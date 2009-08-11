@@ -1536,26 +1536,21 @@ public class JmsOutputChannel implements OutputChannel
 	  } else {
 	    addIdleTime(aMessage);
 	  }
-
+	  // If the send fails it returns false.
 	  if ( endpointConnection.send(aMessage, msgSize, startConnectionTimer) == false ) {
+	    // Failure on sending a request requires cleanup that includes stopping a listener
+	    // on the delegate that we were unable to send a message to. The delegate state is
+	    // set to FAILED. If there are retries or more CASes to send to this delegate the
+	    // connection will be retried.
 	    if ( isRequest ) {
-	      Delegate delegate = lookupDelegate(anEndpoint.getDelegateKey());
-	      //  Removes the failed CAS from the list of CASes pending reply. This also
-	      //  cancels the timer if this CAS was the oldest pending CAS, and if there
-	      //  are other CASes pending a fresh timer is started.
-	      removeCasFromOutstandingList(entry, isRequest, anEndpoint.getDelegateKey());
-				//	Mark this delegate as Failed
-	      delegate.getEndpoint().setStatus(Endpoint.FAILED);
-				//	Destroy listener associated with a reply queue for this delegate
-        InputChannel ic = getAnalysisEngineController().getInputChannel(delegate.getEndpoint().getDestination().toString());
-	      ic.destroyListener(delegate.getEndpoint().getDestination().toString(), anEndpoint.getDelegateKey());
-				//	Setup error context and handle failure in the error handler
-	      ErrorContext errorContext = new ErrorContext();
-	      errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
-	      errorContext.add(AsynchAEMessage.CasReference, entry.getCasReferenceId());
-	      errorContext.add(AsynchAEMessage.Endpoint, anEndpoint);
-	      // Failure on send treat as timeout
-	      delegate.handleError(new MessageTimeoutException(), errorContext);
+	      // Spin recovery thread to handle the send error. After the recovery thread
+	      // is started the current (process) thread goes back to a thread pool in
+	      // ThreadPoolExecutor. The recovery thread can than stop the listener and the
+	      // ThreadPoolExecutor since all threads are back in the pool. Any retries will
+	      // be done in the recovery thread.
+	      RecoveryThread recoveryThread = new RecoveryThread( this, anEndpoint, entry, isRequest, getAnalysisEngineController());
+	      Thread t = new Thread(Thread.currentThread().getThreadGroup().getParent(), recoveryThread);
+	      t.start();
 	    } else {
 	      if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
 	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
@@ -2292,4 +2287,39 @@ public class JmsOutputChannel implements OutputChannel
       timer = null;
     }
   }
+	private static class RecoveryThread implements Runnable {
+	  Endpoint endpoint;
+	  CacheEntry entry;
+	  boolean isRequest;
+	  AnalysisEngineController controller;
+	  JmsOutputChannel outputChannel;
+	  
+	  public RecoveryThread( JmsOutputChannel channel, Endpoint anEndpoint, CacheEntry anEntry, boolean isRequest, AnalysisEngineController aController) {
+	    endpoint = anEndpoint;
+	    entry = anEntry;
+	    controller = aController;
+	    this.isRequest = isRequest;
+	    outputChannel = channel;
+	  }
+	  public void run() {
+      Delegate delegate = outputChannel.lookupDelegate(endpoint.getDelegateKey());
+      //  Removes the failed CAS from the list of CASes pending reply. This also
+      //  cancels the timer if this CAS was the oldest pending CAS, and if there
+      //  are other CASes pending a fresh timer is started.
+      outputChannel.removeCasFromOutstandingList(entry, isRequest, endpoint.getDelegateKey());
+      //  Mark this delegate as Failed
+      delegate.getEndpoint().setStatus(Endpoint.FAILED);
+      //  Destroy listener associated with a reply queue for this delegate
+      InputChannel ic = controller.getInputChannel(delegate.getEndpoint().getDestination().toString());
+      ic.destroyListener(delegate.getEndpoint().getDestination().toString(), endpoint.getDelegateKey());
+      //  Setup error context and handle failure in the error handler
+      ErrorContext errorContext = new ErrorContext();
+      errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
+      errorContext.add(AsynchAEMessage.CasReference, entry.getCasReferenceId());
+      errorContext.add(AsynchAEMessage.Endpoint, endpoint);
+      // Failure on send treat as timeout
+      delegate.handleError(new MessageTimeoutException(), errorContext);
+
+	  }
+	}
 }
