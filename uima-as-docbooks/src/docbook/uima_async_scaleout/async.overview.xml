@@ -921,6 +921,91 @@ under the License.
       results. Later versions may include additional UIMA-specific tooling for this.</para>
     <section id="ugr.async.ov.concepts.mc.what">
       <title>Instrumentation provided</title>
+         <para>UIMA AS Service has a built-in, JMX-based instrumentation that enables service monitoring. It 
+         provides service metrics collected in real-time at configurable checkpoint intervals. The main purpose 
+         of the monitor is to help in detecting overloaded and idle services. Overloaded services are those 
+         that are not able to keep up with the work load. Idle services are those that are not receiving enough 
+         work and stay idle. To detect both conditions, the monitor provides the following metrics: </para>
+
+	<itemizedlist>
+          <listitem>
+            <para>Input queue depth: number of CASes waiting to be processed by a service</para>
+          </listitem>
+          <listitem>
+            <para>Reply queue depth: number of CASes  processed by a service and delivered to a client's queue</para>
+          </listitem>
+          <listitem>
+            <para>Number of CASes processed since the last checkpoint</para>
+          </listitem>
+          <listitem>
+            <para>Idle time since the last checkpoint</para>
+          </listitem>
+          <listitem>
+            <para>Time spent in analysis since the last checkpoint</para>
+          </listitem>
+          <listitem>
+            <para>Cas Pool size</para>
+          </listitem>
+    </itemizedlist> 
+
+    <para>In addition to the performance metrics the monitor also provides basic service information:</para>
+	<itemizedlist>
+          <listitem>
+            <para>Service name</para>
+          </listitem>
+          <listitem>
+            <para>Is service top level</para>
+          </listitem>
+          <listitem>
+            <para>Is service remote</para>
+          </listitem>
+          <listitem>
+            <para>Is service a cas multiplier</para>
+          </listitem>
+          <listitem>
+            <para>Number of processing threads</para>
+          </listitem>
+          <listitem>
+            <para>Service uptime</para>
+          </listitem>
+    </itemizedlist> 
+
+    <para>The main metric for detecting an overloaded service is the input queue depth. If it is growing or high, the service 
+           is not able to keep up with the load. There are more CASes arriving at the queue than the service can process. 
+           Consider increasing number of processig threads in the JVm or start another instance of the service.</para>
+
+    <para>The main metric for detecting idle service is the idle time. If it is high, it indicates that the service is not 
+          receiving enough CASes. This can be caused by a bottleneck in the service's client which can also be supported by 
+          high reply queue depth. Ideally, the idle time should be at zero, which means that the service receives enough CASes 
+          to process. The idle time is shown as a delta from the last time the checkpoint was made.</para>
+
+    <para>Cas Pool size at zero indicates misconfiguration or a bottleneck in a service's client. It should also be supported 
+          by a high idle time. In this case, the service does not have enough CASes in its pool (misconfiguration) and is 
+          forced to wait. A typical reason is a slow client which should be supported by a high reply queue depth. Consider 
+          incrementing service's Cas pool and check the client's metrics to determine a reason why it is slow.</para>
+
+    <para>The monitor provides an API to plug in a custom formatter for displaying service metrics. A default implementation 
+          is provided in the UIMA AS runtime. A custom formatter must implement JmxMonitorListener interface and can be 
+          plugged in to the monitor with the following API:
+          <programlisting><![CDATA[ jmxMonitor.addJmxMonitorListener(customJmxListener);]]></programlisting></para>
+
+
+
+    <para>To easiest way to start a service with JMX monitoring enabled is to configure UIMA's property: UIMA_JVM_OPTS:</para>
+
+    <programlisting>
+    <![CDATA[set UIMA_JVM_OPTS=-Dcom.sun.management.jmxremote 
+    -Dcom.sun.management.jmxremote.port=8009 
+    -Dcom.sun.management.jmxremote.authenticate=false 
+    -Dcom.sun.management.jmxremote.ssl=false 
+    -Djmx.monitor.frequency=1000 
+    -Djmx.monitor.formatter=<custom formatter class>]]></programlisting>
+
+	<para>The above configures JMX MBeanServer to run on port 8009 with no authentication. It also sets the checkpoint interval 
+	to 1 second and plugs in a custom formatter for displaying metrics. Please note that the default formatter logs the metrics in 
+	UIMA Log at INFO level.</para>      
+      
+      <!--
       <para>The implementation provides the following kinds of instrumentation via JMX:
         <itemizedlist>
           <listitem>
@@ -940,7 +1025,18 @@ under the License.
                 <para>by component</para></listitem>
               <listitem>
                 <para>state: OK, Idle, Working, Stopped, restarting, etc.</para></listitem></itemizedlist>
-          </listitem></itemizedlist> </para></section>
+          </listitem>
+          <listitem>
+            <para>lifecycle</para>
+            <itemizedlist spacing="compact">
+              <listitem>
+                <para>completeProcessingAndStop - finishes processing of in-play CASes and stops</para></listitem>
+              <listitem>
+                <para>stopNow - releases all CASes and stops</para></listitem></itemizedlist>
+          </listitem>
+          </itemizedlist> </para>
+     -->     
+     </section>
     <!-- of ugr.async.ov.concepts.mc.what --></section>
   <!-- of ugr.async.ov.concepts.mc -->
   <!-- ======================================================= -->
@@ -962,6 +1058,10 @@ under the License.
                value="tcp://uima17.watson.ibm.com:61616"/>
     <parameter name="endpoint" 
                value="uima.as.RoomDateMeetingDetectorAggregateQueue"/>
+    <parameter name="timeout" 
+               value="xxx"/>
+    <parameter name="getmetatimeout" 
+               value="yyy"/>               
   </parameters>
 </customResourceSpecifier>]]></programlisting>
     

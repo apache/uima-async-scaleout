@@ -227,6 +227,10 @@ under the License.
             <para>CpcTimeout: Collection process complete timeout. Default = no timeout.</para>
           </listitem>
           
+          <listitem>
+            <para>SerializationStrategy:(Optional) xmi or binary serialization. Default = xmi </para>
+          </listitem>
+
         </itemizedlist></para>
       
     </section>
@@ -238,27 +242,39 @@ under the License.
     <section id="ugr.ref.async.callback.listener">
       <title>Status Callback Listener</title>
       <para>Asynchronous events are delivered to applications via methods in classes registered
-          to the API object with addStatusCallbackListener(). These classes must implement the
-          interface org.apache.uima.aae.client.UimaASStatusCallbackListener.
+          to the API object with addStatusCallbackListener(). These classes must extend the
+          class org.apache.uima.aae.client.UimaAsBaseCallbackListener.
+          <!-- These classes must implement the
+          interface org.apache.uima.aae.client.UimaASStatusCallbackListener.-->
 
       <itemizedlist>
         <listitem>
-          <para>initializationComplete(EntityProcessStatus aStatus): The callback used to inform the
+          <para>initializationComplete(UimaASProcessStatus aStatus): The callback used to inform the
             application that the initialization request has completed. On success aStatus will be
-            null; on failure use the EntityProcessStatus class to get the details.</para>
+            null; on failure use the UimaASProcessStatus class to get the details.</para>
         </listitem>
 
         <listitem>
-          <para>entityProcessComplete(CAS aCas, EntityProcessStatus aStatus): The callback used to 
-            inform the application that a processCas request has completed. On success aStatus 
-            will be null; on failure use the EntityProcessStatus class to get the details.</para>
+          <para>entityProcessComplete(CAS aCas, UimaASProcessStatus aStatus): The callback used to 
+            inform the application that a processCas request has completed. On success aCAS object
+            will contain result of analysis; on failure the CAS will be in the same state as 
+            before it was sent to a service. The aStatus object will contain a unique CAS id 
+            that can be retrieved with getCasReferenceId() method; on failure use the 
+            UimaASProcessStatus class to get the details.</para>
         </listitem>
 
         <listitem>
-          <para>collectionProcessComplete(EntityProcessStatus aStatus): The callback used to inform the
+          <para>collectionProcessComplete(UimaASProcessStatus aStatus): The callback used to inform the
             application that the CPC request has completed. On success aStatus will be
-            null; on failure use the EntityProcessStatus class to get the details.</para>
+            null; on failure use the UimaASProcessStatus class to get the details.</para>
         </listitem>
+
+        <listitem>
+          <para>onBeforeMessageSend(UimaASProcessStatus status): The callback used to inform the
+            application that a CAS is about to be sent to a service. The status object has
+            getCasReferenceId() method that returns a unique CAS id assigned by Uima AS.</para>
+        </listitem>
+
       </itemizedlist>
       </para>
   </section>
@@ -380,6 +396,24 @@ uimaAsEngine.deploy(service, appCtx);
   </section>
       
     </section>
+
+  <section id="ugr.ref.async.api.usage_undeployservice">
+    <title>Undeploying a Service with the Client API</title>
+    <para>
+      Services can be undeployed from a client object as follows: 
+        <programlisting>// create Map to hold required parameters
+Map&lt;String,Object&gt; appCtx = new HashMap&lt;String,Object&gt;();
+appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath, 
+           System.getenv("UIMA_HOME") + "/bin/dd2spring.xsl");
+appCtx.put(UimaAsynchronousEngine.SaxonClasspath, 
+           "file:" + System.getenv("UIMA_HOME") + "/saxon/saxon8.jar");
+String id = uimaAsEngine.deploy(service, appCtx);
+uimaAsEngine.undeploy(id);
+    </programlisting>
+    </para>
+  </section>
+      
+    
     <!--======================================================-->    
     <!--                  Sample Code                         -->    
     <!--======================================================-->    
@@ -389,5 +423,7 @@ uimaAsEngine.deploy(service, appCtx);
       <para>See $UIMA_HOME/examples/src/org/apache/uima/examples/as/RunRemoteAsyncAE.java
       </para>
     </section>
+
+
 
 </chapter>

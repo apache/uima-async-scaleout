@@ -89,8 +89,8 @@ under the License.
       <environmentVariables .../>  <!--optional -->
 
       <analysisEngine key="key name" async="[true/false]"
-             internalReplyQueueScaleout="nn1"
-             inputQueueScaleout="nn2">
+             internalReplyQueueScaleout="nn1" <!-- optional -->
+             inputQueueScaleout="nn2">        <!-- optional -->
 
         <scaleout numberOfInstances="1"/>       <!-- optional -->
                                                 <!-- optional --> 
@@ -107,7 +107,7 @@ under the License.
           </analysisEngine>
                 . . .
           <remoteAnalysisEngine key="key name"  <!-- 0 or more -->
-               remoteReplyQueueScaleout="nn1">
+               remoteReplyQueueScaleout="nn1">  <!-- optional -->
   
             <!-- next is either required or must be omitted -->
             <casMultiplier poolSize="5" initialFsHeapSize="nnn"/>
@@ -217,7 +217,10 @@ under the License.
     endpoint="queue_name"
     prefetch="1"/>]]></programlisting>
     
-    <para>The queue broker address includes a protocol specification, which should be set to either "tcp", or
+    <para>
+    The brokerURL attribute is optional. When omitted, a default value of tcp://localhost:61616 will be used. 
+    A different brokerURL can be provided as an override when launching a service. Consult README that provides
+    an example of brokerURL override. The queue broker address includes a protocol specification, which should be set to either "tcp", or
       "http". <!-- for brokers running on other JVMs, and "vm" for brokers running in the
       same JVM.<! - having queue connections only to endpoints in this same JVM.- > For the "tcp", "http"
       protocols, t-->The brokerURL attribute specifies the queue broker URL, typically its network address and
@@ -338,8 +341,8 @@ under the License.
     
     
     <programlisting><![CDATA[<analysisEngine key="key name" async="true"
-             internalReplyQueueScaleout="nn1"
-             inputQueueScaleout="nn2">
+             internalReplyQueueScaleout="nn1"  <!-- optional -->
+             inputQueueScaleout="nn2">         <!-- optional -->
 
   <scaleout numberOfInstances="1"/>        <!-- optional  -->
   <!-- casMultiplier is either required, or must be omitted-->
@@ -355,12 +358,12 @@ under the License.
     </analysisEngine>
             . . . 
     <remoteAnalysisEngine key="key name"   <!-- 0 or more -->
-             remoteReplyQueueScaleout="nn1">
+             remoteReplyQueueScaleout="nn1"> <!-- optional -->
 
       <!-- next is either required or must be omitted -->
       <casMultiplier poolSize="5" initialFsHeapSize="nnn"/>       
       <inputQueue ... />
-      <serializer method="xmi"/>              <!-- optional -->
+      <serializer method="[xmi|binary]"/>              <!-- optional -->
       <asyncAggregateErrorConfiguration .../> <!-- optional -->
     </remoteAnalysisEngine>
             . . . 
@@ -435,10 +438,13 @@ under the License.
       has to be deserialized.
       </para>
     
+    <para>The &lt;serializer> element describes what method of serialization to use. This element is optional and it
+    may be set to either binary or xmi. If omitted, xmi serialization will be used by default. Xmi serialization 
+    can be quite verbose and produce large output for CASes containing many annotations. A more efficient and compact 
+    serialization is produced by binary serialization which trades output size for more CPU required. 
+    </para>
     <para>
-      The &lt;inputQueue> element specifies the remote's input queue. The &lt;serializer>
-      element describes what method of serialization to use (for now "xmi" is the only allowed value, and this element
-      can be omitted). The casMultiplier element inside a remoteAnalysisEngine element is only specified if the
+      The &lt;inputQueue> element specifies the remote's input queue. The casMultiplier element inside a remoteAnalysisEngine element is only specified if the
       remote component is a CAS Multiplier, and it specifies the size of a pool of CASes kept to receive the new CASes
       from the remote component, and the initial size of those CASes. Its poolSize must be equal to or larger than the
       casMultiplier poolSize specified for that remote component.</para>
