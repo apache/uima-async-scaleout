@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
+import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -914,6 +915,19 @@ implements InputChannel, JmsInputChannelMBean, SessionAwareMessageListener
       return;
     }
     ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(failedListener.getBrokerUrl());
+    //  Try to create a test connection to make sure that the broker is available
+    Connection testConnection = null;
+    try {
+      f.createConnection();
+    } catch( Exception e ) {
+      throw e;
+    } finally {
+      if ( testConnection != null ) {
+        //  close test connection. Broker is running
+        testConnection.close();
+      }
+    }
+    
     newListener.setConnectionFactory(f);
     newListener.setMessageListener(this);
     newListener.setController(getController());
