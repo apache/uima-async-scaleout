@@ -1792,7 +1792,7 @@ implements AnalysisEngineController, EventSubscriber
 	        transport.getUimaMessageDispatcher(entry.getKey()).dispatch(message);
 	        transport.stopIt();
 	        System.out.println(">>> Controller:"+getComponentName()+" Stopped Transport For:"+entry.getKey());
-	      } catch ( Exception e) {e.printStackTrace();}
+	      } catch ( Exception e) {}
 	    }
 	  }
 	}
