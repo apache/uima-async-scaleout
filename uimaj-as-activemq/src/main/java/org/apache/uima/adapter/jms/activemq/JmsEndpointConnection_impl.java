@@ -125,7 +125,12 @@ public class JmsEndpointConnection_impl implements ConsumerListener
 
 	public boolean isOpen()
 	{
-		if (producerSession == null)
+		if ( failed ||
+		        producerSession == null || 
+		          brokerDestinations.getConnection() == null || 
+		            ((ActiveMQConnection)brokerDestinations.getConnection()).isClosed() ||
+		              ((ActiveMQConnection)brokerDestinations.getConnection()).isClosing() ||
+		                 ((ActiveMQConnection)brokerDestinations.getConnection()).isTransportFailed())
 		{
 			return false;
 		}
@@ -159,7 +164,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener
 	                new Object[] { anEndpointName, brokerUri });
       }
       
-      if ( brokerDestinations.getConnection() == null ) {
+      if ( !isOpen() ) {  
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
         factory.setDispatchAsync(true);
         factory.setUseAsyncSend(true);
@@ -203,7 +208,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener
 			producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 			// Since the connection is shared, start it only once 
 			if ( !((ActiveMQConnection)brokerDestinations.getConnection()).isStarted() ) {
-	      brokerDestinations.getConnection().start();
+			  brokerDestinations.getConnection().start();
 			}
 			if ( controller != null )
 			{
@@ -216,6 +221,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener
           }
         }
 			}
+			failed = false;
 		}
 		catch ( Exception e)
 		{
