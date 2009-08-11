@@ -221,17 +221,11 @@ public class ActiveMQSupport extends TestCase {
   }
 
   protected synchronized void tearDown() throws Exception {
-    System.out.println("Tearing Down - Collecting All Threads and Waiting For Them to Stop ...");
     super.tearDown();
-    System.out.println("Tearing Down - Collecting All Threads and Waiting For Them to Stop ...");
     ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
-    threadGroup.list();
     // Wait unit all non-amq threads stop
     while (brokerThreadGroup.activeCount() > 0) {
       Thread[] threads = new Thread[threadGroup.activeCount()];
-      System.out.println("Active Thread Count:" + threadGroup.activeCount()
-              + " Active ThreadGroup Count:" + threadGroup.activeGroupCount());
-      threadGroup.list();
       threadGroup.enumerate(threads);
       boolean foundExpectedThreads = true;
 
