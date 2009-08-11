@@ -747,8 +747,6 @@ implements ExceptionListener
           while (threadGroup.activeCount() > 0) {
             try {
               Thread[] threads = new Thread[threadGroup.activeCount()];
-              System.out.println("Active Thread Count:" + threadGroup.activeCount()
-                      + " Active ThreadGroup Count:" + threadGroup.activeGroupCount());
               threadGroup.enumerate(threads);
               boolean foundExpectedThreads = true;
 
