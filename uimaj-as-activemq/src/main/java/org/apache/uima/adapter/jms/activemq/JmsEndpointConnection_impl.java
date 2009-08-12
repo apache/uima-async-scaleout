@@ -559,40 +559,46 @@ public class JmsEndpointConnection_impl implements ConsumerListener
 	}
 
 	private synchronized boolean handleJmsException( JMSException ex) {
-    if ( !failed ) {
+    if (!failed) {
       failed = true;
     }
-    if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
-      //  Check if the exception is due to deleted queue. ActiveMQ does not identify
-      //  this condition in the cause, so we need to parse the exception message and
-      //  compare against "Cannot publish to a deleted Destination" text. If match is
-      //  found, extract the name of the deleted queue from the exception and log it.
-      if ( ex.getMessage() != null && ex.getMessage().startsWith("Cannot publish to a deleted Destination")) {
-        String destName = endpointName;
-        int startPos = ex.getMessage().indexOf(':');
-        if ( startPos > 0 ) {
-          destName = ex.getMessage().substring(startPos);
-        }
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_send_failed_deleted_queue_INFO",
-                new Object[] { componentName, destName});
-        controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
-        return false;
-
-      } if ( ex instanceof ConnectionFailedException && isReplyEndpoint ) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_connection_failure__INFO",
-                new Object[] { componentName, serverUri, delegateEndpoint.getDestination()});
-        controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
-        return false;
-
-      } else {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING", new Object[] {componentName, ex});
-        }
-        ex.printStackTrace();
+    // Check if the exception is due to deleted queue. ActiveMQ does not identify
+    // this condition in the cause, so we need to parse the exception message and
+    // compare against "Cannot publish to a deleted Destination" text. If match is
+    // found, extract the name of the deleted queue from the exception and log it.
+    if (ex.getMessage() != null
+            && ex.getMessage().startsWith("Cannot publish to a deleted Destination")) {
+      String destName = endpointName;
+      int startPos = ex.getMessage().indexOf(':');
+      if (startPos > 0) {
+        destName = ex.getMessage().substring(startPos);
       }
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_send_failed_deleted_queue_INFO", new Object[] { componentName, destName });
+      }
+      controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
+      return false;
+
     }
+    if (ex instanceof ConnectionFailedException && isReplyEndpoint) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+              "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAJMS_connection_failure__INFO",
+              new Object[] { componentName, serverUri, delegateEndpoint.getDestination() });
+      controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
+      return false;
+
+    } else {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { componentName, ex });
+      }
+      ex.printStackTrace();
+    }
+
     return true;
 	}
 	public void onConsumerEvent(ConsumerEvent arg0)
