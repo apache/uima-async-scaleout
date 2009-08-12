@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
@@ -894,8 +895,7 @@ public class JmsOutputChannel implements OutputChannel
 			{
 				return;
 			}
-			JmsEndpointConnection_impl endpointConnection = 
-				getEndpointConnection(anEndpoint);
+			JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
 
 			TextMessage tm = endpointConnection.produceTextMessage(null);
 			tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None); 
@@ -2231,11 +2231,11 @@ public class JmsOutputChannel implements OutputChannel
       }
       timer.schedule(new TimerTask() {
         public void run() {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                     "startTimer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_inactivity_timer_expired_CONFIG",
-                    new Object[] { Thread.currentThread().getName(), inactivityTimeout, endpoint });
+                    "UIMAJMS_inactivity_timer_expired__INFO",
+                    new Object[] { Thread.currentThread().getName(), componentName,  inactivityTimeout, endpoint });
           }
           if (connectionCreationTimestamp <= cachedConnectionCreationTimestamp) {
             try {
@@ -2244,6 +2244,13 @@ public class JmsOutputChannel implements OutputChannel
                 try {
                   brokerDestinations.getConnection().stop();
                   brokerDestinations.getConnection().close();
+                  brokerDestinations.setConnection(null);
+                  for( Entry<Object, JmsEndpointConnection_impl> endpoints: brokerDestinations.endpointMap.entrySet() )
+                  {
+                    endpoints.getValue().close();  // close session and producer
+                    brokerDestinations.endpointMap.remove(endpoints.getValue());
+                  }
+                  connectionMap.remove(endpoint.getServerURI());
                 } catch (Exception e) {
                   // Ignore this for now. Attempting to close connection that has been closed
                   // Ignore we are shutting down
