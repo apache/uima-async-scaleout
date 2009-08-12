@@ -64,6 +64,7 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
   public static final String PARAM_ENDPOINT = "endpoint";
   public static final String PARAM_TIMEOUT = "timeout";
   public static final String PARAM_GETMETA_TIMEOUT = "getmetatimeout";
+  public static final String PARAM_CPC_TIMEOUT = "cpctimeout";
   
   public static final String PARAM_BIN_SERIALIZTION = "binary_serialization";
   private Object mux = new Object();
@@ -77,6 +78,7 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     String endpoint = null;
     int timeout = 0;
     int getMetaTimeout = 0;
+    int cpcTimeout = 0;
     
     String binary_serialization = null;
     for (int i = 0; i < parameters.length; i++) {
@@ -95,6 +97,9 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
       else if (PARAM_GETMETA_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
         getMetaTimeout = Integer.parseInt(parameters[i].getValue());
       }
+      else if (PARAM_CPC_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
+        cpcTimeout = Integer.parseInt(parameters[i].getValue());
+      }
     }
     
     // initialize UIMA EE Engine
@@ -109,6 +114,10 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     if (getMetaTimeout > 0) {
       System.out.println("Setting GetMeta Timeout: " + getMetaTimeout);
       appCtxt.put(UimaAsynchronousEngine.GetMetaTimeout, getMetaTimeout);
+    }
+    if (cpcTimeout > 0) {
+      System.out.println("Setting CPC Timeout: " + cpcTimeout);
+      appCtxt.put(UimaAsynchronousEngine.CpcTimeout, cpcTimeout);
     }
     if (binary_serialization != null && binary_serialization.equalsIgnoreCase("true")) {
       System.out.println("Using binary serialization");
