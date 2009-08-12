@@ -823,27 +823,31 @@ implements UimaAsynchronousEngine, MessageListener
 	protected void handleCollectionProcessCompleteReply(Message message) throws Exception
 	{
 		int payload = ((Integer) message.getIntProperty(AsynchAEMessage.Payload)).intValue();
+		try {
+	    if (AsynchAEMessage.Exception == payload)
+	    {
+	      ProcessTrace pt = new ProcessTrace_impl();
+	      UimaASProcessStatusImpl status = new UimaASProcessStatusImpl(pt);
+	      Exception exception = retrieveExceptionFromMessage(message);
 
-		if (AsynchAEMessage.Exception == payload)
-		{
-			ProcessTrace pt = new ProcessTrace_impl();
-			UimaASProcessStatusImpl status = new UimaASProcessStatusImpl(pt);
-			Exception exception = retrieveExceptionFromMessage(message);
-
-			status.addEventStatus("CpC", "Failed", exception);
-			notifyListeners(null, status, AsynchAEMessage.CollectionProcessComplete);
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "handleCollectionProcessCompleteReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_exception_msg_INFO",
-					new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom), message.getStringProperty(AsynchAEMessage.CasReference), exception });
-      }
-		}
-		else
-		{
-		  //  After receiving CPC reply there may be cleanup to do. Delegate this
-		  //  to platform specific implementation (ActiveMQ or WAS)
-			cleanup(); //Make the receiving thread to complete
-			// Release the semaphore acquired in collectionProcessingComplete()
-			cpcReplySemaphore.release();
+	      status.addEventStatus("CpC", "Failed", exception);
+	      notifyListeners(null, status, AsynchAEMessage.CollectionProcessComplete);
+	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleCollectionProcessCompleteReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_exception_msg_INFO",
+	          new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom), message.getStringProperty(AsynchAEMessage.CasReference), exception });
+	      }
+	    }
+	    else
+	    {
+	      //  After receiving CPC reply there may be cleanup to do. Delegate this
+	      //  to platform specific implementation (ActiveMQ or WAS)
+	      cleanup(); 
+	    }
+		} catch( Exception e ) {
+		  throw e;
+		} finally {
+	    // Release the semaphore acquired in collectionProcessingComplete()
+	    cpcReplySemaphore.release();
 		}
 	}
 
