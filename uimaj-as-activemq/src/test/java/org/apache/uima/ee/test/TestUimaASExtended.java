@@ -152,6 +152,23 @@ public class TestUimaASExtended extends BaseTestSupport
     runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
 	}
 	
+	/**
+	 * Tests processing of an Exception that a service reports on CPC
+	 * 
+	 * @throws Exception
+	 */
+  public void testDeployPrimitiveServiceWithCpCException() throws Exception
+  {
+    System.out.println("-------------- testDeployPrimitiveServiceWithCpCException -------------");
+    //  Instantiate Uima EE Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    //  Deploy Uima EE Primitive Service 
+    deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithCpCException.xml");
+    //  Add expected exception so that we release CPC Latch
+    addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class);
+    
+    runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"NoOpAnnotatorQueue", 1, PROCESS_LATCH);
+  }
   /**
    * Tests sending CPC request from a client that does not send CASes to a service
    * 
@@ -174,6 +191,60 @@ public class TestUimaASExtended extends BaseTestSupport
     }
     uimaAsEngine.stop();
   }
+  /**
+   * Tests inactivity timeout on a reply queue. The service stops a session 
+   * after 5 seconds of sending GetMeta reply. The 
+   * client than waits for 10 seconds and sends a CPC.
+   * 
+   * @throws Exception
+   */
+  public void testServiceInactivityTimeoutOnReplyQueue() throws Exception
+  {
+    System.out.println("-------------- testServiceInactivityTimeoutOnReplyQueue -------------");
+    String sessionTimeoutOverride = System.getProperty("SessionTimeoutOverride");
+    System.setProperty("SessionTimeoutOverride","5000");
+    
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotator.xml");
+    Map<String, Object> appCtx = buildContext( String.valueOf(broker.getMasterConnectorURI()),"NoOpAnnotatorQueue" );
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 1000 );
+    initialize(eeUimaEngine, appCtx);
+    waitUntilInitialized();
+    System.out.println("Client Initialized");
+    
+    CAS cas = eeUimaEngine.getCAS();
+    eeUimaEngine.sendAndReceiveCAS(cas);  // This will start a timer on reply queue
+    cas.reset();
+    //  Now sleep for 8 seconds to let the service timeout on its reply queue due
+    //  to a 5 second inactivity timeout 
+    Thread.currentThread().sleep(8000);
+    System.out.println("Client Sending CPC");
+    
+    //  Send CPC. The service should recreate a session and send CPC reply
+    eeUimaEngine.collectionProcessingComplete();
+    //	Now send some CASes and sleep to let the inactivity timer pop again
+    for( int i=0; i < 5; i++) {
+      eeUimaEngine.sendAndReceiveCAS(cas);  // This will start a timer on reply queue
+      cas.reset();
+      if ( i == 3 ) {
+        Thread.currentThread().sleep(8000);
+      }
+    }
+    //	Send another CPC
+    eeUimaEngine.collectionProcessingComplete();
+
+    eeUimaEngine.stop();
+    
+    //  Reset inactivity to original value or remove if it was not set 
+    if ( sessionTimeoutOverride != null ) {
+      System.setProperty("SessionTimeoutOverride",sessionTimeoutOverride);
+    } else {
+      System.clearProperty("SessionTimeoutOverride");
+    }
+  }
+
+  
+  
   /**
    * Tests handling of ResourceInitializationException that happens in a collocated primitive
    * 
@@ -1707,8 +1778,23 @@ public class TestUimaASExtended extends BaseTestSupport
     System.out.println("-------------- testJmsServiceAdapterWithException -------------");
 	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithException.xml");
+//    deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotator.xml");
     deployService(eeUimaEngine, relativePath+"/Deploy_SyncAggregateWithJmsService.xml");
-    runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue", 1, EXCEPTION_LATCH);
+    Map<String, Object> appCtx = buildContext( String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue" );
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0 );
+    initialize(eeUimaEngine, appCtx);
+    waitUntilInitialized();
+    CAS cas = eeUimaEngine.getCAS();
+    try {
+        eeUimaEngine.sendAndReceiveCAS(cas);
+    } catch( Exception e) {
+        e.printStackTrace();
+    } finally {
+        eeUimaEngine.collectionProcessingComplete();
+        cas.reset();
+    }
+    eeUimaEngine.stop();
+//    runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue", 1, EXCEPTION_LATCH);
   }
   
   public void testJmsServiceAdapterWithProcessTimeout() throws Exception {
@@ -1717,6 +1803,7 @@ public class TestUimaASExtended extends BaseTestSupport
     deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithLongDelay.xml");
     deployService(eeUimaEngine, relativePath+"/Deploy_SyncAggregateWithJmsServiceLongDelay.xml");
     runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue", 1, EXCEPTION_LATCH);
+    
   }
 
   public void testJmsServiceAdapterWithGetmetaTimeout() throws Exception {
