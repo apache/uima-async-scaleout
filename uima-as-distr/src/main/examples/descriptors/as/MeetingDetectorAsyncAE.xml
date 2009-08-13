@@ -22,5 +22,7 @@
      <parameter name="brokerURL" value="tcp://localhost:61616"/>
      <parameter name="endpoint" value="MeetingDetectorTaeQueue"/>
      <parameter name="timeout" value="5000"/>
+     <parameter name="getmetatimeout" value="5000"/>
+     <parameter name="cpctimeout" value="5000"/>
    </parameters>
 </customResourceSpecifier>
