@@ -172,6 +172,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener
         Connection conn = factory.createConnection();
         brokerDestinations.setConnection(conn);
         connectionCreationTimestamp = System.nanoTime();
+        failed = false;
       }
       Connection conn = brokerDestinations.getConnection();
       if ( failed ) {
