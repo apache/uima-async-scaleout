@@ -46,6 +46,7 @@ import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.Threshold;
 import org.apache.uima.aae.error.handler.GetMetaErrorHandler;
@@ -290,7 +291,6 @@ implements ExceptionListener
 	 */
 	protected void handleListenerSetupFailure( Throwable t, boolean alreadyHandled )
 	{
-	  
 	  // If shutdown already, nothing to do
 	  if ( awaitingShutdown ) {
       return;
@@ -513,6 +513,15 @@ implements ExceptionListener
           }
           if ( concurrentListener != null ) {
             concurrentListener.setAnalysisEngineController(controller);
+          }
+          //  Save number of concurrent consumers on the temp reply queue in case we need to
+          //  recreate a new listener on a new temp queue created during recovery
+          if ( endpoint != null &&  controller instanceof AggregateAnalysisEngineController ) {
+            Delegate delegate = 
+              ((AggregateAnalysisEngineController)controller).lookupDelegate(endpoint.getDelegateKey());
+            if ( delegate != null ) {
+              delegate.getEndpoint().setConcurrentReplyConsumers(cc);
+            } 
           }
         } catch ( Exception e ) {
           e.printStackTrace();
