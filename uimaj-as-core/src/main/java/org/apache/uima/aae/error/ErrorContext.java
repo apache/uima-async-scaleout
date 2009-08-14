@@ -25,6 +25,8 @@ import java.util.Iterator;
 public class ErrorContext
 {
 	public static final String THROWABLE_ERROR="ThrowableError";
+	private boolean handleSilently = false;
+	
 	private HashMap contextMap = new HashMap();
 	
 	public void add( HashMap aCtx)
@@ -36,6 +38,12 @@ public class ErrorContext
 		contextMap.put(key, value);
 	}
 	
+	public void handleSilently(boolean silent ) {
+	  handleSilently = silent;
+	}
+	public boolean silentHandling() {
+	  return handleSilently;
+	}
 	public Object get( String key )
 	{
 		if ( contextMap.containsKey(key))
