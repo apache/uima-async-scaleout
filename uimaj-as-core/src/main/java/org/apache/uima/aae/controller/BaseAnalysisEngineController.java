@@ -62,6 +62,7 @@ import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.ErrorHandlerChain;
+import org.apache.uima.aae.error.ForcedMessageTimeoutException;
 import org.apache.uima.aae.error.MessageTimeoutException;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.error.handler.ProcessCasErrorHandler;
@@ -1231,7 +1232,7 @@ implements AnalysisEngineController, EventSubscriber
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
       errorContext.add(AsynchAEMessage.CasReference, timedOutCasId);
       errorContext.add(AsynchAEMessage.Endpoint, endpoint);
-      getErrorHandlerChain().handle(new MessageTimeoutException(), errorContext, this);
+      getErrorHandlerChain().handle(new ForcedMessageTimeoutException(), errorContext, this);
     }
     //  If the delegate has CASes pending dispatch, send each CAS
     //  from the pending dispatch list through the error handler with 
@@ -1249,7 +1250,7 @@ implements AnalysisEngineController, EventSubscriber
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
       errorContext.add(AsynchAEMessage.CasReference, timedOutCasId);
       errorContext.add(AsynchAEMessage.Endpoint, endpoint);
-      getErrorHandlerChain().handle(new MessageTimeoutException(), errorContext, this);
+      getErrorHandlerChain().handle(new ForcedMessageTimeoutException(), errorContext, this);
     }
   }
 	
