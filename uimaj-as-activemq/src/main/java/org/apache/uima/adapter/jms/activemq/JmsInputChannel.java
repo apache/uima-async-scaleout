@@ -41,6 +41,7 @@ import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.InvalidMessageException;
 import org.apache.uima.aae.handler.Handler;
 import org.apache.uima.aae.handler.HandlerBase;
@@ -741,7 +742,6 @@ implements InputChannel, JmsInputChannelMBean, SessionAwareMessageListener
 		if ( !listenerContainerList.contains(messageListener) ) {
 			listenerContainerList.add(messageListener);
 		}
-		this.messageListener = messageListener;
 		if ( getController() != null )
 		{
 			try
@@ -900,21 +900,8 @@ implements InputChannel, JmsInputChannelMBean, SessionAwareMessageListener
     return messageListener.getConcurrentConsumers();
   }
 
-  public void createListener( String aDelegateKey ) throws Exception {
-    
-    UimaDefaultMessageListenerContainer failedListener =
-      failedListenerMap.get(aDelegateKey);
-    UimaDefaultMessageListenerContainer newListener = 
-      new UimaDefaultMessageListenerContainer();
-    if ( failedListener == null ) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "createListener",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_failed_to_create_listener__INFO",
-                new Object[] { getController().getComponentName(), aDelegateKey });
-      }
-      return;
-    }
-    ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(failedListener.getBrokerUrl());
+  private void testIfBrokerRunning(String aBrokerUrl) throws Exception {
+    ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(aBrokerUrl);
     //  Try to create a test connection to make sure that the broker is available
     Connection testConnection = null;
     try {
@@ -927,41 +914,53 @@ implements InputChannel, JmsInputChannelMBean, SessionAwareMessageListener
         testConnection.close();
       }
     }
-    
-    newListener.setConnectionFactory(f);
-    newListener.setMessageListener(this);
-    newListener.setController(getController());
-    
-    TempDestinationResolver resolver = new TempDestinationResolver();
-    resolver.setConnectionFactory(f); 
-    resolver.setListener(newListener);
-    newListener.setDestinationResolver(resolver);
+  }
+  public void createListener( String aDelegateKey ) throws Exception {
+    if ( getController() instanceof AggregateAnalysisEngineController ) {
+      Delegate delegate = ((AggregateAnalysisEngineController)getController()).lookupDelegate(aDelegateKey);
+      if ( delegate != null ) {
 
-    org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor executor = new org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(failedListener.getConcurrentConsumers());
-    executor.setMaxPoolSize(failedListener.getMaxConcurrentConsumers());
-    executor.setQueueCapacity(failedListener.getMaxConcurrentConsumers());
-    executor.initialize();
+        UimaDefaultMessageListenerContainer newListener = 
+          new UimaDefaultMessageListenerContainer();
 
-    newListener.setTaskExecutor(executor);
-    newListener.initialize();
-    newListener.start();
-    //  Wait until the resolver plugs in the destination
-    while (newListener.getDestination() == null) {
-      synchronized( newListener ) {
+        testIfBrokerRunning(delegate.getEndpoint().getServerURI());
+        ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(delegate.getEndpoint().getServerURI());
+        newListener.setConnectionFactory(f);
+        newListener.setMessageListener(this);
+        newListener.setController(getController());
         
-        System.out.println(".... Waiting For Destination ...");
-        newListener.wait(100);
+        TempDestinationResolver resolver = new TempDestinationResolver();
+        resolver.setConnectionFactory(f); 
+        resolver.setListener(newListener);
+        newListener.setDestinationResolver(resolver);
+
+        org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor executor = new org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(delegate.getEndpoint().getConcurrentReplyConsumers());
+        executor.setMaxPoolSize(delegate.getEndpoint().getConcurrentReplyConsumers());
+        executor.setQueueCapacity(delegate.getEndpoint().getConcurrentReplyConsumers());
+        executor.initialize();
+        newListener.setConcurrentConsumers(delegate.getEndpoint().getConcurrentReplyConsumers());
+        newListener.setTaskExecutor(executor);
+        newListener.initialize();
+        newListener.start();
+        //  Wait until the resolver plugs in the destination
+        while (newListener.getDestination() == null) {
+          synchronized( newListener ) {
+            
+            System.out.println(".... Waiting For Spring Resolver to Create New Temp Reply Queue ...");
+            newListener.wait(100);
+          }
+        }
+        newListener.afterPropertiesSet();
+        //  Get the endpoint object for a given delegate key from the Aggregate
+        Endpoint endpoint = ((AggregateAnalysisEngineController)getController()).lookUpEndpoint(aDelegateKey, false);
+        //  Override the reply destination. 
+        endpoint.setDestination(newListener.getDestination());
+        Object clone = ((Endpoint_impl) endpoint).clone();
+        newListener.setTargetEndpoint((Endpoint)clone);
+        endpoint.setStatus(Endpoint.OK);
       }
     }
-    newListener.afterPropertiesSet();
-    //  Get the endpoint object for a given delegate key from the Aggregate
-    Endpoint endpoint = ((AggregateAnalysisEngineController)getController()).lookUpEndpoint(aDelegateKey, false);
-    endpoint.setStatus(Endpoint.OK);
-    //  Override the reply destination. 
-    endpoint.setDestination(newListener.getDestination());
-    Object clone = ((Endpoint_impl) endpoint).clone();
-    newListener.setTargetEndpoint((Endpoint)clone);
   }
   /**
    * Given an endpoint name returns all listeners attached to this endpoint. There can be multiple
