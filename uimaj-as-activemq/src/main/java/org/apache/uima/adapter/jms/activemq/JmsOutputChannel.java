@@ -355,7 +355,7 @@ public class JmsOutputChannel implements OutputChannel
 	 * @return - 
 	 * @throws AsynchAEException
 	 */
-	private JmsEndpointConnection_impl getEndpointConnection( Endpoint anEndpoint ) 
+	private synchronized JmsEndpointConnection_impl getEndpointConnection( Endpoint anEndpoint ) 
 	throws AsynchAEException, ServiceShutdownException, ConnectException {
 		
 		try {
@@ -1543,7 +1543,7 @@ public class JmsOutputChannel implements OutputChannel
 	    // set to FAILED. If there are retries or more CASes to send to this delegate the
 	    // connection will be retried.
 	    if ( isRequest ) {
-	      // Spin recovery thread to handle the send error. After the recovery thread
+	      // Spin recovery thread to handle send error. After the recovery thread
 	      // is started the current (process) thread goes back to a thread pool in
 	      // ThreadPoolExecutor. The recovery thread can than stop the listener and the
 	      // ThreadPoolExecutor since all threads are back in the pool. Any retries will
@@ -2324,6 +2324,7 @@ public class JmsOutputChannel implements OutputChannel
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
       errorContext.add(AsynchAEMessage.CasReference, entry.getCasReferenceId());
       errorContext.add(AsynchAEMessage.Endpoint, endpoint);
+      errorContext.handleSilently(true); // dont dump exception to the log
       // Failure on send treat as timeout
       delegate.handleError(new MessageTimeoutException(), errorContext);
 
