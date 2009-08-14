@@ -262,8 +262,9 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
     		return true;   // handled here. This message will not processed
 		}
 
-		//  Log the exception
-		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+		//  Log the exception unless context says otherwise. Currently failures on 
+		//  send are silent
+		if ( !anErrorContext.silentHandling() && UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError", 
         UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", t);
     }
