@@ -90,6 +90,10 @@ public class Dd2SpringTest extends TestCase{
     
   }
 
+  public void testDd2Spring_Bad_Window() throws Exception {
+    checkDd2Spring("TestThresholdWindow.xml");
+  }
+  
   public void testDd2Spring_Deploy_AggregateUsingRemoteTempQueueNoBroker() throws Exception {
     checkDd2Spring("Deploy_AggregateUsingRemoteTempQueueNoBroker.xml");
   }

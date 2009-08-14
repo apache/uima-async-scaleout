@@ -2026,6 +2026,15 @@
     <u:asyncPrimitiveErrorConfiguration>
       <xsl:choose>
         <xsl:when test="u:processCasErrors">
+          <xsl:if test="u:processCasErrors/@thresholdCount and u:processCasErrors/@thresholdWindow">
+            <xsl:if test="(u:processCasErrors/@thresholdWindow ne '0') and 
+                           ((u:processCasErrors/@thresholdCount cast as xs:integer) gt (u:processCasErrors/@thresholdWindow cast as xs:integer))">
+              <xsl:sequence select="f:msgWithLineNumber('ERROR',
+                ('The', u:processCasErrors/@thresholdWindow, ' must be either 0, or larger than the', u:processCasErrors/@thresholdCount), 
+                .)"/>
+            </xsl:if>
+          </xsl:if>
+          
           <u:processCasErrors 
             thresholdCount= "{if (u:processCasErrors/@thresholdCount)  then u:processCasErrors/@thresholdCount  else 0}"
             thresholdWindow="{if (u:processCasErrors/@thresholdWindow) then u:processCasErrors/@thresholdWindow else 0}"
@@ -2074,6 +2083,15 @@
       
       <xsl:choose>
         <xsl:when test="u:processCasErrors">
+          <xsl:if test="u:processCasErrors/@thresholdCount and u:processCasErrors/@thresholdWindow">
+            <!--xsl:message select="('*** Running test', 'gt 9', ('100' cast as xs:integer) gt ('9' cast as xs:integer), 'more' )"/-->
+            <xsl:if test="(u:processCasErrors/@thresholdWindow ne '0') and 
+                           ((u:processCasErrors/@thresholdCount cast as xs:integer) gt (u:processCasErrors/@thresholdWindow cast as xs:integer))">
+              <xsl:sequence select="f:msgWithLineNumber('ERROR',
+                ('The', u:processCasErrors/@thresholdWindow, ' must be either 0, or larger than the', u:processCasErrors/@thresholdCount), 
+                .)"/>
+            </xsl:if>
+          </xsl:if>
           <u:processCasErrors
             maxRetries= "{if (u:processCasErrors/@maxRetries)  then u:processCasErrors/@maxRetries  else 0}"
             timeout=    "{if (u:processCasErrors/@timeout)     then u:processCasErrors/@timeout     else 0}"
