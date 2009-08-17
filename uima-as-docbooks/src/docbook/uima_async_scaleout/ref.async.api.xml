@@ -249,22 +249,30 @@ under the License.
 
       <itemizedlist>
         <listitem>
-          <para>initializationComplete(UimaASProcessStatus aStatus): The callback used to inform the
+          <para>initializationComplete(EntityProcessStatus aStatus): The callback used to inform the
             application that the initialization request has completed. On success aStatus will be
             null; on failure use the UimaASProcessStatus class to get the details.</para>
         </listitem>
 
         <listitem>
-          <para>entityProcessComplete(CAS aCas, UimaASProcessStatus aStatus): The callback used to 
+          <para>entityProcessComplete(CAS aCas, EntityProcessStatus aStatus): The callback used to 
             inform the application that a processCas request has completed. On success aCAS object
             will contain result of analysis; on failure the CAS will be in the same state as 
-            before it was sent to a service. The aStatus object will contain a unique CAS id 
-            that can be retrieved with getCasReferenceId() method; on failure use the 
-            UimaASProcessStatus class to get the details.</para>
+            before it was sent to a service and aStatus will contain the cause of failure. When calling 
+            this method, the Uima AS passes an object of type UimaASProcessStatus as a second argument. 
+            It extends EntityProcessStatus and provides getCasReferenceId() method to retrieve a unique 
+            id assigned to a CAS. To access this method the user code should implement the following
+            <programlisting>
+               if ( aStatus instanceof UimaASProcessStatus ) {
+	              casReferenceId = 
+	                ((UimaASProcessStatus)aStatus).getCasReferenceId();
+   	           }
+   	        </programlisting>
+          </para>
         </listitem>
 
         <listitem>
-          <para>collectionProcessComplete(UimaASProcessStatus aStatus): The callback used to inform the
+          <para>collectionProcessComplete(EntityProcessStatus aStatus): The callback used to inform the
             application that the CPC request has completed. On success aStatus will be
             null; on failure use the UimaASProcessStatus class to get the details.</para>
         </listitem>
