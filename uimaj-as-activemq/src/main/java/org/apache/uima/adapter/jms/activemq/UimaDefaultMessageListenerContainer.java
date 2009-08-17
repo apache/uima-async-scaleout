@@ -452,16 +452,16 @@ implements ExceptionListener
       //  Make sure Spring uses one thread
 	    super.setConcurrentConsumers(1);
       if (cc > 1) {
-	    try {
-	      concurrentListener = new ConcurrentMessageListener(cc, ml);
-	      super.setMessageListener(concurrentListener);
-	    } catch( Exception e) {
-	      e.printStackTrace();
-	      return;
-	    }
-	  } else {
-      super.setMessageListener(ml);
-	  }
+        try {
+          concurrentListener = new ConcurrentMessageListener(cc, ml);
+          super.setMessageListener(concurrentListener);
+        } catch( Exception e) {
+          e.printStackTrace();
+          return;
+        }
+      } else {
+        super.setMessageListener(ml);
+      }
     } else {
       super.setMessageListener(ml);
       super.setConcurrentConsumers(cc);
@@ -742,6 +742,9 @@ implements ExceptionListener
                 ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().awaitTermination(200,TimeUnit.MILLISECONDS); 
               } catch ( Exception e){}
             }
+          } else if ( concurrentListener != null ) {
+            //  Stop internal Executor
+            concurrentListener.stop();
           }
           if ( taskExecutor != null ) {
             System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " +++++++++ Listener:"+getDestination()+" Controller ThreadPoolExecutor Stopped ...");
