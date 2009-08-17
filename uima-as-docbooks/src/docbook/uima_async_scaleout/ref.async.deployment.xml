@@ -94,7 +94,11 @@ under the License.
 
         <scaleout numberOfInstances="1"/>       <!-- optional -->
                                                 <!-- optional --> 
-        <casMultiplier poolSize="5" initialFsHeapSize="nnn"/> 
+        <casMultiplier 
+             poolSize="5"                       <!-- optional --> 
+             initialFsHeapSize="nnn"            <!-- optional -->
+             processParentLast="[true/false]"/> <!-- optional -->
+             
         <asyncPrimitiveErrorConfiguration .../> <!-- optional -->
 
         <delegates>    <!-- optional, only for aggregates -->
@@ -110,7 +114,11 @@ under the License.
                remoteReplyQueueScaleout="nn1">  <!-- optional -->
   
             <!-- next is either required or must be omitted -->
-            <casMultiplier poolSize="5" initialFsHeapSize="nnn"/>
+            <casMultiplier 
+                    poolSize="5" 
+                    initialFsHeapSize="nnn"
+                    processParentLast="[true/false]"/> <!-- optional -->
+                    
             <inputQueue ... />
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration ... />
@@ -346,7 +354,10 @@ under the License.
 
   <scaleout numberOfInstances="1"/>        <!-- optional  -->
   <!-- casMultiplier is either required, or must be omitted-->
-  <casMultiplier poolSize="5"  initialFsHeapSize="nn"/>               
+  <casMultiplier 
+       poolSize="5"                        <!-- optional  -->
+       initialFsHeapSize="nn"              <!-- optional  -->   
+       processParentLast="[true/false]"/>  <!-- optional  -->             
 
     <!-- next two are optional, but only one allowed -->
   <asyncAggregateErrorConfiguration .../>  <!-- optional  -->
@@ -361,7 +372,11 @@ under the License.
              remoteReplyQueueScaleout="nn1"> <!-- optional -->
 
       <!-- next is either required or must be omitted -->
-      <casMultiplier poolSize="5" initialFsHeapSize="nnn"/>       
+      <casMultiplier 
+           poolSize="5"                        <!-- optional  -->
+           initialFsHeapSize="nnn"             <!-- optional  -->
+           processParentLast="[true/false]"/>  <!-- optional  -->             
+      
       <inputQueue ... />
       <serializer method="[xmi|binary]"/>              <!-- optional -->
       <asyncAggregateErrorConfiguration .../> <!-- optional -->
@@ -429,6 +444,11 @@ under the License.
       The heap grows as needed; this parameter is useful for those cases where the expected heap size is much smaller
       than the default.</para>
     
+    <para>The processParentLast attribute on the &lt;casMultiplier> element is optional, and specifies processing
+      order of an input CAS relative to its children. If true, a flow of an input CAS will be suspended after it is 
+      returned from a Cas Multiplier delegate until all its child CASes have finished processing. If false, an input
+      CAS can be processed in parallel with its children.</para>
+      
     <para>The &lt;remoteAnalysisEngine> elements are used to specify that the delegate is not co-located, and how
       to connect to it.  The <code>remoteReplyQueueScaleout</code> is optional; if not specified it defaults to 1.
       This scaleout is the number of threads that will be used to do the work of the containing aggregate 
