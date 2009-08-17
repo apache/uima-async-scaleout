@@ -90,6 +90,10 @@ public class Dd2SpringTest extends TestCase{
     
   }
 
+  public void testDd2Spring_BrokerURL_params() throws Exception {
+    checkDd2Spring("defaultingAEwithBrokerParms.xml");  
+  }
+  
   public void testDd2Spring_Bad_Window() throws Exception {
     checkDd2Spring("TestThresholdWindow.xml");
   }

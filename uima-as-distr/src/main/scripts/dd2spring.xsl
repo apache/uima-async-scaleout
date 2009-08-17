@@ -2537,7 +2537,9 @@
           <xsl:sequence select=
             "replace(
               replace(
-               replace($inputQueue/@brokerURL,':','_c_')
+               replace(
+                replace($inputQueue/@brokerURL,'\?.*', '')
+                        ,':','_c_')
                        ,'//','_ss_')
                      ,'/', '_s_')"/>     
         </xsl:otherwise>
