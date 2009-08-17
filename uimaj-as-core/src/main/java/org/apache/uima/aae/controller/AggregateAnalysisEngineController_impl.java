@@ -43,6 +43,7 @@ import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandler;
+import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.error.UimaEEServiceException;
 import org.apache.uima.aae.error.UnknownDestinationException;
 import org.apache.uima.aae.jmx.AggregateServiceInfo;
@@ -933,6 +934,7 @@ implements AggregateAnalysisEngineController, AggregateAnalysisEngineController_
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "process", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", new Object[] { t });
         }
+        sendReplyWithShutdownException( anInputCasReferenceId );
         handleAction(ErrorHandler.TERMINATE, null, null);
         return;
 			  
@@ -954,6 +956,16 @@ implements AggregateAnalysisEngineController, AggregateAnalysisEngineController_
 			handleError(map, e);
 		}
 		
+	}
+	private void sendReplyWithShutdownException( String aCasReferenceId) {
+    try {
+      CasStateEntry casStateEntry = localCache.createCasStateEntry(aCasReferenceId);
+      CacheEntry cacheEntry = getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+      Endpoint replyEndpoint = getReplyEndpoint(cacheEntry, casStateEntry);
+      if ( replyEndpoint != null ) {
+        getOutputChannel().sendReply(new ServiceShutdownException(), aCasReferenceId, null, replyEndpoint, AsynchAEMessage.Process);
+      }
+    } catch( Exception ex) {}
 	}
 	private boolean abortProcessingCas(CasStateEntry casStateEntry, CacheEntry entry ) { 
     CasStateEntry parentCasStateEntry = null;
@@ -1158,6 +1170,8 @@ implements AggregateAnalysisEngineController, AggregateAnalysisEngineController_
 	         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
 	           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "process", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", new Object[] { ex });
 	         }
+	         sendReplyWithShutdownException( aCasReferenceId );
+ 
 					handleAction(ErrorHandler.TERMINATE, null, null);
 					return;
 				}
@@ -2012,8 +2026,13 @@ implements AggregateAnalysisEngineController, AggregateAnalysisEngineController_
 			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", new Object[] { e });
 			try
 			{
-				getInProcessCache().destroy();
-				handleAction(ErrorHandler.TERMINATE, null, null);
+        sendReplyWithShutdownException( aCasReferenceId );
+
+				//getInProcessCache().destroy();
+				ErrorContext ec = new ErrorContext();
+				ec.add(ErrorContext.THROWABLE_ERROR, e);
+				ec.add(AsynchAEMessage.CasReference, aCasReferenceId);
+				handleAction(ErrorHandler.TERMINATE, null,ec);
 			}
 			catch( Exception ex) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
