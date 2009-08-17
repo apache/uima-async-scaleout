@@ -662,6 +662,8 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 	           (e.getCause() != null && e.getCause() instanceof ServiceShutdownException ))
 	        {
 	          serviceShutdownException = true;
+	          isStopping = true;
+            engine.stop();
 	        }
 	        else if ( ignoreException( e.getClass()))
 	        {
