@@ -1263,7 +1263,8 @@ implements UimaAsynchronousEngine, MessageListener
 	    cachedRequest.setException(exception);
 	    if ( exception instanceof AnalysisEngineProcessException ||
 	         ( exception.getCause() != null && 
-	           exception.getCause() instanceof AnalysisEngineProcessException) ) {
+	           ( exception.getCause() instanceof AnalysisEngineProcessException ||
+	             exception.getCause() instanceof ServiceShutdownException) ) ) {
 	      // Indicate that this is a process exception. 
 	      cachedRequest.setProcessException();
 	    }
@@ -1312,22 +1313,21 @@ implements UimaAsynchronousEngine, MessageListener
       throw e;
     }
     finally {
-      
-      if ( cachedRequest != null ) {
-        if ( cachedRequest.isSynchronousInvocation() && cachedRequest.isProcessException() ) {
-          //  Wake up the send thread that is blocking waiting for a reply. When the thread
-          //  receives the signal, it checks if the reply contains an exception and will 
-          //  not return control back to the client
-          wakeUpSendThread(cachedRequest);
+     if ( cachedRequest != null ) {
+          if ( cachedRequest.isSynchronousInvocation() && cachedRequest.isProcessException() ) {
+            //  Wake up the send thread that is blocking waiting for a reply. When the thread
+            //  receives the signal, it checks if the reply contains an exception and will 
+            //  not return control back to the client
+            wakeUpSendThread(cachedRequest);
+          }
+          //  Dont release the CAS if the application uses synchronous API
+          if ( !cachedRequest.isSynchronousInvocation() && cachedRequest.getCAS() != null )
+          {
+             cachedRequest.getCAS().release();
+          }
         }
-        //  Dont release the CAS if the application uses synchronous API
-        if ( !cachedRequest.isSynchronousInvocation() && cachedRequest.getCAS() != null )
-        {
-           cachedRequest.getCAS().release();
-        }
-      }
-      removeFromCache(casReferenceId);
-      serviceDelegate.removeCasFromOutstandingList(casReferenceId);
+        removeFromCache(casReferenceId);
+        serviceDelegate.removeCasFromOutstandingList(casReferenceId);
     }
 	}
 	private void completeProcessingReply( CAS cas, String casReferenceId, int payload, boolean doNotify, Message message, ClientRequest cachedRequest, ProcessTrace pt  )
