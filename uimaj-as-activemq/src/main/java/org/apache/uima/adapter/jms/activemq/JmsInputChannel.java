@@ -905,7 +905,7 @@ implements InputChannel, JmsInputChannelMBean, SessionAwareMessageListener
     //  Try to create a test connection to make sure that the broker is available
     Connection testConnection = null;
     try {
-      f.createConnection();
+      testConnection = f.createConnection();
     } catch( Exception e ) {
       throw e;
     } finally {
