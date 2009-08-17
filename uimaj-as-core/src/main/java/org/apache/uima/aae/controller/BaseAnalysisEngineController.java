@@ -1090,7 +1090,7 @@ implements AnalysisEngineController, EventSubscriber
 		{
 			//	Propagate terminate event to the top controller and begin shutdown of this service along
 			//	with all collocated delegates (if any)
-		  if ( anErrorContext.containsKey(ErrorContext.THROWABLE_ERROR) && anErrorContext.containsKey(AsynchAEMessage.CasReference)) {
+		  if ( anErrorContext != null && anErrorContext.containsKey(ErrorContext.THROWABLE_ERROR) && anErrorContext.containsKey(AsynchAEMessage.CasReference)) {
         terminate((Throwable) anErrorContext.get(ErrorContext.THROWABLE_ERROR), (String) anErrorContext.get(AsynchAEMessage.CasReference));
 		  } else {
 	      terminate();
