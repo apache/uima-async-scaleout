@@ -221,15 +221,10 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
 							}
 						}
 					}
-					System.out.println("Endpoint:" + endpoint.getEndpoint() + " Configured to Reply To temp queue:" + endpoint.getDestination());
+					System.out.println("Remote Delegate " + endpoint.getDelegateKey() + " Reply Queue:" + endpoint.getDestination());
 
-				} else {
-					if (endpoint != null) {
-						System.out.println("Endpoint:" + endpoint.getEndpoint() + " Configured to Reply To fixed queue");
-					}
-
-				}
-			}
+				} 
+		  }
 			int concurrentConsumerCountOnReplies = getConcurrentConsumerCount(ctx);
 			// Configure and initialize vm transport in the top level aggregate.
 			// The aggregate will initialize all delegates with the vm transport.
@@ -297,11 +292,14 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
 			// the termination logic will be immediately triggered in the
 			// terminate() method.
 			if (asyncServiceList != null && asyncServiceList.length > 0) {
-				ControllerLifecycle ctrer = (ControllerLifecycle) ctx.getBean(asyncServiceList[0]);
+
+			  ControllerLifecycle ctrer = (ControllerLifecycle) ctx.getBean(asyncServiceList[0]);
 				// Send a trigger to initiate shutdown.
 				if (ctrer instanceof AnalysisEngineController) {
 					((AnalysisEngineController) ctrer).getControllerLatch().release();
 				}
+    
+			  
 				ctrer.terminate();
 			}
 
