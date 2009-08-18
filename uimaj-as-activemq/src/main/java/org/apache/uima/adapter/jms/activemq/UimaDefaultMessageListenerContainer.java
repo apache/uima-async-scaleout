@@ -386,7 +386,6 @@ implements ExceptionListener
 	    } catch (Exception e){}
 	  }
 	  String brokerURL = ((ActiveMQConnectionFactory)connectionFactory).getBrokerURL();
-    System.out.println(">>> Injecting Listener Connection Factory With Broker URL:" + brokerURL);
 	  super.setConnectionFactory(connectionFactory);
 	}
 	private void injectTaskExecutor() {
@@ -482,8 +481,6 @@ implements ExceptionListener
           //  Wait for controller to be injected by Uima AS
           if (isActiveMQDestination() && !isGetMetaListener()
                   && !((ActiveMQDestination) destination).isTemporary()) {
-            System.out.println("Waiting For Controller. Destination::" + destination
-                    + " Listener Instance:" + __listenerRef.hashCode());
             //  Add self to InputChannel
             connectWithInputChannel();
             //  Wait for InputChannel to plug in a controller
@@ -523,6 +520,14 @@ implements ExceptionListener
               delegate.getEndpoint().setConcurrentReplyConsumers(cc);
             } 
           }
+          String selector = "";
+          if ( __listenerRef.getMessageSelector() != null ) {
+            selector = " Selector:"+__listenerRef.getMessageSelector();
+          }
+          if ( getDestination() != null) {
+            System.out.println("Service:"+controller.getComponentName()+" Listener Ready. Broker:" + getBrokerUrl()+" Queue:"+getDestination()+selector);
+          }
+
         } catch ( Exception e ) {
           e.printStackTrace();
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
@@ -651,7 +656,6 @@ implements ExceptionListener
 			  if ( controller != null ) {
 			    serviceName = ">>>Controller:"+controller.getComponentName();
 			  }
-			  System.out.println(serviceName+" Resolver Plugged In a Temp Queue:"+aDestination);
 			  Object pojoListener = getPojoListener();
         if ( pojoListener != null && pojoListener instanceof InputChannel ) {
           ((JmsInputChannel)pojoListener).setListenerContainer(this);
@@ -717,11 +721,6 @@ implements ExceptionListener
       return;
     }
     awaitingShutdown = true;
-    if ( getDestination() != null ) {
-      System.out.println("Listener:"+getDestination()+" Destroy Called. Active Consumer Count:"+super.getActiveConsumerCount());
-    } else {
-      System.out.println("Listener:"+getDestinationName()+" Destroy Called. Active Consumer Count:"+super.getActiveConsumerCount());
-    }
     //  Spin a thread that will wait until all threads complete. This is needed to avoid
     //  memory leak caused by the fact that we did not wait to collect the threads
     Thread threadGroupDestroyer = new Thread(threadGroup.getParent().getParent(),"threadGroupDestroyer") {
@@ -746,15 +745,15 @@ implements ExceptionListener
             //  Stop internal Executor
             concurrentListener.stop();
           }
-          if ( taskExecutor != null ) {
-            System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " +++++++++ Listener:"+getDestination()+" Controller ThreadPoolExecutor Stopped ...");
-          }
+//          if ( taskExecutor != null ) {
+//            System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " +++++++++ Listener:"+getDestination()+" Controller ThreadPoolExecutor Stopped ...");
+//          }
           //  Shutdown the listener
           __listenerRef.shutdown();
           if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST) ) {
             threadGroup.getParent().list();
           }
-          System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " ThreadGroupDestroyer waiting for threads to stop. Active thread count:"+threadGroup.activeCount()+" Active thread group count:"+threadGroup.activeGroupCount());
+//          System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " ThreadGroupDestroyer waiting for threads to stop. Active thread count:"+threadGroup.activeCount()+" Active thread group count:"+threadGroup.activeGroupCount());
           //  Wait until all threads are accounted for
           while (threadGroup.activeCount() > 0) {
             try {
@@ -784,7 +783,7 @@ implements ExceptionListener
             } catch (InterruptedException e) {
             }
           }
-          System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " ThreadGroupDestroyer all threads stopped");
+//          System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " ThreadGroupDestroyer all threads stopped");
 
           try {
             synchronized(threadGroup ) {
@@ -792,7 +791,7 @@ implements ExceptionListener
                 threadGroup.destroy();
               }
             }
-            System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " >>>>>>>>>>>> Listener:"+getDestinationName()+" Thread Group Destroyed");
+//            System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+ " >>>>>>>>>>>> Listener:"+getDestinationName()+" Thread Group Destroyed");
           } catch( Exception e) {}   // Ignore 
         }
       };
