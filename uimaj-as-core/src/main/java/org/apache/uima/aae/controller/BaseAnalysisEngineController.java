@@ -102,7 +102,7 @@ implements AnalysisEngineController, EventSubscriber
 
 	private static final long DoNotProcessTTL = 30*60*1000;  // 30 minute time to live 
 	
-	protected volatile ControllerLatch latch = new ControllerLatch();
+	protected volatile ControllerLatch latch = new ControllerLatch(this);
 
 	protected ConcurrentHashMap statsMap = new ConcurrentHashMap();
 
@@ -315,11 +315,9 @@ implements AnalysisEngineController, EventSubscriber
 		if ( isTopLevelComponent())
 		{
 	    logPlatformInfo(getComponentName());
-//			System.out.println("************** Initializing Component:"+getComponentName());		
 		}
 		else
 		{
-			System.out.println("************** Initializing Collocated Component:"+getComponentName()+" Parent Controller:"+parentController.getComponentName());		
 	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
 	      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
 	                "BaseAnalysisEngineController", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_id_INFO",
@@ -349,9 +347,8 @@ implements AnalysisEngineController, EventSubscriber
 			}
 		}
 		paramsMap.put(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX, jmxManagement.getJmxDomain()); 
-		if ( isTopLevelComponent())
+		if ( isTopLevelComponent() && this instanceof AggregateAnalysisEngineController)
 		{
-		  System.out.println("Top Level Service:"+getComponentName()+ " Configured to Use Java VM Transport For Internal Messaging");
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
               "C'tor", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_using_vm_transport_INFO",
@@ -431,7 +428,7 @@ implements AnalysisEngineController, EventSubscriber
         if ( endpoint != null && endpoint.isRemote() )
         {
           String key = ((AggregateAnalysisEngineController)this).lookUpDelegateKey(endpoint.getEndpoint());
-          System.out.println(">>> Controller:"+getComponentName()+" Configured To Serialize CASes To Remote Delegate:"+key+" Using "+endpoint.getSerializer()+" Serialization");
+          System.out.println("Service:"+getComponentName()+" Configured To Serialize CASes To Remote Delegate:"+key+" Using "+endpoint.getSerializer()+" Serialization");
           if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                     "C'tor", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_show_remote_delegate_serialization_INFO",
@@ -1795,8 +1792,11 @@ implements AnalysisEngineController, EventSubscriber
 	          transport.produceMessage(AsynchAEMessage.Stop,AsynchAEMessage.Request,getName());
 	        transport.getUimaMessageDispatcher(entry.getKey()).dispatch(message);
 	        transport.stopIt();
-	        System.out.println(">>> Controller:"+getComponentName()+" Stopped Transport For:"+entry.getKey());
-	      } catch ( Exception e) {}
+	        System.out.println("Service:"+getComponentName()+" Stopped Delegate Transport:"+entry.getKey());
+	      } catch ( Exception e) {
+	        e.printStackTrace();
+	        System.out.println("Exception:"+e.getClass()+" While Stopping Delegate Transport:"+entry.getKey());
+	      }
 	    }
 	  }
 	}
@@ -2064,7 +2064,6 @@ implements AnalysisEngineController, EventSubscriber
       getOutputChannel().cancelTimers();
       //  Stop the inflow of new input CASes
       stopInputChannel();
-      System.out.println("Controller:"+getComponentName()+" Done Stopping Main Input Channel");     
       stopCasMultipliers();
       stopTransportLayer();
       if ( cause != null && aCasReferenceId != null ) {
@@ -2126,7 +2125,6 @@ implements AnalysisEngineController, EventSubscriber
         }
       }
     }
-    System.out.println(">>> Controller:"+getComponentName()+" Sent Stop Request To Its Cas Multipliers");
   }
 	public void stopCasMultiplier(Delegate casMultiplier, String aCasReferenceId)
 	{
@@ -2175,7 +2173,6 @@ implements AnalysisEngineController, EventSubscriber
 		{
 			try
 			{
-				System.out.println("Controller:"+getComponentName()+" Stopping Input Channel:"+iC.getInputQueueName());
 				iC.stop();
 			}
 			catch( Exception e)
