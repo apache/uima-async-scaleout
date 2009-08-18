@@ -516,6 +516,9 @@ implements AnalysisEngineController, EventSubscriber
      UimaTransport transport = null;
      if ( !transports.containsKey(aKey)) {
        transport = new VmTransport(asContext, this);
+       if ( isStopped() ) {
+         throw new ServiceShutdownException();
+       }
        transports.put( aKey, transport);
      }
      else {
@@ -1832,6 +1835,7 @@ implements AnalysisEngineController, EventSubscriber
 			((AggregateAnalysisEngineController_impl)this).stopTimers();
 			//	Stops ALL input channels of this service including the reply channels
       stopInputChannels(InputChannel.CloseAllChannels);
+      
 			int childControllerListSize = ((AggregateAnalysisEngineController_impl)this).getChildControllerList().size();
 			//	send terminate event to all collocated child controllers
 			if ( childControllerListSize > 0 )
@@ -2062,6 +2066,7 @@ implements AnalysisEngineController, EventSubscriber
       stopInputChannel();
       System.out.println("Controller:"+getComponentName()+" Done Stopping Main Input Channel");     
       stopCasMultipliers();
+      stopTransportLayer();
       if ( cause != null && aCasReferenceId != null ) {
         this.stop(cause, aCasReferenceId);
       } else {
