@@ -132,7 +132,6 @@ extends BaseAnalysisEngineController implements PrimitiveAnalysisEngineControlle
 	    rSpecifier = UimaClassFactory.produceResourceSpecifier(super.aeDescriptor);
 	    synchronized( mux ) {
 	      AnalysisEngine ae =  UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
-	      System.out.println(">>>>> Controller:"+getComponentName()+" Completed Initialization of New AE Instance In Thread::"+Thread.currentThread().getId()+" AE Instance Hashcode:"+ae.hashCode());
 	      if ( aeInstancePool == null ) {
 	        aeInstancePool = new AnalysisEngineInstancePoolWithThreadAffinity(analysisEnginePoolSize);
 	      }
@@ -142,7 +141,6 @@ extends BaseAnalysisEngineController implements PrimitiveAnalysisEngineControlle
         aeInstancePool.checkin(ae);
 	      if ( aeInstancePool.size() == analysisEnginePoolSize ) {
 	        try {
-	          System.out.println("Controller:"+getComponentName()+ " All AE Instances Have Been Instantiated. Completing Initialization");
 	          postInitialize();
 	        } catch ( Exception e) {
 	          e.printStackTrace();
@@ -219,7 +217,6 @@ extends BaseAnalysisEngineController implements PrimitiveAnalysisEngineControlle
                 getCasManagerWrapper().initialize("PrimitiveAEService");
                 CAS cas = getCasManagerWrapper().getNewCas("PrimitiveAEService");
                 cas.release();
-                System.out.println("++++ Controller::"+getComponentName()+" Initialized its Cas Pool");
               }
             }
             if ( isTopLevelComponent() ) {
@@ -283,7 +280,6 @@ extends BaseAnalysisEngineController implements PrimitiveAnalysisEngineControlle
     	//  Just get the CAS and release it back to the component's Cas Pool.
       if ( isCasMultiplier() && !isTopLevelComponent() )
       {
-        System.out.println(Thread.currentThread().getId()+" >>>>>> CAS Multiplier::"+getComponentName()+" Initializing its Cas Pool");
         CAS cas = (CAS)getUimaContext().getEmptyCas(CAS.class);
         cas.release();
       }
@@ -766,7 +762,6 @@ extends BaseAnalysisEngineController implements PrimitiveAnalysisEngineControlle
 	
 	public void stop()
 	{
-	  System.out.println(">>>>> Stopping Controller:"+getComponentName());
 		super.stop();
 		if ( aeInstancePool != null )
 		{
@@ -812,7 +807,7 @@ extends BaseAnalysisEngineController implements PrimitiveAnalysisEngineControlle
 			aeList.clear();
 			aeList = null;
 		}
-    System.out.println(">>>>> Done Stopping Controller:"+getComponentName());
+    System.out.println("Service:"+getComponentName()+" Stopped");
 	}
 	
 }
