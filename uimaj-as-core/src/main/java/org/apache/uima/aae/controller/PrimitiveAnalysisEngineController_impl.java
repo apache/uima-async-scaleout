@@ -22,6 +22,7 @@ package org.apache.uima.aae.controller;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.uima.UIMAFramework;
@@ -775,7 +776,13 @@ extends BaseAnalysisEngineController implements PrimitiveAnalysisEngineControlle
 			}
 			catch( Exception e){ e.printStackTrace();}
 		}
-		if ( cmOutstandingCASes != null )
+    try {
+      for( Entry<String,UimaTransport> transport: transports.entrySet() ) {
+        transport.getValue().stopIt();
+      }
+    } catch( Exception e){ e.printStackTrace();}
+
+    if ( cmOutstandingCASes != null )
 		{
 		  if ( !cmOutstandingCASes.isEmpty()) {
 		    //  If there are outstanding CASes, force them to be released 
