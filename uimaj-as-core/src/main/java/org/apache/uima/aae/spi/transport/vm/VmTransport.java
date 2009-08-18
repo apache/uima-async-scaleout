@@ -111,7 +111,7 @@ public class VmTransport implements UimaTransport {
     dispatcher = new UimaVmMessageDispatcher(executor, null, (String) context.get("EndpointName"));
   }
 
-  public void stopIt() throws UimaSpiException {
+  public synchronized void stopIt() throws UimaSpiException {
     executor.purge();
     executor.shutdownNow();
     workQueue.clear();
@@ -120,26 +120,28 @@ public class VmTransport implements UimaTransport {
       UimaVmMessageDispatcher dispatcher = entry.getValue();
       dispatcher.stop();
     }
-    new Thread(threadGroup.getParent(),threadGroup.getName()+":Reaper") {
-      public void run() {
-        while ( threadGroup.activeCount() > 0) {
-          synchronized(this) {
+    if ( threadGroup != null ) {
+        new Thread(threadGroup.getParent(),threadGroup.getName()+":Reaper") {
+          public void run() {
+            while ( threadGroup.activeCount() > 0) {
+              synchronized(this) {
+                try {
+                  threadGroup.list();
+                  wait(1000);
+                } catch( InterruptedException ex) {
+                  
+                }
+              }
+            }
             try {
-              threadGroup.list();
-              wait(1000);
-            } catch( InterruptedException ex) {
-              
+              threadGroup.destroy();
+            } catch ( Exception e) {
+            } finally {
+              threadGroup = null;
             }
           }
-        }
-        try {
-          threadGroup.destroy();
-        } catch ( Exception e) {
-        } finally {
-          threadGroup = null;
-        }
-      }
-    }.start();
+        }.start();
+    }
   }
   public void destroy() {
     try {
