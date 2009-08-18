@@ -2351,7 +2351,7 @@ implements AggregateAnalysisEngineController, AggregateAnalysisEngineController_
 				{
 					if ( endpoint.isRemote() )
 					{
-						System.out.println(key+" Remote Service Registered Successfully");
+						System.out.println("Remote Service:"+key+" Initialized. Ready To Process Messages From Queue:"+endpoint.getEndpoint());
 		         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
 		           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(), "mergeTypeSystem", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_remote_delegate_ready__CONFIG", new Object[] { getComponentName(), fromDestination });
 		         }
