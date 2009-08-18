@@ -26,7 +26,11 @@ import org.apache.uima.aae.error.AsynchAEException;
 public class ControllerLatch
 {
 	private final CountDownLatch latch = new CountDownLatch(1);
+	private final AnalysisEngineController controller;
 	
+	public ControllerLatch( AnalysisEngineController aController) {
+	  controller = aController;
+	}
 	public void waitUntilInitialized() throws AsynchAEException
 	{
 		try
@@ -50,15 +54,7 @@ public class ControllerLatch
 		{
 			return;
 		}
-		if ( isTopLevelAggregate )
-		{
-			System.out.println(aName+" Controller Initialized. Ready To Process");
-		}
-		else
-		{
-			System.out.println(aName+" Controller Initialized.");
-
-		}
+    System.out.println("Service:"+controller.getComponentName()+" Initialized. Ready To Process Messages From Queue:"+aName);
 	}
 
 }
