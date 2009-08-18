@@ -831,7 +831,12 @@ implements InputChannel, JmsInputChannelMBean, SessionAwareMessageListener
       }
     }
     mL.stop();
-    System.out.println("Stopped Channel:"+mL.getDestinationName());
+    
+    String selector = "";
+    if ( mL.getMessageSelector() != null ) {
+      selector = " Selector:"+mL.getMessageSelector();
+    }
+    System.out.println("Service:"+getController().getComponentName()+" Message Channel:"+mL.getDestination()+selector+" Stopped");
   }
   private boolean doCloseChannel(UimaDefaultMessageListenerContainer mL, int channelsToClose) {
     //  Check if we are closing just the input channel
@@ -859,7 +864,6 @@ implements InputChannel, JmsInputChannelMBean, SessionAwareMessageListener
 	  for( Object listenerObject : listenerContainerList) {
 	    final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer)listenerObject; 
 	    if (mL != null && mL.isRunning() && doCloseChannel(mL, channelsToClose) ) {
-        System.out.println("JmsInputChannel.stop()-Stopping Input Channel:"+mL.getDestination()+" Selector:"+mL.getMessageSelector());
         stopChannel(mL);
         //  Just in case check if the container still in the list. If so, add it to 
         //  another list that container listeners that have been stopped and need
