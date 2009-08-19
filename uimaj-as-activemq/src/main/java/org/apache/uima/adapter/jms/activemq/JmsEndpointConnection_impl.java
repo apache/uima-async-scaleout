@@ -165,12 +165,15 @@ public class JmsEndpointConnection_impl implements ConsumerListener
       }
       
       if ( !isOpen() ) {  
-        ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
-        factory.setDispatchAsync(true);
-        factory.setUseAsyncSend(true);
-        factory.setCopyMessageOnSend(false);
-        Connection conn = factory.createConnection();
-        brokerDestinations.setConnection(conn);
+        Connection conn = null;
+        if (brokerDestinations.getConnection() == null ) {
+          ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
+          conn = factory.createConnection();
+          factory.setDispatchAsync(true);
+          factory.setUseAsyncSend(true);
+          factory.setCopyMessageOnSend(false);
+          brokerDestinations.setConnection(conn);
+        }
         connectionCreationTimestamp = System.nanoTime();
         failed = false;
       }
