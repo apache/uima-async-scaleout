@@ -2097,11 +2097,15 @@ public class JmsOutputChannel implements OutputChannel
 				  }
 				  //  Cancel any pending timers and finally close the JMS Connection to the
 				  //  broker
-				  if ( brokerConnectionEntry != null && brokerConnectionEntry.getConnectionTimer() != null ) {
-				    brokerConnectionEntry.getConnectionTimer().cancelTimer();
+				  if ( brokerConnectionEntry != null ) {
+				    if( brokerConnectionEntry.getConnectionTimer() != null ) {
+				      brokerConnectionEntry.getConnectionTimer().cancelTimer();
+				    }
+				    if ( brokerConnectionEntry.getConnection() != null ) {
 				    try {
 	            brokerConnectionEntry.getConnection().close();
 				    } catch ( Exception ex) { /* ignore, we are stopping */ } 
+				    }
 				  }
 				}
 			}
