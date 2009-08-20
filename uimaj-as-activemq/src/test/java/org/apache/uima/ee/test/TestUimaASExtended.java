@@ -87,6 +87,18 @@ public class TestUimaASExtended extends BaseTestSupport
 		System.out.println("-------------- testBrokerLifecycle -------------");
 		System.out.println("UIMA_HOME="+System.getenv("UIMA_HOME")+System.getProperty("file.separator")+"bin"+System.getProperty("file.separator")+"dd2spring.xsl");
 	}
+	
+  public void testClientCpcTimeout() throws Exception
+  {
+    System.out.println("-------------- testClientCpcTimeout -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithCpCDelay.xml");
+    Map<String, Object> appCtx = buildContext( String.valueOf(broker.getMasterConnectorURI()), "NoOpAnnotatorQueue" );
+    // Set an explicit CPC timeout as exceptions thrown in the 2nd annotator's CPC don't reach the client.
+    appCtx.put(UimaAsynchronousEngine.CpcTimeout, 2000 );
+    runTest(appCtx,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"NoOpAnnotatorQueue", 1, CPC_LATCH); //PC_LATCH);
+  }
+
 	/**
 	 * Tests handling of multiple calls to initialize(). A subsequent call to
 	 * initialize should result in ResourceInitializationException.
@@ -148,7 +160,7 @@ public class TestUimaASExtended extends BaseTestSupport
 		//	Instantiate Uima EE Client
 		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		//	Deploy Uima EE Primitive Service 
-		deployService(eeUimaEngine, relativePath+"/Deploy_PersonTitleAnnotator.xml");
+  	deployService(eeUimaEngine, relativePath+"/Deploy_PersonTitleAnnotator.xml");
     runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
 	}
 	
