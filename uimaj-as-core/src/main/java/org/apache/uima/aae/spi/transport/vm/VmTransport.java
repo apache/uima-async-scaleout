@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UimaAsContext;
@@ -71,6 +72,8 @@ public class VmTransport implements UimaTransport {
   private AnalysisEngineController controller;
 
   private UimaAsContext context;
+  
+  private AtomicBoolean stopping = new AtomicBoolean(false);
 
   public VmTransport(UimaAsContext aContext, AnalysisEngineController aController) {
     context = aContext;
@@ -112,6 +115,10 @@ public class VmTransport implements UimaTransport {
   }
 
   public synchronized void stopIt() throws UimaSpiException {
+    if ( stopping.get() == true ) {
+      return;
+    }
+    stopping.set(true);
     executor.purge();
     executor.shutdownNow();
     workQueue.clear();
@@ -121,8 +128,10 @@ public class VmTransport implements UimaTransport {
       dispatcher.stop();
     }
     if ( threadGroup != null ) {
-        new Thread(threadGroup.getParent(),threadGroup.getName()+":Reaper") {
+      //  Spin a thread where we wait for threads in the threadGroup to stop.
+      new Thread(threadGroup.getParent(),threadGroup.getName()+":Reaper") {
           public void run() {
+            
             while ( threadGroup.activeCount() > 0) {
               synchronized(this) {
                 try {
