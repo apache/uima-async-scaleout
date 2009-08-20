@@ -49,6 +49,8 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalArgumentException;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.AsynchAECasManager_impl;
+import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.client.UimaASStatusCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -58,6 +60,7 @@ import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.UimacppServiceController;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
+import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.UimaASMetaRequestTimeout;
 import org.apache.uima.aae.jmx.JmxManager;
 import org.apache.uima.aae.message.AsynchAEMessage;
@@ -100,6 +103,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	private String applicationName = "UimaASClient";
 	private static SharedConnection sharedConnection = null;
 	private Object stopMux = new Object();
+	private static final UimaAsVersion uimaAsVersion = 
+	  new UimaAsVersion();
 	
 	public BaseUIMAAsynchronousEngine_impl() {
         UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO, "UIMA-AS version " + UIMAFramework.getVersionString());
@@ -419,6 +424,14 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	 */
 	public synchronized void initialize(Map anApplicationContext) throws ResourceInitializationException
 	{
+    //  Check UIMA AS version againg the UIMA Core version. If not the same throw Exception
+    if ( !uimaAsVersion.getVersionString().equals(UIMAFramework.getVersionString())) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+              "BaseAnalysisEngineController", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_incompatible_version_WARNING",
+              new Object[] { "UIM AS Client", uimaAsVersion.getVersionString(), UIMAFramework.getVersionString() });
+      throw new ResourceInitializationException(new AsynchAEException("Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version:"+uimaAsVersion.getVersionString()+" Core UIMA Version:"+UIMAFramework.getVersionString()));
+    }
+
 		if ( running )
 		{
 			throw new ResourceInitializationException(new UIMA_IllegalStateException());
