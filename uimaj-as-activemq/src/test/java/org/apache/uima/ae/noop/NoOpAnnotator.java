@@ -38,6 +38,7 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase
 	int errorFrequency = 0;
 	int processDelay = 0;
   int finalCount = 0;
+  int cpcDelay = 0;
   
 	public void initialize(UimaContext aContext) throws ResourceInitializationException
 	{
@@ -57,7 +58,8 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase
 		
 		if ( getContext().getConfigParameterValue("CpCDelay") != null )
 		{
-			//cpcDelay = ((Integer)getContext().getConfigParameterValue("CpCDelay")).intValue();
+			cpcDelay = ((Integer)getContext().getConfigParameterValue("CpCDelay")).intValue();
+      System.out.println("NoOpAnnotator.initialize() Initializing With CpC Delay of " +cpcDelay +" millis");
 		}
 		if ( getContext().getConfigParameterValue("ProcessDelay") != null )
 		{
@@ -81,7 +83,18 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase
 	public void collectionProcessComplete() throws AnalysisEngineProcessException
 	{
 		System.out.println("NoOpAnnotator.collectionProcessComplete() Called -------------------------------------");
-    if (finalCount > 0 && finalCount != counter) {
+  
+		if ( cpcDelay > 0 ) {
+		  try {
+	      System.out.println("NoOpAnnotator.collectionProcessComplete() Delaying CpC Reply For " +cpcDelay +" millis");
+	      synchronized(this) {
+	        this.wait(cpcDelay);
+	      }
+		  } catch ( InterruptedException e) {
+		    
+		  }
+		}
+		if (finalCount > 0 && finalCount != counter) {
       String msg = "NoOpAnnotator expected " + finalCount + " CASes but was given " + counter;
       System.out.println(msg);
       throw new AnalysisEngineProcessException(new Exception(msg));
