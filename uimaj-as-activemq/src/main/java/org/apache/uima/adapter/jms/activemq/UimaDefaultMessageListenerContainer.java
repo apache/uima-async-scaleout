@@ -584,39 +584,9 @@ implements ExceptionListener
 	 * We will inject the prefetch policy to the new CF based on what is found in the CF
 	 * in the deployment descriptor.
 	 */
+	
 	public void setConnectionFactory(ConnectionFactory aConnectionFactory) {
 	  connectionFactory = aConnectionFactory;
- 	  if (connectionFactory instanceof ActiveMQConnectionFactory) {
-      String brokerURL = ((ActiveMQConnectionFactory) connectionFactory).getBrokerURL();
-      if (brokerURL != null) {
-        //  http connections should not turn off inactivity timeout. The broker doesnt
-        //  create a temp queue if the inactivity is in the url.
-        //  Check if the url contains inactivity parameter
-        if ( brokerURL.startsWith("http") ) {
-          int indx = 0;
-          if( (indx = brokerURL.indexOf("?wireFormat.maxInactivityDuration")) > 0) {
-            //  strip off the inactivity parameter from the broker url
-            brokerURL = brokerURL.substring(0, indx);
-          }
-        } else {
-          // Turns off inactivity Monitoring on the connection
-          if( brokerURL.indexOf("?wireFormat.maxInactivityDuration") < 0) {
-            brokerURL += "?wireFormat.maxInactivityDuration=0";
-          }
-        }
-        // Save the Prefetch Policy provided in the given CF
-        ActiveMQPrefetchPolicy prefetch = ((ActiveMQConnectionFactory) connectionFactory)
-                .getPrefetchPolicy();
-        // Instantiate new CF with a new Broker URL and inject the Prefetch Policy
-        ActiveMQConnectionFactory acf = new ActiveMQConnectionFactory(brokerURL);
-        if (prefetch != null) {
-          acf.setPrefetchPolicy(prefetch);
-        }
-        connectionFactory = acf;
-      } else {
-        // brokerURL = null is handled in the dd2spring
-      }
-    } 
     super.setConnectionFactory(connectionFactory);
 	}
 	
