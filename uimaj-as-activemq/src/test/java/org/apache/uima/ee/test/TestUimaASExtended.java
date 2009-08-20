@@ -92,6 +92,8 @@ public class TestUimaASExtended extends BaseTestSupport
   {
     System.out.println("-------------- testClientCpcTimeout -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    addExceptionToignore(org.apache.uima.aae.error.UimaASCollectionProcessCompleteTimeout.class);
+
     deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithCpCDelay.xml");
     Map<String, Object> appCtx = buildContext( String.valueOf(broker.getMasterConnectorURI()), "NoOpAnnotatorQueue" );
     // Set an explicit CPC timeout as exceptions thrown in the 2nd annotator's CPC don't reach the client.
