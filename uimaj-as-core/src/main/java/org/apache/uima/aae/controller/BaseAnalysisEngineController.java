@@ -52,6 +52,7 @@ import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaAsContext;
+import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.UimaEEAdminContext;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
@@ -241,6 +242,9 @@ implements AnalysisEngineController, EventSubscriber
   
   private ScheduledExecutorService daemonServiceExecutor=null;
   
+  private static final UimaAsVersion uimaAsVersion = 
+    new UimaAsVersion();
+  
   public BaseAnalysisEngineController() {
     
   }
@@ -260,7 +264,7 @@ implements AnalysisEngineController, EventSubscriber
 	
 	public BaseAnalysisEngineController(AnalysisEngineController aParentController, int aComponentCasPoolSize, long anInitialCasHeapSize, String anEndpointName, String aDescriptor, AsynchAECasManager aCasManager, InProcessCache anInProcessCache, Map aDestinationMap, JmxManagement aJmxManagement) throws Exception
 	{
-		casManager = aCasManager;
+	  casManager = aCasManager;
 		inProcessCache = anInProcessCache;
     localCache = new LocalCache(this);
     aeDescriptor = aDescriptor;
@@ -307,14 +311,20 @@ implements AnalysisEngineController, EventSubscriber
 		{
 			Endpoint endpoint = ((AggregateAnalysisEngineController)parentController).lookUpEndpoint(endpointName, false);
 			endpointName = endpoint.getEndpoint();
-		}
-
+		} 
 		resourceSpecifier = UimaClassFactory.produceResourceSpecifier(aDescriptor);
 
 		
 		if ( isTopLevelComponent())
 		{
-	    logPlatformInfo(getComponentName());
+		  //  Check UIMA AS version againg the UIMA Core version. If not the same throw Exception
+	      if ( !uimaAsVersion.getVersionString().equals(UIMAFramework.getVersionString())) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "BaseAnalysisEngineController", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_incompatible_version_WARNING",
+                  new Object[] { getComponentName(), uimaAsVersion.getVersionString(), UIMAFramework.getVersionString() });
+	        throw new ResourceInitializationException(new AsynchAEException("Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version:"+uimaAsVersion.getVersionString()+" Core UIMA Version:"+UIMAFramework.getVersionString()));
+	      }
+	      logPlatformInfo(getComponentName());
 		}
 		else
 		{
@@ -462,7 +472,6 @@ implements AnalysisEngineController, EventSubscriber
           processPid = processPid.substring(0, endPos);  
        }
       }
-      
       DateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss ");
       
       StringBuffer platformInfo = new StringBuffer();
@@ -472,6 +481,8 @@ implements AnalysisEngineController, EventSubscriber
       platformInfo.append("\n+ Service Name:"+serviceName);
       platformInfo.append("\n+ Service Queue Name:"+endpointName);
       platformInfo.append("\n+ Service Start Time:"+df.format(bean.getStartTime()));
+      platformInfo.append("\n+ UIMA AS Version:"+uimaAsVersion.getVersionString());
+      platformInfo.append("\n+ UIMA Core Version:"+UIMAFramework.getVersionString());
       platformInfo.append("\n+ OS Name:"+osBean.getName());
       platformInfo.append("\n+ OS Version:"+osBean.getVersion());
       platformInfo.append("\n+ OS Architecture:"+osBean.getArch());
