@@ -1804,9 +1804,9 @@ implements UimaAsynchronousEngine, MessageListener
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_cpc_timeout_INFO", new Object[] { anEndpoint });
       }
 			status.addEventStatus("CpC", "Failed", new UimaASCollectionProcessCompleteTimeout());
+      // release the semaphore acquired in collectionProcessingComplete()
+      cpcReplySemaphore.release();
 			notifyListeners(null, status, AsynchAEMessage.CollectionProcessComplete);
-			// release the semaphore acquired in collectionProcessingComplete()
-			cpcReplySemaphore.release();
 			break;
 
 		case (ProcessTimeout):
@@ -2154,6 +2154,11 @@ implements UimaAsynchronousEngine, MessageListener
 					}
 					else if (isCPCRequest())
 					{
+					  try {
+	            System.out.println("Uima AS Client Timed Out While Waiting for CPC Reply From a Service. CPC Request Sent To: "+getEndPointName());
+					  } catch( Exception e) {
+					    
+					  }
 						timeOutKind = CpCTimeout;
 						cpcReadySemaphore.release();
 					}
