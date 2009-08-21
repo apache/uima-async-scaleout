@@ -190,11 +190,11 @@ public abstract class BaseMessageSender implements Runnable,
 			  }
 			  
 				initializeMessage( pm, message );
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST,
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE,
 						CLASS_NAME.getName(), "run",
 						JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-						"UIMAJMS_sending_msg_to_endpoint__FINEST",
+						"UIMAJMS_sending_msg_to_endpoint__FINE",
 						new Object[] { UimaMessageValidator.decodeIntToString(AsynchAEMessage.Command, message.getIntProperty(AsynchAEMessage.Command)), UimaMessageValidator.decodeIntToString(AsynchAEMessage.MessageType,message.getIntProperty(AsynchAEMessage.MessageType)), destination });
         }
 				if ( casProcessRequest )
