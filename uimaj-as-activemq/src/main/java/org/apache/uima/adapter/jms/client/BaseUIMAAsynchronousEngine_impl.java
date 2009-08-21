@@ -357,8 +357,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   public void initializeProducer(String aBrokerURI, String aQueueName, Connection aConnection) throws Exception
 	{
-    if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST) ) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "initializeProducer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_init_jms_producer_INFO", new Object[] { aBrokerURI, aQueueName });
+    if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "initializeProducer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_init_jms_producer_INFO", new Object[] { aBrokerURI, aQueueName });
     }
 		brokerURI = aBrokerURI;
 		//	Create a worker thread for sending messages. Jms sessions are single threaded
@@ -425,8 +425,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	{
 		consumerSession = getSession(connection);
 		consumerDestination = consumerSession.createTemporaryQueue();
-    if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST) ) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "initializeConsumer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_init_jms_consumer_INFO", new Object[] { aBrokerURI, consumerDestination.getQueueName() });
+    if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "initializeConsumer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_init_jms_consumer_INFO", new Object[] { aBrokerURI, consumerDestination.getQueueName() });
     }
 		consumer = consumerSession.createConsumer(consumerDestination);
 		consumer.setMessageListener(this);
@@ -440,7 +440,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	{
     //  Check UIMA AS version againg the UIMA Core version. If not the same throw Exception
     if ( !uimaAsVersion.getVersionString().equals(UIMAFramework.getVersionString())) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
               "BaseAnalysisEngineController", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_incompatible_version_WARNING",
               new Object[] { "UIM AS Client", uimaAsVersion.getVersionString(), UIMAFramework.getVersionString() });
       throw new ResourceInitializationException(new AsynchAEException("Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version:"+uimaAsVersion.getVersionString()+" Core UIMA Version:"+UIMAFramework.getVersionString()));
@@ -852,27 +852,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
        throw new ResourceInitializationException();
      }
    }
-//	  
-//	  
-//	    synchronized( serviceMonitor )
-//	    {
-//	  	  while( !serviceInitializationCompleted )
-//		   {
-//		    if ( serviceInitializationException )
-//		    {
-//		      throw new ResourceInitializationException();
-//		    }
-//		    if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
-//		      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "waitForServiceNotification", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_awaiting_container_init__INFO", new Object[] {});
-//		    }
-//
-//	      serviceMonitor.wait();
-//	      if ( serviceInitializationException )
-//	      {
-//	        throw new ResourceInitializationException();
-//	      }
-//	    }
-//	  }
 	}
 	
 	
