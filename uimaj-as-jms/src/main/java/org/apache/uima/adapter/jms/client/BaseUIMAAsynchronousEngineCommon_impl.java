@@ -293,8 +293,8 @@ implements UimaAsynchronousEngine, MessageListener
 
 			if (!running)
 			{
-		     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-		       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "collectionProcessingComplete", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_cpc_request_not_done_INFO", new Object[] {});
+		     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+		       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "collectionProcessingComplete", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_cpc_request_not_done_INFO", new Object[] {});
 		     }
 				return;
 			}
@@ -415,8 +415,8 @@ implements UimaAsynchronousEngine, MessageListener
         cpcReplySemaphore.release();
         getMetaSemaphore.release();
 
-	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopped_as_client_INFO", new Object[] {});
+	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopped_as_client_INFO", new Object[] {});
 	      }
 	      for (Iterator i = springContainerRegistry.entrySet().iterator(); i.hasNext();)
 	      {
@@ -697,8 +697,8 @@ implements UimaAsynchronousEngine, MessageListener
 	    {
 	      if (!running)
 	      {
-	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "sendCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_not_sending_cas_INFO", new Object[] { "Asynchronous Client is Stopping" });
+	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_not_sending_cas_INFO", new Object[] { "Asynchronous Client is Stopping" });
 	        }
 	        return null;
 	      }
@@ -917,8 +917,8 @@ implements UimaAsynchronousEngine, MessageListener
 	      clientSideJmxStats.incrementMetaErrorCount();
 	      status.addEventStatus("GetMeta", "Failed", exception);
 	      notifyListeners(null, status, AsynchAEMessage.GetMeta);
-	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "handleMetadataReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_exception_msg_INFO",
+	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleMetadataReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_exception_msg_INFO",
 	          new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom), message.getStringProperty(AsynchAEMessage.CasReference), exception });
 	      }
         abort = true;
@@ -1161,9 +1161,9 @@ implements UimaAsynchronousEngine, MessageListener
 		}
 		else
 		{
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         // Most likely expired message. Already handled as timeout. Discard the message and move on to the next
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "handleProcessReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_expired_msg_INFO",
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleProcessReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_expired_msg_INFO",
 					new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom), message.getStringProperty(AsynchAEMessage.CasReference) });
       }
 		}
@@ -1183,7 +1183,7 @@ implements UimaAsynchronousEngine, MessageListener
 			(ClientRequest)clientCache.get(inputCasReferenceId);
 		if ( inputCasCachedRequest == null )
 		{
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         // Most likely expired message. Already handled as timeout. Discard the message and move on to the next
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleProcessReplyFromCasMultiplier", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_expired_msg_INFO",
 					new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom), message.getStringProperty(AsynchAEMessage.CasReference) });
@@ -1269,9 +1269,8 @@ implements UimaAsynchronousEngine, MessageListener
 	      cachedRequest.setProcessException();
 	    }
 		}
-		//  release the semaphore acquired in collectionProcessingComplete
-    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "handleException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_exception_msg_INFO",
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_exception_msg_INFO",
 				new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom), message.getStringProperty(AsynchAEMessage.CasReference), exception });
     }
     String casReferenceId = message.getStringProperty(AsynchAEMessage.CasReference);
@@ -1775,8 +1774,8 @@ implements UimaAsynchronousEngine, MessageListener
 		switch (aTimeoutKind)
 		{
 		case (MetadataTimeout):
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_meta_timeout_INFO", new Object[] { anEndpoint });
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_meta_timeout_INFO", new Object[] { anEndpoint });
       }
 			status.addEventStatus("GetMeta", "Failed", new UimaASMetaRequestTimeout());
 			notifyListeners(null, status, AsynchAEMessage.GetMeta);
@@ -1784,8 +1783,8 @@ implements UimaAsynchronousEngine, MessageListener
       getMetaSemaphore.release();
 			break;
     case (PingTimeout):
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_meta_timeout_INFO", new Object[] { anEndpoint });
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_meta_timeout_INFO", new Object[] { anEndpoint });
       }
       status.addEventStatus("Ping", "Failed", new UimaASPingTimeout());
       notifyListeners(null, status, AsynchAEMessage.Ping);
@@ -1800,8 +1799,8 @@ implements UimaAsynchronousEngine, MessageListener
       abort = true;
       break;
 		case (CpCTimeout):
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_cpc_timeout_INFO", new Object[] { anEndpoint });
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_cpc_timeout_INFO", new Object[] { anEndpoint });
       }
 			status.addEventStatus("CpC", "Failed", new UimaASCollectionProcessCompleteTimeout());
       // release the semaphore acquired in collectionProcessingComplete()
@@ -1810,8 +1809,8 @@ implements UimaAsynchronousEngine, MessageListener
 			break;
 
 		case (ProcessTimeout):
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_process_timeout_INFO", new Object[] { anEndpoint });
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_process_timeout_INFO", new Object[] { anEndpoint });
       }
 		  ClientRequest cachedRequest = (ClientRequest)clientCache.get(casReferenceId);
 		  if ( cachedRequest == null )
@@ -2115,8 +2114,8 @@ implements UimaAsynchronousEngine, MessageListener
 			timer.schedule(new TimerTask() {
 				public void run()
 				{
-		      if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-		        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_timer_expired_INFO", new Object[] { endpoint, casReferenceId });
+		      if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+		        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_timer_expired_INFO", new Object[] { endpoint, casReferenceId });
 		      }
 					CAS cas = null;
 					if (isSerializedCAS)
