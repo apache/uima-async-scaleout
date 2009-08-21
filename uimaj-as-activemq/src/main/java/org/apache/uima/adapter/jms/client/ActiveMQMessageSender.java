@@ -29,7 +29,11 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.command.ActiveMQDestination;
+import org.apache.uima.UIMAFramework;
+import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.util.Level;
 
 /**
  * Initializes JMS session and creates JMS MessageProducer to be used for
@@ -41,6 +45,7 @@ import org.apache.activemq.command.ActiveMQDestination;
  * 
  */
 public class ActiveMQMessageSender extends BaseMessageSender {
+  private static final Class CLASS_NAME = ActiveMQMessageSender.class;
 
 	private Connection connection = null;
 	private Session session = null;
@@ -67,10 +72,36 @@ public class ActiveMQMessageSender extends BaseMessageSender {
 		producerMap.put(destination, mProducer);
 		return mProducer;
 	}
+	private String getBrokerURL() {
+    try {
+      return ((ActiveMQConnection)connection).getBrokerInfo().getBrokerURL();
+    } catch( Exception ex) { /* handle silently. */}
+    return "";
+	}
 	private void createSession() throws Exception {
-		if ( session == null )	{
-			session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-		}
+	  String broker = getBrokerURL();
+	  try {
+	    if ( session == null )  {
+	      session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+	    }
+	  } catch( JMSException e) {
+	    if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
+	      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "createSession", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_failed_creating_session_INFO", new Object[] {destinationName, broker});
+	    }
+	    if ( connection == null ) {
+	      System.out.println("UIMA AS Client Shared Connection Is Not Initialized");
+	      if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "createSession", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_connection_not_ready_INFO", new Object[] {broker});
+	      }
+	    } else if ( ((ActiveMQConnection)connection).isClosed() || ((ActiveMQConnection)connection).isClosing()) {
+	      if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "createSession", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_connection_closed_INFO", new Object[] {destinationName, broker});
+	      }
+	    }
+	    throw e;
+	  } catch( Exception e) {
+	    throw e;
+	  }
 	}
 	/**
 	 * Creates a jms session object used to instantiate message producer
