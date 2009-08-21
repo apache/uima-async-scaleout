@@ -180,30 +180,38 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
 	protected Thread spinMonitorThread(final AtomicBoolean ctrlMonitor, int howMany, final int aLatchKind) throws Exception
 	{
-
-		switch (aLatchKind)
+	  final String name;
+	  
+	  switch (aLatchKind)
 		{
 		case CPC_LATCH:
 			// Initialize latch to open after CPC reply comes in.
 			cpcLatch = new CountDownLatch(howMany);
+			name = "CpcLatch";
 			break;
 
 		case EXCEPTION_LATCH:
-			// Initialize latch to open after CPC reply comes in.
+			// Initialize latch to open after expected Exceptions comes in.
 			exceptionCountLatch = new CountDownLatch(howMany);
+			name = "ExceptionLatch";
 			break;
 
 		case PROCESS_LATCH:
-			// Initialize latch to open after CPC reply comes in.
+			// Initialize latch to open after all CASes returned.
 			System.out.println("runTest: Initializing Process Latch. Number of CASes Expected:" + howMany);
 			processCountLatch = new CountDownLatch(howMany);
+			 name = "ProcessLatch";
 			break;
+			
+		default:
+		  // Avoid "may not have been initialized" warning
+		  name = null;
 		}
 
 		// Spin a thread that waits for the latch to open. The latch will open
 		// only when
 		// a CPC reply comes in
-		Thread t = new Thread()
+		Thread t = new Thread(name)
 		{
 			public void run()
 			{
@@ -306,7 +314,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 	    //  This will cause the client to timeout waiting for a CAS reply and
 	    //  to send a Ping message to test service availability. The Ping times
 	    //  out and causes the client API to stop.
-	    new Thread() {
+	    new Thread("WaitThenUndeploy") {
 	      public void run()
 	      {
 	        Object mux = new Object();
@@ -328,7 +336,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 		for (int i = 0; i < howManyRunningThreads; i++)
 		{
 			SynchRunner runner = new SynchRunner(eeUimaEngine, howManyCASesPerRunningThread);
-			Thread runnerThread = new Thread(runner);
+			Thread runnerThread = new Thread(runner, "Runner"+i);
 			runnerThread.start();
 			System.out.println("runTest: Started Runner Thread::Id=" + runnerThread.getId());
 
@@ -550,13 +558,15 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
 		}
 
-		if (unexpectedException)
-		{
+    isStopping = true;
+    aUimaEeEngine.stop();
+
+    // Finally fail test if unhappy ... must be last call as acts like "throw"
+    if (unexpectedException) {
 			fail("Unexpected exception returned");
 		}
-		isStopping = true;
-		aUimaEeEngine.stop();
 	}
+	
 	/**
 	 * Sends a given number of CASs to Uima EE service. This method sends each CAS using either 
 	 * synchronous or asynchronous API. 
@@ -651,8 +661,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 	        }
 	        System.out.println("runTest: Received Reply from CAS "+casReferenceId+" Containing "+list.size()+" Exception(s)");
         } else {
-          System.out.println("runTest: Received Reply from CAS "+casReferenceId+" (Parent "+parentCasReferenceId
-                  +") Containing "+list.size()+" Exception(s)");
+          System.out.println("runTest: ERROR - Received "+list.size()+" Exception(s) from child CAS "+casReferenceId
+                  +" --- should have been on Parent "+parentCasReferenceId);
+          unexpectedException = true;
         }
 	      
 	      for( int i=0; i < list.size(); i++)
