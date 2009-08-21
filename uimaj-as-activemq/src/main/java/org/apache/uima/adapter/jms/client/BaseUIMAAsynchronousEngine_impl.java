@@ -222,69 +222,61 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     }
 	public void stop()
 	{
-	  if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
-	    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopping_as_client_INFO", new Object[] {});
-	  }
-		
-	    if (!running)
-	    {
-	      return;
-	    }
-	    super.stop();
-	    synchronized(stopMux) {
-	    running = false;
-	    if ( super.serviceDelegate != null ) {
-	      //  Cancel all timers and purge lists
-	      super.serviceDelegate.cleanup();
-	    }
-	    try
-	    {
-        // SharedConnection object manages a single JMS connection to the 
+    if (!running) {
+      return;
+    }
+    super.stop();
+    synchronized (stopMux) {
+      running = false;
+      if (super.serviceDelegate != null) {
+        // Cancel all timers and purge lists
+        super.serviceDelegate.cleanup();
+      }
+      try {
+        // SharedConnection object manages a single JMS connection to the
         // broker. If the client is scaled out in the same JVM, the connection
         // is shared by all instances of the client to reduce number of threads
         // in the broker. The SharedConnection object also maintains the number
         // of client instances to determine when it is ok to close the connection.
         // The connection is closed when the last client calls stop().
-	      try {
-	        sharedConnectionSemaphore.acquire();
-	        if ( sharedConnection != null ) {
-	          // Decrement number of active clients
-	          sharedConnection.decrementClientCount();
-	          // The destroy method closes the JMS connection when the number of
-	          // clients becomes 0, otherwise it is a no-op
-	          if ( sharedConnection.destroy() ) {
-	            // This needs to be done to invalidate the object for JUnit tests
-	            sharedConnection = null;
-	          }
-	        }
-	      } catch ( InterruptedException ex) {
-	        System.out.println("UIMA AS Client Interrupted While Acquiring sharedConnectioSemaphore to Close Shared Connection");
-	      } finally {
-	        sharedConnectionSemaphore.release();
-	      }
-        if ( sender != null ) {
+        try {
+          sharedConnectionSemaphore.acquire();
+          if (sharedConnection != null) {
+            // Decrement number of active clients
+            sharedConnection.decrementClientCount();
+            // The destroy method closes the JMS connection when the number of
+            // clients becomes 0, otherwise it is a no-op
+            if (sharedConnection.destroy()) {
+              // This needs to be done to invalidate the object for JUnit tests
+              sharedConnection = null;
+            }
+          }
+        } catch (InterruptedException ex) {
+          System.out
+                  .println("UIMA AS Client Interrupted While Acquiring sharedConnectioSemaphore to Close Shared Connection");
+        } finally {
+          sharedConnectionSemaphore.release();
+        }
+        if (sender != null) {
           sender.doStop();
         }
         // Undeploy all containers
         undeploy();
         System.out.println("UIMA AS Client Undeployed All Containers");
-	      if ( initialized )
-	      {
-	        try {
-	          consumerSession.close();
-	          consumer.close();
-	        } catch ( JMSException exx) {}
-	      }
-	      if ( jmxManager != null )
-	      {
-	        jmxManager.destroy();
-	      }
-	    }
-	    catch (Exception e)
-	    {
-	      e.printStackTrace();
-	    }
-	  }
+        if (initialized) {
+          try {
+            consumerSession.close();
+            consumer.close();
+          } catch (JMSException exx) {
+          }
+        }
+        if (jmxManager != null) {
+          jmxManager.destroy();
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
 	}
 
 	public void setCPCMessage(Message msg) throws Exception
