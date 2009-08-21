@@ -370,8 +370,8 @@ implements UimaAsynchronousEngine, MessageListener
 	public void stop()
 	{
 	  synchronized( stopMux ) {
-	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-	      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopping_as_client_INFO", new Object[] {});
+	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopping_as_client_INFO", new Object[] {});
 	    }
 	    if (!running)
 	    {
@@ -2286,8 +2286,8 @@ implements UimaAsynchronousEngine, MessageListener
 	{
 	}
 
-	// This class is used to share JMS Connection by many instances of UIMA AS 
-	// clients deployed in the same JVM. 
+	// This class is used to share JMS Connection by all instances of UIMA AS 
+	// client deployed in the same JVM. 
 	public static class SharedConnection {
 	  private Connection connection;
 	  private int clientCount;
