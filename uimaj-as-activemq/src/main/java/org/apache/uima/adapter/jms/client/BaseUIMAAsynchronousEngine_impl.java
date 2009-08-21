@@ -102,6 +102,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	private JmxManager jmxManager = null;
 	private String applicationName = "UimaASClient";
 	private static SharedConnection sharedConnection = null;
+	private static Semaphore sharedConnectionSemaphore = 
+	  new Semaphore(1);
 	private Object stopMux = new Object();
 	private static final UimaAsVersion uimaAsVersion = 
 	  new UimaAsVersion();
@@ -220,8 +222,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     }
 	public void stop()
 	{
-	  if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST) ) {
-	    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopping_as_client_INFO", new Object[] {});
+	  if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
+	    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopping_as_client_INFO", new Object[] {});
 	  }
 		
 	    if (!running)
@@ -243,16 +245,23 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
         // in the broker. The SharedConnection object also maintains the number
         // of client instances to determine when it is ok to close the connection.
         // The connection is closed when the last client calls stop().
-        if ( sharedConnection != null ) {
-          // Decrement number of active clients
-          sharedConnection.decrementClientCount();
-          // The destroy method closes the JMS connection when the number of
-          // clients becomes 0, otherwise it is a no-op
-          if ( sharedConnection.destroy() ) {
-            // This needs to be done to invalidate the object for JUnit tests
-            sharedConnection = null;
-          }
-        }
+	      try {
+	        sharedConnectionSemaphore.acquire();
+	        if ( sharedConnection != null ) {
+	          // Decrement number of active clients
+	          sharedConnection.decrementClientCount();
+	          // The destroy method closes the JMS connection when the number of
+	          // clients becomes 0, otherwise it is a no-op
+	          if ( sharedConnection.destroy() ) {
+	            // This needs to be done to invalidate the object for JUnit tests
+	            sharedConnection = null;
+	          }
+	        }
+	      } catch ( InterruptedException ex) {
+	        System.out.println("UIMA AS Client Interrupted While Acquiring sharedConnectioSemaphore to Close Shared Connection");
+	      } finally {
+	        sharedConnectionSemaphore.release();
+	      }
         if ( sender != null ) {
           sender.doStop();
         }
@@ -291,18 +300,31 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       ((TextMessage)msg).setText("");
     }
 	}
-	protected synchronized void setupConnection( String aBrokerURI ) throws Exception
+	protected void setupConnection( String aBrokerURI ) throws Exception
 	{
-		if (sharedConnection == null )
-		{
-			ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(aBrokerURI);
-			Connection connection = factory.createConnection();
-			// This only effects Consumer
-			addPrefetch((ActiveMQConnection)connection);
-			connection.start();
-			sharedConnection = new SharedConnection(connection);
-//			sharedConnection.setConnection(connection);
-		} 
+		try {
+		  //  Acquire global static semaphore
+		  sharedConnectionSemaphore.acquire();
+		  if (sharedConnection == null )
+	    {
+	      ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(aBrokerURI);
+	      Connection connection = factory.createConnection();
+	      // This only effects Consumer
+	      addPrefetch((ActiveMQConnection)connection);
+	      connection.start();
+	      sharedConnection = new SharedConnection(connection);
+	      System.out.println("UIMA AS Client Created Shared Connection To Broker:"+aBrokerURI);
+	      if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO) ) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "setupConnection", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_connection_setup_INFO", new Object[] { aBrokerURI });
+	      }
+	    } 
+		  
+		} catch( Exception e) {
+		  throw e;
+		} finally {
+      //  Release global static semaphore
+		  sharedConnectionSemaphore.release();
+		}
 	}
 
 	private void addPrefetch(ActiveMQConnection aConnection ) {
@@ -312,9 +334,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	}
 	private void validateConnection(String aBrokerURI) throws Exception
 	{
-		if (sharedConnection == null)	{
-			setupConnection(aBrokerURI);
-		}
+	  // checks if a sharedConnection exists and if not creates a new one
+	  setupConnection(aBrokerURI);
 	}
 	protected Session getSession(String aBrokerURI) throws Exception
 	{
@@ -337,6 +358,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		return producerSession.createProducer(dest);
 	}
   public void initializeProducer(String aBrokerURI, String aQueueName) throws Exception {
+    //  Check if a sharedConnection exists. If not it creates one 
     setupConnection(aBrokerURI);
     initializeProducer(aBrokerURI, aQueueName, sharedConnection.getConnection());
   }
@@ -517,12 +539,17 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 			ObjectName on = new ObjectName("org.apache.uima:name="+applicationName);
 			jmxManager.registerMBean(clientSideJmxStats, on);
 
+			// Check if sharedConnection exists. If not create a new one. The sharedConnection
+			// is static and shared by all instances of UIMA AS client in a jvm. The check
+			// is made in a critical section by first acquiring a global static semaphore to 
+			// prevent a race condition.
+			setupConnection(brokerURI);
+			
       // Reuse existing JMS connection if available 
 	    if (sharedConnection != null )  {
         initializeProducer(brokerURI, endpoint, sharedConnection.getConnection());
         initializeConsumer(brokerURI, sharedConnection.getConnection());
 	    } else {
-	      //  This call creates a SharedConnection object and a JMS Connection
 	      initializeProducer(brokerURI, endpoint);
 	      initializeConsumer(brokerURI);
 	    }
