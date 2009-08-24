@@ -27,6 +27,8 @@ import org.apache.camel.AsyncProcessor;
 import org.apache.camel.Endpoint;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultProducer;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
@@ -47,6 +49,8 @@ import org.apache.uima.resource.ResourceInitializationException;
  */
 public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncProcessor {
 
+  private static final Log LOG = LogFactory.getLog(UimaAsProducer.class);
+
   private static class ExchangeAsyncCallbackPair {
     Exchange exchange;
 
@@ -66,7 +70,9 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
     }
     
     public void initializationComplete(EntityProcessStatus aStatus) {
-
+    	if (aStatus.isException()) {
+    		LOG.warn("Error on initializing: " + aStatus.getStatusMessage());
+    	}
     }
 
     public void entityProcessComplete(CAS aCas, EntityProcessStatus aStatus) {
@@ -83,22 +89,27 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
       if (exchangeCallbackPair != null) {
         if (aStatus.isException()) {
 
-          // TODO: Retrieve exceptions from status object
+          for (Exception e : aStatus.getExceptions()) {
+        	  LOG.warn(e);
+          }
 
           exchangeCallbackPair.exchange.setException(new Exception(aStatus.getStatusMessage()));
         }
 
         exchangeCallbackPair.callback.done(false);
       } else {
-        // TODO: log error
+        LOG.warn("Could not find callback for CAS id: " + referenceId);
       }
     }
 
     public void collectionProcessComplete(EntityProcessStatus aStatus) {
-      // TODO: log error status
+    	if (aStatus.isException()) {
+    		LOG.warn("Error on collection process complete: " + aStatus.getStatusMessage());
+    	}
     }
   }
 
+  
   private UimaAsynchronousEngine uimaAsEngine;
 
   /**
