@@ -76,7 +76,9 @@
 				<version>2.0.0</version>
 				<extensions>true</extensions>
 				<configuration>
+					<manifestLocation>META-INF</manifestLocation>
 					<instructions>
+						<Bundle-SymbolicName>org.apache.uima.camel</Bundle-SymbolicName>
 						<Private-Package>org.apache.uima.camel</Private-Package>
 					</instructions>
 				</configuration>
