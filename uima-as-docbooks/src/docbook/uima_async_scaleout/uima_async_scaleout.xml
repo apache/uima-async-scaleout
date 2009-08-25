@@ -34,6 +34,7 @@ under the License.
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.errorhandling.xml"/> 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ref.async.deployment.xml" />
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ref.async.api.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.camel.driver.xml" />
 
   <!--
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.tutorial.xml"/>
