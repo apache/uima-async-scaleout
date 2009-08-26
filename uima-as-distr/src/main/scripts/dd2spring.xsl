@@ -1883,7 +1883,7 @@
           <xsl:if test="u:casMultiplier">
             <xsl:sequence select="f:msgWithLineNumber('ERROR',
              ('deployment descriptor for analysisEngine:', $key,
-             'specifies a casMultipler element, but the analysisEngine is not a CAS multiplier'),
+             'specifies a casMultiplier element, but the analysisEngine is not a CAS multiplier'),
              .)"/>
           </xsl:if>
         </xsl:otherwise>
