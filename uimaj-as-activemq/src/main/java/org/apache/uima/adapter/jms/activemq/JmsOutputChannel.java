@@ -544,7 +544,7 @@ public class JmsOutputChannel implements OutputChannel
 			JmsEndpointConnection_impl endpointConnection = 
 				getEndpointConnection(anEndpoint);
 			
-			TextMessage tm = endpointConnection.produceTextMessage(null);
+			TextMessage tm = endpointConnection.produceTextMessage("");
 			tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None); 
 			tm.setText("");    // Need this to prevent the Broker from throwing an exception when sending a message to C++ service
 			
@@ -838,7 +838,7 @@ public class JmsOutputChannel implements OutputChannel
       JmsEndpointConnection_impl endpointConnection = 
         getEndpointConnection(anEndpoint);
 
-      TextMessage tm = endpointConnection.produceTextMessage(null);
+      TextMessage tm = endpointConnection.produceTextMessage("");
       tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None); 
       populateHeaderWithResponseContext(tm, anEndpoint, aCommand);
       tm.setStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -897,7 +897,7 @@ public class JmsOutputChannel implements OutputChannel
 			}
 			JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
 
-			TextMessage tm = endpointConnection.produceTextMessage(null);
+			TextMessage tm = endpointConnection.produceTextMessage("");
 			tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None); 
 			populateHeaderWithResponseContext(tm, anEndpoint, aCommand);
 			
@@ -2322,7 +2322,9 @@ public class JmsOutputChannel implements OutputChannel
       delegate.getEndpoint().setStatus(Endpoint.FAILED);
       //  Destroy listener associated with a reply queue for this delegate
       InputChannel ic = controller.getInputChannel(delegate.getEndpoint().getDestination().toString());
-      ic.destroyListener(delegate.getEndpoint().getDestination().toString(), endpoint.getDelegateKey());
+      if ( ic != null && delegate != null && delegate.getEndpoint() != null) {
+        ic.destroyListener(delegate.getEndpoint().getDestination().toString(), endpoint.getDelegateKey());
+      }
       //  Setup error context and handle failure in the error handler
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
