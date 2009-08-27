@@ -171,6 +171,43 @@ public class TestUimaASExtended extends BaseTestSupport
 	 * 
 	 * @throws Exception
 	 */
+  public void testDeployAggregateWithDelegateCpCException() throws Exception
+  {
+    System.out.println("-------------- testDeployAggregateWithDelegateCpCException -------------");
+    //  Instantiate Uima EE Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    //  Deploy Uima EE Primitive Service 
+    deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithCpCException.xml");
+    deployService(eeUimaEngine, relativePath+"/Deploy_AggregateAnnotator.xml");
+    addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class);
+
+    Map<String, Object> appCtx = buildContext( String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue" );
+    initialize(eeUimaEngine, appCtx);
+    waitUntilInitialized();
+    System.out.println("Client Initialized");
+    CAS cas = eeUimaEngine.getCAS();
+    for( int i=0; i < 3; i++) {
+      eeUimaEngine.sendAndReceiveCAS(cas);  
+      cas.reset();
+    }
+    System.out.println("Client Sending CPC");
+    
+    //  Send CPC. The service should recreate a session and send CPC reply
+    eeUimaEngine.collectionProcessingComplete();
+
+    //  Now send some CASes and sleep to let the inactivity timer pop again
+    for( int i=0; i < 3; i++) {
+      eeUimaEngine.sendAndReceiveCAS(cas);  // This will start a timer on reply queue
+      cas.reset();
+    }
+    //  Send another CPC
+    eeUimaEngine.collectionProcessingComplete();
+
+    eeUimaEngine.stop();
+    
+    //runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue", 1, CPC_LATCH);
+    //  Add expected exception so that we release CPC Latch
+  }
   public void testDeployPrimitiveServiceWithCpCException() throws Exception
   {
     System.out.println("-------------- testDeployPrimitiveServiceWithCpCException -------------");
@@ -180,7 +217,7 @@ public class TestUimaASExtended extends BaseTestSupport
     deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithCpCException.xml");
     //  Add expected exception so that we release CPC Latch
     addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class);
-    
+
     runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"NoOpAnnotatorQueue", 1, PROCESS_LATCH);
   }
   /**
@@ -1624,13 +1661,15 @@ public class TestUimaASExtended extends BaseTestSupport
     catch( ResourceInitializationException e)
     {
       Exception cause = getCause(e);
-
       System.out.println("Expected Initialization Exception was received:"+cause);
-      eeUimaEngine.stop();
     }
 	catch( Exception e)
 	{
 		fail("Expected ResourceInitializationException. Instead Got:"+e.getClass());
+	}
+	finally
+	{
+    eeUimaEngine.stop();	  
 	}
   }
 
@@ -1673,7 +1712,10 @@ public class TestUimaASExtended extends BaseTestSupport
 	{
 		fail("Expected ResourceInitializationException. Instead Got:"+e.getClass());
 	}
-	eeUimaEngine.stop();
+	finally
+	{
+	  eeUimaEngine.stop();
+	}
   }
 
   /**
@@ -1709,7 +1751,9 @@ public class TestUimaASExtended extends BaseTestSupport
 	{
 		fail("Expected Success. Instead Received Exception:"+e.getClass());
 	}
-	eeUimaEngine.stop();
+	finally {
+	  eeUimaEngine.stop();
+	}  
   }
  
   /**
@@ -1741,7 +1785,10 @@ public class TestUimaASExtended extends BaseTestSupport
 	{
 		fail("Expected ResourceInitializationException. Instead Got:"+e.getClass());
 	}
-	eeUimaEngine.stop();
+	finally
+	{
+	  eeUimaEngine.stop();
+	}
 	
   }
   
@@ -1785,7 +1832,8 @@ public class TestUimaASExtended extends BaseTestSupport
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotator.xml");
     deployService(eeUimaEngine, relativePath+"/Deploy_SyncAggregateWithJmsService.xml");
-    runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue", 1, PROCESS_LATCH);
+    runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue", 10, PROCESS_LATCH);
+//    runTest(null,eeUimaEngine,"tcp://hbca-3.watson.ibm.com:61616","TopLevelTaeQueue", 10, PROCESS_LATCH);
   }
 
   public void testJmsServiceAdapterWithException() throws Exception {
