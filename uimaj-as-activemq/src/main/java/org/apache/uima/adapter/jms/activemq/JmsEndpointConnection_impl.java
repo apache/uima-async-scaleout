@@ -158,15 +158,15 @@ public class JmsEndpointConnection_impl implements ConsumerListener
         }
 			}
 
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
-	                "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_activemq_open__FINE",
-	                new Object[] { anEndpointName, brokerUri });
-      }
       
       if ( !isOpen() ) {  
         Connection conn = null;
         if (brokerDestinations.getConnection() == null ) {
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
+                      "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_activemq_open__FINE",
+                      new Object[] { anEndpointName, brokerUri });
+          }
           ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
           conn = factory.createConnection();
           factory.setDispatchAsync(true);
@@ -230,6 +230,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener
 		catch ( Exception e)
 		{
 		  boolean rethrow = true;
+		  e.printStackTrace();
 		  
       if ( e instanceof JMSException ) {
         rethrow = handleJmsException( (JMSException)e );
@@ -518,8 +519,9 @@ public class JmsEndpointConnection_impl implements ConsumerListener
 			  if ( e instanceof JMSException ) {
 			    handleJmsException( (JMSException)e );
 			  } else {
-	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING", new Object[] { componentName, e});
+			    e.printStackTrace();
+	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "send", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING", new Object[] { componentName, e});
 	        }
 			  }
 			    
@@ -566,41 +568,45 @@ public class JmsEndpointConnection_impl implements ConsumerListener
     if (!failed) {
       failed = true;
     }
-    // Check if the exception is due to deleted queue. ActiveMQ does not identify
-    // this condition in the cause, so we need to parse the exception message and
-    // compare against "Cannot publish to a deleted Destination" text. If match is
-    // found, extract the name of the deleted queue from the exception and log it.
-    if (ex.getMessage() != null
-            && ex.getMessage().startsWith("Cannot publish to a deleted Destination")) {
-      String destName = endpointName;
-      int startPos = ex.getMessage().indexOf(':');
-      if (startPos > 0) {
-        destName = ex.getMessage().substring(startPos);
+    try {
+      // Check if the exception is due to deleted queue. ActiveMQ does not identify
+      // this condition in the cause, so we need to parse the exception message and
+      // compare against "Cannot publish to a deleted Destination" text. If match is
+      // found, extract the name of the deleted queue from the exception and log it.
+      if (ex.getMessage() != null
+              && ex.getMessage().startsWith("Cannot publish to a deleted Destination")) {
+        String destName = endpointName;
+        int startPos = ex.getMessage().indexOf(':');
+        if (startPos > 0) {
+          destName = ex.getMessage().substring(startPos);
+        }
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_send_failed_deleted_queue_INFO", new Object[] { componentName, destName, serverUri });
+        }
+        controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
+        return false;
+
       }
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+      if (ex instanceof ConnectionFailedException && isReplyEndpoint) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                 "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_send_failed_deleted_queue_INFO", new Object[] { componentName, destName });
-      }
-      controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
-      return false;
+                "UIMAJMS_connection_failure__INFO",
+                new Object[] { componentName, serverUri, delegateEndpoint.getDestination() });
+        controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
+        return false;
 
-    }
-    if (ex instanceof ConnectionFailedException && isReplyEndpoint) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-              "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAJMS_connection_failure__INFO",
-              new Object[] { componentName, serverUri, delegateEndpoint.getDestination() });
-      controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
-      return false;
-
-    } else {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { componentName, ex });
+      } else {
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", new Object[] { componentName, ex });
+        }
+        ex.printStackTrace();
       }
-      ex.printStackTrace();
+    } catch ( Exception e) {
+      e.printStackTrace();
     }
 
     return true;
