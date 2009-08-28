@@ -2104,6 +2104,7 @@ public class JmsOutputChannel implements OutputChannel
 				    if ( brokerConnectionEntry.getConnection() != null ) {
 				    try {
 	            brokerConnectionEntry.getConnection().close();
+	            System.out.println("JMS Connection to Broker: "+key+" Closed");
 				    } catch ( Exception ex) { /* ignore, we are stopping */ } 
 				    }
 				  }
@@ -2318,12 +2319,14 @@ public class JmsOutputChannel implements OutputChannel
       //  cancels the timer if this CAS was the oldest pending CAS, and if there
       //  are other CASes pending a fresh timer is started.
       outputChannel.removeCasFromOutstandingList(entry, isRequest, endpoint.getDelegateKey());
-      //  Mark this delegate as Failed
-      delegate.getEndpoint().setStatus(Endpoint.FAILED);
-      //  Destroy listener associated with a reply queue for this delegate
-      InputChannel ic = controller.getInputChannel(delegate.getEndpoint().getDestination().toString());
-      if ( ic != null && delegate != null && delegate.getEndpoint() != null) {
-        ic.destroyListener(delegate.getEndpoint().getDestination().toString(), endpoint.getDelegateKey());
+      if ( delegate != null ) {
+        //  Mark this delegate as Failed
+        delegate.getEndpoint().setStatus(Endpoint.FAILED);
+        //  Destroy listener associated with a reply queue for this delegate
+        InputChannel ic = controller.getInputChannel(delegate.getEndpoint().getDestination().toString());
+        if ( ic != null && delegate != null && delegate.getEndpoint() != null) {
+          ic.destroyListener(delegate.getEndpoint().getDestination().toString(), endpoint.getDelegateKey());
+        }
       }
       //  Setup error context and handle failure in the error handler
       ErrorContext errorContext = new ErrorContext();
