@@ -90,6 +90,7 @@ import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -649,8 +650,8 @@ public class OverviewPage extends AbstractHeaderPage {
     // Note: Need to add SWT.BORDER style to make the border VISIBLE in Linux
     brokerUrlDecoField = FormSection2.createLabelAndDecoratedText(toolkit, topComposite, 
             "Broker URL for input queue:", 
-            aeService.getBrokerURL(), SWT.WRAP | SWT.BORDER, 10, 0);
-    
+            aeService.getBrokerURL(), SWT.WRAP | SWT.BORDER, 200, 0, true, 0);
+      
     // Create an error decoration
     decorationBrokerUrl = FormSection2.registerFieldDecoration("brokerUrl",
                   "The broker URL cannot be empty");
@@ -662,8 +663,9 @@ public class OverviewPage extends AbstractHeaderPage {
 
     // Note: Need to add SWT.BORDER style to make the border VISIBLE in Linux
     endPointDecoField = FormSection2.createLabelAndDecoratedText(toolkit, topComposite, 
-            "Name for input queue:", aeService.getEndPoint(), SWT.WRAP | SWT.BORDER, 10, 0);
+            "Name for input queue:", aeService.getEndPoint(), SWT.WRAP | SWT.BORDER, 200, 0, true, 0);
     endPoint = (Text) endPointDecoField.getControl();
+    // ((FormData) endPoint.getLayoutData()).width = 200;
     endPoint.setToolTipText("Enter the name for the input queue");
     endPoint.addModifyListener(fModifyListener);
     decorationEndPoint =

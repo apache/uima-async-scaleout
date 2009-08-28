@@ -72,7 +72,8 @@ public class FormSection2 extends FormSection {
   }
   
   public static DecoratedField createLabelAndDecoratedText (final FormToolkit toolkit, Composite parent,
-          String labelText, String textText, int style, int textWidthHint, int textHeightHint) 
+          String labelText, String textText, int style, int textWidthHint, int textHeightHint, 
+          boolean grabH, int indentLeft) 
   {
       Label label = toolkit.createLabel(parent, labelText);
       label.setForeground(toolkit.getColors().getColor(FormColors.TITLE));
@@ -87,7 +88,8 @@ public class FormSection2 extends FormSection {
       ((Text) field.getControl()).setText(textText);
       toolkit.adapt(field.getLayoutControl(), false, false);
 
-      FormSection.fillIntoGridOrTableLayout (parent, label, field.getLayoutControl(), textWidthHint, textHeightHint);
+      fillIntoGridOrTableLayout (parent, label, field.getLayoutControl(), 
+    		  textWidthHint, textHeightHint, grabH, indentLeft);
       
       return field;
   } // createLabelAndDecoratedText
@@ -224,7 +226,7 @@ public class FormSection2 extends FormSection {
   } // fillIntoGridLayout
 
   public static void fillIntoTableLayout(Composite parent, Label label, Control control,
-          int heightHint, boolean grabH, int indentLeft) {
+		  int heightHint, boolean grabH, int indentLeft) {
     Layout layout = parent.getLayout();
 
     if (layout instanceof TableWrapLayout) {
@@ -255,7 +257,7 @@ public class FormSection2 extends FormSection {
           td.grabHorizontal = false;
         }
         if (heightHint > 0) {
-          td.heightHint = heightHint;
+            td.heightHint = heightHint;
         }
         control.setLayoutData(td);
       }

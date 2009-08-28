@@ -487,7 +487,7 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
             compositeRemoteSetting, Messages.DDE_AEMetaDataDetails_BrokerURLForRemote, 
             currentMetaDataObject == null ?
                     "":((RemoteAEDeploymentMetaData) currentMetaDataObject).getInputQueue().getBrokerURL(), 
-                    SWT.WRAP | SWT.BORDER, 10, 0);
+                    SWT.WRAP | SWT.BORDER, 100, 0, true, 0);
     
     // Create an error decoration
     decorationBrokerUrl = FormSection2.registerFieldDecoration("brokerUrl2",
@@ -504,7 +504,7 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
             compositeRemoteSetting, Messages.DDE_AEMetaDataDetails_QueueNameForRemote, 
             currentMetaDataObject == null ?
                     "":((RemoteAEDeploymentMetaData) currentMetaDataObject).getInputQueue().getEndPoint(), 
-                    SWT.WRAP | SWT.BORDER, 10, 0);
+                    SWT.WRAP | SWT.BORDER, 100, 0, true, 0);
     endPoint = (Text) endPointDecoField.getControl();
     endPoint.addModifyListener(fModifyListener);
     decorationEndPoint =

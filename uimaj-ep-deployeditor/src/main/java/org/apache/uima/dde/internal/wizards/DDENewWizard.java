@@ -44,7 +44,7 @@ public class DDENewWizard extends AbstractNewWizard  {
     + "<deployment protocol=\"jms\" provider=\"activemq\">\n"
     + "<casPool numberOfCASes=\"1\"/>\n" // since Top AE is a primitive (not Async)
     + "<service>"
-    + "<inputQueue endpoint=\"myQueueName\" brokerURL=\"tcp://localhost:61616\"/>\n"
+    + "<inputQueue endpoint=\"myQueueName\" brokerURL=\"${defaultBrokerURL}\"/>\n"
     // + "<topDescriptor>\n"
     // + "<import location=\"\"/>\n"
     // + "</topDescriptor>\n"
