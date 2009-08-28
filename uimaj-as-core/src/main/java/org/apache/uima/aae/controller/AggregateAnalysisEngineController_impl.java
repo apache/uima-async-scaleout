@@ -768,6 +768,8 @@ implements AggregateAnalysisEngineController, AggregateAnalysisEngineController_
 	             String delegateKey = (String)aDelegateList.get(0);
 	             System.out.println("Controller:"+getComponentName()+" Terminating Due to FlowController Failure While Disabling Delegate:"+delegateKey+" Cas:"+parentCasCacheEntry.getCasReferenceId());
 	             super.terminate(ex, parentCasCacheEntry.getCasReferenceId());
+	           } else {
+	             terminate();
 	           }
 	         } else {
 	           terminate();
