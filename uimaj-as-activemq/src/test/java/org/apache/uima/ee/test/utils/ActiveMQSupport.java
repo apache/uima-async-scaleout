@@ -222,39 +222,6 @@ public class ActiveMQSupport extends TestCase {
 
   protected synchronized void tearDown() throws Exception {
     super.tearDown();
-    ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
-    // Wait unit all non-amq threads stop
-    while (brokerThreadGroup.activeCount() > 0) {
-      Thread[] threads = new Thread[threadGroup.activeCount()];
-      threadGroup.enumerate(threads);
-      boolean foundExpectedThreads = true;
-
-      for (Thread t : threads) {
-        try {
-          String tName = t.getName();
-          // The following is necessary to account for the AMQ threads
-          // Any threads not named in the list below will cause a wait
-          // and retry until all non-amq threads are stopped
-          if (!tName.startsWith("main") && !tName.equalsIgnoreCase("timer-0")
-                  && !tName.equals("ReaderThread") && !tName.equals("BrokerThreadGroup")
-                  && !tName.startsWith("ActiveMQ")) {
-            foundExpectedThreads = false;
-            break; // from for
-          }
-        } catch (Exception e) {
-        }
-      }
-      if (foundExpectedThreads) {
-        break; // from while
-      }
-      Object syncMonitor = new Object();
-      try {
-        synchronized (syncMonitor) {
-          syncMonitor.wait(500);
-        }
-      } catch (InterruptedException e) {
-      }
-    }
   }
 
 }
