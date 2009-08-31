@@ -380,7 +380,6 @@ implements UimaAsynchronousEngine, MessageListener
 
 	    running = false;
 	    casQueueProducerReady = false;
-	    uimaSerializer.reset();
       if ( serviceDelegate != null ) {
         serviceDelegate.cancelDelegateTimer();
       }
