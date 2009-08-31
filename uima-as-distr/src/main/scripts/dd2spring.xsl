@@ -453,13 +453,15 @@
         "/> 
         <xsl:message select="'aeDelegates'"/-->
         
-        <xsl:if test="$remoteAnalysisEngine/u:casMultiplier">
-          <property name="shadowCasPoolSize" value="{$remoteAnalysisEngine/u:casMultiplier/@poolSize}"/>  
+        <xsl:if test="$remoteAnalysisEngine/u:casMultiplier/@poolSize">
+          <property name="shadowCasPoolSize" value="{$remoteAnalysisEngine/u:casMultiplier/@poolSize}"/>
+        </xsl:if> 
+        <xsl:if test="$remoteAnalysisEngine/u:casMultiplier/@initialFsHeapSize"> 
           <property name="initialFsHeapSize" value="{$remoteAnalysisEngine/u:casMultiplier/@initialFsHeapSize}"/>
         </xsl:if>
         
         <!-- jira UIMA-1245 -->
-        <xsl:if test="$aeDelegate/u:casMultiplier">
+        <xsl:if test="$aeDelegate/u:casMultiplier/@processParentLast">
           <property name="processParentLast" value="{$aeDelegate/u:casMultiplier/@processParentLast}"/>
         </xsl:if>
         
@@ -735,7 +737,7 @@
             <xsl:message select="."/-->
             <xsl:sequence select="f:generateLineComment('scaleout number of instances', 5)"/>
             <constructor-arg index="6" value="{u:scaleout/@numberOfInstances}"/>
-            <xsl:if test="u:casMultiplier">
+            <xsl:if test="u:casMultiplier/@poolSize">
               <xsl:sequence select="f:generateLineComment('CAS Multiplier poolSize', 5)"/>
               <constructor-arg index="7" value="{u:casMultiplier/@poolSize}"/>
             </xsl:if>
@@ -1468,7 +1470,7 @@
           
         <xsl:otherwise>
           <!-- casPool argument provided.  verify that the number of instances is >= scaleout if scaleout is present -->
-          <!-- TO BE DONE LATER - also handle case where not all parameters were specified -->
+          <!-- DONE later in this defaulting code - also handle case where not all parameters were specified -->
         </xsl:otherwise>
       </xsl:choose>
       <xsl:apply-templates mode="addDefaults"/>
@@ -1802,7 +1804,8 @@
                 <xsl:sequence select="f:msgWithLineNumber('WARNING',
                    ('casMultiplier settings for processParentLast will be ignored',
                     'for the top-level analysisEngine with key=', $key, $nl,
-                    'To specify this value for the top level, specify it on the containing (remote) aggregate for this service.'
+                    'To specify this value for the top level,', 
+                    'specify it on the containing (remote) aggregate for this service.'
                    ),
                    .)"/>       
               </xsl:if>
@@ -1815,17 +1818,26 @@
                     processParentLast="{if (u:casMultiplier/@processParentLast) then u:casMultiplier/@processParentLast else 'false'}"
                   />
                 </xsl:when>
+                <!--  top level async: no cas multiplier settings are used
+                      size etc from contained CM;
+                      processParentLast not applicable for top level - 
+                      uses (remote) containing aggregate's setting, if any
+                      
+                      However the casMultiplier element is generated so that 
+                      a Second Input Q is built for messages from remote cas 
+                      Multipliers, at the top level -->
                 <xsl:when test="string($async) eq 'true'">
-                  <u:casMultiplier 
-                    processParentLast="{if (u:casMultiplier/@processParentLast) then u:casMultiplier/@processParentLast else 'false'}"
-                  />                  
+                  <u:casMultiplier/>                  
                 </xsl:when>
+                
+                <!-- case async = false and not top level -->
                 <xsl:when test="not(parent::u:service)">
                   <u:casMultiplier poolSize="{if (u:casMultiplier/@poolSize) then u:casMultiplier/@poolSize else '1'}"
                           initialFsHeapSize="{if (u:casMultiplier/@initialFsHeapSize) then u:casMultiplier/@initialFsHeapSize else '2000000'}"
                           processParentLast="{if (u:casMultiplier/@processParentLast) then u:casMultiplier/@processParentLast else 'false'}"
                   />  
                 </xsl:when>
+                <!-- case async = false, top level -->
                 <xsl:otherwise>
                   <u:casMultiplier poolSize="{if (u:casMultiplier/@poolSize) then u:casMultiplier/@poolSize else '1'}"
                           initialFsHeapSize="{if (u:casMultiplier/@initialFsHeapSize) then u:casMultiplier/@initialFsHeapSize else '2000000'}"
@@ -1836,36 +1848,45 @@
             
             <!-- after this point, have a cas multiplier, without a <casMultiplier> element -->
 
+            <!-- async true, not top level -->
             <xsl:when test="(string($async) eq 'true') and
                             (not(parent::u:service))">
              <xsl:sequence select="f:msgWithLineNumber('WARN',
-               ('deployment descriptor for analysisEngine:', $key,
-               'is for a CAS Multiplier (or Collection Reader wrapped as a CAS Multiplier).', $nl,
-               'However, the &lt;casMultiplier> element is missing.',
-                  'Defaulting to a processParentLast to false for this case.'),
+               ('Deployment descriptor for analysisEngine:', $key,
+               'is for a non-top-level CAS Multiplier (or Collection Reader wrapped as a CAS Multiplier).', $nl,
+               'However, the &lt;casMultiplier> element is missing.', $nl,
+               'The &lt;casMultiplier> element is only used here for specifying the processParentLast attribute.', $nl,
+               'Defaulting to a processParentLast to false for this case, to',
+               'let the parent flow with its chlidren.'),
                .)"/>
               <u:casMultiplier processParentLast="false"/>
             </xsl:when>
              
-            <xsl:when test="parent::u:service">
-              <xsl:sequence select="f:msgWithLineNumber('WARN',
-                 ('deployment descriptor for analysisEngine:', $key,
-                 'is for a top-level CAS Multiplier (or Collection Reader wrapped as a CAS Multiplier).', $nl,
-                 'However, the &lt;casMultiplier> element is missing.', $nl,
-                    'Defaulting to a poolSize of 1, initialFsHeapSize of 2,000,000'),
-                 .)"/>
-              <u:casMultiplier poolSize="1" initialFsHeapSize="2000000"/>             
+            <!-- async true top level - no cas multiplier settings are used
+                      size etc from contained CM;
+                      processParentLast not applicable for top level - 
+                      uses (remote) containing aggregate's setting, if any
+                      
+                      However the casMultiplier element is generated so that 
+                      a Second Input Q is built for messages from remote cas 
+                      Multipliers, at the top level -->
+            <xsl:when test="(string($async) eq 'true') and
+                            (parent::u:service)">
+              <u:casMultiplier/>             
             </xsl:when>
-            <xsl:otherwise>
+            
+            <!-- async = false, not top level -->
+            <xsl:when test="not(parent::u:service)">
               <xsl:sequence select="f:msgWithLineNumber('WARN',
              ('deployment descriptor for analysisEngine:', $key,
-             'is for a CAS Multiplier (not top level) (or Collection Reader wrapped as a CAS Multiplier).', $nl,
+             'is for a synchronous CAS Multiplier (not top level) (or Collection Reader wrapped as a CAS Multiplier).', $nl,
              'However, the &lt;casMultiplier> element is missing.', $nl,
-                'Defaulting to a poolSize of 1, initialFsHeapSize of 2,000,000, and', $nl,
-                '  processParentLast of false, for this case.'),
+                'Defaulting to a poolSize of 1, initialFsHeapSize of 2,000,000.', $nl,
+                'Defaulting to a processParentLast to false for this case, to',
+                'let the parent flow with its chlidren.'),
              .)"/>
               <u:casMultiplier poolSize="1" initialFsHeapSize="2000000" processParentLast="false"/>
-            </xsl:otherwise>
+            </xsl:when>
 
             <!--xsl:when test="u:casMultiplier/@poolSize">
               <xsl:copy-of select="u:casMultiplier"/>
@@ -1879,7 +1900,7 @@
             </xsl:otherwise-->
           </xsl:choose>
         </xsl:when>
-        <xsl:otherwise>
+        <xsl:otherwise>  <!-- is not a cas multiplier -->
           <xsl:if test="u:casMultiplier">
             <xsl:sequence select="f:msgWithLineNumber('ERROR',
              ('deployment descriptor for analysisEngine:', $key,
@@ -1975,11 +1996,13 @@
         
     </xsl:for-each>
     
+    <!-- next limitation lifted for 2.3.0 
     <xsl:if test="count($ddDelegates[self::u:remoteAnalysisEngine[u:casMultiplier]]) > 1">
       <xsl:sequence select="f:msgWithLineNumber('ERROR',
         ('More than one remote delegate is a CAS Multiplier. This implementation only supports having one'),
          .)"/>
     </xsl:if>
+    -->
     
     <u:delegates>
       <xsl:for-each select="$delegatesFromLocalAeDescriptor">
@@ -2760,6 +2783,7 @@
                 internalReplyQueueScaleout=""
                 inputQueueScaleout="">
               <u:scaleout i:maxone="" numberOfInstances=""/>
+                <!-- top level cas multiplier can't specify processParentLast -->
               <u:casMultiplier i:maxone="" poolSize="" initialFsHeapSize=""/>
               <u:asyncPrimitiveErrorConfiguration i:maxone="">
                 <u:processCasErrors i:maxone="" 
