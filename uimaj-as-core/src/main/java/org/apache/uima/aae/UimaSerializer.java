@@ -27,7 +27,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.concurrent.ConcurrentHashMap;
+//import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
@@ -55,9 +55,8 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 public class UimaSerializer
 {
-  
-  private ConcurrentHashMap xmlReaderMap = new ConcurrentHashMap();
-  private Object mux = new Object();
+  private final ThreadLocal<XMLReader> localXmlReader = new ThreadLocal<XMLReader>();
+
 	/**
 	 * Serializes XCas into CAS
 	 * 
@@ -119,7 +118,6 @@ public class UimaSerializer
 
 		if (typeSystem == null)
 			typeSystem = aCAS.getTypeSystem();
-//		XMLSerializer xmlSer = new XMLSerializer(writer, false);
 		XMLSerializer xmlSer = new XMLSerializer(stream, false);
 		if (encoding != null)
 			xmlSer.setOutputProperty(OutputKeys.ENCODING, encoding);
@@ -127,7 +125,6 @@ public class UimaSerializer
 		XmiCasSerializer ser = new XmiCasSerializer(typeSystem);
 		
 		ser.serialize(aCAS, xmlSer.getContentHandler());
-		// ser.serialize(aCAS, xmlSer.getContentHandler(),false, otsd);
 	}
 
 	/**
@@ -143,7 +140,7 @@ public class UimaSerializer
 			ser.serialize(aCAS, xmlSer.getContentHandler(), null, serSharedData);
 			return writer.toString();
 		}
-		catch( Exception e)
+		catch( SAXException e)
 		{
 			throw e;
 		}
@@ -163,7 +160,7 @@ public class UimaSerializer
 			ser.serialize(aCAS, xmlSer.getContentHandler(), null, serSharedData, aMarker);
 			return writer.toString();
 		}
-		catch( Exception e)
+		catch( SAXException e)
 		{
 			throw e;
 		}
@@ -179,22 +176,12 @@ public class UimaSerializer
 	throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException
 	{
 		
-    XMLReader xmlReader = null;
-    //  Create a new instance of a XMLReader if one doesnt exist in the
-    //  global map. Each thread reuses its own instance.
-    synchronized( mux ) {
-      if ( !xmlReaderMap.containsKey(Thread.currentThread().getId())) {
-        xmlReader = XMLReaderFactory.createXMLReader();
-        xmlReaderMap.put(Thread.currentThread().getId(), xmlReader);
-      } else {
-        xmlReader = (XMLReader) xmlReaderMap.get(Thread.currentThread().getId());
-      }
-    }
-    if ( xmlReader == null ) {
-      throw new ParserConfigurationException("XMLReaderMap Doesnt Contain a Reader Object for Key:"+Thread.currentThread().getId());
-    }
+	  if (localXmlReader.get() == null) {
+	        localXmlReader.set(XMLReaderFactory.createXMLReader());
+	  }
+	  XMLReader xmlReader = XMLReaderFactory.createXMLReader(); // localXmlReader.get();
 
-    Reader reader = new StringReader(anXmlStr);
+	  Reader reader = new StringReader(anXmlStr);
     XmiCasDeserializer deser = new XmiCasDeserializer(aCAS.getTypeSystem());
     ContentHandler handler = deser.getXmiCasHandler(aCAS, aLenient, aSharedData, aMergePoint);
     xmlReader.setContentHandler(handler);
@@ -205,18 +192,11 @@ public class UimaSerializer
 			boolean aLenient, int aMergePoint, AllowPreexistingFS allow) 
 	throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException
 	{
-    XMLReader xmlReader = null;
-    synchronized( mux ) {
-      if ( !xmlReaderMap.containsKey(Thread.currentThread().getId())) {
-        xmlReader = XMLReaderFactory.createXMLReader();
-        xmlReaderMap.put(Thread.currentThread().getId(), xmlReader);
-      } else {
-        xmlReader = (XMLReader) xmlReaderMap.get(Thread.currentThread().getId());
-      }
-    }
-    if ( xmlReader == null ) {
-      throw new ParserConfigurationException("XMLReaderMap Doesnt Contain a Reader Object for Key:"+Thread.currentThread().getId());
-    }
+	  
+	  if (localXmlReader.get() == null) {
+	    localXmlReader.set(XMLReaderFactory.createXMLReader());
+	  }
+	  XMLReader xmlReader = localXmlReader.get();
     Reader reader = new StringReader(anXmlStr);
     XmiCasDeserializer deser = new XmiCasDeserializer(aCAS.getTypeSystem());
     ContentHandler handler = deser.getXmiCasHandler(aCAS, aLenient, aSharedData, aMergePoint, allow);
@@ -287,10 +267,6 @@ public class UimaSerializer
         fos.close();
       }
     }
-  }
-  
-  public void reset() {
-    xmlReaderMap.clear();
   }
 }	
 
