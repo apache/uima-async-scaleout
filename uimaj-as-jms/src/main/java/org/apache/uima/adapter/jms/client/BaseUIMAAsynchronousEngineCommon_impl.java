@@ -531,6 +531,9 @@ implements UimaAsynchronousEngine, MessageListener
     CasQueueEntry entry = getQueueEntry( Thread.currentThread().getId());
     //  Add this thread entry to the queue of threads waiting for a CAS
     threadQueue.add(entry);
+    //  Create an object that we can use to wait before testing
+    //  availability of a CAS
+    Object localWaitMonitor = new Object();
     if ( entry != null ) {
       while (running) {
         try {
@@ -538,6 +541,16 @@ implements UimaAsynchronousEngine, MessageListener
           // signals CAS availability.
           entry.getSemaphore().acquire();
           if (entry.getCas() == null) {
+            try {
+              //  A CAS may not be available for awhile. Allow CPUs to do other
+              //  work while we wait here for 100 millis before testing CAS 
+              //  availability again.
+              synchronized(localWaitMonitor) {
+                localWaitMonitor.wait(100);
+              }
+            } catch( InterruptedException ex) {
+              
+            }
             continue;
           } else {
             return entry.getCas();
