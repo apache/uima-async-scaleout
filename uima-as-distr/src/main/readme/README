@@ -139,7 +139,17 @@ b. Run the command:
 
   Note: If you use import by name in your deployment descriptor, UIMA AS searches the CLASSPATH
   as well as directories on UIMA_DATAPATH to resolve the import.
-
+ 
+  Note: deployAsyncService.sh/cmd scripts launch UimaBootstrap main program which loads UIMA jars
+  dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-4.1.1, UIMA_HOME/apache-activemq-4.1.1/lib,
+  and UIMA_HOME/apache-activemq-4.1.1/lib/optional directories. If you want to use a different
+  version of ActiveMQ, please set ACTIVEMQ_HOME environment variable to the location of 
+  ActiveMQ you intend to use. Also, if you want to deploy your own annotator that is 
+  installed in a different directory than UIMA_HOME/lib please set the USER_JAR_PATH 
+  environment variable to point to the directories that contain your jar files. You
+  may specify multiple directories using File.pathSeparator; each directory's contained 
+  JARs will be added to the class path. The paths can also contain jar files.   
+  
 3.3 Calling a UIMA AS Asynchronous Service
 
 To test a remote UIMA service you can use the script:
