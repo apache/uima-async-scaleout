@@ -171,7 +171,7 @@ public class TestUimaASExtended extends BaseTestSupport
 	 * 
 	 * @throws Exception
 	 */
-  public void testDeployAggregateWithDelegateCpCException() throws Exception
+	public void testDeployAggregateWithDelegateCpCException() throws Exception
   {
     System.out.println("-------------- testDeployAggregateWithDelegateCpCException -------------");
     //  Instantiate Uima EE Client
@@ -205,8 +205,6 @@ public class TestUimaASExtended extends BaseTestSupport
 
     eeUimaEngine.stop();
     
-    //runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue", 1, CPC_LATCH);
-    //  Add expected exception so that we release CPC Latch
   }
   public void testDeployPrimitiveServiceWithCpCException() throws Exception
   {
@@ -1370,7 +1368,6 @@ public class TestUimaASExtended extends BaseTestSupport
     System.out.println("-------------- testProcessParallelFlowWithDelegateFailure -------------");
 		//	Create Uima EE Client
 		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		UIMAFramework.getLogger().setLevel(Level.FINE);
 		//	Deploy remote service
 		deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotatorWithException.xml");
 		//	Deploy remote service
@@ -1394,7 +1391,6 @@ public class TestUimaASExtended extends BaseTestSupport
   {
     System.out.println("-------------- testErrorThresholdWindow -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    UIMAFramework.getLogger().setLevel(Level.FINE);
     deployService(eeUimaEngine, relativePath+"/Deploy_AggregateAnnotatorWithThresholdWindow.xml");
     Map<String, Object> appCtx = buildContext( String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue" );
     // Set an explicit CPC timeout as exceptions thrown in the 2nd annotator's CPC don't reach the client.
