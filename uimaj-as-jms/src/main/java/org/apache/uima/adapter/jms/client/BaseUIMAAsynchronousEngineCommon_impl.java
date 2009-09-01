@@ -488,11 +488,10 @@ implements UimaAsynchronousEngine, MessageListener
             }
             if ( running ) { // only if the client is still running handle the new cas
               try {
-                entry.getSemaphore().acquire();
-                //  Associate the CAS with the entry and wake up the Consumer thread
+                //  Associate the CAS with the entry and release the semaphore
                 entry.setCas(cas);
               } finally {
-                entry.getSemaphore().release();
+                entry.getSemaphore().release(); 
               }
             } else {
               return; // Client is terminating
@@ -531,33 +530,17 @@ implements UimaAsynchronousEngine, MessageListener
     CasQueueEntry entry = getQueueEntry( Thread.currentThread().getId());
     //  Add this thread entry to the queue of threads waiting for a CAS
     threadQueue.add(entry);
-    //  Create an object that we can use to wait before testing
-    //  availability of a CAS
-    Object localWaitMonitor = new Object();
     if ( entry != null ) {
       while (running) {
-        try {
-          // Wait until the CAS producer adds the CAS to the CasQueueEntry and
-          // signals CAS availability.
-          entry.getSemaphore().acquire();
-          if (entry.getCas() == null) {
-            try {
-              //  A CAS may not be available for awhile. Allow CPUs to do other
-              //  work while we wait here for 100 millis before testing CAS 
-              //  availability again.
-              synchronized(localWaitMonitor) {
-                localWaitMonitor.wait(100);
-              }
-            } catch( InterruptedException ex) {
-              
-            }
-            continue;
-          } else {
-            return entry.getCas();
-          }
-        } finally {
-          entry.getSemaphore().release();
-        }   
+        // Wait until the CAS producer thread adds a CAS to the CasQueueEntry and
+        // releases the semaphore. 
+        entry.getSemaphore().acquire();
+        if (entry.getCas() == null) {
+          //  Should not happen unless we are terminating
+          break;
+        } else {
+          return entry.getCas();
+        }
       } // while
     }
     return null;   // client has terminated
@@ -567,9 +550,6 @@ implements UimaAsynchronousEngine, MessageListener
 	  CasQueueEntry entry = null;
 	  if ( threadRegistrar.containsKey(aThreadId ) ) {
 	   entry = threadRegistrar.get(aThreadId);
-	   if ( entry != null ) {
-	     entry.reset();
-	   }
 	 } else {
 	   entry = new CasQueueEntry(new Semaphore(1));
 	   threadRegistrar.put(aThreadId, entry);
@@ -594,9 +574,6 @@ implements UimaAsynchronousEngine, MessageListener
     }
     public Semaphore getSemaphore() {
       return semaphore;
-    }
-    public void reset() {
-      cas = null;
     }
 	  
 	}
