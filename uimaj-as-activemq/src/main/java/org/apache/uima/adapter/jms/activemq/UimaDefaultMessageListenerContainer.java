@@ -501,7 +501,7 @@ implements ExceptionListener
           __listenerRef.injectTaskExecutor();
           //  Notify Spring Listener that all properties are ready
           __listenerRef.allPropertiesSet();
-          if (isActiveMQDestination()) {
+          if (isActiveMQDestination() && destination != null ) {
             destinationName = ((ActiveMQDestination) destination).getPhysicalName();
           }
           if ( !done ) {
