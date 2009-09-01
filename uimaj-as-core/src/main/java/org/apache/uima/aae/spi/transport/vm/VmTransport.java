@@ -30,6 +30,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsThreadFactory;
@@ -45,6 +47,7 @@ import org.apache.uima.aae.spi.transport.UimaMessage;
 import org.apache.uima.aae.spi.transport.UimaMessageDispatcher;
 import org.apache.uima.aae.spi.transport.UimaMessageListener;
 import org.apache.uima.aae.spi.transport.UimaTransport;
+import org.apache.uima.util.Level;
 
 /**
  * This class provides implementation for internal messaging between collocated Uima AS services.
@@ -53,6 +56,7 @@ import org.apache.uima.aae.spi.transport.UimaTransport;
  *
  */
 public class VmTransport implements UimaTransport {
+  private static final Class CLASS_NAME = VmTransport.class;
 
   private List<SpiListener> spiListeners = new ArrayList<SpiListener>();
 
@@ -135,7 +139,9 @@ public class VmTransport implements UimaTransport {
             while ( threadGroup.activeCount() > 0) {
               synchronized(this) {
                 try {
-                  threadGroup.list();
+                  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+                    threadGroup.list();
+                  }
                   wait(1000);
                 } catch( InterruptedException ex) {
                   
