@@ -40,7 +40,7 @@
 	        <casMultiplier poolSize="5"/> 
           </analysisEngine>
 
-          <remoteAnalysisEngine key="NoOp">
+          <remoteAnalysisEngine key="NoOp" remoteReplyQueueScaleout="3">
 	                  <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="tcp://localhost:8118"/>
 	                  <serializer method="xmi"/>
                       <asyncAggregateErrorConfiguration>
