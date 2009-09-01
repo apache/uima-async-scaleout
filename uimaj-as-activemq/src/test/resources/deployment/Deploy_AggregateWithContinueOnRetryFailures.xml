@@ -44,7 +44,6 @@
           </analysisEngine>
           <remoteAnalysisEngine key="WriterAnnotatorA">
             <inputQueue brokerURL="tcp://localhost:8118" endpoint="WriterAnnotatorA"/>
-            <replyQueue location="local"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="terminate"/>
@@ -63,7 +62,6 @@
           </analysisEngine>
           <remoteAnalysisEngine key="WriterAnnotatorB">
             <inputQueue brokerURL="tcp://localhost:8118" endpoint="WriterAnnotatorB"/>
-            <replyQueue location="local"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="terminate"/>
