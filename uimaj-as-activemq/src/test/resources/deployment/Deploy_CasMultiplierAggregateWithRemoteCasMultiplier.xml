@@ -36,7 +36,6 @@
         <delegates>
 		  <remoteAnalysisEngine key="SimpleCasGenerator">
             <inputQueue brokerURL="tcp://localhost:8118" endpoint="TestMultiplierQueue"/>
-            <replyQueue location="remote" />
             <casMultiplier poolSize="3" initialFsHeapSize="2000000"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="terminate"/>
@@ -47,7 +46,6 @@
 
 		  <remoteAnalysisEngine key="NoOp">
             <inputQueue brokerURL="tcp://localhost:8118" endpoint="NoOpAnnotatorQueue"/>
-            <replyQueue location="remote" />
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="60000" errorAction="disable"/>
