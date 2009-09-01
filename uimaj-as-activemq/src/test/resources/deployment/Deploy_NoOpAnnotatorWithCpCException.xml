@@ -37,7 +37,7 @@
       <analysisEngine>
       <asyncPrimitiveErrorConfiguration>
            <!-- <processCasErrors thresholdCount="4" thresholdWindow="10" thresholdAction="terminate" /> -->
-           <collectionProcessCompleteErrors additionalErrorAction="terminate" />
+           <collectionProcessCompleteErrors additionalErrorAction="continue" />
       </asyncPrimitiveErrorConfiguration>
       </analysisEngine>
     
