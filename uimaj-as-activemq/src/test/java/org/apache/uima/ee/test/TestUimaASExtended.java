@@ -76,7 +76,6 @@ public class TestUimaASExtended extends BaseTestSupport
 
   public BaseTestSupport superRef = null;
   
-
   
   
 	/**
@@ -88,6 +87,28 @@ public class TestUimaASExtended extends BaseTestSupport
 		System.out.println("UIMA_HOME="+System.getenv("UIMA_HOME")+System.getProperty("file.separator")+"bin"+System.getProperty("file.separator")+"dd2spring.xsl");
 	}
 	
+  public void testClientProcess() throws Exception
+  {
+    System.out.println("-------------- testClientProcess -------------");
+    //  Instantiate Uima AS Client
+    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+    //  Deploy Uima AS Primitive Service 
+    deployService(uimaAsEngine, relativePath+"/Deploy_PersonTitleAnnotator.xml");
+    Map<String, Object> appCtx = buildContext( String.valueOf(broker.getMasterConnectorURI()),"PersonTitleAnnotatorQueue" );
+    initialize(uimaAsEngine, appCtx);
+    waitUntilInitialized();
+    
+    for( int i=0; i < 100; i++ ) {
+      CAS cas = uimaAsEngine.getCAS(); 
+      cas.setDocumentText("Some Text");
+      System.out.println("UIMA AS Client Sending CAS#"+(i+1)+" Request to a Service");
+      uimaAsEngine.sendCAS(cas);
+    }
+    uimaAsEngine.collectionProcessingComplete();
+    uimaAsEngine.stop();
+  }
+
+
   public void testClientCpcTimeout() throws Exception
   {
     System.out.println("-------------- testClientCpcTimeout -------------");
