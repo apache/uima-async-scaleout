@@ -19,11 +19,11 @@
 
 package org.apache.uima.aae;
 
-public interface UimaEEAdminContext
-{
-	public void shutdown();
-	public void stopListener(String anEndpoint );
-  public int getConcurrentConsumerCount( String anEndpointName );
+public interface UimaEEAdminContext {
+  public void shutdown();
 
-    
+  public void stopListener(String anEndpoint);
+
+  public int getConcurrentConsumerCount(String anEndpointName);
+
 }

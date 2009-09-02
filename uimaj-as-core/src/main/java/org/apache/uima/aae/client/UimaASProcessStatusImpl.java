@@ -156,26 +156,26 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
   public String getParentCasReferenceId() {
     return parentCasId;
   }
+
   /**
-   * Show class variable names and their current values. Uses
-   * reflection to obtain a list of variables from the class. 
+   * Show class variable names and their current values. Uses reflection to obtain a list of
+   * variables from the class.
    */
   public String toString() {
-    StringBuffer sb = new StringBuffer(); 
-    sb.append( this.getClass().getName() );
-    sb.append( " Object {" );
+    StringBuffer sb = new StringBuffer();
+    sb.append(this.getClass().getName());
+    sb.append(" Object {");
     sb.append(System.getProperty("line.separator"));
-    //  Fetch all variables of this class
+    // Fetch all variables of this class
     Field[] fields = this.getClass().getDeclaredFields();
-    //  Show the name of each variable and its value
-    for ( Field field : fields  ) {
+    // Show the name of each variable and its value
+    for (Field field : fields) {
       sb.append("  ");
       try {
-        sb.append( field.getName() );
+        sb.append(field.getName());
         sb.append(": ");
-        sb.append( field.get(this) );
-      }
-      catch ( IllegalAccessException ex ) {
+        sb.append(field.get(this));
+      } catch (IllegalAccessException ex) {
         System.out.println(ex);
       }
       sb.append(System.getProperty("line.separator"));

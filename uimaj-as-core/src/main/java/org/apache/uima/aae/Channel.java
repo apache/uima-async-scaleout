@@ -19,14 +19,15 @@
 
 package org.apache.uima.aae;
 
-public interface Channel
-{
+public interface Channel {
   public static final int CloseAllChannels = 0;
+
   public static final int InputChannels = 1;
 
   public void stop() throws Exception;
-  public void stop(int channelsToStop) throws Exception;
-	public String getName();
 
-	
+  public void stop(int channelsToStop) throws Exception;
+
+  public String getName();
+
 }

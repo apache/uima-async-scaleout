@@ -52,7 +52,8 @@ public class UimaClassFactory {
   /**
    * Creates a resource specifier from a given file
    * 
-   * @param aFileResource - resource filename
+   * @param aFileResource
+   *          - resource filename
    * @return ResourceSpecifier - new instance
    * 
    * @throws InvalidXMLException
@@ -68,7 +69,7 @@ public class UimaClassFactory {
 
   /**
    * Creates and returns a new default Resource Manager
-   *  
+   * 
    * @return ResourceManager - new instance of a default ResourceManager
    */
   public static ResourceManager produceResourceManager() {
@@ -90,14 +91,19 @@ public class UimaClassFactory {
     return input;
 
   }
+
   /**
    * Produces and initializes new FlowController
    * 
-   * @param aeSpecifier - 
+   * @param aeSpecifier
+   *          -
    * @param aFlowControllerDescriptor
-   * @param anAggregateMergedTypeSystem - Merged type system from all delegates
-   * @param aParentContext - reference to parent context
-   * @param aSofaMappings -
+   * @param anAggregateMergedTypeSystem
+   *          - Merged type system from all delegates
+   * @param aParentContext
+   *          - reference to parent context
+   * @param aSofaMappings
+   *          -
    * @param aJmxManagementInterface
    * @return
    * @throws InvalidXMLException
@@ -117,7 +123,7 @@ public class UimaClassFactory {
         key = fcd.getKey();
       }
 
-      ResourceManager resourceManager = aParentContext.getRootContext().getResourceManager(); 
+      ResourceManager resourceManager = aParentContext.getRootContext().getResourceManager();
       XMLInputSource input = resolveImportByName(aFlowControllerDescriptor, resourceManager);
 
       FlowControllerDescription specifier = (FlowControllerDescription) UIMAFramework

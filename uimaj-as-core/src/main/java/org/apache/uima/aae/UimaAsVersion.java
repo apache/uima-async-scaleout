@@ -25,7 +25,6 @@ package org.apache.uima.aae;
  */
 public class UimaAsVersion {
 
-  
   /**
    * Gets the major version number of the UIMA AS implementation.
    * 

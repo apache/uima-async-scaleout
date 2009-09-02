@@ -80,24 +80,24 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
   public void initialize(int aCasPoolSize, String aContextName) throws Exception {
     Properties performanceTuningSettings = new Properties();
     if (initialHeapSize > 0) {
-      performanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, 
-              Integer.valueOf((int) initialHeapSize).toString());
+      performanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
+              (int) initialHeapSize).toString());
     }
     initialize(aCasPoolSize, aContextName, performanceTuningSettings);
   }
 
   public void initialize(int aCasPoolSize, String aContextName,
           Properties aPerformanceTuningSettings) throws Exception {
- 
+
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
-            "initialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-            "UIMAEE_primary_cas_pool_init__CONFIG", new Object[] { aCasPoolSize, aContextName });
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(), "initialize",
+              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_primary_cas_pool_init__CONFIG",
+              new Object[] { aCasPoolSize, aContextName });
     }
     // Create CAS Pool for incoming messages
     casManager.defineCasPool(aContextName, aCasPoolSize, aPerformanceTuningSettings);
     contextName = aContextName;
-    
+
     setInitialized(true);
     if (aPerformanceTuningSettings != null) {
       System.out.println("CasManager Initialized Cas Pool:" + aContextName + ". Cas Pool Size:"
@@ -140,8 +140,8 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
   }
 
   /**
-   * Constructs and returns a <code>ProcessingResourceMetaData</code> object that contains the
-   * type system, indexes, and type priorities definitions for the CAS.
+   * Constructs and returns a <code>ProcessingResourceMetaData</code> object that contains the type
+   * system, indexes, and type priorities definitions for the CAS.
    * 
    * @return processing resource metadata object containing the relevant parts of the CAS definition
    */

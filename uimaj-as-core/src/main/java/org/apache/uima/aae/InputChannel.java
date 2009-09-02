@@ -22,19 +22,29 @@ package org.apache.uima.aae;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.MessageContext;
 
-public interface InputChannel extends Channel
-{
-	public int getSessionAckMode();
-	public void ackMessage( MessageContext aMessageContext );
-	public String getServerUri();
-	public void setServerUri(String aServerUri);
-	public String getInputQueueName();
-	public ServiceInfo getServiceInfo();
-	public boolean isStopped();
+public interface InputChannel extends Channel {
+  public int getSessionAckMode();
+
+  public void ackMessage(MessageContext aMessageContext);
+
+  public String getServerUri();
+
+  public void setServerUri(String aServerUri);
+
+  public String getInputQueueName();
+
+  public ServiceInfo getServiceInfo();
+
+  public boolean isStopped();
+
   public int getConcurrentConsumerCount();
-  public void destroyListener( String anEndpointName, String aDelegateKey );
-  public void createListener( String aDelegateKey ) throws Exception;
+
+  public void destroyListener(String anEndpointName, String aDelegateKey);
+
+  public void createListener(String aDelegateKey) throws Exception;
+
   public boolean isFailed(String aDelegateKey);
-  public boolean isListenerForDestination( String anEndpointName);
+
+  public boolean isListenerForDestination(String anEndpointName);
 
 }

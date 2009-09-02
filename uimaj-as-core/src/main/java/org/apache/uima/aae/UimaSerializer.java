@@ -26,8 +26,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.Writer;
-//import java.util.concurrent.ConcurrentHashMap;
+import java.io.Writer; //import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
@@ -53,220 +52,187 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-public class UimaSerializer
-{
+public class UimaSerializer {
   private final ThreadLocal<XMLReader> localXmlReader = new ThreadLocal<XMLReader>();
 
-	/**
-	 * Serializes XCas into CAS
-	 * 
-	 * @param anXcas
-	 * @param aCas
-	 * @throws Exception
-	 */
-	public OutOfTypeSystemData deSerialiazeFromXCAS(String anXcas, CAS aCas) throws Exception
-	{
-		OutOfTypeSystemData otsd = new OutOfTypeSystemData();
-		TypeSystem typesToLoad2 = aCas.getTypeSystem();
-		ByteArrayInputStream bis = new ByteArrayInputStream(anXcas.getBytes());
-		XCASDeserializer deser2 = new XCASDeserializer(typesToLoad2);
-		ContentHandler deserHandler2 = deser2.getXCASHandler(aCas, otsd);
+  /**
+   * Serializes XCas into CAS
+   * 
+   * @param anXcas
+   * @param aCas
+   * @throws Exception
+   */
+  public OutOfTypeSystemData deSerialiazeFromXCAS(String anXcas, CAS aCas) throws Exception {
+    OutOfTypeSystemData otsd = new OutOfTypeSystemData();
+    TypeSystem typesToLoad2 = aCas.getTypeSystem();
+    ByteArrayInputStream bis = new ByteArrayInputStream(anXcas.getBytes());
+    XCASDeserializer deser2 = new XCASDeserializer(typesToLoad2);
+    ContentHandler deserHandler2 = deser2.getXCASHandler(aCas, otsd);
 
-		SAXParserFactory fact2 = SAXParserFactory.newInstance();
-		SAXParser parser2;
-		parser2 = fact2.newSAXParser();
-		XMLReader xmlReader2 = parser2.getXMLReader();
-		xmlReader2.setContentHandler(deserHandler2);
-		xmlReader2.parse(new InputSource(bis));
-		return otsd;
-	}
+    SAXParserFactory fact2 = SAXParserFactory.newInstance();
+    SAXParser parser2;
+    parser2 = fact2.newSAXParser();
+    XMLReader xmlReader2 = parser2.getXMLReader();
+    xmlReader2.setContentHandler(deserHandler2);
+    xmlReader2.parse(new InputSource(bis));
+    return otsd;
+  }
 
-	/**
-	 * Serializes CAS into a given OutputStream
-	 * 
-	 * @param stream
-	 * @param aCAS
-	 * @param encoding
-	 * @param typeSystem
-	 * @throws IOException
-	 * @throws SAXException
-	 */
-	public void serializeToXCAS(OutputStream stream, CAS aCAS, String encoding, TypeSystem typeSystem, OutOfTypeSystemData otsd) throws IOException, SAXException
-	{
+  /**
+   * Serializes CAS into a given OutputStream
+   * 
+   * @param stream
+   * @param aCAS
+   * @param encoding
+   * @param typeSystem
+   * @throws IOException
+   * @throws SAXException
+   */
+  public void serializeToXCAS(OutputStream stream, CAS aCAS, String encoding,
+          TypeSystem typeSystem, OutOfTypeSystemData otsd) throws IOException, SAXException {
 
-		if (typeSystem == null)
-			typeSystem = aCAS.getTypeSystem();
-		XMLSerializer xmlSer = new XMLSerializer(stream, false);
-		if (encoding != null)
-			xmlSer.setOutputProperty(OutputKeys.ENCODING, encoding);
-		XCASSerializer ser = new XCASSerializer(typeSystem);
-		ser.serialize(aCAS, xmlSer.getContentHandler(), false, otsd);
-	}
+    if (typeSystem == null)
+      typeSystem = aCAS.getTypeSystem();
+    XMLSerializer xmlSer = new XMLSerializer(stream, false);
+    if (encoding != null)
+      xmlSer.setOutputProperty(OutputKeys.ENCODING, encoding);
+    XCASSerializer ser = new XCASSerializer(typeSystem);
+    ser.serialize(aCAS, xmlSer.getContentHandler(), false, otsd);
+  }
 
-	/**
-	 * Serializes CAS into a given OutputStream
-	 * 
-	 * @param stream
-	 * @param aCAS
-	 * @param encoding
-	 * @param typeSystem
-	 * @throws IOException
-	 * @throws SAXException
-	 */
-	public void serializeToXMI(OutputStream stream, CAS aCAS, String encoding, TypeSystem typeSystem, OutOfTypeSystemData otsd) throws IOException, SAXException
-	{
+  /**
+   * Serializes CAS into a given OutputStream
+   * 
+   * @param stream
+   * @param aCAS
+   * @param encoding
+   * @param typeSystem
+   * @throws IOException
+   * @throws SAXException
+   */
+  public void serializeToXMI(OutputStream stream, CAS aCAS, String encoding, TypeSystem typeSystem,
+          OutOfTypeSystemData otsd) throws IOException, SAXException {
 
-		if (typeSystem == null)
-			typeSystem = aCAS.getTypeSystem();
-		XMLSerializer xmlSer = new XMLSerializer(stream, false);
-		if (encoding != null)
-			xmlSer.setOutputProperty(OutputKeys.ENCODING, encoding);
+    if (typeSystem == null)
+      typeSystem = aCAS.getTypeSystem();
+    XMLSerializer xmlSer = new XMLSerializer(stream, false);
+    if (encoding != null)
+      xmlSer.setOutputProperty(OutputKeys.ENCODING, encoding);
 
-		XmiCasSerializer ser = new XmiCasSerializer(typeSystem);
-		
-		ser.serialize(aCAS, xmlSer.getContentHandler());
-	}
+    XmiCasSerializer ser = new XmiCasSerializer(typeSystem);
 
-	/**
-	 * Utility method for serializing a CAS to an XMI String
-	 */
-	public String serializeCasToXmi(CAS aCAS, XmiSerializationSharedData serSharedData) throws Exception
-	{
-		Writer writer = new StringWriter();
-		try
-		{
-			XMLSerializer xmlSer = new XMLSerializer(writer, false);
-			XmiCasSerializer ser = new XmiCasSerializer(aCAS.getTypeSystem()); 
-			ser.serialize(aCAS, xmlSer.getContentHandler(), null, serSharedData);
-			return writer.toString();
-		}
-		catch( SAXException e)
-		{
-			throw e;
-		}
-		finally
-		{
-			writer.close();
-		}
-	}
-	
-	public String serializeCasToXmi(CAS aCAS, XmiSerializationSharedData serSharedData, Marker aMarker) throws Exception
-	{
-		Writer writer = new StringWriter();
-		try
-		{
-			XMLSerializer xmlSer = new XMLSerializer(writer, false);
-			XmiCasSerializer ser = new XmiCasSerializer(aCAS.getTypeSystem()); 
-			ser.serialize(aCAS, xmlSer.getContentHandler(), null, serSharedData, aMarker);
-			return writer.toString();
-		}
-		catch( SAXException e)
-		{
-			throw e;
-		}
-		finally
-		{
-			writer.close();
-		}
-	}
-	
-	/** Utility method for deserializing a CAS from an XMI String */
-	public void deserializeCasFromXmi(String anXmlStr, CAS aCAS, XmiSerializationSharedData aSharedData, 
-			boolean aLenient, int aMergePoint) 
-	throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException
-	{
-		
-	  if (localXmlReader.get() == null) {
-	        localXmlReader.set(XMLReaderFactory.createXMLReader());
-	  }
-	  XMLReader xmlReader = XMLReaderFactory.createXMLReader(); // localXmlReader.get();
+    ser.serialize(aCAS, xmlSer.getContentHandler());
+  }
 
-	  Reader reader = new StringReader(anXmlStr);
+  /**
+   * Utility method for serializing a CAS to an XMI String
+   */
+  public String serializeCasToXmi(CAS aCAS, XmiSerializationSharedData serSharedData)
+          throws Exception {
+    Writer writer = new StringWriter();
+    try {
+      XMLSerializer xmlSer = new XMLSerializer(writer, false);
+      XmiCasSerializer ser = new XmiCasSerializer(aCAS.getTypeSystem());
+      ser.serialize(aCAS, xmlSer.getContentHandler(), null, serSharedData);
+      return writer.toString();
+    } catch (SAXException e) {
+      throw e;
+    } finally {
+      writer.close();
+    }
+  }
+
+  public String serializeCasToXmi(CAS aCAS, XmiSerializationSharedData serSharedData, Marker aMarker)
+          throws Exception {
+    Writer writer = new StringWriter();
+    try {
+      XMLSerializer xmlSer = new XMLSerializer(writer, false);
+      XmiCasSerializer ser = new XmiCasSerializer(aCAS.getTypeSystem());
+      ser.serialize(aCAS, xmlSer.getContentHandler(), null, serSharedData, aMarker);
+      return writer.toString();
+    } catch (SAXException e) {
+      throw e;
+    } finally {
+      writer.close();
+    }
+  }
+
+  /** Utility method for deserializing a CAS from an XMI String */
+  public void deserializeCasFromXmi(String anXmlStr, CAS aCAS,
+          XmiSerializationSharedData aSharedData, boolean aLenient, int aMergePoint)
+          throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
+
+    if (localXmlReader.get() == null) {
+      localXmlReader.set(XMLReaderFactory.createXMLReader());
+    }
+    XMLReader xmlReader = XMLReaderFactory.createXMLReader(); // localXmlReader.get();
+
+    Reader reader = new StringReader(anXmlStr);
     XmiCasDeserializer deser = new XmiCasDeserializer(aCAS.getTypeSystem());
     ContentHandler handler = deser.getXmiCasHandler(aCAS, aLenient, aSharedData, aMergePoint);
     xmlReader.setContentHandler(handler);
     xmlReader.parse(new InputSource(reader));
-	}
+  }
 
-	public void deserializeCasFromXmi(String anXmlStr, CAS aCAS, XmiSerializationSharedData aSharedData, 
-			boolean aLenient, int aMergePoint, AllowPreexistingFS allow) 
-	throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException
-	{
-	  
-	  if (localXmlReader.get() == null) {
-	    localXmlReader.set(XMLReaderFactory.createXMLReader());
-	  }
-	  XMLReader xmlReader = localXmlReader.get();
+  public void deserializeCasFromXmi(String anXmlStr, CAS aCAS,
+          XmiSerializationSharedData aSharedData, boolean aLenient, int aMergePoint,
+          AllowPreexistingFS allow) throws FactoryConfigurationError, ParserConfigurationException,
+          SAXException, IOException {
+
+    if (localXmlReader.get() == null) {
+      localXmlReader.set(XMLReaderFactory.createXMLReader());
+    }
+    XMLReader xmlReader = localXmlReader.get();
     Reader reader = new StringReader(anXmlStr);
     XmiCasDeserializer deser = new XmiCasDeserializer(aCAS.getTypeSystem());
-    ContentHandler handler = deser.getXmiCasHandler(aCAS, aLenient, aSharedData, aMergePoint, allow);
-    xmlReader.setContentHandler(handler); 
+    ContentHandler handler = deser
+            .getXmiCasHandler(aCAS, aLenient, aSharedData, aMergePoint, allow);
+    xmlReader.setContentHandler(handler);
     xmlReader.parse(new InputSource(reader));
-	}
+  }
+
   /** Utility method for deserializing a CAS from a binary */
-  public void deserializeCasFromBinary(byte[] binarySource, CAS aCAS) throws Exception
-  {
+  public void deserializeCasFromBinary(byte[] binarySource, CAS aCAS) throws Exception {
     ByteArrayInputStream fis = null;
-    try
-    {
-      fis =  new ByteArrayInputStream(binarySource);
+    try {
+      fis = new ByteArrayInputStream(binarySource);
       Serialization.deserializeCAS(aCAS, fis);
-    }
-    catch( Exception e)
-    {
+    } catch (Exception e) {
       throw e;
-    }
-    finally
-    {
-      if ( fis != null )
-      {
+    } finally {
+      if (fis != null) {
         fis.close();
       }
     }
   }
 
-  public byte[] serializeCasToBinary(CAS aCAS) throws Exception
-  {
+  public byte[] serializeCasToBinary(CAS aCAS) throws Exception {
     ByteArrayOutputStream fos = null;
-    try
-    {
+    try {
       fos = new ByteArrayOutputStream();
       Serialization.serializeCAS(aCAS, fos);
       return fos.toByteArray();
-    }
-    catch( Exception e)
-    {
+    } catch (Exception e) {
       throw e;
-    }
-    finally
-    {
-      if ( fos != null)
-      {
+    } finally {
+      if (fos != null) {
         fos.close();
       }
     }
   }
 
-  public byte[] serializeCasToBinary(CAS aCAS, Marker aMark) throws Exception
-  {
+  public byte[] serializeCasToBinary(CAS aCAS, Marker aMark) throws Exception {
     ByteArrayOutputStream fos = null;
-    try
-    {
+    try {
       fos = new ByteArrayOutputStream();
       Serialization.serializeCAS(aCAS, fos, aMark);
       return fos.toByteArray();
-    }
-    catch( Exception e)
-    {
+    } catch (Exception e) {
       throw e;
-    }
-    finally
-    {
-      if ( fos != null)
-      {
+    } finally {
+      if (fos != null) {
         fos.close();
       }
     }
   }
-}	
-
+}
