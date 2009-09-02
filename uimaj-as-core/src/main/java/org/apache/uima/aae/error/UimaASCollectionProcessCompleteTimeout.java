@@ -19,25 +19,20 @@
 
 package org.apache.uima.aae.error;
 
-public class UimaASCollectionProcessCompleteTimeout extends Exception
-{
-	public UimaASCollectionProcessCompleteTimeout()
-	{
-	}
+public class UimaASCollectionProcessCompleteTimeout extends Exception {
+  public UimaASCollectionProcessCompleteTimeout() {
+  }
 
-	public UimaASCollectionProcessCompleteTimeout(String message)
-	{
-		super(message);
-	}
+  public UimaASCollectionProcessCompleteTimeout(String message) {
+    super(message);
+  }
 
-	public UimaASCollectionProcessCompleteTimeout(Throwable cause)
-	{
-		super(cause);
-	}
+  public UimaASCollectionProcessCompleteTimeout(Throwable cause) {
+    super(cause);
+  }
 
-	public UimaASCollectionProcessCompleteTimeout(String message, Throwable cause)
-	{
-		super(message, cause);
-	}
+  public UimaASCollectionProcessCompleteTimeout(String message, Throwable cause) {
+    super(message, cause);
+  }
 
 }

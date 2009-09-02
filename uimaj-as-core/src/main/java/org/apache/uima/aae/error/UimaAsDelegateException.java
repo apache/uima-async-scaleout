@@ -18,14 +18,14 @@
  */
 package org.apache.uima.aae.error;
 
-public class UimaAsDelegateException extends Exception  {
+public class UimaAsDelegateException extends Exception {
 
   /**
    * 
    */
   private static final long serialVersionUID = 1L;
-  public UimaAsDelegateException(String message, Throwable cause)
-  {
+
+  public UimaAsDelegateException(String message, Throwable cause) {
     super(message, cause);
   }
 

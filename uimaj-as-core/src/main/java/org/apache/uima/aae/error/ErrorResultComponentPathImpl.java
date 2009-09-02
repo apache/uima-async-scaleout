@@ -23,33 +23,27 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ErrorResultComponentPathImpl implements ErrorResultComponentPath
-{
-	private static final long serialVersionUID = 100262915217554060L;
+public class ErrorResultComponentPathImpl implements ErrorResultComponentPath {
+  private static final long serialVersionUID = 100262915217554060L;
 
-	private List pathList = new ArrayList();
-	
-	public void add(String aPath)
-	{
-		this.add(aPath, pathList.size());
-	}
+  private List pathList = new ArrayList();
 
-	public void add(String aPath, int anInsertPosition)
-	{
-		pathList.add(anInsertPosition, aPath);
-	}
+  public void add(String aPath) {
+    this.add(aPath, pathList.size());
+  }
 
-	public String get(int aPosition)
-	{
-		if ( aPosition >= 0 && aPosition <= pathList.size())
-		{
-			return (String)pathList.get(aPosition);
-		}
-		return null;
-	}
+  public void add(String aPath, int anInsertPosition) {
+    pathList.add(anInsertPosition, aPath);
+  }
 
-	public Iterator iterator()
-	{
-		return pathList.iterator();
-	}
+  public String get(int aPosition) {
+    if (aPosition >= 0 && aPosition <= pathList.size()) {
+      return (String) pathList.get(aPosition);
+    }
+    return null;
+  }
+
+  public Iterator iterator() {
+    return pathList.iterator();
+  }
 }

@@ -30,38 +30,35 @@ import org.apache.uima.aae.error.UimaEEServiceException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.util.Level;
 
-public class DefaultDelegateErrorHandler extends ErrorHandlerBase implements ErrorHandler
-{
-	private static final Class CLASS_NAME = DefaultDelegateErrorHandler.class;
+public class DefaultDelegateErrorHandler extends ErrorHandlerBase implements ErrorHandler {
+  private static final Class CLASS_NAME = DefaultDelegateErrorHandler.class;
 
-	public boolean handleError(Throwable t, ErrorContext anErrorContext, AnalysisEngineController aController)
-	{
-		
-		if ( t instanceof UimaEEServiceException)
-		{
-			t.printStackTrace();
+  public boolean handleError(Throwable t, ErrorContext anErrorContext,
+          AnalysisEngineController aController) {
+
+    if (t instanceof UimaEEServiceException) {
+      t.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError", 
-					UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", new Object[] { t });
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { t });
       }
-			if ( anErrorContext.containsKey(AsynchAEMessage.Endpoint) )
-			{
-				Endpoint endpoint = (Endpoint)anErrorContext.get(AsynchAEMessage.Endpoint);
-				String casReferenceId = (String)anErrorContext.get(AsynchAEMessage.CasReference);
-        String parentCasReferenceId = (String)anErrorContext.get(AsynchAEMessage.InputCasReference);
+      if (anErrorContext.containsKey(AsynchAEMessage.Endpoint)) {
+        Endpoint endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
+        String casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
+        String parentCasReferenceId = (String) anErrorContext
+                .get(AsynchAEMessage.InputCasReference);
 
-				try
-				{
-					aController.getOutputChannel().sendReply(t, casReferenceId, parentCasReferenceId, endpoint, AsynchAEMessage.Process );
-				}
-				catch( Throwable e)
-				{
-					e.printStackTrace();
-				}
-			}
-			return true;
-		}
-		return false;
-	}
+        try {
+          aController.getOutputChannel().sendReply(t, casReferenceId, parentCasReferenceId,
+                  endpoint, AsynchAEMessage.Process);
+        } catch (Throwable e) {
+          e.printStackTrace();
+        }
+      }
+      return true;
+    }
+    return false;
+  }
 
 }

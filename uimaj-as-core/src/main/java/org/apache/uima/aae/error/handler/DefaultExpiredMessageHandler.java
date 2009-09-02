@@ -34,57 +34,51 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.util.Level;
 
 /**
- * ErrorHandler that handles expired messages. These are reply messages that arrive after
- * the request message times or a message that has already been processed.
+ * ErrorHandler that handles expired messages. These are reply messages that arrive after the
+ * request message times or a message that has already been processed.
  * 
- *
+ * 
  */
-public class DefaultExpiredMessageHandler extends ErrorHandlerBase implements ErrorHandler 
-{
-	
-	private static final Class CLASS_NAME = DefaultExpiredMessageHandler.class;
+public class DefaultExpiredMessageHandler extends ErrorHandlerBase implements ErrorHandler {
 
-	public DefaultExpiredMessageHandler( Map anEndpointThreasholdMap )
-	{
-		super(anEndpointThreasholdMap);
-	}
-	public DefaultExpiredMessageHandler( )
-	{
-	}
-	public boolean handleError(Throwable t, ErrorContext anErrorContext, AnalysisEngineController aController)
-	{
-		if (t instanceof ExpiredMessageException)
-		{
-			String endpointName=null;
-			String casReferenceId=null;
-			if ( anErrorContext.containsKey(AsynchAEMessage.Endpoint) )
-			{
-				endpointName = (String) anErrorContext.get(AsynchAEMessage.Endpoint);
-				try
-				{
-					if ( anErrorContext.containsKey(AsynchAEMessage.CasReference ) )
-					{
-						casReferenceId = (String)anErrorContext.get( AsynchAEMessage.CasReference);
-					}
-				}
-				catch ( Exception e)
-				{
-					//System.out.println(Thread.currentThread().getName() + " DefaultTimeoutHandler Exception while sending request for metadata to endpoint::" + endpointName);
-					e.printStackTrace();
-					// Log this Exception and return false. Let the Default
-					// Catch All
-					// Handler handle this situation
-				}
-			}
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-	                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_expired_message__INFO",
-	                new Object[] { endpointName, casReferenceId  });
+  private static final Class CLASS_NAME = DefaultExpiredMessageHandler.class;
+
+  public DefaultExpiredMessageHandler(Map anEndpointThreasholdMap) {
+    super(anEndpointThreasholdMap);
+  }
+
+  public DefaultExpiredMessageHandler() {
+  }
+
+  public boolean handleError(Throwable t, ErrorContext anErrorContext,
+          AnalysisEngineController aController) {
+    if (t instanceof ExpiredMessageException) {
+      String endpointName = null;
+      String casReferenceId = null;
+      if (anErrorContext.containsKey(AsynchAEMessage.Endpoint)) {
+        endpointName = (String) anErrorContext.get(AsynchAEMessage.Endpoint);
+        try {
+          if (anErrorContext.containsKey(AsynchAEMessage.CasReference)) {
+            casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
+          }
+        } catch (Exception e) {
+          // System.out.println(Thread.currentThread().getName() +
+          // " DefaultTimeoutHandler Exception while sending request for metadata to endpoint::" +
+          // endpointName);
+          e.printStackTrace();
+          // Log this Exception and return false. Let the Default
+          // Catch All
+          // Handler handle this situation
+        }
       }
-			return true;
-		}
-		return false;
-	}
-
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleError",
+                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_expired_message__INFO",
+                new Object[] { endpointName, casReferenceId });
+      }
+      return true;
+    }
+    return false;
+  }
 
 }

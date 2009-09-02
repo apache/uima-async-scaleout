@@ -19,25 +19,20 @@
 
 package org.apache.uima.aae.error;
 
-public class UimaASProcessCasTimeout extends Exception
-{
-	public UimaASProcessCasTimeout()
-	{
-	}
+public class UimaASProcessCasTimeout extends Exception {
+  public UimaASProcessCasTimeout() {
+  }
 
-	public UimaASProcessCasTimeout(String message)
-	{
-		super(message);
-	}
+  public UimaASProcessCasTimeout(String message) {
+    super(message);
+  }
 
-	public UimaASProcessCasTimeout(Throwable cause)
-	{
-		super(cause);
-	}
+  public UimaASProcessCasTimeout(Throwable cause) {
+    super(cause);
+  }
 
-	public UimaASProcessCasTimeout(String message, Throwable cause)
-	{
-		super(message, cause);
-	}
+  public UimaASProcessCasTimeout(String message, Throwable cause) {
+    super(message, cause);
+  }
 
 }

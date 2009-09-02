@@ -27,43 +27,36 @@ import java.util.Map;
 
 import org.apache.uima.aae.controller.AnalysisEngineController;
 
-public class ErrorHandlerChain extends LinkedList
-{
-	public ErrorHandlerChain( List aChainofHandlers )
-	{
-		this.addAll(aChainofHandlers);
-	}
-	
-	public Map getThresholds()
-	{
-		Map thresholds = new HashMap();
-		Iterator iterator = this.iterator();
-		while( iterator.hasNext() )
-		{
-			ErrorHandler handler = ((ErrorHandler)iterator.next());
-			Map thresholdMap = handler.getEndpointThresholdMap();
-			//	merge
-			thresholds.putAll(thresholdMap);
-		}
-		return thresholds;
-	}
-	public void handle( Throwable t, ErrorContext anErrorContext, AnalysisEngineController aController )
-	{
-		boolean errorHandled = false;
-		if ( size() > 0)
-		{
-			Throwable cause = t;
-			if ( t instanceof AsynchAEException && t.getCause() != null  )
-			{
-				cause = t.getCause();
-			}
-			Iterator iterator = this.iterator();
-			while( errorHandled == false && iterator.hasNext() )
-			{
-				ErrorHandler handler = ((ErrorHandler)iterator.next());
-				errorHandled = handler.handleError( cause, anErrorContext, aController );
-			}
-		}
-	}
+public class ErrorHandlerChain extends LinkedList {
+  public ErrorHandlerChain(List aChainofHandlers) {
+    this.addAll(aChainofHandlers);
+  }
+
+  public Map getThresholds() {
+    Map thresholds = new HashMap();
+    Iterator iterator = this.iterator();
+    while (iterator.hasNext()) {
+      ErrorHandler handler = ((ErrorHandler) iterator.next());
+      Map thresholdMap = handler.getEndpointThresholdMap();
+      // merge
+      thresholds.putAll(thresholdMap);
+    }
+    return thresholds;
+  }
+
+  public void handle(Throwable t, ErrorContext anErrorContext, AnalysisEngineController aController) {
+    boolean errorHandled = false;
+    if (size() > 0) {
+      Throwable cause = t;
+      if (t instanceof AsynchAEException && t.getCause() != null) {
+        cause = t.getCause();
+      }
+      Iterator iterator = this.iterator();
+      while (errorHandled == false && iterator.hasNext()) {
+        ErrorHandler handler = ((ErrorHandler) iterator.next());
+        errorHandled = handler.handleError(cause, anErrorContext, aController);
+      }
+    }
+  }
 
 }

@@ -32,36 +32,32 @@ import org.apache.uima.aae.error.UnknownDestinationException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.util.Level;
 
-public class UnknownDestinationHandler extends ErrorHandlerBase implements ErrorHandler
-{
-private static final Class CLASS_NAME = UnknownDestinationHandler.class;
+public class UnknownDestinationHandler extends ErrorHandlerBase implements ErrorHandler {
+  private static final Class CLASS_NAME = UnknownDestinationHandler.class;
 
-	public UnknownDestinationHandler(Map anEndpointThreasholdMap)
-	{
-		super(anEndpointThreasholdMap);
-	}
+  public UnknownDestinationHandler(Map anEndpointThreasholdMap) {
+    super(anEndpointThreasholdMap);
+  }
 
-	public UnknownDestinationHandler()
-	{
-	}
+  public UnknownDestinationHandler() {
+  }
 
-	public boolean handleError(Throwable t, ErrorContext anErrorContext, AnalysisEngineController aController)
-	{
-		if (t instanceof UnknownDestinationException)
-		{
-			String casReferenceId = null;
-			if (anErrorContext.containsKey(AsynchAEMessage.CasReference))
-			{
-				casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
-			}
+  public boolean handleError(Throwable t, ErrorContext anErrorContext,
+          AnalysisEngineController aController) {
+    if (t instanceof UnknownDestinationException) {
+      String casReferenceId = null;
+      if (anErrorContext.containsKey(AsynchAEMessage.CasReference)) {
+        casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
+      }
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_handling_bad_destination__INFO", new Object[] { null, casReferenceId });
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleError",
+                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_handling_bad_destination__INFO",
+                new Object[] { null, casReferenceId });
       }
 
-			return true;
-		}
-		return false;
-	}
-
+      return true;
+    }
+    return false;
+  }
 
 }

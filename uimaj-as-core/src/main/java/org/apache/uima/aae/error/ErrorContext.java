@@ -22,45 +22,45 @@ package org.apache.uima.aae.error;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class ErrorContext
-{
-	public static final String THROWABLE_ERROR="ThrowableError";
-	private boolean handleSilently = false;
-	
-	private HashMap contextMap = new HashMap();
-	
-	public void add( HashMap aCtx)
-	{
-		contextMap.putAll(aCtx);
-	}
-	public void add( Object key, Object value )
-	{
-		contextMap.put(key, value);
-	}
-	
-	public void handleSilently(boolean silent ) {
-	  handleSilently = silent;
-	}
-	public boolean silentHandling() {
-	  return handleSilently;
-	}
-	public Object get( String key )
-	{
-		if ( contextMap.containsKey(key))
-		{
-			return contextMap.get(key);
-		}
-		return null;
-	}
-	public boolean containsKey( String key )
-	{
-		return contextMap.containsKey(key);
-	}
-	public Iterator getIterator()
-	{
-		return contextMap.keySet().iterator();
-	}
-	public void remove(String key) {
-	  contextMap.remove(key);
-	}
+public class ErrorContext {
+  public static final String THROWABLE_ERROR = "ThrowableError";
+
+  private boolean handleSilently = false;
+
+  private HashMap contextMap = new HashMap();
+
+  public void add(HashMap aCtx) {
+    contextMap.putAll(aCtx);
+  }
+
+  public void add(Object key, Object value) {
+    contextMap.put(key, value);
+  }
+
+  public void handleSilently(boolean silent) {
+    handleSilently = silent;
+  }
+
+  public boolean silentHandling() {
+    return handleSilently;
+  }
+
+  public Object get(String key) {
+    if (contextMap.containsKey(key)) {
+      return contextMap.get(key);
+    }
+    return null;
+  }
+
+  public boolean containsKey(String key) {
+    return contextMap.containsKey(key);
+  }
+
+  public Iterator getIterator() {
+    return contextMap.keySet().iterator();
+  }
+
+  public void remove(String key) {
+    contextMap.remove(key);
+  }
 }

@@ -19,25 +19,20 @@
 
 package org.apache.uima.aae.error;
 
-public class UimaASPingTimeout extends Exception
-{
-	public UimaASPingTimeout()
-	{
-	}
+public class UimaASPingTimeout extends Exception {
+  public UimaASPingTimeout() {
+  }
 
-	public UimaASPingTimeout(String message)
-	{
-		super(message);
-	}
+  public UimaASPingTimeout(String message) {
+    super(message);
+  }
 
-	public UimaASPingTimeout(Throwable cause)
-	{
-		super(cause);
-	}
+  public UimaASPingTimeout(Throwable cause) {
+    super(cause);
+  }
 
-	public UimaASPingTimeout(String message, Throwable cause)
-	{
-		super(message, cause);
-	}
+  public UimaASPingTimeout(String message, Throwable cause) {
+    super(message, cause);
+  }
 
 }

@@ -33,119 +33,102 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.util.Level;
 
-public class DefaultHandler extends ErrorHandlerBase implements ErrorHandler
-{
-	private static final Class CLASS_NAME = DefaultHandler.class;
+public class DefaultHandler extends ErrorHandlerBase implements ErrorHandler {
+  private static final Class CLASS_NAME = DefaultHandler.class;
 
-	public DefaultHandler()
-	{
-	}
+  public DefaultHandler() {
+  }
 
-	public DefaultHandler( Map anEndpointThreasholdMap )
-	{
-		super(anEndpointThreasholdMap);
-	}
-    
-	private Endpoint getDestination( AnalysisEngineController aController, ErrorContext anErrorContext)
-	{
-		Endpoint endpoint = null;
-		String casReferenceId = (String)anErrorContext.get( AsynchAEMessage.CasReference);
-		if ( aController instanceof AggregateAnalysisEngineController )
-		{
-			endpoint = ((AggregateAnalysisEngineController)aController).getMessageOrigin(casReferenceId);
+  public DefaultHandler(Map anEndpointThreasholdMap) {
+    super(anEndpointThreasholdMap);
+  }
 
-			//	Remove the entry from the Message Origin Map since it is no longer needed. The CAS will be
-			//	dropped as soon as the exception is sent up to the client.
-			if (endpoint != null && aController.isTopLevelComponent())
-			{
-				((AggregateAnalysisEngineController)aController).removeMessageOrigin( casReferenceId);
-			}
-		}
-		else if ( anErrorContext.containsKey(AsynchAEMessage.Endpoint))
-		{
-			endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
-		}
-		return endpoint;
-	}
-	public boolean handleError(Throwable t, ErrorContext anErrorContext, AnalysisEngineController aController)
-	{
-		String casReferenceId = null;
-		Endpoint endpoint = null;
-		String key = null;
-		try
-		{
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError", 
-					UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", t);
+  private Endpoint getDestination(AnalysisEngineController aController, ErrorContext anErrorContext) {
+    Endpoint endpoint = null;
+    String casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
+    if (aController instanceof AggregateAnalysisEngineController) {
+      endpoint = ((AggregateAnalysisEngineController) aController).getMessageOrigin(casReferenceId);
+
+      // Remove the entry from the Message Origin Map since it is no longer needed. The CAS will be
+      // dropped as soon as the exception is sent up to the client.
+      if (endpoint != null && aController.isTopLevelComponent()) {
+        ((AggregateAnalysisEngineController) aController).removeMessageOrigin(casReferenceId);
       }
-			endpoint = getDestination(aController, anErrorContext);
-      casReferenceId = (String)anErrorContext.get( AsynchAEMessage.CasReference);
-      String parentCasReferenceId = (String)anErrorContext.get( AsynchAEMessage.InputCasReference);
+    } else if (anErrorContext.containsKey(AsynchAEMessage.Endpoint)) {
+      endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
+    }
+    return endpoint;
+  }
 
-			//	Notify the parent of the exception
-			if ( endpoint != null && !endpoint.isCasMultiplier())
-			{
-				aController.getOutputChannel().sendReply(t, casReferenceId, parentCasReferenceId, endpoint, AsynchAEMessage.Process);
+  public boolean handleError(Throwable t, ErrorContext anErrorContext,
+          AnalysisEngineController aController) {
+    String casReferenceId = null;
+    Endpoint endpoint = null;
+    String key = null;
+    try {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", t);
+      }
+      endpoint = getDestination(aController, anErrorContext);
+      casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
+      String parentCasReferenceId = (String) anErrorContext.get(AsynchAEMessage.InputCasReference);
 
-				//	Lookup Delegate's key
-				key = super.getDelegateKey(endpoint, aController);
-				
-				if (super.exceedsThreshold(Monitor.ErrorCount, key, aController))
-				{
-					String action = getAction(Monitor.ErrorCount, key);
-					aController.takeAction( action, key, anErrorContext);
-				}
-			}
-			else if ( endpoint == null)
-			{
+      // Notify the parent of the exception
+      if (endpoint != null && !endpoint.isCasMultiplier()) {
+        aController.getOutputChannel().sendReply(t, casReferenceId, parentCasReferenceId, endpoint,
+                AsynchAEMessage.Process);
+
+        // Lookup Delegate's key
+        key = super.getDelegateKey(endpoint, aController);
+
+        if (super.exceedsThreshold(Monitor.ErrorCount, key, aController)) {
+          String action = getAction(Monitor.ErrorCount, key);
+          aController.takeAction(action, key, anErrorContext);
+        }
+      } else if (endpoint == null) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "handleError", 
-						UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_no_endpoint__INFO", new Object[] { aController.getName() });
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+                  "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_no_endpoint__INFO", new Object[] { aController.getName() });
         }
-			}
-		}
-		catch( Exception e)
-		{
-			e.printStackTrace();
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError", 
-					UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", e);
       }
-		}
-		finally
-		{
-			try
-			{
-				//	Only top level component can Drop the CAS. 
-				if ( aController.isTopLevelComponent() )
-				{
-					aController.takeAction( ErrorHandler.DROPCAS, key, anErrorContext);
-				}			
-				else if ( casReferenceId != null && aController instanceof AggregateAnalysisEngineController )
-				{
-					((AggregateAnalysisEngineController)aController).dropFlow(casReferenceId, true);
-					((AggregateAnalysisEngineController)aController).removeMessageOrigin(casReferenceId);
+    } catch (Exception e) {
+      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", e);
+      }
+    } finally {
+      try {
+        // Only top level component can Drop the CAS.
+        if (aController.isTopLevelComponent()) {
+          aController.takeAction(ErrorHandler.DROPCAS, key, anErrorContext);
+        } else if (casReferenceId != null
+                && aController instanceof AggregateAnalysisEngineController) {
+          ((AggregateAnalysisEngineController) aController).dropFlow(casReferenceId, true);
+          ((AggregateAnalysisEngineController) aController).removeMessageOrigin(casReferenceId);
 
-				}
-
-				aController.dropStats(casReferenceId, aController.getName());
-				
-				endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
-				if ( endpoint != null )
-				{
-					aController.dropStats(casReferenceId, endpoint.getEndpoint());
-				}
-			}
-			catch( Exception e)
-			{
-				e.printStackTrace();
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError", 
-						UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", e);
         }
-			}
-		}
-		return true;
-	}
+
+        aController.dropStats(casReferenceId, aController.getName());
+
+        endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
+        if (endpoint != null) {
+          aController.dropStats(casReferenceId, endpoint.getEndpoint());
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                  "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", e);
+        }
+      }
+    }
+    return true;
+  }
 
 }
