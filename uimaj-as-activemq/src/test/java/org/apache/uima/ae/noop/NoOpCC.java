@@ -24,11 +24,12 @@ import org.apache.uima.collection.CasConsumer_ImplBase;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
 
-public class NoOpCC extends CasConsumer_ImplBase{
+public class NoOpCC extends CasConsumer_ImplBase {
 
   public void initialize() throws ResourceInitializationException {
-  
+
   }
+
   public void processCas(CAS aCAS) throws ResourceProcessException {
     System.out.println("NoOpCC process() called");
   }

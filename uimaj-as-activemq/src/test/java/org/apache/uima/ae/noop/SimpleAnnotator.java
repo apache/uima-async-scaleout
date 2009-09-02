@@ -33,78 +33,73 @@ import org.apache.uima.util.Level;
 import org.apache.uima.util.Logger;
 
 public class SimpleAnnotator extends CasAnnotator_ImplBase {
-	private long counter = 0;
-	int processDelay = 0;
-	int finalCount = 0;
+  private long counter = 0;
 
-	public void initialize(UimaContext aContext)
-			throws ResourceInitializationException {
-		super.initialize(aContext);
+  int processDelay = 0;
 
-		if (getContext().getConfigParameterValue("ProcessDelay") != null) {
-			processDelay = ((Integer) getContext().getConfigParameterValue(
-					"ProcessDelay")).intValue();
-			System.out
-					.println("SimpleAnnotator.initialize() Initializing With Process Delay of "
-							+ processDelay + " millis");
-		}
+  int finalCount = 0;
 
-		if (getContext().getConfigParameterValue("FinalCount") != null) {
-			finalCount = ((Integer) getContext().getConfigParameterValue(
-					"FinalCount")).intValue();
-		}
+  public void initialize(UimaContext aContext) throws ResourceInitializationException {
+    super.initialize(aContext);
 
-		// write log messages
-		Logger logger = getContext().getLogger();
-		logger.log(Level.CONFIG, "SimpleAnnotator initialized");
-	}
+    if (getContext().getConfigParameterValue("ProcessDelay") != null) {
+      processDelay = ((Integer) getContext().getConfigParameterValue("ProcessDelay")).intValue();
+      System.out.println("SimpleAnnotator.initialize() Initializing With Process Delay of "
+              + processDelay + " millis");
+    }
 
-	public void typeSystemInit(TypeSystem aTypeSystem)
-			throws AnalysisEngineProcessException {
-	}
+    if (getContext().getConfigParameterValue("FinalCount") != null) {
+      finalCount = ((Integer) getContext().getConfigParameterValue("FinalCount")).intValue();
+    }
 
-	public void collectionProcessComplete()
-			throws AnalysisEngineProcessException {
-		System.out
-				.println("SimpleAnnotator.collectionProcessComplete() Called -------------------------------------");
-		if (finalCount > 0 && finalCount != counter) {
-			String msg = "SimpleAnnotator expected " + finalCount
-					+ " CASes but was given " + counter;
-			System.out.println(msg);
-			throw new AnalysisEngineProcessException(new Exception(msg));
-		}
-		counter = 0;
-	}
+    // write log messages
+    Logger logger = getContext().getLogger();
+    logger.log(Level.CONFIG, "SimpleAnnotator initialized");
+  }
 
-	public void process(CAS aCAS) throws AnalysisEngineProcessException {
-		++counter;
-		if (processDelay == 0) {
-			if (UIMAFramework.getLogger().isLoggable(Level.FINE))
-				System.out.println("SimpleAnnotator.process() called for the "
-						+ counter + "th time. Hashcode:" + hashCode());
-		} else {
-			if (UIMAFramework.getLogger().isLoggable(Level.FINE))
-				System.out.println("SimpleAnnotator.process() called for the "
-						+ counter + "th time, delaying Response For:"
-						+ processDelay + " millis");
-			synchronized (this) {
-				try {
-					wait(processDelay);
-				} catch (InterruptedException e) {
-				}
-			}
-		}
-		JCas jcas;
-		try {
-			jcas = aCAS.getJCas();
-		} catch (CASException e) {
-			throw new AnalysisEngineProcessException(e);
-		}
-		SourceDocumentInformation sda = new SourceDocumentInformation(jcas, 0, jcas.getDocumentText().length());
-		sda.setOffsetInSource(0);
-		sda.addToIndexes();
+  public void typeSystemInit(TypeSystem aTypeSystem) throws AnalysisEngineProcessException {
+  }
+
+  public void collectionProcessComplete() throws AnalysisEngineProcessException {
+    System.out
+            .println("SimpleAnnotator.collectionProcessComplete() Called -------------------------------------");
+    if (finalCount > 0 && finalCount != counter) {
+      String msg = "SimpleAnnotator expected " + finalCount + " CASes but was given " + counter;
+      System.out.println(msg);
+      throw new AnalysisEngineProcessException(new Exception(msg));
+    }
+    counter = 0;
+  }
+
+  public void process(CAS aCAS) throws AnalysisEngineProcessException {
+    ++counter;
+    if (processDelay == 0) {
+      if (UIMAFramework.getLogger().isLoggable(Level.FINE))
+        System.out.println("SimpleAnnotator.process() called for the " + counter
+                + "th time. Hashcode:" + hashCode());
+    } else {
+      if (UIMAFramework.getLogger().isLoggable(Level.FINE))
+        System.out.println("SimpleAnnotator.process() called for the " + counter
+                + "th time, delaying Response For:" + processDelay + " millis");
+      synchronized (this) {
+        try {
+          wait(processDelay);
+        } catch (InterruptedException e) {
+        }
+      }
+    }
+    JCas jcas;
+    try {
+      jcas = aCAS.getJCas();
+    } catch (CASException e) {
+      throw new AnalysisEngineProcessException(e);
+    }
+    SourceDocumentInformation sda = new SourceDocumentInformation(jcas, 0, jcas.getDocumentText()
+            .length());
+    sda.setOffsetInSource(0);
+    sda.addToIndexes();
     if (UIMAFramework.getLogger().isLoggable(Level.FINE))
       System.out.println("SimpleAnnotator.process() added a SourceDocumentInformation annotation");
-	}
+  }
 
 }

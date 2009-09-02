@@ -54,55 +54,54 @@ import org.apache.uima.util.Level;
 import org.apache.uima.util.Logger;
 
 /**
- * Checks that the sofa data of every N-th CAS starts with the correct value.
- * Validates output of a CasMultiplier that merges its input CASes
+ * Checks that the sofa data of every N-th CAS starts with the correct value. Validates output of a
+ * CasMultiplier that merges its input CASes
  */
 
-public class CheckTextAnnotator extends CasAnnotator_ImplBase
-{
+public class CheckTextAnnotator extends CasAnnotator_ImplBase {
   String name = "CheckText";
+
   int counter;
-  
+
   int checkInterval = 0;
-	int finalCount = 0;
+
+  int finalCount = 0;
+
   String textPrefix;
-  
-	public void initialize(UimaContext aContext) throws ResourceInitializationException
-	{
-		super.initialize(aContext);
-		counter = 0;
-		
-    textPrefix = (String)getContext().getConfigParameterValue("TextPrefix");
-    checkInterval = ((Integer)getContext().getConfigParameterValue("CheckInterval")).intValue();
+
+  public void initialize(UimaContext aContext) throws ResourceInitializationException {
+    super.initialize(aContext);
+    counter = 0;
+
+    textPrefix = (String) getContext().getConfigParameterValue("TextPrefix");
+    checkInterval = ((Integer) getContext().getConfigParameterValue("CheckInterval")).intValue();
     if (getContext().getConfigParameterValue("FinalCount") != null) {
-      finalCount = ((Integer) getContext().getConfigParameterValue(
-          "FinalCount")).intValue();
+      finalCount = ((Integer) getContext().getConfigParameterValue("FinalCount")).intValue();
     }
 
-		// write log messages
-		Logger logger = getContext().getLogger();
-		logger.log(Level.CONFIG, name+" initialized");
-	}
+    // write log messages
+    Logger logger = getContext().getLogger();
+    logger.log(Level.CONFIG, name + " initialized");
+  }
 
-	public void typeSystemInit(TypeSystem aTypeSystem) throws AnalysisEngineProcessException
-	{
-	}
-  
-	public void collectionProcessComplete() throws AnalysisEngineProcessException
-	{
-		System.out.println(name+".collectionProcessComplete() Called -------------------------------------");
+  public void typeSystemInit(TypeSystem aTypeSystem) throws AnalysisEngineProcessException {
+  }
+
+  public void collectionProcessComplete() throws AnalysisEngineProcessException {
+    System.out.println(name
+            + ".collectionProcessComplete() Called -------------------------------------");
     if (finalCount > 0 && finalCount != counter) {
-      String msg = name+" expected " + finalCount + " CASes but was given " + counter;
+      String msg = name + " expected " + finalCount + " CASes but was given " + counter;
       System.out.println(msg);
       throw new AnalysisEngineProcessException(new Exception(msg));
     }
-    if ( UIMAFramework.getLogger().isLoggable(Level.INFO)) {
-      System.out.println(name+" processed " + counter + " CASes");
+    if (UIMAFramework.getLogger().isLoggable(Level.INFO)) {
+      System.out.println(name + " processed " + counter + " CASes");
     }
     counter = 0;
-	}
-  
-	public void process(CAS aCAS) throws AnalysisEngineProcessException {
+  }
+
+  public void process(CAS aCAS) throws AnalysisEngineProcessException {
     ++counter;
     String line = aCAS.getDocumentText();
     if (UIMAFramework.getLogger().isLoggable(Level.FINE)) {
@@ -113,13 +112,14 @@ public class CheckTextAnnotator extends CasAnnotator_ImplBase
     }
     if (checkInterval > 0 && counter % checkInterval == 0) {
       if (!line.startsWith(textPrefix)) {
-        String msg = name+" expected "+counter+"-th CAS to start with: " + textPrefix;
+        String msg = name + " expected " + counter + "-th CAS to start with: " + textPrefix;
         System.out.println(msg);
         throw new AnalysisEngineProcessException(new Exception(msg));
       }
     }
 
-    // If not checking the document text check if a SourceDocumentInformation annotation has been added
+    // If not checking the document text check if a SourceDocumentInformation annotation has been
+    // added
     if (checkInterval == 0) {
       JCas jcas;
       try {
@@ -130,11 +130,11 @@ public class CheckTextAnnotator extends CasAnnotator_ImplBase
       AnnotationIndex aIndx = jcas.getAnnotationIndex(SourceDocumentInformation.type);
       FSIterator aIter = aIndx.iterator();
       if (!aIter.isValid()) {
-        String msg = name+" didn't find a SourceDocumentInformation annotation";
+        String msg = name + " didn't find a SourceDocumentInformation annotation";
         System.out.println(msg);
         throw new AnalysisEngineProcessException(new Exception(msg));
       }
-      System.out.println(name+" found a SourceDocumentInformation");
+      System.out.println(name + " found a SourceDocumentInformation");
     }
   }
 
