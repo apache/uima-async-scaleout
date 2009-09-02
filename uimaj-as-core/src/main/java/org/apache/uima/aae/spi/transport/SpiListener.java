@@ -27,8 +27,8 @@ public interface SpiListener {
   /**
    * This method is called by the SPI implementation.
    * 
-   * @param event -
-   *          SPI event
+   * @param event
+   *          - SPI event
    */
   public void onSpiEvent(SpiEvent event);
 }

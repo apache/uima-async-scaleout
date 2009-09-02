@@ -21,14 +21,16 @@ package org.apache.uima.aae.jmx.monitor;
 import org.apache.uima.aae.jmx.monitor.ServiceMetrics;
 
 public interface JmxMonitorListener {
-	/**
-	 * Provides metrics for all UIMA AS services collected during a checkpoint. This
-	 * method is called by the {@link JmxMonitor} after each checkpoint with the latest
-	 * metrics. The metrics are deltas except for queue depth attribute.
-	 * 
-	 * @param sampleTime - last checkpoint time
-	 * @param metrics - an array of ServiceMetrics objects, each holding metrics for a specific
-	 * UIMA AS service.
-	 */
-	public void onNewMetrics(long sampleTime, ServiceMetrics[] metrics);
+  /**
+   * Provides metrics for all UIMA AS services collected during a checkpoint. This method is called
+   * by the {@link JmxMonitor} after each checkpoint with the latest metrics. The metrics are deltas
+   * except for queue depth attribute.
+   * 
+   * @param sampleTime
+   *          - last checkpoint time
+   * @param metrics
+   *          - an array of ServiceMetrics objects, each holding metrics for a specific UIMA AS
+   *          service.
+   */
+  public void onNewMetrics(long sampleTime, ServiceMetrics[] metrics);
 }

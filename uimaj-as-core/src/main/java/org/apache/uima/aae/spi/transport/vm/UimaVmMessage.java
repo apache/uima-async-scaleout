@@ -29,10 +29,10 @@ import org.apache.uima.aae.message.UimaMessageValidator;
 import org.apache.uima.aae.spi.transport.UimaMessage;
 
 /**
- * Wrapper for the Uima message. This wrapper is used for internal messaging between collocated
- * Uima AS service. 
+ * Wrapper for the Uima message. This wrapper is used for internal messaging between collocated Uima
+ * AS service.
  * 
- *
+ * 
  */
 public class UimaVmMessage extends ConcurrentHashMap<String, Object> implements UimaMessage {
 
@@ -58,16 +58,16 @@ public class UimaVmMessage extends ConcurrentHashMap<String, Object> implements 
 
   public int getIntProperty(String propertyKey) {
     Object value = super.get(propertyKey);
-    if ( value != null ) {
-      return Integer.valueOf((Integer)value );
+    if (value != null) {
+      return Integer.valueOf((Integer) value);
     }
     return 0;
   }
 
   public String getStringProperty(String propertyKey) {
     Object value = super.get(propertyKey);
-    if (value != null ) {
-      return (String)value;
+    if (value != null) {
+      return (String) value;
     }
     return "";
   }
@@ -86,7 +86,7 @@ public class UimaVmMessage extends ConcurrentHashMap<String, Object> implements 
 
   public long getLongProperty(String propertyKey) {
     Object value = super.get(propertyKey);
-    if ( value != null ) {
+    if (value != null) {
       return Long.valueOf((Long) value);
     }
     return 0;
@@ -98,8 +98,8 @@ public class UimaVmMessage extends ConcurrentHashMap<String, Object> implements 
 
   public boolean getBooleanProperty(String aPropertyKey) {
     Object value = super.get(aPropertyKey);
-    if ( value != null ) {
-      return ((Boolean)value ).booleanValue();
+    if (value != null) {
+      return ((Boolean) value).booleanValue();
     }
     return false;
   }

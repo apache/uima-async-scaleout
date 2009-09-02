@@ -30,18 +30,18 @@ import org.apache.uima.aae.spi.transport.UimaMessageListener;
 import org.apache.uima.util.Level;
 
 /**
-
- * Uima message implementation of {@link UimaMessageDispatcher}. It uses a Java's Executor framework to
- * pass Uima messages to a collocated Uima AS service. Each message is processed in a seperate thread
- * provided by the Executor.
- *  
- *  */
+ * 
+ * Uima message implementation of {@link UimaMessageDispatcher}. It uses a Java's Executor framework
+ * to pass Uima messages to a collocated Uima AS service. Each message is processed in a seperate
+ * thread provided by the Executor.
+ * 
+ * */
 public class UimaVmMessageDispatcher implements UimaMessageDispatcher {
   private static final Class<?> CLASS_NAME = UimaVmMessageDispatcher.class;
 
   private ThreadPoolExecutor executor = null;
 
-  //  Message listener which will receive a new message
+  // Message listener which will receive a new message
   private final UimaMessageListener targetListener;
 
   private String delegateKey;
@@ -52,14 +52,15 @@ public class UimaVmMessageDispatcher implements UimaMessageDispatcher {
     delegateKey = aKey;
     targetListener = aListener;
   }
+
   /**
-   * This method is responsible for adding a Uima message to a queue which is shared with a 
-   * collocated service. Each message is processed by the receiving service in a thread 
-   * provided by the Executor.
+   * This method is responsible for adding a Uima message to a queue which is shared with a
+   * collocated service. Each message is processed by the receiving service in a thread provided by
+   * the Executor.
    */
   public void dispatch(final UimaMessage message) {
-    if ( executor.isShutdown() || executor.isTerminating() || executor.isShutdown() ) {
-      return; 
+    if (executor.isShutdown() || executor.isTerminating() || executor.isShutdown()) {
+      return;
     }
     executor.execute(new Runnable() {
       public void run() {
@@ -73,14 +74,17 @@ public class UimaVmMessageDispatcher implements UimaMessageDispatcher {
         } catch (Exception e) {
           e.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", new Object[] { e });
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", new Object[] { e });
           }
         }
       }
     });
   }
+
   public void stop() {
-    if ( executor != null ) {
+    if (executor != null) {
       executor.purge();
       executor.shutdownNow();
     }

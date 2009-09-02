@@ -10,42 +10,44 @@ import org.apache.uima.util.Level;
 public class UimaMessageValidator {
   private static final Class CLASS_NAME = UimaMessageValidator.class;
 
-  private static String getEndpointName( UimaMessage aMessage) throws IllegalArgumentException {
+  private static String getEndpointName(UimaMessage aMessage) throws IllegalArgumentException {
     String endpointName = aMessage.getStringProperty(AsynchAEMessage.MessageFrom);
-    if ( endpointName == null )
-    {
+    if (endpointName == null) {
       throw new IllegalArgumentException("Invalid Message. Missing 'MessageFrom' Property.");
     }
     return endpointName;
   }
+
   /**
    * Validate message type contained in the JMS header.
    * 
-   * @param aMessage - jms message retrieved from queue
-   * @param properties - map containing message properties
+   * @param aMessage
+   *          - jms message retrieved from queue
+   * @param properties
+   *          - map containing message properties
    * @return
    * @throws Exception
    */
 
   public static boolean validMessageType(UimaMessage aMessage, String endpointName)
           throws Exception {
-    
-    
+
     if (aMessage.containsProperty(AsynchAEMessage.MessageType)) {
       int msgType = aMessage.getIntProperty(AsynchAEMessage.MessageType);
       if (msgType != AsynchAEMessage.Response && msgType != AsynchAEMessage.Request) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                "validMessageType", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_invalid_msgtype_in_message__INFO", new Object[] { msgType, endpointName });
+                  "validMessageType", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_invalid_msgtype_in_message__INFO",
+                  new Object[] { msgType, endpointName });
         }
         return false;
       }
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-              "validMessageType", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAJMS_msgtype_notin_message__INFO", new Object[] { endpointName });
+                "validMessageType", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_msgtype_notin_message__INFO", new Object[] { endpointName });
       }
       return false;
     }
@@ -81,30 +83,33 @@ public class UimaMessageValidator {
   /**
    * Validate command contained in the header of the JMS Message
    * 
-   * @param aMessage - JMS Message received
-   * @param properties - Map containing header properties
+   * @param aMessage
+   *          - JMS Message received
+   * @param properties
+   *          - Map containing header properties
    * @return - true if the command received is a valid one, false otherwise
    * @throws Exception
    */
-  public static boolean validCommand(UimaMessage aMessage, String endpointName)
-          throws Exception {
+  public static boolean validCommand(UimaMessage aMessage, String endpointName) throws Exception {
     if (aMessage.containsProperty(AsynchAEMessage.Command)) {
       int command = aMessage.getIntProperty(AsynchAEMessage.Command);
       if (command != AsynchAEMessage.Process && command != AsynchAEMessage.GetMeta
               && command != AsynchAEMessage.ReleaseCAS && command != AsynchAEMessage.Stop
-              && command != AsynchAEMessage.Ping && command != AsynchAEMessage.CollectionProcessComplete) {
+              && command != AsynchAEMessage.Ping
+              && command != AsynchAEMessage.CollectionProcessComplete) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "validCommand",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_invalid_command_in_message__INFO",
-                new Object[] { command, endpointName });
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "validCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_invalid_command_in_message__INFO",
+                  new Object[] { command, endpointName });
         }
         return false;
       }
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "validCommand",
-              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_command_notin_message__INFO",
-              new Object[] { endpointName });
+                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_command_notin_message__INFO",
+                new Object[] { endpointName });
       }
       return false;
     }
@@ -115,20 +120,21 @@ public class UimaMessageValidator {
   /**
    * Validates payload in the JMS Message.
    * 
-   * @param aMessage - JMS Message received
-   * @param properties - Map containing header properties
+   * @param aMessage
+   *          - JMS Message received
+   * @param properties
+   *          - Map containing header properties
    * @return - true if the payload is valid, false otherwise
    * @throws Exception
    */
-  public static boolean validPayload(UimaMessage aMessage, String endpointName)
-          throws Exception {
+  public static boolean validPayload(UimaMessage aMessage, String endpointName) throws Exception {
     if (aMessage.containsProperty(AsynchAEMessage.Command)) {
       int command = aMessage.getIntProperty(AsynchAEMessage.Command);
       if (command == AsynchAEMessage.GetMeta
               || command == AsynchAEMessage.CollectionProcessComplete
-              || command == AsynchAEMessage.Ping
-              || command == AsynchAEMessage.Stop || command == AsynchAEMessage.ReleaseCAS) {
-        //  Payload not included in GetMeta Request
+              || command == AsynchAEMessage.Ping || command == AsynchAEMessage.Stop
+              || command == AsynchAEMessage.ReleaseCAS) {
+        // Payload not included in GetMeta Request
         return true;
       }
     }
@@ -136,19 +142,21 @@ public class UimaMessageValidator {
     if (aMessage.containsProperty(AsynchAEMessage.Payload)) {
       int payload = aMessage.getIntProperty(AsynchAEMessage.Payload);
       if (payload != AsynchAEMessage.XMIPayload && payload != AsynchAEMessage.CASRefID
-          && payload != AsynchAEMessage.BinaryPayload  && payload != AsynchAEMessage.Exception && payload != AsynchAEMessage.Metadata) {
+              && payload != AsynchAEMessage.BinaryPayload && payload != AsynchAEMessage.Exception
+              && payload != AsynchAEMessage.Metadata) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "validPayload",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_invalid_payload_in_message__INFO",
-                new Object[] { payload, endpointName });
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "validPayload", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_invalid_payload_in_message__INFO",
+                  new Object[] { payload, endpointName });
         }
         return false;
       }
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "validPayload",
-              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_payload_notin_message__INFO",
-              new Object[] { endpointName });
+                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_payload_notin_message__INFO",
+                new Object[] { endpointName });
       }
       return false;
     }
@@ -159,7 +167,7 @@ public class UimaMessageValidator {
   public static boolean isStaleMessage(UimaMessage aMessage, boolean isStopped,
           String endpointName, boolean entryExists) {
     if (isStopped) {
-      //  Shutting down 
+      // Shutting down
       return true;
     }
     int command = aMessage.getIntProperty(AsynchAEMessage.Command);
@@ -169,13 +177,13 @@ public class UimaMessageValidator {
       if (!entryExists) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.FINE,
-                CLASS_NAME.getName(),
-                "isStaleMessage",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_stale_message__FINE",
-                new Object[] { endpointName, casReferenceId,
-                    aMessage.getStringProperty(AsynchAEMessage.MessageFrom) });
+                  Level.FINE,
+                  CLASS_NAME.getName(),
+                  "isStaleMessage",
+                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_stale_message__FINE",
+                  new Object[] { endpointName, casReferenceId,
+                      aMessage.getStringProperty(AsynchAEMessage.MessageFrom) });
         }
         return true;
       }
@@ -187,28 +195,29 @@ public class UimaMessageValidator {
    * Validates contents of the message. It checks if command, payload and message types contain
    * valid data.
    * 
-   * @param aMessage - JMS Message to validate
+   * @param aMessage
+   *          - JMS Message to validate
    * @return - true if message is valid, false otherwise
    * @throws Exception
    */
-  public static boolean isValidMessage(UimaMessage aMessage, 
-          AnalysisEngineController controller) throws Exception {
-    String endpointName = getEndpointName( aMessage);
+  public static boolean isValidMessage(UimaMessage aMessage, AnalysisEngineController controller)
+          throws Exception {
+    String endpointName = getEndpointName(aMessage);
     if (!validMessageType(aMessage, endpointName)) {
-        return false;
-      }
-      if (!validCommand(aMessage, endpointName)) {
-        return false;
-      }
-      if (!validPayload(aMessage, endpointName)) {
-        return false;
-      }
-      String casReferenceId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
+      return false;
+    }
+    if (!validCommand(aMessage, endpointName)) {
+      return false;
+    }
+    if (!validPayload(aMessage, endpointName)) {
+      return false;
+    }
+    String casReferenceId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
 
-      if (isStaleMessage(aMessage, controller.isStopped(), endpointName, controller
-              .getInProcessCache().entryExists(casReferenceId))) {
-        return false;
-      }
+    if (isStaleMessage(aMessage, controller.isStopped(), endpointName, controller
+            .getInProcessCache().entryExists(casReferenceId))) {
+      return false;
+    }
     return true;
   }
 

@@ -19,43 +19,36 @@
 
 package org.apache.uima.aae.monitor.statistics;
 
-public class LongNumericStatistic extends NumericStatisticBaseImpl
-implements LongNumericStatisticMBean
-//implements NumericStatisticBean
+public class LongNumericStatistic extends NumericStatisticBaseImpl implements
+        LongNumericStatisticMBean
+// implements NumericStatisticBean
 {
-	private long value=0;
-	
-	public LongNumericStatistic( String aName)
-	{
-		super( aName);
-	}
+  private long value = 0;
 
-	public void decrement()
-	{
-		if ( value > 0 )
-		{
-			value--;
-		}
-	}
+  public LongNumericStatistic(String aName) {
+    super(aName);
+  }
 
-	public void increment()
-	{
-		value++;
-	}
+  public void decrement() {
+    if (value > 0) {
+      value--;
+    }
+  }
 
-	public void increment(long anIncrementBy)
-	{
-		value += anIncrementBy;
-	}
+  public void increment() {
+    value++;
+  }
 
-	public void reset()
-	{
-		value = 0;
-	}
+  public void increment(long anIncrementBy) {
+    value += anIncrementBy;
+  }
 
-	public long getValue()
-	{
-		return value;
-	}
+  public void reset() {
+    value = 0;
+  }
+
+  public long getValue() {
+    return value;
+  }
 
 }

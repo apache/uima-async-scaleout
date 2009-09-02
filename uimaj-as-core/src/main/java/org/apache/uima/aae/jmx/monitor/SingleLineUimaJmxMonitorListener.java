@@ -28,116 +28,116 @@ import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.util.Level;
 
 /**
- * This class implements {@link JmxMonitorListener} interface. It provides basic formatting
- * for UIMA-AS service metrics. All metrics are formatted and logged into a uima log if 
- * one is defined. Otherwise, the output is dumped to stdout.
+ * This class implements {@link JmxMonitorListener} interface. It provides basic formatting for
+ * UIMA-AS service metrics. All metrics are formatted and logged into a uima log if one is defined.
+ * Otherwise, the output is dumped to stdout.
  * 
- *
+ * 
  */
 public class SingleLineUimaJmxMonitorListener implements JmxMonitorListener {
 
-	private static final Class CLASS_NAME = JmxMonitorListener.class;
-	private boolean firsttime = true;
-	private double lastSampleTime = 0;
-	private double period;
+  private static final Class CLASS_NAME = JmxMonitorListener.class;
 
-	/**
-	 * Constructor 
-	 * 
-	 * @param aMaxNameLength - the longest name of the UIMA-AS service. This is use to 
-	 * pad other names so that the output is easier to read.
-	 * 
-	 */
-	public SingleLineUimaJmxMonitorListener()
-	{
-	}
-	
-	/**
-	 * Callback method called by the JmxMonitor after each checkpoint. 
-	 * 
-	 * @param sampleTime - last checkpoint time
-	 * @param metrics - an array of ServiceMetrics objects, each holding metrics for a specific
-	 * UIMA AS service.
-	 */
-	public void onNewMetrics(long sampleTime, ServiceMetrics[] metrics) {
-		
-		String items;
+  private boolean firsttime = true;
 
-		if (firsttime) {
-			firsttime = false;
-			items ="\t Timestamp";
-			for( ServiceMetrics serviceMetrics: metrics ) {
-				String srvName = serviceMetrics.getServiceName();
-				srvName = srvName.substring(0, srvName.indexOf("_Service Performance"));
-				if (serviceMetrics.isTopLevelService()) {
-					srvName = "(S)" + srvName;
-				}
-				else if (serviceMetrics.isServiceRemote()) {
-					srvName = "(R)" + srvName;
-				}
-				items = items + "\t" + srvName + "-CPU";
-				items = items + "\t" + srvName + "-Idle";
-				items = items + "\t" + srvName + "-CASes";
-				items = items + "\t" + srvName + "-InQ";
-				if (!serviceMetrics.isTopLevelService()) {
-					items = items + "\t" + srvName + "-RepQ";
-				}
-				if (serviceMetrics.isTopLevelService() ||
-						(serviceMetrics.isCasMultiplier() && serviceMetrics.isServiceRemote()) ) {
-					items = items + "\t" + srvName + "-CPW";
-				}
-				if (serviceMetrics.isCasMultiplier() && !serviceMetrics.isServiceRemote() ) {
-					items = items + "\t" + srvName + "-CmFreeCP";
-				}
-				if ( serviceMetrics.isTopLevelService() ) {
+  private double lastSampleTime = 0;
+
+  private double period;
+
+  /**
+   * Constructor
+   * 
+   * @param aMaxNameLength
+   *          - the longest name of the UIMA-AS service. This is use to pad other names so that the
+   *          output is easier to read.
+   * 
+   */
+  public SingleLineUimaJmxMonitorListener() {
+  }
+
+  /**
+   * Callback method called by the JmxMonitor after each checkpoint.
+   * 
+   * @param sampleTime
+   *          - last checkpoint time
+   * @param metrics
+   *          - an array of ServiceMetrics objects, each holding metrics for a specific UIMA AS
+   *          service.
+   */
+  public void onNewMetrics(long sampleTime, ServiceMetrics[] metrics) {
+
+    String items;
+
+    if (firsttime) {
+      firsttime = false;
+      items = "\t Timestamp";
+      for (ServiceMetrics serviceMetrics : metrics) {
+        String srvName = serviceMetrics.getServiceName();
+        srvName = srvName.substring(0, srvName.indexOf("_Service Performance"));
+        if (serviceMetrics.isTopLevelService()) {
+          srvName = "(S)" + srvName;
+        } else if (serviceMetrics.isServiceRemote()) {
+          srvName = "(R)" + srvName;
+        }
+        items = items + "\t" + srvName + "-CPU";
+        items = items + "\t" + srvName + "-Idle";
+        items = items + "\t" + srvName + "-CASes";
+        items = items + "\t" + srvName + "-InQ";
+        if (!serviceMetrics.isTopLevelService()) {
+          items = items + "\t" + srvName + "-RepQ";
+        }
+        if (serviceMetrics.isTopLevelService()
+                || (serviceMetrics.isCasMultiplier() && serviceMetrics.isServiceRemote())) {
+          items = items + "\t" + srvName + "-CPW";
+        }
+        if (serviceMetrics.isCasMultiplier() && !serviceMetrics.isServiceRemote()) {
+          items = items + "\t" + srvName + "-CmFreeCP";
+        }
+        if (serviceMetrics.isTopLevelService()) {
           items = items + "\t" + srvName + "-SvcFreeCP";
-				}
-			}
-			UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO, items);
-		}
+        }
+      }
+      UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO, items);
+    }
 
-		items = "\t";
-		items = items + format(sampleTime/1000000000.0);
-		period = (sampleTime - lastSampleTime)/1000000.0;
-		lastSampleTime = sampleTime;
-		for( ServiceMetrics serviceMetrics: metrics )
-		{
-			items = items + "\t" + format(serviceMetrics.getAnalysisTime()/period);
-			items = items + "\t" + format(serviceMetrics.getIdleTime()/period);
-			items = items + "\t" + serviceMetrics.getProcessCount();
-			items = items + "\t" + serviceMetrics.getInputQueueDepth();
-			if (!serviceMetrics.isTopLevelService()) {
-				items = items + "\t" + serviceMetrics.getReplyQueueDepth();
-			}
-			if ( serviceMetrics.isTopLevelService() ) {
-				items = items + "\t" + format(serviceMetrics.getCasPoolWaitTime()/period);
-			}
-			else if ( serviceMetrics.isCasMultiplier() ) {
-				if ( serviceMetrics.isServiceRemote() ) {
-					items = items + "\t" + format(serviceMetrics.getShadowCasPoolWaitTime()/period);
-				}
-				else {
-					items = items + "\t" + serviceMetrics.getCmFreeCasInstanceCount();
-				}
-			}
-      if ( serviceMetrics.isTopLevelService() ) {
+    items = "\t";
+    items = items + format(sampleTime / 1000000000.0);
+    period = (sampleTime - lastSampleTime) / 1000000.0;
+    lastSampleTime = sampleTime;
+    for (ServiceMetrics serviceMetrics : metrics) {
+      items = items + "\t" + format(serviceMetrics.getAnalysisTime() / period);
+      items = items + "\t" + format(serviceMetrics.getIdleTime() / period);
+      items = items + "\t" + serviceMetrics.getProcessCount();
+      items = items + "\t" + serviceMetrics.getInputQueueDepth();
+      if (!serviceMetrics.isTopLevelService()) {
+        items = items + "\t" + serviceMetrics.getReplyQueueDepth();
+      }
+      if (serviceMetrics.isTopLevelService()) {
+        items = items + "\t" + format(serviceMetrics.getCasPoolWaitTime() / period);
+      } else if (serviceMetrics.isCasMultiplier()) {
+        if (serviceMetrics.isServiceRemote()) {
+          items = items + "\t" + format(serviceMetrics.getShadowCasPoolWaitTime() / period);
+        } else {
+          items = items + "\t" + serviceMetrics.getCmFreeCasInstanceCount();
+        }
+      }
+      if (serviceMetrics.isTopLevelService()) {
         items = items + "\t" + serviceMetrics.getSvcFreeCasInstanceCount();
       }
 
-		}
+    }
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
       UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO, items);
     }
-	}
+  }
 
-	private String format( double value)
-	{
-		NumberFormat formatter = new DecimalFormat();
-//		formatter.setRoundingMode(java.math.RoundingMode.UP);
-//		formatter.setMinimumFractionDigits(0);
-//		formatter.setMaximumFractionDigits(0);
+  private String format(double value) {
+    NumberFormat formatter = new DecimalFormat();
+    // formatter.setRoundingMode(java.math.RoundingMode.UP);
+    // formatter.setMinimumFractionDigits(0);
+    // formatter.setMaximumFractionDigits(0);
 
-		return formatter.format(value);
-	}
+    return formatter.format(value);
+  }
 
 }

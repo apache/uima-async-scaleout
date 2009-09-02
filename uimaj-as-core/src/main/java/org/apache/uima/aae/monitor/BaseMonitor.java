@@ -32,72 +32,64 @@ import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.aae.monitor.statistics.Statistic;
 import org.apache.uima.aae.monitor.statistics.Statistics;
 
-public class BaseMonitor implements Monitor
-{
-	private Map thresholds = null;
-	
+public class BaseMonitor implements Monitor {
+  private Map thresholds = null;
 
-	public BaseMonitor( String jmxServerURI ) throws Exception
-	{
-	}
+  public BaseMonitor(String jmxServerURI) throws Exception {
+  }
 
-	public void setThresholds( Map aThresholdMap)
-	{
-		thresholds = aThresholdMap;
-	}
-	public Map getThresholds()
-	{
-		return thresholds;
-	}
-	
-	public void addStatistic(String aName, Statistic aStatistic, Endpoint anEndpoint)
-	{
-	}
+  public void setThresholds(Map aThresholdMap) {
+    thresholds = aThresholdMap;
+  }
 
-	public Statistic getStatistic(String key)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-	public void addStatistic(String key, Statistic aStatistic)
-	{
-		// TODO Auto-generated method stub
-		
-	}
-	public LongNumericStatistic getLongNumericStatistic(String aComponent, String aStatisticName)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-	public Statistic getStatistic(String aComponentName, String aStatisticName)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-	public Statistics getStatistics(String aComponentName)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-	public void incrementCount(String aComponent, String aStatisticName)
-	{
-		// TODO Auto-generated method stub
-		
-	}
-	public void resetCountingStatistic(String aComponent, String aStatisticName)
-	{
-		// TODO Auto-generated method stub
-		
-	}
-	public long componentMapSize()
-	{
-		return 0;
-	}
-	
-	public long thresholdMapSize()
-	{
-		return 0;
-	}
+  public Map getThresholds() {
+    return thresholds;
+  }
 
+  public void addStatistic(String aName, Statistic aStatistic, Endpoint anEndpoint) {
+  }
+
+  public Statistic getStatistic(String key) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  public void addStatistic(String key, Statistic aStatistic) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public LongNumericStatistic getLongNumericStatistic(String aComponent, String aStatisticName) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  public Statistic getStatistic(String aComponentName, String aStatisticName) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  public Statistics getStatistics(String aComponentName) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  public void incrementCount(String aComponent, String aStatisticName) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public void resetCountingStatistic(String aComponent, String aStatisticName) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public long componentMapSize() {
+    return 0;
+  }
+
+  public long thresholdMapSize() {
+    return 0;
+  }
 
 }

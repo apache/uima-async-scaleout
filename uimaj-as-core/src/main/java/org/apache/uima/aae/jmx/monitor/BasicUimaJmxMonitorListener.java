@@ -26,88 +26,118 @@ import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.util.Level;
 
 /**
- * This class implements {@link JmxMonitorListener} interface. It provides basic formatting
- * for UIMA-AS service metrics. All metrics are formatted and logged into a uima log if 
- * one is defined. Otherwise, the output is dumped to stdout.
+ * This class implements {@link JmxMonitorListener} interface. It provides basic formatting for
+ * UIMA-AS service metrics. All metrics are formatted and logged into a uima log if one is defined.
+ * Otherwise, the output is dumped to stdout.
  * 
- *
+ * 
  */
 public class BasicUimaJmxMonitorListener implements JmxMonitorListener {
 
-	private static final Class CLASS_NAME = JmxMonitorListener.class;
-	private int maxNameLength=0;
+  private static final Class CLASS_NAME = JmxMonitorListener.class;
 
-	/**
-	 * Constructor 
-	 * 
-	 * @param aMaxNameLength - the longest name of the UIMA-AS service. This is use to 
-	 * pad other names so that the output is easier to read.
-	 * 
-	 */
-	public BasicUimaJmxMonitorListener( int aMaxNameLength )
-	{
-		maxNameLength = aMaxNameLength;
-	}
-	
-	/**
-	 * Callback method called by the JmxMonitor after each checkpoint. 
-	 * 
-	 * @param sampleTime - last checkpoint time
-	 * @param metrics - an array of ServiceMetrics objects, each holding metrics for a specific
-	 * UIMA AS service.
-	 */
-	public void onNewMetrics(long sampleTime, ServiceMetrics[] metrics) {
-		
-		for( ServiceMetrics serviceMetrics: metrics )
-		{
-			//	Log metrics including shadow CAS pool metric for remote CAS multiplier. Filter out the top level service
-			if ( serviceMetrics.isCasMultiplier() && serviceMetrics.isServiceRemote() && !serviceMetrics.isTopLevelService() )
-			{
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_idle_time_shadow_cas_pool_INFO", new Object[] { format((double)sampleTime/1000000),padName(serviceMetrics.getServiceName()),serviceMetrics.isCasMultiplier(), serviceMetrics.isServiceRemote(),format(serviceMetrics.getIdleTime()),  serviceMetrics.getProcessCount(), serviceMetrics.getInputQueueDepth(), serviceMetrics.getReplyQueueDepth(),format(serviceMetrics.getShadowCasPoolWaitTime()) , format(serviceMetrics.getAnalysisTime()), serviceMetrics.getProcessThreadCount(), serviceMetrics.getCmFreeCasInstanceCount(), serviceMetrics.getSvcFreeCasInstanceCount()});
-        }
-			}
-			else
-			{
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_idle_time_cas_pool_INFO", new Object[] { format((double)sampleTime/1000000),padName(serviceMetrics.getServiceName()),serviceMetrics.isCasMultiplier(), serviceMetrics.isServiceRemote(),format(serviceMetrics.getIdleTime()),  serviceMetrics.getProcessCount(), serviceMetrics.getInputQueueDepth(),serviceMetrics.getReplyQueueDepth(), format(serviceMetrics.getCasPoolWaitTime()) , format(serviceMetrics.getAnalysisTime()), serviceMetrics.getProcessThreadCount(), serviceMetrics.getCmFreeCasInstanceCount(), serviceMetrics.getSvcFreeCasInstanceCount()});
-        }
-			}
-		}
-		//	Log group delimiter to make it easier to see metrics for this interval 
-		onNewSamplingInterval();
-	}
+  private int maxNameLength = 0;
 
-	public void onNewSamplingInterval() 	{
-    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_marker_INFO", new Object[] { });
+  /**
+   * Constructor
+   * 
+   * @param aMaxNameLength
+   *          - the longest name of the UIMA-AS service. This is use to pad other names so that the
+   *          output is easier to read.
+   * 
+   */
+  public BasicUimaJmxMonitorListener(int aMaxNameLength) {
+    maxNameLength = aMaxNameLength;
+  }
+
+  /**
+   * Callback method called by the JmxMonitor after each checkpoint.
+   * 
+   * @param sampleTime
+   *          - last checkpoint time
+   * @param metrics
+   *          - an array of ServiceMetrics objects, each holding metrics for a specific UIMA AS
+   *          service.
+   */
+  public void onNewMetrics(long sampleTime, ServiceMetrics[] metrics) {
+
+    for (ServiceMetrics serviceMetrics : metrics) {
+      // Log metrics including shadow CAS pool metric for remote CAS multiplier. Filter out the top
+      // level service
+      if (serviceMetrics.isCasMultiplier() && serviceMetrics.isServiceRemote()
+              && !serviceMetrics.isTopLevelService()) {
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(
+                  Level.INFO,
+                  CLASS_NAME.getName(),
+                  "run",
+                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_idle_time_shadow_cas_pool_INFO",
+                  new Object[] { format((double) sampleTime / 1000000),
+                      padName(serviceMetrics.getServiceName()), serviceMetrics.isCasMultiplier(),
+                      serviceMetrics.isServiceRemote(), format(serviceMetrics.getIdleTime()),
+                      serviceMetrics.getProcessCount(), serviceMetrics.getInputQueueDepth(),
+                      serviceMetrics.getReplyQueueDepth(),
+                      format(serviceMetrics.getShadowCasPoolWaitTime()),
+                      format(serviceMetrics.getAnalysisTime()),
+                      serviceMetrics.getProcessThreadCount(),
+                      serviceMetrics.getCmFreeCasInstanceCount(),
+                      serviceMetrics.getSvcFreeCasInstanceCount() });
+        }
+      } else {
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(
+                  Level.INFO,
+                  CLASS_NAME.getName(),
+                  "run",
+                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_idle_time_cas_pool_INFO",
+                  new Object[] { format((double) sampleTime / 1000000),
+                      padName(serviceMetrics.getServiceName()), serviceMetrics.isCasMultiplier(),
+                      serviceMetrics.isServiceRemote(), format(serviceMetrics.getIdleTime()),
+                      serviceMetrics.getProcessCount(), serviceMetrics.getInputQueueDepth(),
+                      serviceMetrics.getReplyQueueDepth(),
+                      format(serviceMetrics.getCasPoolWaitTime()),
+                      format(serviceMetrics.getAnalysisTime()),
+                      serviceMetrics.getProcessThreadCount(),
+                      serviceMetrics.getCmFreeCasInstanceCount(),
+                      serviceMetrics.getSvcFreeCasInstanceCount() });
+        }
+      }
     }
-	}
-	private String format( double value)
-	{
-		NumberFormat formatter = new DecimalFormat();
-		formatter.setMinimumFractionDigits(0);
-		formatter.setMaximumFractionDigits(0);
+    // Log group delimiter to make it easier to see metrics for this interval
+    onNewSamplingInterval();
+  }
 
-		return formatter.format(value);
-	}
-	private String format2( double value)
-	{
-		NumberFormat formatter = new DecimalFormat("0.00");
+  public void onNewSamplingInterval() {
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "run",
+              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_marker_INFO", new Object[] {});
+    }
+  }
 
-		return formatter.format(value);
-	}
-	private String padName( String aName )
-	{
-		StringBuffer name = new StringBuffer(aName);
-		if ( aName.length() < maxNameLength )
-		{
-			for( int i=aName.length(); i < maxNameLength; i++ )
-			{
-				name.append(' ');
-			}
-		}
-		return name.toString();
-	}
+  private String format(double value) {
+    NumberFormat formatter = new DecimalFormat();
+    formatter.setMinimumFractionDigits(0);
+    formatter.setMaximumFractionDigits(0);
+
+    return formatter.format(value);
+  }
+
+  private String format2(double value) {
+    NumberFormat formatter = new DecimalFormat("0.00");
+
+    return formatter.format(value);
+  }
+
+  private String padName(String aName) {
+    StringBuffer name = new StringBuffer(aName);
+    if (aName.length() < maxNameLength) {
+      for (int i = aName.length(); i < maxNameLength; i++) {
+        name.append(' ');
+      }
+    }
+    return name.toString();
+  }
 
 }

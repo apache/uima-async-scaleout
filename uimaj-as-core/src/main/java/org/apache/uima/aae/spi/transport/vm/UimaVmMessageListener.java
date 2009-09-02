@@ -73,26 +73,28 @@ public class UimaVmMessageListener implements UimaMessageListener {
     int requestType = 0;
     try {
       latch.await();
-      if ( controller != null && controller.isStopped()) {
+      if (controller != null && controller.isStopped()) {
         return; // throw away the message, we are stopping
       }
       if (UimaMessageValidator.isValidMessage(aMessage, controller)) {
         MessageContext msgContext = aMessage.toMessageContext(controller.getName());
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "onMessage",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_new_msg_recvd__FINEST",
-                new Object[] { controller.getComponentName(), aMessage.toString() });
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
+                  "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_new_msg_recvd__FINEST",
+                  new Object[] { controller.getComponentName(), aMessage.toString() });
         }
         if (!concurrentThreads.containsKey(Thread.currentThread().getId())) {
           Thread.currentThread().setName(
-                  Thread.currentThread().getName() + "::" + controller.getComponentName()+ "::"+Thread.currentThread().getId());
+                  Thread.currentThread().getName() + "::" + controller.getComponentName() + "::"
+                          + Thread.currentThread().getId());
           // Store the thread identifier in the map. The value stored is not important. All
           // we want is to save the fact that the thread name has been changed. And we only
           // want to change it once
           concurrentThreads.put(Thread.currentThread().getId(), Thread.currentThread().getName());
         }
         requestType = aMessage.getIntProperty(AsynchAEMessage.Command);
-        if ( requestType == AsynchAEMessage.Stop ) {
+        if (requestType == AsynchAEMessage.Stop) {
           return;
         }
         // Determine if this message is a request and either GetMeta, CPC, or Process
@@ -101,17 +103,17 @@ public class UimaVmMessageListener implements UimaMessageListener {
         if (doCheckpoint) {
           controller.beginProcess(requestType);
         }
-        //  Process the message.
+        // Process the message.
         handler.handle(msgContext);
       }
-    } catch( InterruptedException e) {
+    } catch (InterruptedException e) {
       System.out.println("VMTransport Latch Interrupted - Processor is Stopping");
     } catch (Exception e) {
       e.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-              "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAEE_exception__WARNING", new Object[] { e });
+                "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
       }
     } finally {
       // Call the end checkpoint for non-aggregates. For primitives the CAS has been fully processed
@@ -121,6 +123,7 @@ public class UimaVmMessageListener implements UimaMessageListener {
       }
     }
   }
+
   /**
    * Initializes this listener. Instantiates and links message handlers. O
    */

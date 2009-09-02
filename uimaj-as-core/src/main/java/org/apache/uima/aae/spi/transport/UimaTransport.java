@@ -30,24 +30,24 @@ public interface UimaTransport {
    * registered listeners when the initialization is completed, when the start is completed, and
    * when the stop is completed.
    * 
-   * @param aListener -
-   *          SPI listener to receive events
+   * @param aListener
+   *          - SPI listener to receive events
    */
   public void addSpiListener(SpiListener aListener);
 
   /**
    * This method is called to start SPI.
    * 
-   * @throws UimaSpiException -
-   *           any problems while starting the SPI
+   * @throws UimaSpiException
+   *           - any problems while starting the SPI
    */
   public void startIt() throws UimaSpiException;
 
   /**
    * This method is called to stop SPI.
    * 
-   * @throws UimaSpiException -
-   *           any problems while stopping the SPI
+   * @throws UimaSpiException
+   *           - any problems while stopping the SPI
    */
   public void stopIt() throws UimaSpiException;
 
@@ -56,8 +56,8 @@ public interface UimaTransport {
    * 
    * @return - instance of SPI Dispatcher
    * 
-   * @throws UimaSpiException -
-   *           any problems while fetching Dispatcher
+   * @throws UimaSpiException
+   *           - any problems while fetching Dispatcher
    */
   public UimaMessageDispatcher getUimaMessageDispatcher() throws UimaSpiException;
 
@@ -66,13 +66,14 @@ public interface UimaTransport {
   public UimaMessageDispatcher getUimaMessageDispatcher(String aDelegateKey)
           throws UimaSpiException;
 
-  public UimaMessageListener produceUimaMessageListener()
-          throws UimaSpiException;
+  public UimaMessageListener produceUimaMessageListener() throws UimaSpiException;
 
-  public UimaMessageDispatcher produceUimaMessageDispatcher(UimaTransport aTransport) throws UimaSpiException;
+  public UimaMessageDispatcher produceUimaMessageDispatcher(UimaTransport aTransport)
+          throws UimaSpiException;
 
   public UimaVmMessage produceMessage();
 
   public UimaVmMessage produceMessage(int aCommand, int aMessageType, String aMessageFrom);
+
   public void registerWithJMX(AnalysisEngineController aController, String queueKind);
 }
