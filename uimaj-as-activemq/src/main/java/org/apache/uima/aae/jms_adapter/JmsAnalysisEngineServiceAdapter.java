@@ -19,7 +19,6 @@
 
 package org.apache.uima.aae.jms_adapter;
 
-
 import java.util.Map;
 
 import org.apache.uima.analysis_engine.service.impl.AnalysisEngineServiceAdapter;
@@ -43,25 +42,25 @@ public class JmsAnalysisEngineServiceAdapter extends AnalysisEngineServiceAdapte
     if (!(aSpecifier instanceof CustomResourceSpecifier)) {
       return false;
     }
-    
+
     // create proxy to service
-    setStub(new JmsAnalysisEngineServiceStub(this, ((CustomResourceSpecifier)aSpecifier).getParameters()));
+    setStub(new JmsAnalysisEngineServiceStub(this, ((CustomResourceSpecifier) aSpecifier)
+            .getParameters()));
 
     // do superclass initialization, which among other things initializes UimaContext.
     // note we need to establish connection to service before calling this, since
     // superclass initialization depends on having access to the component metadata.
     super.initialize(aSpecifier, aAdditionalParams);
 
-    // Sofa mappings are currently not implemented for remote AEs.  Catch this
+    // Sofa mappings are currently not implemented for remote AEs. Catch this
     // and report an error.
     if (getUimaContextAdmin().getSofaMap().size() > 0) {
-      throw new ResourceInitializationException(ResourceInitializationException.SOFA_MAPPING_NOT_SUPPORTED_FOR_REMOTE,
-              new Object[]{getMetaData().getName()});
+      throw new ResourceInitializationException(
+              ResourceInitializationException.SOFA_MAPPING_NOT_SUPPORTED_FOR_REMOTE,
+              new Object[] { getMetaData().getName() });
     }
-    
+
     return true;
   }
-
-
 
 }

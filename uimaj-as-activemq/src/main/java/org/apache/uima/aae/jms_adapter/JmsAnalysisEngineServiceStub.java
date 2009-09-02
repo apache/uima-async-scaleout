@@ -58,50 +58,52 @@ import org.apache.uima.resource.ResourceServiceException;
 import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.util.Level;
 
-public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener implements AnalysisEngineServiceStub
-{
+public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener implements
+        AnalysisEngineServiceStub {
   public static final String PARAM_BROKER_URL = "brokerUrl";
+
   public static final String PARAM_ENDPOINT = "endpoint";
+
   public static final String PARAM_TIMEOUT = "timeout";
+
   public static final String PARAM_GETMETA_TIMEOUT = "getmetatimeout";
+
   public static final String PARAM_CPC_TIMEOUT = "cpctimeout";
-  
+
   public static final String PARAM_BIN_SERIALIZTION = "binary_serialization";
+
   private Object mux = new Object();
+
   private boolean cpcReceived;
+
   private UimaAsynchronousEngine uimaEEEngine;
-  
-  public JmsAnalysisEngineServiceStub(Resource owner,
-          Parameter[] parameters) throws ResourceInitializationException {
+
+  public JmsAnalysisEngineServiceStub(Resource owner, Parameter[] parameters)
+          throws ResourceInitializationException {
     // read parameters
     String brokerUrl = null;
     String endpoint = null;
     int timeout = 0;
     int getMetaTimeout = 0;
     int cpcTimeout = 0;
-    
+
     String binary_serialization = null;
     for (int i = 0; i < parameters.length; i++) {
       if (PARAM_BROKER_URL.equalsIgnoreCase(parameters[i].getName())) {
         brokerUrl = parameters[i].getValue();
-      }
-      else if (PARAM_ENDPOINT.equalsIgnoreCase(parameters[i].getName())) {
+      } else if (PARAM_ENDPOINT.equalsIgnoreCase(parameters[i].getName())) {
         endpoint = parameters[i].getValue();
-      }
-      else if (PARAM_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
+      } else if (PARAM_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
         timeout = Integer.parseInt(parameters[i].getValue());
-      }
-      else if (PARAM_BIN_SERIALIZTION.equalsIgnoreCase(parameters[i].getName())) {
+      } else if (PARAM_BIN_SERIALIZTION.equalsIgnoreCase(parameters[i].getName())) {
         binary_serialization = parameters[i].getValue();
-      }
-      else if (PARAM_GETMETA_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
+      } else if (PARAM_GETMETA_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
         getMetaTimeout = Integer.parseInt(parameters[i].getValue());
-      }
-      else if (PARAM_CPC_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
+      } else if (PARAM_CPC_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
         cpcTimeout = Integer.parseInt(parameters[i].getValue());
       }
     }
-    
+
     // initialize UIMA EE Engine
     Map appCtxt = new HashMap();
     appCtxt.put(UimaAsynchronousEngine.ServerUri, brokerUrl);
@@ -129,12 +131,11 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     System.out.println("adapter init complete");
   }
 
-
   /**
    * @see org.apache.uima.resource.service.ResourceServiceStub#callGetMetaData()
    */
   public ResourceMetaData callGetMetaData() throws ResourceServiceException {
-    //metadata already retrieved during initialization
+    // metadata already retrieved during initialization
     try {
       return uimaEEEngine.getMetaData();
     } catch (ResourceInitializationException e) {
@@ -167,13 +168,12 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     callProcess(aCAS);
   }
 
-
   /**
    * @see org.apache.uima.resource.service.impl.ResourceServiceStub#destroy()
    */
   public void destroy() {
     try {
-//      System.out.println("destroy methjdssdx");
+      // System.out.println("destroy methjdssdx");
       uimaEEEngine.stop();
     } catch (Exception e) {
       if (UIMAFramework.getLogger().isLoggable(Level.WARNING)) {
@@ -186,8 +186,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
    * @see org.apache.uima.collection.impl.service.CasObjectProcessorServiceStub#callBatchProcessComplete()
    */
   public void callBatchProcessComplete() throws ResourceServiceException {
-    //Not supported.  Do nothing, rather than throw an exception, since this is called
-    //in the normal course of CPE processing.
+    // Not supported. Do nothing, rather than throw an exception, since this is called
+    // in the normal course of CPE processing.
   }
 
   /**
@@ -198,12 +198,12 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
       cpcReceived = false;
       uimaEEEngine.collectionProcessingComplete();
       // make this routine synchronous
-//      System.out.println("CPC no wakeup needed");
+      // System.out.println("CPC no wakeup needed");
       synchronized (mux) {
         while (!cpcReceived) {
           try {
             mux.wait();
-//            System.out.println("CPC wakeup");
+            // System.out.println("CPC wakeup");
           } catch (InterruptedException e) {
             // Only here if something interrupts this thread
             e.printStackTrace();
@@ -215,33 +215,41 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     }
   }
 
-
-  /* (non-Javadoc)
-   * @see org.apache.uima.aae.client.UimaASStatusCallbackListener#collectionProcessComplete(org.apache.uima.collection.EntityProcessStatus)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * org.apache.uima.aae.client.UimaASStatusCallbackListener#collectionProcessComplete(org.apache
+   * .uima.collection.EntityProcessStatus)
    */
   public void collectionProcessComplete(EntityProcessStatus aStatus) {
     synchronized (mux) {
-//      System.out.println("CPC reply done got one");
+      // System.out.println("CPC reply done got one");
       cpcReceived = true;
       mux.notifyAll();
     }
   }
 
-
-  /* (non-Javadoc)
-   * @see org.apache.uima.aae.client.UimaASStatusCallbackListener#entityProcessComplete(org.apache.uima.cas.CAS, org.apache.uima.collection.EntityProcessStatus)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * org.apache.uima.aae.client.UimaASStatusCallbackListener#entityProcessComplete(org.apache.uima
+   * .cas.CAS, org.apache.uima.collection.EntityProcessStatus)
    */
   public void entityProcessComplete(CAS aCas, EntityProcessStatus aStatus) {
     // not used
   }
 
-
-  /* (non-Javadoc)
-   * @see org.apache.uima.aae.client.UimaASStatusCallbackListener#initializationComplete(org.apache.uima.collection.EntityProcessStatus)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * org.apache.uima.aae.client.UimaASStatusCallbackListener#initializationComplete(org.apache.uima
+   * .collection.EntityProcessStatus)
    */
   public void initializationComplete(EntityProcessStatus aStatus) {
     // not used
   }
-
 
 }
