@@ -309,12 +309,12 @@ public class JmsEndpointConnection_impl implements ConsumerListener
 		this.endpoint = endpoint;
 	}
 
-	protected String getServerUri()
+	protected synchronized String getServerUri()
 	{
 		return serverUri;
 	}
 
-	protected void setServerUri(String serverUri)
+	protected synchronized void setServerUri(String serverUri)
 	{
 		this.serverUri = serverUri;
 	}
