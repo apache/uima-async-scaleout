@@ -51,7 +51,7 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
   public static final String PARAM_ALLOW_CONTINUE_ON_FAILURE = "AllowContinueOnFailure";
 
   public static final String PARAM_ALLOW_DROP_ON_FAILURE = "AllowDropOnFailure";
-  
+
   public static final String PARAM_FLOW = "Flow";
 
   private static final int ACTION_CONTINUE = 0;
@@ -67,15 +67,15 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
   private ArrayList mSequence;
 
   private int mActionAfterCasMultiplier;
-  
+
   private Set mAEsAllowingContinueOnFailure = new HashSet();
-  
+
   private Set mAEsAllowingDropOnFailure = new HashSet();
 
   private boolean flowError;
 
   private String[] exceptionsToIgnore;
-  
+
   private Logger mLogger;
 
   private int nCreated;
@@ -84,7 +84,7 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
     super.initialize(aContext);
     mLogger = aContext.getLogger();
 
-    String[] flow = (String[])aContext.getConfigParameterValue(PARAM_FLOW);
+    String[] flow = (String[]) aContext.getConfigParameterValue(PARAM_FLOW);
     mSequence = new ArrayList();
     for (int i = 0; i < flow.length; i++) {
       String[] aes = flow[i].split(",");
@@ -94,7 +94,7 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
         Collection keys = new ArrayList();
         keys.addAll(Arrays.asList(aes));
         mSequence.add(new ParallelStep(keys));
-      }            
+      }
     }
 
     String actionAfterCasMultiplier = (String) aContext
@@ -112,25 +112,24 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
     } else {
       throw new ResourceInitializationException(); // TODO
     }
-    
-    exceptionsToIgnore = (String[])aContext
-      .getConfigParameterValue(EXCEPTIONS_TO_IGNORE);
-    
+
+    exceptionsToIgnore = (String[]) aContext.getConfigParameterValue(EXCEPTIONS_TO_IGNORE);
+
     // Some delegates allow the CAS to continue in the flow after an error
-    String[] aeKeysAllowingContinue = (String[])aContext
+    String[] aeKeysAllowingContinue = (String[]) aContext
             .getConfigParameterValue(PARAM_ALLOW_CONTINUE_ON_FAILURE);
     if (aeKeysAllowingContinue != null) {
       mAEsAllowingContinueOnFailure.addAll(Arrays.asList(aeKeysAllowingContinue));
     }
-    
+
     // Some delegates want the CAS quietly dropped after an error
-    String[] aeKeysAllowingDrop = (String[])aContext
-             .getConfigParameterValue(PARAM_ALLOW_DROP_ON_FAILURE);
+    String[] aeKeysAllowingDrop = (String[]) aContext
+            .getConfigParameterValue(PARAM_ALLOW_DROP_ON_FAILURE);
     if (aeKeysAllowingDrop != null) {
       mAEsAllowingDropOnFailure.addAll(Arrays.asList(aeKeysAllowingDrop));
     }
 
-   flowError = false;
+    flowError = false;
     nCreated = 0;
   }
 
@@ -143,8 +142,10 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
     ++nCreated;
     return new FixedFlowObject(0, false, Integer.toString(nCreated));
   }
-  
-  /* (non-Javadoc)
+
+  /*
+   * (non-Javadoc)
+   * 
    * @see org.apache.uima.flow.FlowController_ImplBase#addAnalysisEngines(java.util.Collection)
    */
   public void addAnalysisEngines(Collection aKeys) {
@@ -152,23 +153,23 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
     mSequence.add(new ParallelStep(new ArrayList(aKeys)));
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
+   * 
    * @see org.apache.uima.flow.FlowController_ImplBase#removeAnalysisEngines(java.util.Collection)
    */
   public void removeAnalysisEngines(Collection aKeys) throws AnalysisEngineProcessException {
-    //Remove keys from Sequence
+    // Remove keys from Sequence
     for (int i = 0; i < mSequence.size(); ++i) {
-      Step step = (Step)mSequence.get(i);
-      if (step instanceof SimpleStep && aKeys.contains(((SimpleStep)step).getAnalysisEngineKey())) {
+      Step step = (Step) mSequence.get(i);
+      if (step instanceof SimpleStep && aKeys.contains(((SimpleStep) step).getAnalysisEngineKey())) {
         mSequence.set(i, null);
-      }
-      else if (step instanceof ParallelStep) {
-        Collection keys = new ArrayList(((ParallelStep)step).getAnalysisEngineKeys());
+      } else if (step instanceof ParallelStep) {
+        Collection keys = new ArrayList(((ParallelStep) step).getAnalysisEngineKeys());
         keys.removeAll(aKeys);
         if (keys.isEmpty()) {
           mSequence.set(i, null);
-        }
-        else {
+        } else {
           mSequence.set(i, new ParallelStep(keys));
         }
       }
@@ -183,9 +184,9 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
     private boolean casMultiplierProducedNewCas = false;
 
     private boolean internallyCreatedCas = false;
-    
+
     private boolean dropOnFailure = false;
-    
+
     private String flowId;
 
     private int nCreated;
@@ -228,10 +229,12 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
       }
 
       if (dropOnFailure) {
-        mLogger.log(Level.FINE, "CAS " + flowId + " skips rest of flow after failing previous step");
+        mLogger
+                .log(Level.FINE, "CAS " + flowId
+                        + " skips rest of flow after failing previous step");
         return new FinalStep(internallyCreatedCas);
       }
-      
+
       // if CAS was passed to a CAS multiplier on the last step, special processing
       // is needed according to the value of the ActionAfterCasMultiplier config parameter
       if (wasPassedToCasMultiplier) {
@@ -282,7 +285,7 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
         mLogger.log(Level.FINE, "CAS " + flowId + " at final step - will"
                 + (((FinalStep) nextStep).getForceCasToBeDropped() ? "" : " not") + " be dropped");
       } else if (nextStep instanceof ParallelStep) {
-        ((ParallelStep) nextStep).getAnalysisEngineKeys().toArray( new String[0]);
+        ((ParallelStep) nextStep).getAnalysisEngineKeys().toArray(new String[0]);
         stepName = ((ParallelStep) nextStep).getAnalysisEngineKeys().toString();
         mLogger.log(Level.FINE, "CAS " + flowId + " sent in parallel to: " + stepName);
       }
@@ -298,23 +301,21 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
     private boolean stepContainsCasMultiplier(Step nextStep) {
       if (nextStep instanceof SimpleStep) {
         AnalysisEngineMetaData md = (AnalysisEngineMetaData) getContext()
-          .getAnalysisEngineMetaDataMap().get(((SimpleStep)nextStep).getAnalysisEngineKey());
-        return md != null && md.getOperationalProperties() != null &&
-                md.getOperationalProperties().getOutputsNewCASes();
-      }
-      else if (nextStep instanceof ParallelStep) {
-        Iterator iter = ((ParallelStep)nextStep).getAnalysisEngineKeys().iterator();
+                .getAnalysisEngineMetaDataMap().get(((SimpleStep) nextStep).getAnalysisEngineKey());
+        return md != null && md.getOperationalProperties() != null
+                && md.getOperationalProperties().getOutputsNewCASes();
+      } else if (nextStep instanceof ParallelStep) {
+        Iterator iter = ((ParallelStep) nextStep).getAnalysisEngineKeys().iterator();
         while (iter.hasNext()) {
-          String key = (String)iter.next();
+          String key = (String) iter.next();
           AnalysisEngineMetaData md = (AnalysisEngineMetaData) getContext()
-            .getAnalysisEngineMetaDataMap().get(key);
-          if (md != null && md.getOperationalProperties() != null &&
-                  md.getOperationalProperties().getOutputsNewCASes())
+                  .getAnalysisEngineMetaDataMap().get(key);
+          if (md != null && md.getOperationalProperties() != null
+                  && md.getOperationalProperties().getOutputsNewCASes())
             return true;
         }
         return false;
-      }
-      else
+      } else
         return false;
     }
 
@@ -328,7 +329,7 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
       casMultiplierProducedNewCas = true;
       // start the new output CAS from the next node after the CasMultiplier that produced it
       int i = 0;
-      while (!stepContains((Step)mSequence.get(i), producedBy))
+      while (!stepContains((Step) mSequence.get(i), producedBy))
         i++;
       ++nCreated;
       return new FixedFlowObject(i + 1, true, flowId + "." + nCreated);
@@ -341,36 +342,39 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
      */
     private boolean stepContains(Step step, String producedBy) {
       if (step instanceof SimpleStep) {
-        return ((SimpleStep)step).getAnalysisEngineKey().equals(producedBy);
-      }
-      else if (step instanceof ParallelStep) {
-        Iterator iter = ((ParallelStep)step).getAnalysisEngineKeys().iterator();
+        return ((SimpleStep) step).getAnalysisEngineKey().equals(producedBy);
+      } else if (step instanceof ParallelStep) {
+        Iterator iter = ((ParallelStep) step).getAnalysisEngineKeys().iterator();
         while (iter.hasNext()) {
-          String key = (String)iter.next();
+          String key = (String) iter.next();
           if (key.equals(producedBy))
             return true;
         }
         return false;
-      }
-      else
+      } else
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.uima.flow.CasFlow_ImplBase#continueOnFailure(java.lang.String, java.lang.Exception)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.uima.flow.CasFlow_ImplBase#continueOnFailure(java.lang.String,
+     * java.lang.Exception)
      */
     public boolean continueOnFailure(String failedAeKey, Exception failure) {
       // Check that root cause is expected
       Throwable cause = failure;
       while (cause.getCause() != null) {
-        cause = cause.getCause();       
+        cause = cause.getCause();
       }
       mLogger.log(Level.WARNING, failedAeKey + " ERROR = " + cause.toString());
-      // Usually expect IndexOutOfBoundsException or MessageTimeoutException 
+      // Usually expect IndexOutOfBoundsException or MessageTimeoutException
       // (forced when a delegate with outstanding CASes is disabled) but these
       // must now be explicitly specified in the descriptor.
-      if ( !expectedException(cause)) {
-        System.out.println("FlowController.continueOnFailure - Unexpected cause for delegate failure: "+ cause.getClass());
+      if (!expectedException(cause)) {
+        System.out
+                .println("FlowController.continueOnFailure - Unexpected cause for delegate failure: "
+                        + cause.getClass());
         // Throwing an exception here doesn't stop flow!
         // Will be thrown in "next" method so should let CAS continue !?
         flowError = true;
@@ -379,19 +383,19 @@ public class AdvancedFixedFlowController extends CasFlowController_ImplBase {
       Boolean carryOn = mAEsAllowingContinueOnFailure.contains(failedAeKey);
       dropOnFailure = internallyCreatedCas && mAEsAllowingDropOnFailure.contains(failedAeKey);
       if (dropOnFailure) {
-        mLogger.log(Level.FINE, "CAS " + flowId
-                + " will be quietly dropped after failure of " + failedAeKey);
+        mLogger.log(Level.FINE, "CAS " + flowId + " will be quietly dropped after failure of "
+                + failedAeKey);
       } else {
         mLogger.log(Level.FINE, "CAS " + flowId + " CAN" + (carryOn ? "" : "NOT")
                 + " continue in flow after failure of " + failedAeKey);
       }
       return carryOn || dropOnFailure;
     }
-    
+
     private boolean expectedException(Throwable failure) {
-      if ( exceptionsToIgnore != null ) {
-        for( String exception: exceptionsToIgnore) {
-          if ( failure.getClass().getName().equals(exception)) {
+      if (exceptionsToIgnore != null) {
+        for (String exception : exceptionsToIgnore) {
+          if (failure.getClass().getName().equals(exception)) {
             return true;
           }
         }
