@@ -26,45 +26,42 @@ import javax.jms.Session;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.springframework.jms.support.destination.DestinationResolver;
 
+public class TempDestinationResolver implements DestinationResolver {
+  private UimaDefaultMessageListenerContainer listener;
 
-public class TempDestinationResolver implements DestinationResolver
-{
-	private UimaDefaultMessageListenerContainer listener;
-	private Destination destination = null;
-	private Object mutex = new Object();
+  private Destination destination = null;
 
-	/**
-	 * This method is called by the Spring listener code. It creates a single temp queue for all listener instances.
-	 * If the Spring listener is configured with more than one concurrentConsumer, this method will be 
-	 * called more than once. The temp queue is created only once and cached on the first call. Subsequent
-	 * requests receive the same queue.
-	 */
-	public Destination resolveDestinationName(Session session, String destinationName, boolean pubSubDomain) throws JMSException
-	{
-		
-		synchronized( mutex )
-		{
-			if ( destination == null )
-			{
-				destination = session.createTemporaryQueue();
-				if ( listener != null )
-				{
-					listener.setDestination(destination);
-				}
-			}
-		}
-		return destination;
-	}
+  private Object mutex = new Object();
 
-	public void setListener( UimaDefaultMessageListenerContainer aListener )
-	{
-		listener = aListener;
-	}
-	/**
-	 * called from Spring during initialization
-	 * 
-	 * @param aFactory
-	 */
-	public void setConnectionFactory( ActiveMQConnectionFactory aFactory ) {
-	}
+  /**
+   * This method is called by the Spring listener code. It creates a single temp queue for all
+   * listener instances. If the Spring listener is configured with more than one concurrentConsumer,
+   * this method will be called more than once. The temp queue is created only once and cached on
+   * the first call. Subsequent requests receive the same queue.
+   */
+  public Destination resolveDestinationName(Session session, String destinationName,
+          boolean pubSubDomain) throws JMSException {
+
+    synchronized (mutex) {
+      if (destination == null) {
+        destination = session.createTemporaryQueue();
+        if (listener != null) {
+          listener.setDestination(destination);
+        }
+      }
+    }
+    return destination;
+  }
+
+  public void setListener(UimaDefaultMessageListenerContainer aListener) {
+    listener = aListener;
+  }
+
+  /**
+   * called from Spring during initialization
+   * 
+   * @param aFactory
+   */
+  public void setConnectionFactory(ActiveMQConnectionFactory aFactory) {
+  }
 }
