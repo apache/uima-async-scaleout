@@ -89,6 +89,10 @@ public class Dd2SpringTest extends TestCase{
   protected void tearDown() {
     
   }
+  
+  public void testAggregateWithInnerAggregateCM() throws Exception {
+    checkDd2Spring("aggregateWithInnerAggregateCM.xml");  
+  }
 
   public void testDd2Spring_BrokerURL_params() throws Exception {
     checkDd2Spring("defaultingAEwithBrokerParms.xml");  
