@@ -33,35 +33,31 @@ import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.util.Level;
 
-public class InvalidJMSMessageHandler extends ErrorHandlerBase implements ErrorHandler
-{
-	private static final Class CLASS_NAME = InvalidJMSMessageHandler.class;
+public class InvalidJMSMessageHandler extends ErrorHandlerBase implements ErrorHandler {
+  private static final Class CLASS_NAME = InvalidJMSMessageHandler.class;
 
-	public InvalidJMSMessageHandler( Map anEndpointThreasholdMap )
-	{
-		super(anEndpointThreasholdMap);
-	}
-	public InvalidJMSMessageHandler( )
-	{
-	}
-	public boolean handleError(Throwable t, ErrorContext anErrorContext, AnalysisEngineController aController)
-	{
-		if (t instanceof InvalidMessageException )
-		{
+  public InvalidJMSMessageHandler(Map anEndpointThreasholdMap) {
+    super(anEndpointThreasholdMap);
+  }
+
+  public InvalidJMSMessageHandler() {
+  }
+
+  public boolean handleError(Throwable t, ErrorContext anErrorContext,
+          AnalysisEngineController aController) {
+    if (t instanceof InvalidMessageException) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-	                "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_handling_invalid_jms_message__INFO",
-	                new Object[] {});
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleError",
+                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_handling_invalid_jms_message__INFO",
+                new Object[] {});
       }
-			if ( anErrorContext.containsKey(UIMAMessage.RawMsg ))
-			{
-				
-				
-				Message invalidMessage = (Message)anErrorContext.get(UIMAMessage.RawMsg);
-				//	Handle the message here.
-			}
-			return true;
-		}
-		return false;
-	}
+      if (anErrorContext.containsKey(UIMAMessage.RawMsg)) {
+
+        Message invalidMessage = (Message) anErrorContext.get(UIMAMessage.RawMsg);
+        // Handle the message here.
+      }
+      return true;
+    }
+    return false;
+  }
 }
