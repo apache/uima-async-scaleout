@@ -52,25 +52,25 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 
 /**
- * An example CasMultiplier, which simulates merging of the input CASes.
- * Generates 1 output CAS for every N input CASes.
+ * An example CasMultiplier, which simulates merging of the input CASes. Generates 1 output CAS for
+ * every N input CASes.
  */
-public class SimpleCasMerger extends CasMultiplier_ImplBase
-{
-	private int docCount = 0;
+public class SimpleCasMerger extends CasMultiplier_ImplBase {
+  private int docCount = 0;
 
   private int genCount = 0;
 
   private int nToMerge;
-  
+
   private String casMultName;
-    
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.uima.analysis_component.AnalysisComponent_ImplBase#initialize(org.apache.uima.UimaContext)
-	 */
-	public void initialize(UimaContext aContext) throws ResourceInitializationException {
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @seeorg.apache.uima.analysis_component.AnalysisComponent_ImplBase#initialize(org.apache.uima.
+   * UimaContext)
+   */
+  public void initialize(UimaContext aContext) throws ResourceInitializationException {
     super.initialize(aContext);
     this.nToMerge = ((Integer) aContext.getConfigParameterValue("NumberToMerge")).intValue();
     this.casMultName = (String) aContext.getConfigParameterValue("AnnotatorName");
@@ -79,46 +79,42 @@ public class SimpleCasMerger extends CasMultiplier_ImplBase
     }
   }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see JCasMultiplier_ImplBase#process(JCas)
-	 */
-	public void process(CAS aCas) throws AnalysisEngineProcessException
-	{
-		this.docCount++;
-    if ( UIMAFramework.getLogger().isLoggable(Level.FINE))
-      System.out.println(casMultName + ".process() received document " + this.docCount );
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see JCasMultiplier_ImplBase#process(JCas)
+   */
+  public void process(CAS aCas) throws AnalysisEngineProcessException {
+    this.docCount++;
+    if (UIMAFramework.getLogger().isLoggable(Level.FINE))
+      System.out.println(casMultName + ".process() received document " + this.docCount);
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.uima.analysis_component.AnalysisComponent#hasNext()
-	 */
-	public boolean hasNext() throws AnalysisEngineProcessException
-	{
-	  // Generate N-th when receive M * N-th input
-		return (docCount >= (genCount+1) * nToMerge);
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.apache.uima.analysis_component.AnalysisComponent#hasNext()
+   */
+  public boolean hasNext() throws AnalysisEngineProcessException {
+    // Generate N-th when receive M * N-th input
+    return (docCount >= (genCount + 1) * nToMerge);
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.uima.analysis_component.AnalysisComponent#next()
-	 */
-	public AbstractCas next() throws AnalysisEngineProcessException
-	{	
-	  CAS cas = getEmptyCAS();
-	   
+  /*
+   * (non-Javadoc)
+   * 
+   * @see org.apache.uima.analysis_component.AnalysisComponent#next()
+   */
+  public AbstractCas next() throws AnalysisEngineProcessException {
+    CAS cas = getEmptyCAS();
+
     this.genCount++;
     String text = casMultName + " created #" + this.genCount + " from #" + this.docCount;
-    if ( UIMAFramework.getLogger().isLoggable(Level.FINE))
+    if (UIMAFramework.getLogger().isLoggable(Level.FINE))
       System.out.println(text);
     cas.setDocumentText(text);
-    
+
     return cas;
-	}
+  }
 
 }
-
