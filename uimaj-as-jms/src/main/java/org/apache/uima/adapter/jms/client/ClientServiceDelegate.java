@@ -35,30 +35,39 @@ public class ClientServiceDelegate extends Delegate {
   private static final Class CLASS_NAME = ClientServiceDelegate.class;
 
   private BaseUIMAAsynchronousEngineCommon_impl clientUimaAsEngine;
+
   private String applicationName = "UimaAsClient";
+
   private volatile boolean usesSynchronousAPI;
+
   private Destination freeCasDestination = null;
-  
-  public ClientServiceDelegate(String serviceName, String anApplicationName,  BaseUIMAAsynchronousEngineCommon_impl engine ) {
+
+  public ClientServiceDelegate(String serviceName, String anApplicationName,
+          BaseUIMAAsynchronousEngineCommon_impl engine) {
     super.delegateKey = serviceName;
     clientUimaAsEngine = engine;
-    if ( anApplicationName != null && anApplicationName.trim().length() > 0 ) {
+    if (anApplicationName != null && anApplicationName.trim().length() > 0) {
       applicationName = anApplicationName;
     }
   }
+
   public boolean isSynchronousAPI() {
     return usesSynchronousAPI;
   }
+
   public void setSynchronousAPI() {
-    this.usesSynchronousAPI = true;;
+    this.usesSynchronousAPI = true;
+    ;
   }
 
   public Destination getFreeCasDestination() {
     return freeCasDestination;
   }
+
   public void setFreeCasDestination(Destination freeCasDestination) {
     this.freeCasDestination = freeCasDestination;
   }
+
   public String getComponentName() {
     return applicationName;
   }
@@ -67,82 +76,92 @@ public class ClientServiceDelegate extends Delegate {
     String casReferenceId = null;
     CAS cas = null;
     ClientRequest cachedRequest = null;
-    if ( !clientUimaAsEngine.running ) {
+    if (!clientUimaAsEngine.running) {
       cancelDelegateTimer();
       return;
     }
-    int command = ((Integer)errorContext.get(AsynchAEMessage.Command)).intValue();
+    int command = ((Integer) errorContext.get(AsynchAEMessage.Command)).intValue();
     try {
-      if ( e instanceof MessageTimeoutException) {
+      if (e instanceof MessageTimeoutException) {
         cancelDelegateTimer();
-        switch( command ) {
+        switch (command) {
           case AsynchAEMessage.Process:
-            casReferenceId = (String)errorContext.get(AsynchAEMessage.CasReference);
-            if ( casReferenceId != null ) {
-              cachedRequest =(ClientRequest)clientUimaAsEngine.clientCache.get(casReferenceId);
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE) &&
-                      getEndpoint() != null )  {
-                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(), "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_process_timeout_INFO", new Object[] { getEndpoint().getEndpoint() });
-              }        
+            casReferenceId = (String) errorContext.get(AsynchAEMessage.CasReference);
+            if (casReferenceId != null) {
+              cachedRequest = (ClientRequest) clientUimaAsEngine.clientCache.get(casReferenceId);
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)
+                      && getEndpoint() != null) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(),
+                        "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_process_timeout_INFO",
+                        new Object[] { getEndpoint().getEndpoint() });
+              }
               if (cachedRequest != null && cachedRequest.isRemote()) {
                 cas = cachedRequest.getCAS();
               }
               boolean isPingTimeout = false;
-              if ( errorContext.containsKey(AsynchAEMessage.ErrorCause)) {
-                isPingTimeout =  
-                  AsynchAEMessage.PingTimeout == 
-                    (Integer)errorContext.get(AsynchAEMessage.ErrorCause);
+              if (errorContext.containsKey(AsynchAEMessage.ErrorCause)) {
+                isPingTimeout = AsynchAEMessage.PingTimeout == (Integer) errorContext
+                        .get(AsynchAEMessage.ErrorCause);
               }
-              if ( isPingTimeout && isAwaitingPingReply() ) {
+              if (isPingTimeout && isAwaitingPingReply()) {
                 System.out.println(">>>>> Client Ping Timedout");
-                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_ping_timed_out__WARNING",
-                        new Object[] { getKey() });
-                
-                clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(), BaseUIMAAsynchronousEngineCommon_impl.PingTimeout, casReferenceId);
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                        "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_client_ping_timed_out__WARNING", new Object[] { getKey() });
+
+                clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
+                        BaseUIMAAsynchronousEngineCommon_impl.PingTimeout, casReferenceId);
               } else {
                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_process_timedout__INFO",
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                          "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAJMS_client_process_timedout__INFO",
                           new Object[] { getGetMetaTimeout() });
                 }
                 System.out.println(">>>>> Client Process Timed out. Notifying Listeners");
-                clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(), BaseUIMAAsynchronousEngineCommon_impl.ProcessTimeout, casReferenceId);
+                clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
+                        BaseUIMAAsynchronousEngineCommon_impl.ProcessTimeout, casReferenceId);
               }
             }
             clientUimaAsEngine.clientSideJmxStats.incrementProcessTimeoutErrorCount();
             break;
-            
+
           case AsynchAEMessage.GetMeta:
-               if ( isAwaitingPingReply() ) {
-                 System.out.println(">>>>> Client Ping Timedout");
-                 clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(), BaseUIMAAsynchronousEngineCommon_impl.PingTimeout, casReferenceId);
-               } else {
-                 //  Notifies Listeners and removes ClientRequest instance from the client cache
-                 clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(), BaseUIMAAsynchronousEngineCommon_impl.MetadataTimeout, casReferenceId);
-                 clientUimaAsEngine.clientSideJmxStats.incrementMetaTimeoutErrorCount();
-               }
-               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_meta_timeout_INFO",
-                   new Object[] { getKey() });
-               }
-               System.out.println("Stopping Uima AS Client API. Service Not Responding To a Ping.");
-               clientUimaAsEngine.stop();
+            if (isAwaitingPingReply()) {
+              System.out.println(">>>>> Client Ping Timedout");
+              clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
+                      BaseUIMAAsynchronousEngineCommon_impl.PingTimeout, casReferenceId);
+            } else {
+              // Notifies Listeners and removes ClientRequest instance from the client cache
+              clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
+                      BaseUIMAAsynchronousEngineCommon_impl.MetadataTimeout, casReferenceId);
+              clientUimaAsEngine.clientSideJmxStats.incrementMetaTimeoutErrorCount();
+            }
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                      "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_meta_timeout_INFO", new Object[] { getKey() });
+            }
+            System.out.println("Stopping Uima AS Client API. Service Not Responding To a Ping.");
+            clientUimaAsEngine.stop();
             break;
-              
+
           case AsynchAEMessage.CollectionProcessComplete:
-            
+
             break;
         }
       }
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", new Object[] { ex });
-      }        
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { ex });
+      }
     }
-    //  Dont release the CAS if synchronous API was used
-    if (cas != null && !cachedRequest.isSynchronousInvocation())
-    {
+    // Dont release the CAS if synchronous API was used
+    if (cas != null && !cachedRequest.isSynchronousInvocation()) {
       cas.release();
     }
   }

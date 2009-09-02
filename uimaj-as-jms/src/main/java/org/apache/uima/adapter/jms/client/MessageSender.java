@@ -26,17 +26,17 @@ import javax.jms.TextMessage;
 
 public interface MessageSender {
 
-	public MessageProducer getMessageProducer();
+  public MessageProducer getMessageProducer();
 
-	public Exception getReasonForFailure();
+  public Exception getReasonForFailure();
 
-	public boolean failed();
+  public boolean failed();
 
-	public TextMessage createTextMessage() throws Exception;
+  public TextMessage createTextMessage() throws Exception;
 
-	public void doStop();
-	
-	public MessageProducer getMessageProducer(Destination destination) throws Exception;
+  public void doStop();
+
+  public MessageProducer getMessageProducer(Destination destination) throws Exception;
 
   public BytesMessage createBytesMessage() throws Exception;
 }

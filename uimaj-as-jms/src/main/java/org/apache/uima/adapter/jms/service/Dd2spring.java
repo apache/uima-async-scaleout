@@ -35,64 +35,71 @@ import org.apache.uima.util.Level;
 
 public class Dd2spring {
 
-	private static final Class [] mainArg = new Class [] {String[].class};
-	private static final Class THIS_CLASS = Dd2spring.class;
-	private ClassLoader saxonClassLoader;
-	
-	/**
-	 * Test driver  arg = path_to_source,  path_to_xslt, path_to_saxon_jar, uima-as-debug flag
-	 * @param args
-	 */
-	public static void main(String[] args) {
+  private static final Class[] mainArg = new Class[] { String[].class };
+
+  private static final Class THIS_CLASS = Dd2spring.class;
+
+  private ClassLoader saxonClassLoader;
+
+  /**
+   * Test driver arg = path_to_source, path_to_xslt, path_to_saxon_jar, uima-as-debug flag
+   * 
+   * @param args
+   */
+  public static void main(String[] args) {
     new Dd2spring().convertDd2Spring(args[0], args[1], args[2], args[3]);
-	}
-	
-	public File convertDd2Spring(String ddFilePath,
-			String dd2SpringXsltFilePath,
-			String saxonClasspath,
-			String uimaAsDebug) {
+  }
 
-		URL urlForSaxonClassPath;
-		try {
-			urlForSaxonClassPath = new URL(saxonClasspath);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMA_dd2spring_Cannot_convert_saxon_classpath_to_a_URL_SEVERE",
-          new Object[] {saxonClasspath});
-			return null;
-		}
+  public File convertDd2Spring(String ddFilePath, String dd2SpringXsltFilePath,
+          String saxonClasspath, String uimaAsDebug) {
 
-		File tempFile;
-		try {
-			tempFile = File.createTempFile("UIMAdd2springOutput", ".xml");
-		} catch (IOException e) {
-			e.printStackTrace();
-			UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMA_dd2spring_cant_create_temp_output_file_SEVERE");
-			return null;
-		}
+    URL urlForSaxonClassPath;
+    try {
+      urlForSaxonClassPath = new URL(saxonClasspath);
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_Cannot_convert_saxon_classpath_to_a_URL_SEVERE",
+              new Object[] { saxonClasspath });
+      return null;
+    }
 
-		convertDd2Spring(tempFile, ddFilePath, dd2SpringXsltFilePath, urlForSaxonClassPath);
-		
-		// delete the file when terminating if
-		//   a) uimaAsDebug is not specified (is null) or
-		//   b) uimaAsDebug is specified, but is ""
-		if (null == uimaAsDebug || uimaAsDebug.equals("")) {
-		  tempFile.deleteOnExit();
-		}
-		  
-		return tempFile;		
-	}
-/**
- * 
- * @param ddFilePath file path to UIMA Deployment Descriptor - passed to saxon
- * @param dd2SpringXsltFilePath file path to dd2spring.xslt transformation file - passed to saxon
- * @param saxonClasspathURL classpath for saxon8.jar
- * @return temp file with generated Spring from dd2spring transform
- */	
+    File tempFile;
+    try {
+      tempFile = File.createTempFile("UIMAdd2springOutput", ".xml");
+    } catch (IOException e) {
+      e.printStackTrace();
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_cant_create_temp_output_file_SEVERE");
+      return null;
+    }
+
+    convertDd2Spring(tempFile, ddFilePath, dd2SpringXsltFilePath, urlForSaxonClassPath);
+
+    // delete the file when terminating if
+    // a) uimaAsDebug is not specified (is null) or
+    // b) uimaAsDebug is specified, but is ""
+    if (null == uimaAsDebug || uimaAsDebug.equals("")) {
+      tempFile.deleteOnExit();
+    }
+
+    return tempFile;
+  }
+
+  /**
+   * 
+   * @param ddFilePath
+   *          file path to UIMA Deployment Descriptor - passed to saxon
+   * @param dd2SpringXsltFilePath
+   *          file path to dd2spring.xslt transformation file - passed to saxon
+   * @param saxonClasspathURL
+   *          classpath for saxon8.jar
+   * @return temp file with generated Spring from dd2spring transform
+   */
   public void convertDd2Spring(File tempFile, String ddFilePath, String dd2SpringXsltFilePath,
-      URL saxonClasspathURL) {
+          URL saxonClasspathURL) {
 
     if (null == saxonClassLoader) {
       URL[] classLoaderUrls = new URL[] { saxonClasspathURL };
@@ -106,11 +113,12 @@ public class Dd2spring {
     try {
       mainStartClass = Class.forName("net.sf.saxon.Transform", true, saxonClassLoader);
     } catch (ClassNotFoundException e) {
-      System.err.println("Error - can't load Saxon jar from " + saxonClasspathURL + " for dd2spring transformation.");
+      System.err.println("Error - can't load Saxon jar from " + saxonClasspathURL
+              + " for dd2spring transformation.");
       e.printStackTrace();
       UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-          "UIMA_dd2spring_saxon_missing_SEVERE");
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_saxon_missing_SEVERE");
       return;
     }
 
@@ -118,16 +126,15 @@ public class Dd2spring {
     // -l -s deployment_descriptor} -o output_file_path dd2spring.xsl_file_path
 
     List<String> argsForSaxon = new ArrayList<String>();
-    argsForSaxon.add("-l");         // turn on line numbers
-    argsForSaxon.add("-s");         // source file
-    argsForSaxon.add(ddFilePath);   //   source file
-    argsForSaxon.add("-o");         // output file
-    argsForSaxon.add(tempFile.getAbsolutePath());   // output file
+    argsForSaxon.add("-l"); // turn on line numbers
+    argsForSaxon.add("-s"); // source file
+    argsForSaxon.add(ddFilePath); // source file
+    argsForSaxon.add("-o"); // output file
+    argsForSaxon.add(tempFile.getAbsolutePath()); // output file
     argsForSaxon.add(dd2SpringXsltFilePath); // xslt transform to apply
-    
-    
+
     if (null != System.getProperty("uima-as.dd2spring.noTempQueues")) {
-      argsForSaxon.add("noTempQueues=true");  // disable generate of temp queues (for testing)
+      argsForSaxon.add("noTempQueues=true"); // disable generate of temp queues (for testing)
     }
 
     Method mainMethod = null;
@@ -136,35 +143,36 @@ public class Dd2spring {
     } catch (SecurityException e) {
       e.printStackTrace();
       UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-          "UIMA_dd2spring_security_exception_calling_saxon");
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_security_exception_calling_saxon");
       return;
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
       UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-          "UIMA_dd2spring_internal_error_calling_saxon");
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_internal_error_calling_saxon");
       return;
     }
     try {
-      mainMethod.invoke(null, new Object[] { argsForSaxon.toArray(new String [argsForSaxon.size()])});
+      mainMethod.invoke(null,
+              new Object[] { argsForSaxon.toArray(new String[argsForSaxon.size()]) });
     } catch (IllegalArgumentException e) {
       e.printStackTrace();
       UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-          "UIMA_dd2spring_internal_error_calling_saxon");
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_internal_error_calling_saxon");
       return;
     } catch (IllegalAccessException e) {
       e.printStackTrace();
       UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-          "UIMA_dd2spring_internal_error_calling_saxon");
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_internal_error_calling_saxon");
       return;
     } catch (InvocationTargetException e) {
       e.printStackTrace();
       UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-          "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-          "UIMA_dd2spring_internal_error_calling_saxon");
+              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMA_dd2spring_internal_error_calling_saxon");
       return;
     }
 

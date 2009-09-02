@@ -21,14 +21,13 @@ package org.apache.uima.adapter.jms.message;
 import java.util.HashMap;
 
 public class PendingMessage extends HashMap {
-	private int messageType;
-	
-	public PendingMessage(int aMessageType)
-	{
-		messageType = aMessageType;
-	}
+  private int messageType;
 
-	public int getMessageType() {
-		return messageType;
-	}
+  public PendingMessage(int aMessageType) {
+    messageType = aMessageType;
+  }
+
+  public int getMessageType() {
+    return messageType;
+  }
 }
