@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae.client;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,129 +28,160 @@ import java.util.Map;
 
 import org.apache.uima.util.ProcessTrace;
 
-public class UimaASProcessStatusImpl implements UimaASProcessStatus 
-{
+public class UimaASProcessStatusImpl implements UimaASProcessStatus {
 
-	  private static final long serialVersionUID = -5101356145458558249L;
+  private static final long serialVersionUID = -5101356145458558249L;
 
-	  ProcessTrace prT;
+  ProcessTrace prT;
 
-	  HashMap eventMap = new HashMap();
+  HashMap eventMap = new HashMap();
 
-	  List exceptionList = new ArrayList();
+  List exceptionList = new ArrayList();
 
-	  List failedList = new ArrayList();
+  List failedList = new ArrayList();
 
-	  HashMap resultHM = new HashMap();
+  HashMap resultHM = new HashMap();
 
-	  private boolean isSkipped = false;
+  private boolean isSkipped = false;
 
-	  public boolean isProcessed = true;
+  public boolean isProcessed = true;
 
-	  private String casReferenceId;
+  private String casReferenceId;
 
-	  private String parentCasId;
-	  
-	  public UimaASProcessStatusImpl(ProcessTrace p){
-	      this(p,null);
-	  }
-	  public UimaASProcessStatusImpl(ProcessTrace p, String aCasReferenceId) {
-	      this(p,aCasReferenceId,null);
-	  }
+  private String parentCasId;
 
-	  public UimaASProcessStatusImpl(ProcessTrace p, String aCasReferenceId, String aParentCasReferenceId) {
-		    prT = p;
-		    casReferenceId = aCasReferenceId;
-		    parentCasId = aParentCasReferenceId;
-	  }
-	  public UimaASProcessStatusImpl(ProcessTrace p, boolean aSkip) {
-	    prT = p;
-	    isSkipped = aSkip;
-	  }
+  public UimaASProcessStatusImpl(ProcessTrace p) {
+    this(p, null);
+  }
 
-	  public boolean isException() {
-	    if (failedList.size() > 0) {
-	      return true;
-	    } else {
-	      return false;
-	    }
-	  }
+  public UimaASProcessStatusImpl(ProcessTrace p, String aCasReferenceId) {
+    this(p, aCasReferenceId, null);
+  }
 
-	  public String getStatusMessage() {
-	    if (failedList.size() > 0)
-	      return "failed";
-	    return "success";
-	  }
+  public UimaASProcessStatusImpl(ProcessTrace p, String aCasReferenceId,
+          String aParentCasReferenceId) {
+    prT = p;
+    casReferenceId = aCasReferenceId;
+    parentCasId = aParentCasReferenceId;
+  }
 
-	  public List getExceptions() {
-	    return exceptionList;
-	  }
+  public UimaASProcessStatusImpl(ProcessTrace p, boolean aSkip) {
+    prT = p;
+    isSkipped = aSkip;
+  }
 
-	  public List getFailedComponentNames() {
+  public boolean isException() {
+    if (failedList.size() > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
-	    return failedList;
-	  }
+  public String getStatusMessage() {
+    if (failedList.size() > 0)
+      return "failed";
+    return "success";
+  }
 
-	  public void addEventStatus(String aEventName, String aResultS, Throwable aE) {
-	    EventLog eL = new EventLog(aResultS, aE);
-	    eventMap.put(aEventName, eL);
-	    if (!aResultS.equalsIgnoreCase("success")) {
-	      failedList.add(aEventName);
-	      exceptionList.add(aE);
+  public List getExceptions() {
+    return exceptionList;
+  }
 
-	    }
-	    resultHM.put(aEventName, aE);
-	  }
+  public List getFailedComponentNames() {
 
-	  public ProcessTrace getProcessTrace() {
-	    return prT;
-	  }
+    return failedList;
+  }
 
-	  public void printEventLog() {
-	    Iterator iter = eventMap.entrySet().iterator();
-	    while (iter.hasNext()) {
-	      Object obj = iter.next();
-	      String key = (String) ((Map.Entry) obj).getKey();
-	      EventLog eL = (EventLog) ((Map.Entry) obj).getValue();
-	      System.out.println(" EVENT " + key + "  Result " + eL.status);
-	      if (eL.exception != null) {
-	        eL.exception.printStackTrace();
-	      }
+  public void addEventStatus(String aEventName, String aResultS, Throwable aE) {
+    EventLog eL = new EventLog(aResultS, aE);
+    eventMap.put(aEventName, eL);
+    if (!aResultS.equalsIgnoreCase("success")) {
+      failedList.add(aEventName);
+      exceptionList.add(aE);
 
-	    }
-	    for (int j = 0; j < failedList.size(); j++) {
+    }
+    resultHM.put(aEventName, aE);
+  }
 
-	      System.out.println(" failed component name " + failedList.get(j));
-	    }
-	  }
+  public ProcessTrace getProcessTrace() {
+    return prT;
+  }
 
-	  static class EventLog {
-	    String status;
+  public void printEventLog() {
+    Iterator iter = eventMap.entrySet().iterator();
+    while (iter.hasNext()) {
+      Object obj = iter.next();
+      String key = (String) ((Map.Entry) obj).getKey();
+      EventLog eL = (EventLog) ((Map.Entry) obj).getValue();
+      System.out.println(" EVENT " + key + "  Result " + eL.status);
+      if (eL.exception != null) {
+        eL.exception.printStackTrace();
+      }
 
-	    // Exception exception;
-	    Throwable exception;
+    }
+    for (int j = 0; j < failedList.size(); j++) {
 
-	    // public EventLog( String stats , Exception e ) {
-	    public EventLog(String stats, Throwable e) {
-	      status = stats;
-	      exception = e;
-	    }
+      System.out.println(" failed component name " + failedList.get(j));
+    }
+  }
 
-	  }
+  static class EventLog {
+    String status;
 
-	  /**
-	   * Gets whether an entity has beed skipped during processing
-	   * 
-	   * @return true if an entity was skipped, false otherwise
-	   */
-	  public boolean isEntitySkipped() {
-	    return isSkipped;
-	  }
+    // Exception exception;
+    Throwable exception;
 
-	public String getCasReferenceId() {
-		return casReferenceId;
-	}
-	public String getParentCasReferenceId() {
-		return parentCasId;
-	}
-	}
+    // public EventLog( String stats , Exception e ) {
+    public EventLog(String stats, Throwable e) {
+      status = stats;
+      exception = e;
+    }
+
+  }
+
+  /**
+   * Gets whether an entity has beed skipped during processing
+   * 
+   * @return true if an entity was skipped, false otherwise
+   */
+  public boolean isEntitySkipped() {
+    return isSkipped;
+  }
+
+  public String getCasReferenceId() {
+    return casReferenceId;
+  }
+
+  public String getParentCasReferenceId() {
+    return parentCasId;
+  }
+  /**
+   * Show class variable names and their current values. Uses
+   * reflection to obtain a list of variables from the class. 
+   */
+  public String toString() {
+    StringBuffer sb = new StringBuffer(); 
+    sb.append( this.getClass().getName() );
+    sb.append( " Object {" );
+    sb.append(System.getProperty("line.separator"));
+    //  Fetch all variables of this class
+    Field[] fields = this.getClass().getDeclaredFields();
+    //  Show the name of each variable and its value
+    for ( Field field : fields  ) {
+      sb.append("  ");
+      try {
+        sb.append( field.getName() );
+        sb.append(": ");
+        sb.append( field.get(this) );
+      }
+      catch ( IllegalAccessException ex ) {
+        System.out.println(ex);
+      }
+      sb.append(System.getProperty("line.separator"));
+    }
+    sb.append("}");
+
+    return sb.toString();
+  }
+}
