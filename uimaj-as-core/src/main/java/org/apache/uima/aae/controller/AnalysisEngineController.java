@@ -41,156 +41,161 @@ import org.apache.uima.aae.spi.transport.UimaTransport;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CAS;
 
+public interface AnalysisEngineController extends ControllerLifecycle {
+  public static final String CasPoolSize = "CasPoolSize";
 
-public interface AnalysisEngineController extends ControllerLifecycle
-{
-	public static final String CasPoolSize = "CasPoolSize";
-	public static final String AEInstanceCount = "AEInstanceCount";
-	public void sendMetadata(Endpoint anEndpoint) throws AsynchAEException;
-	public ControllerLatch getControllerLatch();
-	public void setInputChannel(InputChannel anInputChannel ) throws Exception;
+  public static final String AEInstanceCount = "AEInstanceCount";
 
-	public void addInputChannel(InputChannel anInputChannel ) throws Exception;
+  public void sendMetadata(Endpoint anEndpoint) throws AsynchAEException;
 
-	public String getServiceEndpointName();
-	
-	public void handleDelegateLifeCycleEvent( String anEndpoint, int aDelegateCount);
-	
-	public void takeAction( String anAction, String anEndpointName, ErrorContext anErrorContext);  
+  public ControllerLatch getControllerLatch();
 
-	public InputChannel getInputChannel();
+  public void setInputChannel(InputChannel anInputChannel) throws Exception;
 
-	public InputChannel getInputChannel(String aQueueName );
+  public void addInputChannel(InputChannel anInputChannel) throws Exception;
 
-	public void saveReplyTime( long snapshot, String aKey );
-	
-	public long getReplyTime();
-	
-	public Map getStats();
-	
-	public UimaContext getChildUimaContext( String aDelegateEndpointName ) throws Exception;
-	
-	public void dropCAS( String aCasReferenceId, boolean dropCacheEntry );
-	
-	public void dropCAS( CAS aCAS );
-	
-	public InProcessCache getInProcessCache();
+  public String getServiceEndpointName();
 
-	public boolean isPrimitive();
-	
-	public Monitor getMonitor();
-	
-	public String getName();
-	
-	public String getComponentName();
-	
-	public void collectionProcessComplete(Endpoint anEndpoint) throws AsynchAEException;
+  public void handleDelegateLifeCycleEvent(String anEndpoint, int aDelegateCount);
 
-	public boolean isTopLevelComponent();
-	
-	public void initialize() throws AsynchAEException;
-	
-	public void process( CAS aCas, String aCasId );// throws AnalysisEngineProcessException, AsynchAEException;
-	
-	public void process(CAS aCAS, String anInputCasReferenceId, String aNewCasReferenceId, String newCASProducedBy); //throws AnalysisEngineProcessException, AsynchAEException;
+  public void takeAction(String anAction, String anEndpointName, ErrorContext anErrorContext);
 
-	public void process( CAS aCAS, String aCasReferenceId, Endpoint anEndpoint );// throws AnalysisEngineProcessException, AsynchAEException;
-	
-	public void saveTime(long anArrivalTime, String aCasReferenceId, String anEndpointName );
-	
-	public long getTime(String aCasReferenceId, String anEndpointName );
-	
-	public ErrorHandlerChain getErrorHandlerChain();
-	
-	public void setOutputChannel( OutputChannel anOutputChannel ) throws Exception;
-	
-	public OutputChannel getOutputChannel();
-	
-	public void setCasManager( AsynchAECasManager aCasManager);
-	
-	public AsynchAECasManager getCasManagerWrapper();
-	
-	public void stop();
-	
-	/**
-	 * Returns true if the AnalysisEngineController has been (or is in the process of)
-	 * shutdown.
-	 * 
-	 * @return - true if stopped
-	 */
-	public boolean isStopped();
-	/**
-	 * Called to set the state of the AnalysisEngineController to STOPPED. 
-	 * This method does not stop input or output channels. 
-	 */
-	public void setStopped();	
-	
-	
-	public void dropStats( String aCasReferenceId, String anEndpointName );
+  public InputChannel getInputChannel();
 
-	public void setUimaEEAdminContext( UimaEEAdminContext anAdminContext );
-	
-	public UimaEEAdminContext getUimaEEAdminContext();
+  public InputChannel getInputChannel(String aQueueName);
 
-	public String getJMXDomain();
+  public void saveReplyTime(long snapshot, String aKey);
 
-	public int getIndex();
-	
-	public String getJmxContext();
-	
-	public void addTimeSnapshot( long snapshot, String aKey );
-	
-	public ServicePerformance getServicePerformance();
+  public long getReplyTime();
 
-	public ServiceInfo getServiceInfo();
-	
-	public long getTimeSnapshot( String aKey );
+  public Map getStats();
 
-	public void addServiceInfo( ServiceInfo aServiceInfo );
+  public UimaContext getChildUimaContext(String aDelegateEndpointName) throws Exception;
 
-	public ServiceErrors getServiceErrors();
+  public void dropCAS(String aCasReferenceId, boolean dropCacheEntry);
 
-	public void setDeployDescriptor( String aDeployDescriptor );
-	
-	public void cacheClientEndpoint(Endpoint anEndpoint);
+  public void dropCAS(CAS aCAS);
 
-	public Endpoint getClientEndpoint();
-	
-	public EventSubscriber getEventListener();
+  public InProcessCache getInProcessCache();
 
-	public JmxManagement getManagementInterface();
-	
-    public void notifyListenersWithInitializationStatus(Exception e);
-  
-	public ServicePerformance getCasStatistics( String aCasReferenceId );
-	
-    public boolean isCasMultiplier();
+  public boolean isPrimitive();
 
-	public void releaseNextCas(String aCasReferenceId);
+  public Monitor getMonitor();
 
-//	public long getTotalIdleTime();
-	public long getIdleTime();
-	
-	//	This is called every time a request comes
-	public void beginProcess(int msgType);
+  public String getName();
 
-	//	This is called every time a request is completed
-	public void endProcess(int msgType);
-	
-	//	Returns the idle time between process CAS calls
-	public long getIdleTimeBetweenProcessCalls(int msgType);
+  public String getComponentName();
 
-	public long getCpuTime();
-	
-	public long getAnalysisTime();
-	
-	public void incrementSerializationTime(long cpuTime);
-	
-	public void incrementDeserializationTime(long cpuTime);
+  public void collectionProcessComplete(Endpoint anEndpoint) throws AsynchAEException;
 
-	public void onInitialize();
-	
-	public UimaMessageListener getUimaMessageListener(String aDelegateKey);
+  public boolean isTopLevelComponent();
+
+  public void initialize() throws AsynchAEException;
+
+  public void process(CAS aCas, String aCasId);// throws AnalysisEngineProcessException,
+                                               // AsynchAEException;
+
+  public void process(CAS aCAS, String anInputCasReferenceId, String aNewCasReferenceId,
+          String newCASProducedBy); // throws AnalysisEngineProcessException, AsynchAEException;
+
+  public void process(CAS aCAS, String aCasReferenceId, Endpoint anEndpoint);// throws
+                                                                             // AnalysisEngineProcessException,
+                                                                             // AsynchAEException;
+
+  public void saveTime(long anArrivalTime, String aCasReferenceId, String anEndpointName);
+
+  public long getTime(String aCasReferenceId, String anEndpointName);
+
+  public ErrorHandlerChain getErrorHandlerChain();
+
+  public void setOutputChannel(OutputChannel anOutputChannel) throws Exception;
+
+  public OutputChannel getOutputChannel();
+
+  public void setCasManager(AsynchAECasManager aCasManager);
+
+  public AsynchAECasManager getCasManagerWrapper();
+
+  public void stop();
+
+  /**
+   * Returns true if the AnalysisEngineController has been (or is in the process of) shutdown.
+   * 
+   * @return - true if stopped
+   */
+  public boolean isStopped();
+
+  /**
+   * Called to set the state of the AnalysisEngineController to STOPPED. This method does not stop
+   * input or output channels.
+   */
+  public void setStopped();
+
+  public void dropStats(String aCasReferenceId, String anEndpointName);
+
+  public void setUimaEEAdminContext(UimaEEAdminContext anAdminContext);
+
+  public UimaEEAdminContext getUimaEEAdminContext();
+
+  public String getJMXDomain();
+
+  public int getIndex();
+
+  public String getJmxContext();
+
+  public void addTimeSnapshot(long snapshot, String aKey);
+
+  public ServicePerformance getServicePerformance();
+
+  public ServiceInfo getServiceInfo();
+
+  public long getTimeSnapshot(String aKey);
+
+  public void addServiceInfo(ServiceInfo aServiceInfo);
+
+  public ServiceErrors getServiceErrors();
+
+  public void setDeployDescriptor(String aDeployDescriptor);
+
+  public void cacheClientEndpoint(Endpoint anEndpoint);
+
+  public Endpoint getClientEndpoint();
+
+  public EventSubscriber getEventListener();
+
+  public JmxManagement getManagementInterface();
+
+  public void notifyListenersWithInitializationStatus(Exception e);
+
+  public ServicePerformance getCasStatistics(String aCasReferenceId);
+
+  public boolean isCasMultiplier();
+
+  public void releaseNextCas(String aCasReferenceId);
+
+  // public long getTotalIdleTime();
+  public long getIdleTime();
+
+  // This is called every time a request comes
+  public void beginProcess(int msgType);
+
+  // This is called every time a request is completed
+  public void endProcess(int msgType);
+
+  // Returns the idle time between process CAS calls
+  public long getIdleTimeBetweenProcessCalls(int msgType);
+
+  public long getCpuTime();
+
+  public long getAnalysisTime();
+
+  public void incrementSerializationTime(long cpuTime);
+
+  public void incrementDeserializationTime(long cpuTime);
+
+  public void onInitialize();
+
+  public UimaMessageListener getUimaMessageListener(String aDelegateKey);
 
   public UimaTransport getTransport(UimaAsContext aContext, String aKey) throws Exception;
 
@@ -199,20 +204,24 @@ public interface AnalysisEngineController extends ControllerLifecycle
   public void initializeVMTransport(int parentControllerReplyConsumerCount) throws Exception;
 
   public InputChannel getReplyInputChannel(String aDelegateKey);
-  
+
   public LocalCache getLocalCache();
-  public void registerVmQueueWithJMX( Object o, String aName ) throws Exception; 
-  
+
+  public void registerVmQueueWithJMX(Object o, String aName) throws Exception;
+
   public AnalysisEngineController getParentController();
-  public void addAbortedCasReferenceId( String aCasReferenceId );
+
+  public void addAbortedCasReferenceId(String aCasReferenceId);
+
   public boolean isAwaitingCacheCallbackNotification();
+
   public void quiesceAndStop();
-  
+
   public void forceTimeoutOnPendingCases(String key);
 
-  public void addEndpointToDoNotProcessList( String anEndpointName );
-  
-  public boolean isEndpointOnDontProcessList( String anEndpointName);
-  
+  public void addEndpointToDoNotProcessList(String anEndpointName);
+
+  public boolean isEndpointOnDontProcessList(String anEndpointName);
+
   public void evictExpiredEntries();
 }

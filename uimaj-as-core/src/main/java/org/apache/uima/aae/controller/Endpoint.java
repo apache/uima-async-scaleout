@@ -22,148 +22,156 @@ package org.apache.uima.aae.controller;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.ServiceInfo;
 
-public interface Endpoint
-{
+public interface Endpoint {
   public static final int OK = 1;
+
   public static final int FAILED = 2;
+
   public static final int DISABLED = 3;
-  
-	public int getMetadataRequestTimeout();
-	public void setController( AnalysisEngineController aController);
-	public void startCheckpointTimer();
-	public long getCheckpointTimer();
-	
-	public boolean isRetryEnabled();
-	public void setMetadataRequestTimeout(int metadataRequestTimeout);
 
-	public int getProcessRequestTimeout();
+  public int getMetadataRequestTimeout();
 
-	public void setReplyEndpoint(boolean tORf );
+  public void setController(AnalysisEngineController aController);
 
-	public boolean isReplyEndpoint();
+  public void startCheckpointTimer();
 
-	public void setProcessRequestTimeout(int processRequestTimeout);
+  public long getCheckpointTimer();
 
-	public boolean completedProcessingCollection();
-	
-	public void setCompletedProcessingCollection(boolean completed);
-	
-	public void setNoConsumers(boolean trueOrFalse);
-	
-	public boolean hasNoConsumers();
-	
-	public boolean isInitialized();
+  public boolean isRetryEnabled();
 
-	public void setInitialized(boolean initialized);
+  public void setMetadataRequestTimeout(int metadataRequestTimeout);
 
-	public String getEndpoint();
-	
-	public boolean isFinal();
-	public void setFinal(boolean isFinal);
-	
-	public long getEntryTime();
+  public int getProcessRequestTimeout();
 
-	public void setEndpoint(String endpoint);
+  public void setReplyEndpoint(boolean tORf);
 
-	public String getServerURI();
+  public boolean isReplyEndpoint();
 
-	public void setServerURI(String serverURI);
-	
-	public void startMetadataRequestTimer();
-	
-	public void startCollectionProcessCompleteTimer();
+  public void setProcessRequestTimeout(int processRequestTimeout);
 
-	public void startProcessRequestTimer(String aCasReferenceId);
-	
-	public void cancelTimer();
+  public boolean completedProcessingCollection();
 
-	public boolean isWaitingForResponse();
-	
-	public void setWaitingForResponse(boolean isWaiting);
-	
-	public void initialize() throws AsynchAEException;
-	
-	public void setDescriptor( String aDescriptor );
-	
-	public String getDescriptor();
-	
-	public void setRemote( boolean aRemote) ;
+  public void setCompletedProcessingCollection(boolean completed);
 
-	public String getReplyToEndpoint();
-	
-	public boolean isRemote();
-	
-	public String getSerializer();
-	
-	public void close();
-	
-	public boolean isOpen();
-	
-	public void setHighWaterMark( String aHighWaterMark );
-	
-	public String getHighWaterMark();
-	
-	public boolean remove();
-	
-	public void setRemove(boolean removeIt);
+  public void setNoConsumers(boolean trueOrFalse);
 
-	public boolean isCasMultiplier();
-	
-	public void setIsCasMultiplier(boolean trueORfalse);
-	
-	public void setShadowCasPoolSize( int aPoolSize );
-	
-	public int getShadowPoolSize();
-	
-	public ServiceInfo getServiceInfo();
+  public boolean hasNoConsumers();
 
-	public Object getDestination();
-	
-	public void setDestination( Object aDestination);
+  public boolean isInitialized();
 
-	public void setCommand( int aCommand );
-	
-	public int getCommand();
-	
-	public void setRegisteredWithParent();
-	
-	public boolean isRegisteredWithParent();
-	
-	public void setInitialFsHeapSize(int aHeapSize);
-	
-	public void setTempReplyDestination(boolean isTempReplyDestination );
-	
-	public boolean isTempReplyDestination();
-	public void setReplyDestinationFailed();
-	
-	public boolean replyDestinationFailed();
-	public void setIdleTime( long anIdleTime );
-	
-	public long getIdleTime();
-	
-	public void setEndpointServer( String anEndpointServer );
-	
-	public String getEndpointServer();
-	
+  public void setInitialized(boolean initialized);
+
+  public String getEndpoint();
+
+  public boolean isFinal();
+
+  public void setFinal(boolean isFinal);
+
+  public long getEntryTime();
+
+  public void setEndpoint(String endpoint);
+
+  public String getServerURI();
+
+  public void setServerURI(String serverURI);
+
+  public void startMetadataRequestTimer();
+
+  public void startCollectionProcessCompleteTimer();
+
+  public void startProcessRequestTimer(String aCasReferenceId);
+
+  public void cancelTimer();
+
+  public boolean isWaitingForResponse();
+
+  public void setWaitingForResponse(boolean isWaiting);
+
+  public void initialize() throws AsynchAEException;
+
+  public void setDescriptor(String aDescriptor);
+
+  public String getDescriptor();
+
+  public void setRemote(boolean aRemote);
+
+  public String getReplyToEndpoint();
+
+  public boolean isRemote();
+
+  public String getSerializer();
+
+  public void close();
+
+  public boolean isOpen();
+
+  public void setHighWaterMark(String aHighWaterMark);
+
+  public String getHighWaterMark();
+
+  public boolean remove();
+
+  public void setRemove(boolean removeIt);
+
+  public boolean isCasMultiplier();
+
+  public void setIsCasMultiplier(boolean trueORfalse);
+
+  public void setShadowCasPoolSize(int aPoolSize);
+
+  public int getShadowPoolSize();
+
+  public ServiceInfo getServiceInfo();
+
+  public Object getDestination();
+
+  public void setDestination(Object aDestination);
+
+  public void setCommand(int aCommand);
+
+  public int getCommand();
+
+  public void setRegisteredWithParent();
+
+  public boolean isRegisteredWithParent();
+
+  public void setInitialFsHeapSize(int aHeapSize);
+
+  public void setTempReplyDestination(boolean isTempReplyDestination);
+
+  public boolean isTempReplyDestination();
+
+  public void setReplyDestinationFailed();
+
+  public boolean replyDestinationFailed();
+
+  public void setIdleTime(long anIdleTime);
+
+  public long getIdleTime();
+
+  public void setEndpointServer(String anEndpointServer);
+
+  public String getEndpointServer();
+
   public void setConcurrentRequestConsumers(int aConsumerCount);
-  
+
   public int getConcurrentRequestConsumers();
 
   public void setConcurrentReplyConsumers(int aConsumerCount);
-  
+
   public int getConcurrentReplyConsumers();
-  
-  public void setSerializer( String aSerializer );
- 
-  public void setStatus( int aStatus);
-  
+
+  public void setSerializer(String aSerializer);
+
+  public void setStatus(int aStatus);
+
   public int getStatus();
-  
-  public void setDelegateKey( String aDelegateKey );
-  
+
+  public void setDelegateKey(String aDelegateKey);
+
   public String getDelegateKey();
 
   public void setProcessParentLast(boolean parentLast);
-  
+
   public boolean processParentLast();
 }

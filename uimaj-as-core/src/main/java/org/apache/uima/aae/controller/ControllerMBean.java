@@ -21,8 +21,8 @@ package org.apache.uima.aae.controller;
 
 import java.io.Serializable;
 
-public interface ControllerMBean extends Serializable{
+public interface ControllerMBean extends Serializable {
   public void completeProcessingAndStop();
-  
+
   public void stopNow();
 }

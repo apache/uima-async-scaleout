@@ -23,24 +23,27 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.util.Level;
 
-public class Controller implements ControllerMBean{
+public class Controller implements ControllerMBean {
   private static final Class CLASS_NAME = ControllerMBean.class;
 
   /**
    * 
    */
   private static final long serialVersionUID = 1L;
+
   private AnalysisEngineController controller;
 
-  public Controller( AnalysisEngineController aController) {
+  public Controller(AnalysisEngineController aController) {
     controller = aController;
   }
+
   public void completeProcessingAndStop() {
-    System.out.println("************> Controller:"+controller.getComponentName()+" JMX MBean Received Stop Command");
+    System.out.println("************> Controller:" + controller.getComponentName()
+            + " JMX MBean Received Stop Command");
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                 "completeProcessingAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_jmx_stop_called__INFO",
-                 new Object[] { controller.getComponentName() });
+              "completeProcessingAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_jmx_stop_called__INFO", new Object[] { controller.getComponentName() });
     }
 
     controller.quiesceAndStop();
@@ -48,11 +51,11 @@ public class Controller implements ControllerMBean{
 
   public void stopNow() {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                 "stopNow", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_jmx_stopNow_called__INFO",
-                 new Object[] { controller.getComponentName()});
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stopNow",
+              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_jmx_stopNow_called__INFO",
+              new Object[] { controller.getComponentName() });
     }
     controller.terminate();
   }
-  
+
 }

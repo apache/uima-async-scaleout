@@ -74,13 +74,13 @@ public abstract class Delegate {
   // CASes should be send to the delegate as soon as the getMeta (Ping) is received.
   private List<DelegateEntry> pendingDispatchList = new ArrayList<DelegateEntry>();
 
-  //  Flag that is set when getMeta reply is received
+  // Flag that is set when getMeta reply is received
   private volatile boolean awaitingPingReply;
 
   private volatile boolean concurrentConsumersOnReplyQueue;
-  
+
   private Endpoint notificationEndpoint = null;
-  
+
   public Endpoint getNotificationEndpoint() {
     return notificationEndpoint;
   }
@@ -100,6 +100,7 @@ public abstract class Delegate {
   public void resetAwaitingPingReply() {
     this.awaitingPingReply = false;
   }
+
   /**
    * Returns delegate key
    * 
@@ -127,28 +128,29 @@ public abstract class Delegate {
   public Endpoint getEndpoint() {
     return endpoint;
   }
+
   /**
-   * Forces Timer restart for the oldest CAS sitting in the list
-   * of CASes pending reply.  
+   * Forces Timer restart for the oldest CAS sitting in the list of CASes pending reply.
    */
   public void restartTimerForOldestCasInOutstandingList() {
     DelegateEntry entry = null;
     synchronized (outstandingCasList) {
       if (!outstandingCasList.isEmpty()) {
-        //  Get the oldest entry
+        // Get the oldest entry
         entry = outstandingCasList.get(0);
-        if ( entry != null ) {
+        if (entry != null) {
           restartTimerForCas(entry);
         }
       }
     }
   }
+
   /**
    * Restarts timer for a given CAS
    * 
    * @param entry
    */
-  private void restartTimerForCas( DelegateEntry entry ) {
+  private void restartTimerForCas(DelegateEntry entry) {
     if (getCasProcessTimeout() > 0) {
       entry.incrementRetryCount();
       // restart timer for retry
@@ -163,30 +165,32 @@ public abstract class Delegate {
                 new Object[] { getComponentName(), delegateKey, entry.getCasReferenceId(),
                     getCasProcessTimeout() });
       }
-    }    
+    }
   }
 
   public List<DelegateEntry> getDelegateCasesPendingRepy() {
     return outstandingCasList;
   }
-  
+
   public void addNewCasToOutstandingList(String aCasReferenceId) {
     addNewCasToOutstandingList(aCasReferenceId, false);
   }
-  public void addNewCasToOutstandingList(String aCasReferenceId, boolean isCasGeneratingChildren ) {
+
+  public void addNewCasToOutstandingList(String aCasReferenceId, boolean isCasGeneratingChildren) {
     synchronized (outstandingCasList) {
       DelegateEntry entry = null;
-      if ( (entry = lookupEntry(aCasReferenceId, outstandingCasList)) == null) {
+      if ((entry = lookupEntry(aCasReferenceId, outstandingCasList)) == null) {
         entry = new DelegateEntry(aCasReferenceId);
         // Remember the command
         entry.setCommand(AsynchAEMessage.Process);
-        if ( isCasGeneratingChildren ) {
+        if (isCasGeneratingChildren) {
           entry.setGeneratingChildren(true);
         }
         outstandingCasList.add(entry);
       }
     }
   }
+
   /**
    * Adds a given Cas ID to the list of CASes pending reply. A new timer will be started to handle
    * delegate's timeout if either: 1) the list of CASes pending reply is empty AND delegate timeout
@@ -202,7 +206,8 @@ public abstract class Delegate {
       // Check if the outstanding list already contains entry for the Cas Id. If it does, retry
       // logic
       // is calling this method. Increment number of retries and restart the timer.
-      if (!outstandingCasList.isEmpty() && (entry = lookupEntry(aCasReferenceId, outstandingCasList)) != null) {
+      if (!outstandingCasList.isEmpty()
+              && (entry = lookupEntry(aCasReferenceId, outstandingCasList)) != null) {
         restartTimerForCas(entry);
       } else {
         // Create a new entry to be stored in the list of CASes pending reply
@@ -273,39 +278,36 @@ public abstract class Delegate {
       return pendingDispatchList.size();
     }
   }
+
   /**
-   * Logs CASes sitting in the list of CASes pending dispatch. These CASes
-   * were delayed due to a bad state of the delegate. 
+   * Logs CASes sitting in the list of CASes pending dispatch. These CASes were delayed due to a bad
+   * state of the delegate.
    */
   private void dumpDelayedList() {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-      for( DelegateEntry entry: pendingDispatchList) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.FINE,
-                this.getClass().getName(),
-                "dumpDelayedList",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+      for (DelegateEntry entry : pendingDispatchList) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, this.getClass().getName(),
+                "dumpDelayedList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_dump_cas_pending_dispatch__FINE",
-                new Object[] { getComponentName(),  entry.getCasReferenceId(), delegateKey });
+                new Object[] { getComponentName(), entry.getCasReferenceId(), delegateKey });
       }
     }
   }
+
   /**
-   * Logs CASes sitting in the list of CASes pending reply. 
+   * Logs CASes sitting in the list of CASes pending reply.
    */
   private void dumpPendingReplyList() {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-      for( DelegateEntry entry: outstandingCasList) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.FINE,
-                this.getClass().getName(),
-                "dumpPendingReplyList",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+      for (DelegateEntry entry : outstandingCasList) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, this.getClass().getName(),
+                "dumpPendingReplyList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_dump_cas_pending_reply__FINE",
-                new Object[] { getComponentName(),  entry.getCasReferenceId(), delegateKey });
+                new Object[] { getComponentName(), entry.getCasReferenceId(), delegateKey });
       }
     }
   }
+
   /**
    * Increments retry count
    * 
@@ -345,20 +347,19 @@ public abstract class Delegate {
     }
     return null;
   }
-  /** 
-   * Removes the oldest entry from the list of CASes pending dispatch.
-   * A CAS is delayed and placed on this list when the delegate status
-   * changes to TIMED_OUT and a PING message is sent to test delegate 
-   * availability. Until the PING message is acked by the delegate OR
-   * the PING times out, all CASes are delayed. When the PING is acked
-   * by the delegate ALL delayed CASes are sent to the delegate one at
-   * a time.
+
+  /**
+   * Removes the oldest entry from the list of CASes pending dispatch. A CAS is delayed and placed
+   * on this list when the delegate status changes to TIMED_OUT and a PING message is sent to test
+   * delegate availability. Until the PING message is acked by the delegate OR the PING times out,
+   * all CASes are delayed. When the PING is acked by the delegate ALL delayed CASes are sent to the
+   * delegate one at a time.
    * 
    * @return - ID of the oldest CAS in the list
    */
   public String removeOldestFromPendingDispatchList() {
     synchronized (pendingDispatchList) {
-      if ( pendingDispatchList.size() > 0 ) {
+      if (pendingDispatchList.size() > 0) {
         String casReferenceId = pendingDispatchList.remove(0).getCasReferenceId();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -368,7 +369,7 @@ public abstract class Delegate {
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_removed_cas_from_delegate_pending_dispatch_list__FINE",
                   new Object[] { getComponentName(), delegateKey, casReferenceId,
-                    pendingDispatchList.size() });
+                      pendingDispatchList.size() });
         }
         return casReferenceId;
       }
@@ -376,15 +377,12 @@ public abstract class Delegate {
     return null;
   }
 
-  
-  /** 
-   * Removes an entry from the list of CASes pending dispatch that
-   * matches a given CAS Id.A CAS is delayed and placed on this list when the delegate status
-   * changes to TIMED_OUT and a PING message is sent to test delegate 
-   * availability. Until the PING message is acked by the delegate OR
-   * the PING times out, all CASes are delayed. When the PING is acked
-   * by the delegate ALL delayed CASes are sent to the delegate one at
-   * a time.
+  /**
+   * Removes an entry from the list of CASes pending dispatch that matches a given CAS Id.A CAS is
+   * delayed and placed on this list when the delegate status changes to TIMED_OUT and a PING
+   * message is sent to test delegate availability. Until the PING message is acked by the delegate
+   * OR the PING times out, all CASes are delayed. When the PING is acked by the delegate ALL
+   * delayed CASes are sent to the delegate one at a time.
    * 
    * @return - ID of the oldest CAS in the list
    */
@@ -401,7 +399,7 @@ public abstract class Delegate {
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_removed_cas_from_delegate_pending_dispatch_list__FINE",
                   new Object[] { getComponentName(), delegateKey, entry.getCasReferenceId(),
-                    pendingDispatchList.size() });
+                      pendingDispatchList.size() });
         }
         return true;
       }
@@ -442,12 +440,13 @@ public abstract class Delegate {
       return outstandingCasList.remove(0).getCasReferenceId();
     }
   }
-  
+
   public String getOldestCasIdFromOutstandingList() {
     synchronized (outstandingCasList) {
       return outstandingCasList.get(0).getCasReferenceId();
     }
   }
+
   /**
    * Removes {@link DelegateEntry} from the list of CASes pending reply. If the CAS removed was the
    * oldest in the list (first in the list) AND there are other CASes in the list pending reply AND
@@ -506,7 +505,7 @@ public abstract class Delegate {
     synchronized (outstandingCasList) {
       outstandingCasList.clear();
     }
-    synchronized( pendingDispatchList) {
+    synchronized (pendingDispatchList) {
       pendingDispatchList.clear();
     }
   }
@@ -522,7 +521,7 @@ public abstract class Delegate {
       return pendingDispatchList.size();
     }
   }
-  
+
   /**
    * Cancels current timer
    */
@@ -571,23 +570,23 @@ public abstract class Delegate {
    *          - command for which the timer is started
    */
   private synchronized void startDelegateTimer(final String aCasReferenceId, final int aCommand) {
-    //  Check if we are awaiting a Ping reply. While awaiting ping reply dont start
-    //  a new timer.
-    if ( isAwaitingPingReply() ) {
-      //  Ping is actually a GetMeta request
-      if ( aCommand == AsynchAEMessage.GetMeta ) {
-        //  Cancel any outstanding timers. A timer for a Ping message is about to
-        //  be started. Another thread may have started a Process timer.
+    // Check if we are awaiting a Ping reply. While awaiting ping reply dont start
+    // a new timer.
+    if (isAwaitingPingReply()) {
+      // Ping is actually a GetMeta request
+      if (aCommand == AsynchAEMessage.GetMeta) {
+        // Cancel any outstanding timers. A timer for a Ping message is about to
+        // be started. Another thread may have started a Process timer.
         cancelDelegateTimer();
       } else {
-        //  We are waiting for a ping reply, don't start a new timer
+        // We are waiting for a ping reply, don't start a new timer
         return;
       }
     }
     final long timeToWait = getTimeoutValueForCommand(aCommand);
     Date timeToRun = new Date(System.currentTimeMillis() + timeToWait);
-    timer = new Timer("Controller:" + getComponentName() + ":Request TimerThread-Endpoint_impl:" + endpoint
-            + ":" + System.nanoTime() + ":Cmd:" + aCommand);
+    timer = new Timer("Controller:" + getComponentName() + ":Request TimerThread-Endpoint_impl:"
+            + endpoint + ":" + System.nanoTime() + ":Cmd:" + aCommand);
     final Delegate delegate = this;
     timer.schedule(new TimerTask() {
       public void run() {
@@ -611,14 +610,14 @@ public abstract class Delegate {
                     "UIMAEE_meta_timeout_no_reply__INFO",
                     new Object[] { delegate.getKey(), timeToWait });
           }
-          //  Check if this is a Ping timeout. If it is and there are CASes on
-          //  the list of CASes pending reply, treat this timeout as Process
-          //  Timeout
-          if ( isAwaitingPingReply() && getCasPendingReplyListSize() > 0) {
+          // Check if this is a Ping timeout. If it is and there are CASes on
+          // the list of CASes pending reply, treat this timeout as Process
+          // Timeout
+          if (isAwaitingPingReply() && getCasPendingReplyListSize() > 0) {
             String casReferenceId = getOldestCasIdFromOutstandingList();
             errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
-            //  Override the command to make sure this timeout is handled
-            //  by the ProcessCasErrorHandler.
+            // Override the command to make sure this timeout is handled
+            // by the ProcessCasErrorHandler.
             errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
             errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
           }
@@ -669,36 +668,38 @@ public abstract class Delegate {
 
   public void setState(int aState) {
     synchronized (stateMux) {
-      //  Change the state to timout, only if the current state = OK_STATE
-      //  This prevents overriding DISABLED state.
-      if ( aState == TIMEOUT_STATE && this.state != OK_STATE ) {
+      // Change the state to timout, only if the current state = OK_STATE
+      // This prevents overriding DISABLED state.
+      if (aState == TIMEOUT_STATE && this.state != OK_STATE) {
         return;
-      } 
+      }
       state = aState;
     }
   }
+
   public void setConcurrentConsumersOnReplyQueue() {
     concurrentConsumersOnReplyQueue = true;
   }
+
   public boolean hasConcurrentConsumersOnReplyQueue() {
     return concurrentConsumersOnReplyQueue;
   }
-  
-  public boolean isGeneratingChildrenFrom(String aCasReferenceId ) {
-    synchronized( outstandingCasList) {
+
+  public boolean isGeneratingChildrenFrom(String aCasReferenceId) {
+    synchronized (outstandingCasList) {
       DelegateEntry entry = lookupEntry(aCasReferenceId, outstandingCasList);
-      if ( entry == null ) {
+      if (entry == null) {
         return false;
       } else {
         return entry.isGeneratingChildren();
       }
     }
   }
-  
-  public void setGeneratingChildrenFrom(String aCasReferenceId, boolean tOf ) {
-    synchronized( outstandingCasList) {
+
+  public void setGeneratingChildrenFrom(String aCasReferenceId, boolean tOf) {
+    synchronized (outstandingCasList) {
       DelegateEntry entry = lookupEntry(aCasReferenceId, outstandingCasList);
-      if ( entry == null ) {
+      if (entry == null) {
         // noop;
       } else {
         entry.setGeneratingChildren(tOf);
@@ -724,7 +725,7 @@ public abstract class Delegate {
     private int retryCount = 0;
 
     private volatile boolean generatingChildren = false;
-    
+
     public DelegateEntry(String aCasReferenceId) {
       casReferenceId = aCasReferenceId;
     }
@@ -761,5 +762,5 @@ public abstract class Delegate {
       return casReferenceId;
     }
   }
-  
+
 }

@@ -48,19 +48,19 @@ import org.apache.uima.util.Level;
 import org.springframework.beans.factory.DisposableBean;
 
 /**
- * This bean functions as a proxy for a Uima C++ service. It starts the Uima C++
- * service given a UIMA descriptor, the input queue name, and environment
- * settings required for the specific annotator and the Uima C++ runtime. On
- * start up a socket connection is established between this instance of the
- * proxy and the service. This connection is used for routing log message from
- * the C++ service to the UIMA framework logger and to allow the proxy to send
- * JMX and administrative requests such as shutdown.
+ * This bean functions as a proxy for a Uima C++ service. It starts the Uima C++ service given a
+ * UIMA descriptor, the input queue name, and environment settings required for the specific
+ * annotator and the Uima C++ runtime. On start up a socket connection is established between this
+ * instance of the proxy and the service. This connection is used for routing log message from the
+ * C++ service to the UIMA framework logger and to allow the proxy to send JMX and administrative
+ * requests such as shutdown.
  * 
  */
-public class UimacppServiceController extends AnalysisEngineControllerAdapter
-implements ControllerLifecycle, DisposableBean {
+public class UimacppServiceController extends AnalysisEngineControllerAdapter implements
+        ControllerLifecycle, DisposableBean {
 
   private static final String STARTING_DIRECTORY = "UIMACPP_STARTING_DIRECTORY";
+
   protected ServerSocket server;
 
   private int port;
@@ -78,7 +78,7 @@ implements ControllerLifecycle, DisposableBean {
   private StderrHandler stderrHandler;
 
   private ProcessBuilder builder;
-  
+
   private String startingDirectory;
 
   private String aeDesc;
@@ -96,48 +96,44 @@ implements ControllerLifecycle, DisposableBean {
   private org.apache.uima.util.Logger uimaLogger;
 
   private UimacppServiceManagement mbean;
-  
+
   private JmxManagement jmxMgmt;
 
   private UimacppShutdownHook shutdownHook;
 
   private int initialFsHeapSize;
-  
+
   private ArrayList<ControllerCallbackListener> listeners = new ArrayList<ControllerCallbackListener>();
-  
+
   private Boolean InitializedState = false;
-  
+
   private Exception InitializedStatus = null;
-  
-  
-    /**
-   * Configure and start a Uima C++ service that connects to an ActiveMQ
-   * queue broker. 
-   * This class  initializes the process environment and starts a process 
-   * to deploy the C++ service.
-   * Communication via sockets is established between this Controller and the
-   * C++ service through which logging, JMX and administrative messages are
-   * transmitted.
+
+  /**
+   * Configure and start a Uima C++ service that connects to an ActiveMQ queue broker. This class
+   * initializes the process environment and starts a process to deploy the C++ service.
+   * Communication via sockets is established between this Controller and the C++ service through
+   * which logging, JMX and administrative messages are transmitted.
    * 
-   * @param aeDescriptorFileName -
-   *          UIMA analysis engine descriptor file.
-   * @param queueName -
-   *          input queue name
-   * @param brokerURL -
-   *          queue broker URL
-   * @param numInstances -
-   *          number of instance of AEs to start in the service.
-   * @param prefetchSize -
-   *          number of message to prefetch
-   * @param envVarMap -
-   *          enviroment variables to be set. These settings are valid only for
-   *          the new process in which C++ service will run.
+   * @param aeDescriptorFileName
+   *          - UIMA analysis engine descriptor file.
+   * @param queueName
+   *          - input queue name
+   * @param brokerURL
+   *          - queue broker URL
+   * @param numInstances
+   *          - number of instance of AEs to start in the service.
+   * @param prefetchSize
+   *          - number of message to prefetch
+   * @param envVarMap
+   *          - enviroment variables to be set. These settings are valid only for the new process in
+   *          which C++ service will run.
    * @throws UIMAException
    */
-  public UimacppServiceController(String aeDescriptorFileName,
-      String queueName, String brokerURL, int numInstances, int prefetchSize,
-      Map<String,String> envVarMap, int processCasErrorThreshhold, int processCasErrorWindow,
-      boolean terminateOnCPCError, int initialFsHeapSize) throws ResourceInitializationException {
+  public UimacppServiceController(String aeDescriptorFileName, String queueName, String brokerURL,
+          int numInstances, int prefetchSize, Map<String, String> envVarMap,
+          int processCasErrorThreshhold, int processCasErrorWindow, boolean terminateOnCPCError,
+          int initialFsHeapSize) throws ResourceInitializationException {
 
     try {
       this.uimaLogger = UIMAFramework.getLogger(this.getClass());
@@ -149,7 +145,7 @@ implements ControllerLifecycle, DisposableBean {
       this.terminateOnCPCError = terminateOnCPCError;
       this.initialFsHeapSize = initialFsHeapSize;
       this.startingDirectory = envVarMap.get(STARTING_DIRECTORY);
-      
+
       /* start a listener */
       server = new ServerSocket(0);
       port = server.getLocalPort();
@@ -165,35 +161,35 @@ implements ControllerLifecycle, DisposableBean {
         commandArgs.add("-b");
         commandArgs.add(brokerURL);
       }
-      
+
       commandArgs.add("-p");
       commandArgs.add(Integer.toString(prefetchSize));
-      
+
       /* construct the process builder */
       builder = new ProcessBuilder(commandArgs);
       setEnvironmentVariables(envVarMap);
 
       /* setup environment variables */
 
-      //System.out.println("Uima C++ Service " + aeDesc + " configured.");
-      //System.out.println("Listener started at port " + port + ".");
+      // System.out.println("Uima C++ Service " + aeDesc + " configured.");
+      // System.out.println("Listener started at port " + port + ".");
       // System.out.println(builder.command().toString());
       /* start the C++ service */
-      //try {
-        // start threads to accept two connections from the service
+      // try {
+      // start threads to accept two connections from the service
 
-        /* start the service */
+      /* start the service */
       this.uimaLogger.log(Level.INFO, "Starting C++ service: " + commandArgs.toString());
       this.uimaLogger.log(Level.INFO, " env params: " + envVarMap.toString());
       startService();
 
-        /** register with JMX - for now register with the platform MBean server */
-        mbean = new UimacppServiceManagement("org.apache.uima:type=ee.jms.services,",commandConnection, aeDesc,
-            numInstances, brokerURL, queueName);
-        JmxMBeanAgent.registerMBean(mbean, null);
+      /** register with JMX - for now register with the platform MBean server */
+      mbean = new UimacppServiceManagement("org.apache.uima:type=ee.jms.services,",
+              commandConnection, aeDesc, numInstances, brokerURL, queueName);
+      JmxMBeanAgent.registerMBean(mbean, null);
 
-        // Initialization looks good
-        notifyInitializationStatus(null);
+      // Initialization looks good
+      notifyInitializationStatus(null);
 
     } catch (IOException e) {
       notifyInitializationStatus(e);
@@ -203,18 +199,17 @@ implements ControllerLifecycle, DisposableBean {
       throw new ResourceInitializationException(e);
     }
   }
-  
+
   private void notifyInitializationStatus(Exception e) {
     synchronized (this) {
       if (!this.InitializedState) {
         this.InitializedStatus = e;
         this.InitializedState = true;
       }
-  
-      for( int i=0; i < this.listeners.size(); i++ )
-      {
-        //  If there is an exception, notify listener with failure
-        if ( e != null ) {
+
+      for (int i = 0; i < this.listeners.size(); i++) {
+        // If there is an exception, notify listener with failure
+        if (e != null) {
           (this.listeners.get(i)).notifyOnInitializationFailure(e);
         }
         // else, Success!
@@ -224,27 +219,23 @@ implements ControllerLifecycle, DisposableBean {
       }
     }
   }
-  
-  public UimacppServiceController(String aeDescriptorFileName,
-      String queueName, String brokerURL, int numInstances, int prefetchSize,
-      Map<String,String> envVarMap, int processCasErrorThreshhold, int processCasErrorWindow,
-      boolean terminateOnCPCError) throws ResourceInitializationException {
-  
-     this(aeDescriptorFileName,
-        queueName, brokerURL, numInstances, prefetchSize,
-        envVarMap, processCasErrorThreshhold, processCasErrorWindow,
-        terminateOnCPCError,0); 
-    
+
+  public UimacppServiceController(String aeDescriptorFileName, String queueName, String brokerURL,
+          int numInstances, int prefetchSize, Map<String, String> envVarMap,
+          int processCasErrorThreshhold, int processCasErrorWindow, boolean terminateOnCPCError)
+          throws ResourceInitializationException {
+
+    this(aeDescriptorFileName, queueName, brokerURL, numInstances, prefetchSize, envVarMap,
+            processCasErrorThreshhold, processCasErrorWindow, terminateOnCPCError, 0);
+
   }
 
   /**
-   * Configure and start a Uima C++ service that connects to an WebSphereMQ
-   * queue broker. 
-   * This class  initializes the process environment and starts a process 
-   * to deploy the C++ service.
-   * Communication via sockets is established between this Controller and the
-   * C++ service through which logging, JMX and administrative messages are
-   * transmitted.
+   * Configure and start a Uima C++ service that connects to an WebSphereMQ queue broker. This class
+   * initializes the process environment and starts a process to deploy the C++ service.
+   * Communication via sockets is established between this Controller and the C++ service through
+   * which logging, JMX and administrative messages are transmitted.
+   * 
    * @param uimaLogger
    * @param aeDescriptorFileName
    * @param mqQueueName
@@ -261,12 +252,11 @@ implements ControllerLifecycle, DisposableBean {
    * @throws ResourceInitializationException
    */
   public UimacppServiceController(org.apache.uima.util.Logger uimaLogger,
-      String aeDescriptorFileName, String queueName, String mqHostName,
-      int mqPort, String mqChannel, String mqQueueMgr, int numInstances,
-      Map<String,String> envVarMap, int processCasErrorThreshhold, int processCasErrorWindow,
-      boolean terminateOnCPCError, JmxManagement jmxManagement,
-      int initialFsHeapSize)
-      throws ResourceInitializationException {
+          String aeDescriptorFileName, String queueName, String mqHostName, int mqPort,
+          String mqChannel, String mqQueueMgr, int numInstances, Map<String, String> envVarMap,
+          int processCasErrorThreshhold, int processCasErrorWindow, boolean terminateOnCPCError,
+          JmxManagement jmxManagement, int initialFsHeapSize)
+          throws ResourceInitializationException {
 
     try {
       this.uimaLogger = UIMAFramework.getLogger(this.getClass());
@@ -290,7 +280,7 @@ implements ControllerLifecycle, DisposableBean {
       ArrayList<String> commandArgs = new ArrayList<String>();
       buildCommandArgs(commandArgs, envVarMap, "deployWMQCppService");
 
-      //add MQ specific args
+      // add MQ specific args
       if (mqHostName != null && mqHostName.length() > 0) {
         commandArgs.add("-mqh");
         commandArgs.add(mqHostName);
@@ -313,48 +303,45 @@ implements ControllerLifecycle, DisposableBean {
       builder = new ProcessBuilder(commandArgs);
       setEnvironmentVariables(envVarMap);
 
-      //System.out.println("Uima C++ Service " + aeDesc + " configured.");
-      //System.out.println("Listener started at port " + port + ".");
+      // System.out.println("Uima C++ Service " + aeDesc + " configured.");
+      // System.out.println("Listener started at port " + port + ".");
       // System.out.println(builder.command().toString());
 
       /* start the service */
       this.uimaLogger.log(Level.INFO, "Starting C++ service: " + commandArgs.toString());
       this.uimaLogger.log(Level.INFO, " env params: " + envVarMap.toString());
-      startService();  
-      
-      mbean = new UimacppServiceManagement(null, commandConnection, aeDesc,
-          numInstances, mqHostName + " " + mqPort + "//" + mqQueueMgr,
-          "queue://" +/* mqChannel +*/ "/" + queueName);
-      
-      /** register with JMX  */
-     
-      if (jmxManagement == null ) {
-        throw new ResourceInitializationException( new IOException("JmxManagement object is null."));
+      startService();
+
+      mbean = new UimacppServiceManagement(null, commandConnection, aeDesc, numInstances,
+              mqHostName + " " + mqPort + "//" + mqQueueMgr, "queue://" + /* mqChannel + */"/"
+                      + queueName);
+
+      /** register with JMX */
+
+      if (jmxManagement == null) {
+        throw new ResourceInitializationException(new IOException("JmxManagement object is null."));
       }
-      
+
       mbean = new UimacppServiceManagement(jmxManagement.getJmxDomain(), commandConnection, aeDesc,
-            numInstances, mqHostName + " " + mqPort + "//" + mqQueueMgr,
-            queueName);
-      ObjectName oname = new ObjectName(mbean.getUniqueMBeanName()); 
-      jmxManagement.registerMBean(mbean, oname); 
+              numInstances, mqHostName + " " + mqPort + "//" + mqQueueMgr, queueName);
+      ObjectName oname = new ObjectName(mbean.getUniqueMBeanName());
+      jmxManagement.registerMBean(mbean, oname);
 
     } catch (IOException e) {
       throw new ResourceInitializationException(e);
     } catch (UIMAException e) {
       throw new ResourceInitializationException(e);
     } catch (MalformedObjectNameException e) {
-     throw new ResourceInitializationException(e);
+      throw new ResourceInitializationException(e);
     } catch (NullPointerException e) {
       throw new ResourceInitializationException(e);
     } catch (Exception e) {
       throw new ResourceInitializationException(e);
-    } 
+    }
   }
 
-  private void buildCommandArgs(ArrayList<String> commandArgs, 
-      Map<String,String> envVarMap,
-      String exeName)
-      throws ResourceInitializationException {
+  private void buildCommandArgs(ArrayList<String> commandArgs, Map<String, String> envVarMap,
+          String exeName) throws ResourceInitializationException {
 
     String uimacppHome = (String) envVarMap.get("UIMACPP_HOME");
     if (uimacppHome == null) {
@@ -365,13 +352,13 @@ implements ControllerLifecycle, DisposableBean {
     }
 
     if (!(new File(uimacppHome)).exists()) {
-      throw new ResourceInitializationException(new IOException(
-          "Invalid location of UIMACPP_HOME " + uimacppHome));
+      throw new ResourceInitializationException(new IOException("Invalid location of UIMACPP_HOME "
+              + uimacppHome));
     }
 
     // the Uima C++ service wrapper exe
     String cmd = uimacppHome + System.getProperty("file.separator") + "bin"
-        + System.getProperty("file.separator") + exeName; 
+            + System.getProperty("file.separator") + exeName;
 
     commandArgs.add(cmd);
 
@@ -412,11 +399,9 @@ implements ControllerLifecycle, DisposableBean {
     // logging level setting obtained from the UIMA framework
     // translated to UIMA C++ logging levels.
     commandArgs.add("-l");
-    if (uimaLogger.isLoggable(Level.FINE)
-        || uimaLogger.isLoggable(Level.CONFIG)
-        || uimaLogger.isLoggable(Level.FINER)
-        || uimaLogger.isLoggable(Level.FINEST)
-        || uimaLogger.isLoggable(Level.INFO)) {
+    if (uimaLogger.isLoggable(Level.FINE) || uimaLogger.isLoggable(Level.CONFIG)
+            || uimaLogger.isLoggable(Level.FINER) || uimaLogger.isLoggable(Level.FINEST)
+            || uimaLogger.isLoggable(Level.INFO)) {
       commandArgs.add(Integer.toString(0));
     } else if (uimaLogger.isLoggable(Level.WARNING)) {
       commandArgs.add(Integer.toString(1));
@@ -428,20 +413,19 @@ implements ControllerLifecycle, DisposableBean {
 
     // translate logger level to trace level 0-4.
     // set based Level = CONFIG, INFO, FINE, FINER, FINEST...
-    commandArgs.add("-t"); 
+    commandArgs.add("-t");
     if (uimaLogger.isLoggable(Level.FINEST)) {
       commandArgs.add(Integer.toString(3));
     } else if (uimaLogger.isLoggable(Level.FINER)) {
       commandArgs.add(Integer.toString(2));
     } else if (uimaLogger.isLoggable(Level.FINE)) {
       commandArgs.add(Integer.toString(1));
-    } else if (uimaLogger.isLoggable(Level.CONFIG) || 
-    		uimaLogger.isLoggable(Level.INFO)) {
+    } else if (uimaLogger.isLoggable(Level.CONFIG) || uimaLogger.isLoggable(Level.INFO)) {
       commandArgs.add(Integer.toString(0));
     } else {
       commandArgs.add(Integer.toString(-1));
     }
-    //   data directory used to resolve location of
+    // data directory used to resolve location of
     // files used by annotator.
     String uimacppDataPath = (String) envVarMap.get("UIMACPP_DATAPATH");
     if (uimacppDataPath != null && uimacppDataPath.length() != 0) {
@@ -462,75 +446,68 @@ implements ControllerLifecycle, DisposableBean {
       commandArgs.add("-a");
       commandArgs.add("true");
     }
-    
+
     if (initialFsHeapSize > 0) {
       commandArgs.add("-fsheapsz");
       commandArgs.add(Integer.toString(initialFsHeapSize));
     }
 
   }
-  
+
   public UimacppServiceController(org.apache.uima.util.Logger uimaLogger,
-      String aeDescriptorFileName, String queueName, String mqHostName,
-      int mqPort, String mqChannel, String mqQueueMgr, int numInstances,
-      Map<String,String> envVarMap, int processCasErrorThreshhold, int processCasErrorWindow,
-      boolean terminateOnCPCError, JmxManagement jmxManagement) throws ResourceInitializationException  {
-    
-     this(uimaLogger,
-        aeDescriptorFileName, queueName, mqHostName,
-        mqPort, mqChannel, mqQueueMgr, numInstances,
-        envVarMap, processCasErrorThreshhold, processCasErrorWindow,
-        terminateOnCPCError,  jmxManagement,0);
-    
+          String aeDescriptorFileName, String queueName, String mqHostName, int mqPort,
+          String mqChannel, String mqQueueMgr, int numInstances, Map<String, String> envVarMap,
+          int processCasErrorThreshhold, int processCasErrorWindow, boolean terminateOnCPCError,
+          JmxManagement jmxManagement) throws ResourceInitializationException {
+
+    this(uimaLogger, aeDescriptorFileName, queueName, mqHostName, mqPort, mqChannel, mqQueueMgr,
+            numInstances, envVarMap, processCasErrorThreshhold, processCasErrorWindow,
+            terminateOnCPCError, jmxManagement, 0);
+
   }
 
-  private void setEnvironmentVariables(Map<String,String> envVarMap) {
+  private void setEnvironmentVariables(Map<String, String> envVarMap) {
     /* setup environment variables */
     String uimacppHome = (String) envVarMap.get("UIMACPP_HOME");
-    String uimacppLibDir = uimacppHome + System.getProperty("file.separator")
-        + "lib" 
-        + System.getProperty("path.separator")
-        + uimacppHome + System.getProperty("file.separator")
-        + "lib" + System.getProperty("file.separator") +
-        "xms";
+    String uimacppLibDir = uimacppHome + System.getProperty("file.separator") + "lib"
+            + System.getProperty("path.separator") + uimacppHome
+            + System.getProperty("file.separator") + "lib" + System.getProperty("file.separator")
+            + "xms";
 
     Map<String, String> environment = builder.environment();
-    
-    //add uimacpp lib dir to the path
+
+    // add uimacpp lib dir to the path
     String value = environment.get("PATH");
     if (value != null && value.length() > 0) {
-    value = uimacppLibDir + System.getProperty("path.separator")+
-            value;
+      value = uimacppLibDir + System.getProperty("path.separator") + value;
     } else {
       value = uimacppLibDir;
     }
     environment.put("PATH", value);
-   
+
     value = environment.get("LD_LIBRARY_PATH");
     if (value != null && value.length() > 0) {
-      value = uimacppLibDir + System.getProperty("path.separator")+
-              value;
+      value = uimacppLibDir + System.getProperty("path.separator") + value;
     } else {
-        value = uimacppLibDir;
+      value = uimacppLibDir;
     }
     environment.put("LD_LIBRARY_PATH", value);
-    
+
     value = environment.get("DYLD_LIBRARY_PATH");
 
     value = environment.get("LD_LIBRARY_PATH");
     if (value != null && value.length() > 0) {
-      value = uimacppLibDir + System.getProperty("path.separator")+
-              value;
+      value = uimacppLibDir + System.getProperty("path.separator") + value;
     } else {
-        value = uimacppLibDir;
+      value = uimacppLibDir;
     }
     environment.put("DYLD_LIBRARY_PATH", value);
 
-    //set user specified environment variables
+    // set user specified environment variables
     Set set = envVarMap.entrySet();
-    
-    for( Iterator it = set.iterator(); it.hasNext(); ) {
-      Map.Entry entry = (Map.Entry)it.next();
+
+    for (Iterator it = set.iterator(); it.hasNext();) {
+      Map.Entry entry = (Map.Entry) it.next();
       String key = (String) entry.getKey();
       value = (String) entry.getValue();
 
@@ -539,14 +516,12 @@ implements ControllerLifecycle, DisposableBean {
         // and DYLD_LIBRARY_PATH
         // for these we prepend the values to the
         // existing values.
-        if (key.equalsIgnoreCase("PATH")
-            || key.equalsIgnoreCase("LD_LIBRARY_PATH")
-            || key.equalsIgnoreCase("DYLD_LIBRARY_PATH")) {
+        if (key.equalsIgnoreCase("PATH") || key.equalsIgnoreCase("LD_LIBRARY_PATH")
+                || key.equalsIgnoreCase("DYLD_LIBRARY_PATH")) {
           String origValue = environment.get(key);
           if (origValue != null) {
-            value = value + System.getProperty("path.separator")
-                + uimacppLibDir + System.getProperty("path.separator")
-                + origValue;
+            value = value + System.getProperty("path.separator") + uimacppLibDir
+                    + System.getProperty("path.separator") + origValue;
           }
 
         }
@@ -567,17 +542,17 @@ implements ControllerLifecycle, DisposableBean {
       ConnectionHandler handler2 = new ConnectionHandler(this);
       Thread t2 = new Thread(handler2);
       t2.start();
-    
-      //setup starting directory if specified.
+
+      // setup starting directory if specified.
       if (this.startingDirectory != null && this.startingDirectory.length() > 0) {
         File startingDir = new File(this.startingDirectory);
         if (!startingDir.exists()) {
-        	throw new ResourceInitializationException(new IOException(
-            this.startingDirectory + " Uimacpp Starting Directory not found. + ")); 	
+          throw new ResourceInitializationException(new IOException(this.startingDirectory
+                  + " Uimacpp Starting Directory not found. + "));
         }
         builder.directory(startingDir);
       }
-      
+
       uimacppProcess = builder.start();
       if (uimacppProcess == null) {
         throw new UIMAException(new Throwable("Could not fork process."));
@@ -594,51 +569,47 @@ implements ControllerLifecycle, DisposableBean {
       // wait for connection handler threads to complete
       t1.join();
       t2.join();
-      synchronized(this)
-      {
-          if (this.loggerConnection == null || 
-                  this.loggerHandler == null || 
-                  this.commandConnection == null) {
-                throw new ResourceInitializationException(new IOException(
-                "Could not establish socket connection with C++ service."));
-              }
+      synchronized (this) {
+        if (this.loggerConnection == null || this.loggerHandler == null
+                || this.commandConnection == null) {
+          throw new ResourceInitializationException(new IOException(
+                  "Could not establish socket connection with C++ service."));
+        }
       }
-     
-      /* add the shutdown hook */
-      shutdownHook = new UimacppShutdownHook(uimacppProcess, commandConnection,
-          uimaLogger);
-      Runtime.getRuntime().addShutdownHook(shutdownHook);
-      
-      if (uimacppProcess != null) {
-        //wait for C++ process to report initialization status.	  
-    	System.out.println("Waiting for Uima C++ service to report init status...");
-    	BufferedReader in = new BufferedReader(new InputStreamReader(commandConnection
-    	          .getInputStream()));
 
-    	StringBuffer sb = new StringBuffer();
-    	int c = in.read();
-    	while (c >= 0) {
-    	   sb.append((char) c);
-    	   c = in.read();
-    	   if (c == '\n') {
-    	          break;
-    	   }
-    	}  
-    	if (sb.toString().equalsIgnoreCase("0")) {
-    		System.out.println("Uima C++ service at " + queueName
-    				+ " Ready to process...");
-    		WaitThread wt = new WaitThread(uimacppProcess, uimaLogger,listeners);
-    		Thread wThread = new Thread(wt);
-    		wThread.start();
-    	} else {
-    		System.out.println("UIMA C++ service at " + queueName + " failed to initialize.");
-    		System.out.println(sb.toString());
-    		uimacppProcess.destroy();
-    		throw new IOException(sb.toString());
-    	}
+      /* add the shutdown hook */
+      shutdownHook = new UimacppShutdownHook(uimacppProcess, commandConnection, uimaLogger);
+      Runtime.getRuntime().addShutdownHook(shutdownHook);
+
+      if (uimacppProcess != null) {
+        // wait for C++ process to report initialization status.
+        System.out.println("Waiting for Uima C++ service to report init status...");
+        BufferedReader in = new BufferedReader(new InputStreamReader(commandConnection
+                .getInputStream()));
+
+        StringBuffer sb = new StringBuffer();
+        int c = in.read();
+        while (c >= 0) {
+          sb.append((char) c);
+          c = in.read();
+          if (c == '\n') {
+            break;
+          }
+        }
+        if (sb.toString().equalsIgnoreCase("0")) {
+          System.out.println("Uima C++ service at " + queueName + " Ready to process...");
+          WaitThread wt = new WaitThread(uimacppProcess, uimaLogger, listeners);
+          Thread wThread = new Thread(wt);
+          wThread.start();
+        } else {
+          System.out.println("UIMA C++ service at " + queueName + " failed to initialize.");
+          System.out.println(sb.toString());
+          uimacppProcess.destroy();
+          throw new IOException(sb.toString());
+        }
       } else {
         throw new ResourceInitializationException(new IOException(
-            "Could not start the C++ service."));
+                "Could not start the C++ service."));
       }
     } catch (IOException e) {
       throw new ResourceInitializationException(e);
@@ -651,8 +622,8 @@ implements ControllerLifecycle, DisposableBean {
   /**
    * Shuts down the UIMA C++ service process.
    * 
-   * @param force -
-   *          force or allow service to shutdown gracefully.
+   * @param force
+   *          - force or allow service to shutdown gracefully.
    * @throws IOException
    * @throws InterruptedException
    */
@@ -660,13 +631,13 @@ implements ControllerLifecycle, DisposableBean {
     mbean.shutdown();
     if (jmxMgmt != null) {
       try {
-		    this.jmxMgmt.destroy();		    
-	    } catch (Exception e) {
-		    throw new IOException(e.getMessage());
-	    }
+        this.jmxMgmt.destroy();
+      } catch (Exception e) {
+        throw new IOException(e.getMessage());
+      }
     }
     if (listeners != null) {
-      for (int i=0;i < listeners.size(); i++) {
+      for (int i = 0; i < listeners.size(); i++) {
         ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
         if (listener != null) {
           listener.notifyOnTermination("Uima C++ service shutdown.");
@@ -674,14 +645,12 @@ implements ControllerLifecycle, DisposableBean {
       }
       listeners.clear();
     }
-    synchronized(this)
-    {
-        loggerConnection.close();
+    synchronized (this) {
+      loggerConnection.close();
     }
     commandConnection.close();
     server.close();
-  } 
-  
+  }
 
   public String getStatistics() throws IOException {
     return mbean.getStatisticsAsString();
@@ -704,7 +673,6 @@ implements ControllerLifecycle, DisposableBean {
     }
   }
 
- 
   /**
    * test
    * 
@@ -712,70 +680,49 @@ implements ControllerLifecycle, DisposableBean {
    */
   public static void main(String[] args) {
     HashMap<String, String> envVarMap = new HashMap<String, String>();
-    
+
     try {
-    	if (System.getProperty("os.name").startsWith("Windows")) {
+      if (System.getProperty("os.name").startsWith("Windows")) {
         envVarMap.put("UIMACPP_HOME", "c:\\uimacpp2.0\\uimacpp");
         envVarMap.put("UIMACPP_LOGFILE", "c:\\temp\\uimacppcontroller.log");
         envVarMap.put("Path", "c:\\cppExamples2.0\\src");
-      
+
         UimacppServiceController controller = new UimacppServiceController(
-          "c:/cppExamples2.0/descriptors/DaveDetector.xml", // AE descriptor
-          "davedetector", // input queue
-          "tcp://localhost:61616", // activemq broker url
-          1, // num instances
-          0, // prefetch,
-          envVarMap, 
-          0, // processCAS error threshhold
-          0, // processCAS error window
-          false,2000000);
-    	} else {
-    	    envVarMap.put("UIMACPP_HOME", "/opt/IBM/uimacpp");    
-    	    //envVarMap.put("Path", "/opt/IBM/uimacpp/bin");
-    	    envVarMap.put("UIMACPP_LOGFILE", "/tmp/bhavani.log");
-    	    //envVarMap.put("LD_LIBRARY_PATH", "/opt/IBM/uimacpp/lib:/opt/IBM/uimacpp/lib/xms");
-    	    UimacppServiceController controller = 
-    	              new UimacppServiceController(UIMAFramework.getLogger(),
-                    "/home/bsiyer/cppExamples/descriptors/DaveDetector.xml",
-                    "ORANGE.QUEUE", "sith07.watson.ibm.com", 1414,
-                    null, null, 1, envVarMap, 0, 0, false, null,0);      
-    	}
-    	
-      /**
-      try {
-        Thread.sleep(2000);
-      } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+                "c:/cppExamples2.0/descriptors/DaveDetector.xml", // AE descriptor
+                "davedetector", // input queue
+                "tcp://localhost:61616", // activemq broker url
+                1, // num instances
+                0, // prefetch,
+                envVarMap, 0, // processCAS error threshhold
+                0, // processCAS error window
+                false, 2000000);
+      } else {
+        envVarMap.put("UIMACPP_HOME", "/opt/IBM/uimacpp");
+        // envVarMap.put("Path", "/opt/IBM/uimacpp/bin");
+        envVarMap.put("UIMACPP_LOGFILE", "/tmp/bhavani.log");
+        // envVarMap.put("LD_LIBRARY_PATH", "/opt/IBM/uimacpp/lib:/opt/IBM/uimacpp/lib/xms");
+        UimacppServiceController controller = new UimacppServiceController(UIMAFramework
+                .getLogger(), "/home/bsiyer/cppExamples/descriptors/DaveDetector.xml",
+                "ORANGE.QUEUE", "sith07.watson.ibm.com", 1414, null, null, 1, envVarMap, 0, 0,
+                false, null, 0);
       }
-      
-      System.out.println("MAIN getStats");
-      for (int i = 0; i < 3; i++) {
-	      String stats = controller.getStatistics();
-	      if (stats == null)
-	        System.out.println("NULL stats");
-	      else
-	        System.out.println(i + " " + stats);
-	    }
-	
-	    System.out.println("MAIN RESET STATS");
-	    controller.resetStatistics();
-	    String stats = controller.getStatistics();
-	    if (stats == null)
-	      System.out.println("NULL stats");
-	    else
-	      System.out.println("AFTER RESET " + stats);
-	
-	    try { 
-	       controller.shutdown(); 
-	    } catch (InterruptedException e1) 
-	    { 
-	       e1.printStackTrace();
-	    } catch (IOException e) { // TODO Auto-generated catch block
-	       e.printStackTrace(); 
-	    }
-	 **/
-    	
+
+      /**
+       * try { Thread.sleep(2000); } catch (InterruptedException e) { // TODO Auto-generated catch
+       * block e.printStackTrace(); }
+       * 
+       * System.out.println("MAIN getStats"); for (int i = 0; i < 3; i++) { String stats =
+       * controller.getStatistics(); if (stats == null) System.out.println("NULL stats"); else
+       * System.out.println(i + " " + stats); }
+       * 
+       * System.out.println("MAIN RESET STATS"); controller.resetStatistics(); String stats =
+       * controller.getStatistics(); if (stats == null) System.out.println("NULL stats"); else
+       * System.out.println("AFTER RESET " + stats);
+       * 
+       * try { controller.shutdown(); } catch (InterruptedException e1) { e1.printStackTrace(); }
+       * catch (IOException e) { // TODO Auto-generated catch block e.printStackTrace(); }
+       **/
+
     } catch (ResourceInitializationException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -787,7 +734,7 @@ implements ControllerLifecycle, DisposableBean {
    * 
    * Runs when UIMA EE client API undeploys this service.
    * 
-   */ 
+   */
   public void terminate() {
     try {
       shutdown();
@@ -802,7 +749,7 @@ implements ControllerLifecycle, DisposableBean {
    * 
    * Runs when spring undeploys this bean.
    * 
-   */ 
+   */
   public void destroy() {
     try {
       shutdown();
@@ -820,16 +767,14 @@ implements ControllerLifecycle, DisposableBean {
       if (this.InitializedState) {
         if (this.InitializedStatus == null) {
           aListener.notifyOnInitializationSuccess();
-        }
-        else {
+        } else {
           aListener.notifyOnInitializationFailure(this.InitializedStatus);
         }
       }
     }
-  } 
-  
-  public void removeControllerCallbackListener(ControllerCallbackListener aListener)
-  {
+  }
+
+  public void removeControllerCallbackListener(ControllerCallbackListener aListener) {
     this.listeners.remove(aListener);
   }
 
@@ -840,9 +785,8 @@ implements ControllerLifecycle, DisposableBean {
 }
 
 /**
- * Handles C++ service logging requests.
- *  It receives messages sent through the logger socket 
- *  connection and writes it to the UIMA logger.
+ * Handles C++ service logging requests. It receives messages sent through the logger socket
+ * connection and writes it to the UIMA logger.
  * 
  * 
  */
@@ -853,8 +797,7 @@ class LoggerHandler implements Runnable {
 
   org.apache.uima.util.Logger logger;
 
-  public LoggerHandler(Socket sock, org.apache.uima.util.Logger uimaLogger)
-      throws IOException {
+  public LoggerHandler(Socket sock, org.apache.uima.util.Logger uimaLogger) throws IOException {
 
     socket = sock;
     in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -862,10 +805,10 @@ class LoggerHandler implements Runnable {
   }
 
   public void logMessage(String logMessage) {
-    // determine the logging level of the message  
+    // determine the logging level of the message
     // translate uimacpp log level to java logger level
     Level level = Level.INFO; // default
-    
+
     if (logMessage.startsWith("0")) {
       level = Level.INFO;
     } else if (logMessage.startsWith("1")) {
@@ -873,11 +816,11 @@ class LoggerHandler implements Runnable {
     } else if (logMessage.startsWith("2")) {
       level = Level.SEVERE;
     }
-  
+
     logMessage = logMessage.trim();
     // log the message
     logger.log(level, logMessage);
-    //System.out.println(logMessage);
+    // System.out.println(logMessage);
   }
 
   public void run() {
@@ -894,7 +837,7 @@ class LoggerHandler implements Runnable {
         c = in.read();
       }
     } catch (IOException e) {
-      logger.log(Level.WARNING,e.getMessage());
+      logger.log(Level.WARNING, e.getMessage());
     }
   }
 } // log handler
@@ -937,8 +880,7 @@ class StdoutHandler implements Runnable {
 
   org.apache.uima.util.Logger logger;
 
-  public StdoutHandler(Process aprocess, org.apache.uima.util.Logger uimaLogger)
-      throws IOException {
+  public StdoutHandler(Process aprocess, org.apache.uima.util.Logger uimaLogger) throws IOException {
 
     in = new BufferedReader(new InputStreamReader(aprocess.getInputStream()));
     logger = uimaLogger;
@@ -975,8 +917,7 @@ class StderrHandler implements Runnable {
 
   org.apache.uima.util.Logger logger;
 
-  public StderrHandler(Process aprocess, org.apache.uima.util.Logger uimaLogger)
-      throws IOException {
+  public StderrHandler(Process aprocess, org.apache.uima.util.Logger uimaLogger) throws IOException {
 
     in = new BufferedReader(new InputStreamReader(aprocess.getErrorStream()));
     logger = uimaLogger;
@@ -1011,12 +952,11 @@ class WaitThread implements Runnable {
   public Process uimacppProcess;
 
   private org.apache.uima.util.Logger uimaLogger;
+
   private List<ControllerCallbackListener> listeners;
 
-  public WaitThread(Process aprocess, 
-      org.apache.uima.util.Logger logger,
-      List<ControllerCallbackListener> llist)
-      throws IOException {
+  public WaitThread(Process aprocess, org.apache.uima.util.Logger logger,
+          List<ControllerCallbackListener> llist) throws IOException {
     this.uimacppProcess = aprocess;
     this.uimaLogger = logger;
     this.listeners = llist;
@@ -1029,7 +969,7 @@ class WaitThread implements Runnable {
       rc = uimacppProcess.waitFor();
       message += "rc=" + rc;
       if (listeners != null) {
-        for (int i=0;i < listeners.size(); i++) {
+        for (int i = 0; i < listeners.size(); i++) {
           ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
           if (listener != null) {
             listener.notifyOnTermination(message);
@@ -1039,19 +979,17 @@ class WaitThread implements Runnable {
       }
     } catch (InterruptedException e) {
       this.uimaLogger.log(Level.INFO, e.getMessage());
-       message += e.getMessage();
-       if (listeners != null) {
-         for (int i=0;i < listeners.size(); i++) {
-           ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
-           if (listener != null) {
-             listener.notifyOnTermination(message);
-           }
-         }
-         listeners.clear(); 
-       }
+      message += e.getMessage();
+      if (listeners != null) {
+        for (int i = 0; i < listeners.size(); i++) {
+          ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
+          if (listener != null) {
+            listener.notifyOnTermination(message);
+          }
+        }
+        listeners.clear();
+      }
     }
-    
-    
 
   }
 } // WaitThread
@@ -1065,11 +1003,10 @@ class UimacppShutdownHook extends Thread {
 
   public Process uimacppProcess;
 
-
   private org.apache.uima.util.Logger uimaLogger;
 
-  public UimacppShutdownHook(Process aprocess, Socket socket,
-      org.apache.uima.util.Logger logger) throws IOException {
+  public UimacppShutdownHook(Process aprocess, Socket socket, org.apache.uima.util.Logger logger)
+          throws IOException {
     this.uimacppProcess = aprocess;
     this.uimaLogger = logger;
   }

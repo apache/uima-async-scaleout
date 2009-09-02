@@ -29,17 +29,17 @@ import java.util.HashMap;
 import java.util.StringTokenizer;
 
 /**
- * This class implements the JMX MBean interface to provide 
- * operational statistics about the C++ service.
+ * This class implements the JMX MBean interface to provide operational statistics about the C++
+ * service.
  */
 public class UimacppServiceManagement implements UimacppServiceManagementMBean {
- 
+
   private static final long serialVersionUID = -2507413276728501209L;
-  
+
   private static final long MAX_TIME_VALID = 500;
 
   private static long lastRefreshTime;
-  
+
   HashMap<String, String> jmxInfo;
 
   private String uniqueMBeanName;
@@ -59,11 +59,10 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   PrintWriter writer;
 
   public UimacppServiceManagement(String domainName, Socket sock, String aeDescriptor,
-      int numInstances, String brokerURL, String queueName) throws IOException {
-   
-    if (domainName==null  || domainName.length() == 0) {
-      domainName = "org.apache.uima:type=ee.jms.services,s="+
-      queueName + " Uima EE Service,";
+          int numInstances, String brokerURL, String queueName) throws IOException {
+
+    if (domainName == null || domainName.length() == 0) {
+      domainName = "org.apache.uima:type=ee.jms.services,s=" + queueName + " Uima EE Service,";
     }
     uniqueMBeanName = domainName + "name=" + queueName + "_Service";
     socket = sock;
@@ -80,18 +79,17 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   synchronized public String getStatisticsAsString() throws IOException {
 
     if (socket != null) {
-      //System.out.println("UimacppServiceManagement::getStatisticsAsString() Sending GETSTATS");
+      // System.out.println("UimacppServiceManagement::getStatisticsAsString() Sending GETSTATS");
 
       writer.write("GETSTATS");
       writer.flush();
 
-      //OutputStream os = socket.getOutputStream();
-      //os.flush();
-      //os.write(getstats.getBytes());
+      // OutputStream os = socket.getOutputStream();
+      // os.flush();
+      // os.write(getstats.getBytes());
 
-      //System.out.println("getStatistics() Sent GETSTATS Waiting for reply");
-      BufferedReader in = new BufferedReader(new InputStreamReader(socket
-          .getInputStream()));
+      // System.out.println("getStatistics() Sent GETSTATS Waiting for reply");
+      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
       StringBuffer sb = new StringBuffer();
       int c = in.read();
@@ -140,11 +138,13 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public String getQueueBrokerURL() throws IOException {
-    //System.out.println("QueueBrokerURL");
-    /* We are assuming this method gets called first by the
-     * MBeanServer. So we send a request to C++ service to get latest stats. */
-    
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("QueueBrokerURL");
+    /*
+     * We are assuming this method gets called first by the MBeanServer. So we send a request to C++
+     * service to get latest stats.
+     */
+
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
 
@@ -152,24 +152,24 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public String getQueueName() throws IOException {
-    //System.out.println("QueueName");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("QueueName");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     return queueName;
   }
 
   synchronized public String getAEDescriptor() throws IOException {
-    //System.out.println("aeDescriptor");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("aeDescriptor");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     return aeDescriptor;
   }
 
   synchronized public int getAEInstances() throws IOException {
-    //System.out.println("aeInstances");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("aeInstances");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     return aeInstances;
@@ -177,8 +177,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getErrorsGetMeta() throws IOException {
-    //System.out.println("GETMETAERRORS");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("GETMETAERRORS");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("GETMETAERRORS");
@@ -190,8 +190,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getErrorsProcessCas() throws IOException {
-    //System.out.println("errorsProcessCas");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("errorsProcessCas");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("PROCESSCASERRORS");
@@ -203,8 +203,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getErrorsCPC() throws IOException {
-    //System.out.println("errorsCPC");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("errorsCPC");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("CPCERRORS");
@@ -216,8 +216,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTotalNumCasProcessed() throws IOException {
-    //System.out.println("TotalNumCasProcessed");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("TotalNumCasProcessed");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("NUMCASPROCESSED");
@@ -229,8 +229,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTimingGetMeta() throws IOException {
-    //System.out.println("getTimingGetMeta");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("getTimingGetMeta");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("GETMETATIME");
@@ -242,8 +242,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTimingCPC() throws IOException {
-    //System.out.println("getTimingCPC");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("getTimingCPC");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("CPCTIME");
@@ -255,8 +255,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTimingSerialization() throws IOException {
-    //System.out.println("getTimingSerialization");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("getTimingSerialization");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("SERIALIZETIME");
@@ -268,8 +268,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTimingAnnotatorProcess() throws IOException {
-    //System.out.println("getTimingAnnotatorProcess");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("getTimingAnnotatorProcess");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("ANNOTATORTIME");
@@ -281,8 +281,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTimingDeserialization() throws IOException {
-    //System.out.println("getTimingDeserialization");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("getTimingDeserialization");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("DESERIALIZETIME");
@@ -294,8 +294,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTimingMessageProcessing() throws IOException {
-    //System.out.println("getTimingMessageProcessing");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("getTimingMessageProcessing");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("MESSAGEPROCESSTIME");
@@ -307,8 +307,8 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   }
 
   synchronized public long getTimingIdle() throws IOException {
-    //System.out.println("getTimingIdle");
-    if ( System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID ) {
+    // System.out.println("getTimingIdle");
+    if (System.currentTimeMillis() - this.lastRefreshTime > MAX_TIME_VALID) {
       getStatistics();
     }
     String v = jmxInfo.get("IDLETIME");
@@ -337,10 +337,10 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
 
   synchronized public void shutdown() throws IOException {
     if (this.socket != null) {
-      //System.out.println("UimacppServiceManagement sending shutdown message");
+      // System.out.println("UimacppServiceManagement sending shutdown message");
       writer.write("SHUTDOWN");
       writer.flush();
-      //System.out.println("UimacppServiceManagement sent shutdown message");
+      // System.out.println("UimacppServiceManagement sent shutdown message");
 
       return;
     } else {

@@ -35,13 +35,15 @@ public class ControllerDelegate extends Delegate {
     super.delegateKey = aDelegateKey;
     controller = aController;
   }
+
   public String getComponentName() {
     return controller.getComponentName();
   }
+
   public void handleError(Exception e, ErrorContext errorContext) {
-    if (controller != null &&  controller.getErrorHandlerChain() != null) {
-        // Handle Timeout
-        controller.getErrorHandlerChain().handle(e, errorContext, controller);
+    if (controller != null && controller.getErrorHandlerChain() != null) {
+      // Handle Timeout
+      controller.getErrorHandlerChain().handle(e, errorContext, controller);
     }
   }
 }

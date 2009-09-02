@@ -40,5 +40,4 @@ public class XsltGUIDgenerator {
     return localhost + new UID().toString();
   }
 
-
 }

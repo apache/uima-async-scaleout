@@ -33,599 +33,498 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.util.Level;
 
-public class Endpoint_impl implements Endpoint, Cloneable
-{
-	private static final Class CLASS_NAME = Endpoint_impl.class;
+public class Endpoint_impl implements Endpoint, Cloneable {
+  private static final Class CLASS_NAME = Endpoint_impl.class;
 
-	private volatile Object destination = null;
-	
-	private String endpoint;
+  private volatile Object destination = null;
 
-	private String serverURI;
+  private String endpoint;
 
-	private volatile boolean initialized;
+  private String serverURI;
 
-	private Timer timer;
+  private volatile boolean initialized;
 
-	private String replyTo;
-	
-	private volatile boolean waitingForResponse;
+  private Timer timer;
 
-	private int metadataRequestTimeout;
+  private String replyTo;
 
-	private int processRequestTimeout;
+  private volatile boolean waitingForResponse;
 
-	private int collectionProcessCompleteTimeout;
-	
-	private volatile boolean isRemote;
+  private int metadataRequestTimeout;
 
-	private String descriptor;
+  private int processRequestTimeout;
 
-	private String serializer="xmi";
+  private int collectionProcessCompleteTimeout;
 
-	private volatile boolean finalEndpoint;
-	
-	private final long timeIn = System.nanoTime(); 
-	
-	private long checkpointTimer;
-	
-	private AnalysisEngineController controller;
-	
-	private Endpoint selfRef = this;
-	
-	private volatile boolean retryEnabled;
-	
-	private Object monitor = new Object();
-	
-	private String highWaterMark = null;
-	
-	private volatile boolean completedProcessingCollection;
-	
-	private volatile boolean noConsumers =false;
-	
-	private volatile boolean remove = false;
-	
-	private volatile boolean isCasMultiplier = false;
-	
-	private int shadowCasPoolSize = 0;
-	
-	private volatile boolean isReplyEndpointFlag;
-	
-	private ServiceInfo serviceInfo = null;
+  private volatile boolean isRemote;
 
-	private int command; 
-	
-	private volatile boolean registeredWithParent;
-	
-	private volatile boolean tempReplyDestination;
-		
-	private int initialHeapSize;
-	
-	private volatile boolean replyDestinationFailed;
-	
-	private long idleTime=0;
-	
-	private int concurrentRequestConsumers = 1;
-	
-	private int concurrentReplyConsumers = 1;
-	
-	//	This is supplied by the remote client. It needs to be
-	//	echoed back to the client. 
-	private String endpointServer = null;
-	
-	private int status;
-	
-	private String delegateKey;
-	private volatile boolean processParentLast=false;
-	
-	public Endpoint_impl() {
-	  status = Endpoint.OK;
-	}
-	
-  public void setProcessParentLast (boolean parentLast) {
-    processParentLast  = parentLast;
+  private String descriptor;
+
+  private String serializer = "xmi";
+
+  private volatile boolean finalEndpoint;
+
+  private final long timeIn = System.nanoTime();
+
+  private long checkpointTimer;
+
+  private AnalysisEngineController controller;
+
+  private Endpoint selfRef = this;
+
+  private volatile boolean retryEnabled;
+
+  private Object monitor = new Object();
+
+  private String highWaterMark = null;
+
+  private volatile boolean completedProcessingCollection;
+
+  private volatile boolean noConsumers = false;
+
+  private volatile boolean remove = false;
+
+  private volatile boolean isCasMultiplier = false;
+
+  private int shadowCasPoolSize = 0;
+
+  private volatile boolean isReplyEndpointFlag;
+
+  private ServiceInfo serviceInfo = null;
+
+  private int command;
+
+  private volatile boolean registeredWithParent;
+
+  private volatile boolean tempReplyDestination;
+
+  private int initialHeapSize;
+
+  private volatile boolean replyDestinationFailed;
+
+  private long idleTime = 0;
+
+  private int concurrentRequestConsumers = 1;
+
+  private int concurrentReplyConsumers = 1;
+
+  // This is supplied by the remote client. It needs to be
+  // echoed back to the client.
+  private String endpointServer = null;
+
+  private int status;
+
+  private String delegateKey;
+
+  private volatile boolean processParentLast = false;
+
+  public Endpoint_impl() {
+    status = Endpoint.OK;
   }
-  
-  public boolean processParentLast () {
-    return processParentLast ;
+
+  public void setProcessParentLast(boolean parentLast) {
+    processParentLast = parentLast;
   }
-  
 
-	public int getCommand()
-	{
-		return command;
-	}
+  public boolean processParentLast() {
+    return processParentLast;
+  }
 
-	public void setCommand(int command)
-	{
-		this.command = command;
-	}
+  public int getCommand() {
+    return command;
+  }
 
-	public void setNoConsumers(boolean trueOrFalse)
-	{
-		noConsumers = trueOrFalse;
-	}
-	
-	public void setReplyEndpoint(boolean tORf )
-	{
-		isReplyEndpointFlag = tORf;
-	}
-	public boolean isReplyEndpoint()
-	{
-		return isReplyEndpointFlag;
-	}
-	public boolean remove()
-	{
-		return remove;
-		
-	}
-	
-	public void setRemove( boolean rm)
-	{
-		remove = rm;
-	}
-	public boolean hasNoConsumers()
-	{
-		return noConsumers;
-	}
-	public String getReplyToEndpoint()
-	{
-		return replyTo;
-	}
-	public void setReplyToEndpoint( String anEndpointName )
-	{
-		replyTo = anEndpointName;
-	}
-	public boolean completedProcessingCollection()
-	{
-		return completedProcessingCollection;
-	}
-	
-	public void setCompletedProcessingCollection(  boolean completed )
-	{
-		completedProcessingCollection = completed;
-	}
+  public void setCommand(int command) {
+    this.command = command;
+  }
 
-	
-	public void setHighWaterMark( String aHighWaterMark )
-	{
-		highWaterMark = aHighWaterMark;
-	}
-	
-	public String getHighWaterMark()
-	{
-		return highWaterMark;
-	}
-	
-	public boolean isRetryEnabled()
-	{
-		return retryEnabled;
-	}
-	public void setRetryEnabled(boolean retryEnabled)
-	{
-		this.retryEnabled = retryEnabled;
-	}
-	public void setController( AnalysisEngineController aController )
-	{
-		controller = aController;
-	}
-	public void startCheckpointTimer()
-	{
-		checkpointTimer = System.nanoTime();
-	}
-	public long getCheckpointTimer()
-	{
-		return checkpointTimer;
-	}
+  public void setNoConsumers(boolean trueOrFalse) {
+    noConsumers = trueOrFalse;
+  }
 
+  public void setReplyEndpoint(boolean tORf) {
+    isReplyEndpointFlag = tORf;
+  }
 
-	public long getEntryTime()
-	{
-		return timeIn;
-	}
-	public Object clone()
-	{
-		try
-		{
-			return super.clone();
-		}
-		catch ( CloneNotSupportedException e)
-		{
-			throw new InternalError(e.toString());
-		}
-	}
+  public boolean isReplyEndpoint() {
+    return isReplyEndpointFlag;
+  }
 
-	public String getSerializer()
-	{
-		return serializer;
-	}
-	public boolean isFinal()
-	{
-		return finalEndpoint;
-	}
-	
-	public void setFinal( boolean isFinal )
-	{
-		finalEndpoint = isFinal;
-	}
-	public void setSerializer(String serializer)
-	{
-	  if ( serializer != null && serializer.trim().length() > 0 ) {
+  public boolean remove() {
+    return remove;
+
+  }
+
+  public void setRemove(boolean rm) {
+    remove = rm;
+  }
+
+  public boolean hasNoConsumers() {
+    return noConsumers;
+  }
+
+  public String getReplyToEndpoint() {
+    return replyTo;
+  }
+
+  public void setReplyToEndpoint(String anEndpointName) {
+    replyTo = anEndpointName;
+  }
+
+  public boolean completedProcessingCollection() {
+    return completedProcessingCollection;
+  }
+
+  public void setCompletedProcessingCollection(boolean completed) {
+    completedProcessingCollection = completed;
+  }
+
+  public void setHighWaterMark(String aHighWaterMark) {
+    highWaterMark = aHighWaterMark;
+  }
+
+  public String getHighWaterMark() {
+    return highWaterMark;
+  }
+
+  public boolean isRetryEnabled() {
+    return retryEnabled;
+  }
+
+  public void setRetryEnabled(boolean retryEnabled) {
+    this.retryEnabled = retryEnabled;
+  }
+
+  public void setController(AnalysisEngineController aController) {
+    controller = aController;
+  }
+
+  public void startCheckpointTimer() {
+    checkpointTimer = System.nanoTime();
+  }
+
+  public long getCheckpointTimer() {
+    return checkpointTimer;
+  }
+
+  public long getEntryTime() {
+    return timeIn;
+  }
+
+  public Object clone() {
+    try {
+      return super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new InternalError(e.toString());
+    }
+  }
+
+  public String getSerializer() {
+    return serializer;
+  }
+
+  public boolean isFinal() {
+    return finalEndpoint;
+  }
+
+  public void setFinal(boolean isFinal) {
+    finalEndpoint = isFinal;
+  }
+
+  public void setSerializer(String serializer) {
+    if (serializer != null && serializer.trim().length() > 0) {
       this.serializer = serializer;
-	  }
-	}
+    }
+  }
 
-	public int getMetadataRequestTimeout()
-	{
-		return metadataRequestTimeout;
-	}
+  public int getMetadataRequestTimeout() {
+    return metadataRequestTimeout;
+  }
 
-	public void setMetadataRequestTimeout(int metadataRequestTimeout)
-	{
-		this.metadataRequestTimeout = metadataRequestTimeout;
-	}
+  public void setMetadataRequestTimeout(int metadataRequestTimeout) {
+    this.metadataRequestTimeout = metadataRequestTimeout;
+  }
 
-	public int getProcessRequestTimeout()
-	{
-		return processRequestTimeout;
-	}
+  public int getProcessRequestTimeout() {
+    return processRequestTimeout;
+  }
 
-	public void setProcessRequestTimeout(int processRequestTimeout)
-	{
-		this.processRequestTimeout = processRequestTimeout;
-	}
+  public void setProcessRequestTimeout(int processRequestTimeout) {
+    this.processRequestTimeout = processRequestTimeout;
+  }
 
-	public void setCollectionProcessCompleteTimeout(int cpcTimeout)
-	{
-		this.collectionProcessCompleteTimeout = cpcTimeout;
-	}
+  public void setCollectionProcessCompleteTimeout(int cpcTimeout) {
+    this.collectionProcessCompleteTimeout = cpcTimeout;
+  }
 
-	public int getCollectionProcessCompleteTimeout()
-	{
-		return collectionProcessCompleteTimeout;
-	}
-	public boolean isInitialized()
-	{
-		return initialized;
-	}
+  public int getCollectionProcessCompleteTimeout() {
+    return collectionProcessCompleteTimeout;
+  }
 
-	public void setInitialized(boolean initialized)
-	{
-		this.initialized = initialized;
-	}
+  public boolean isInitialized() {
+    return initialized;
+  }
 
-	public String getEndpoint()
-	{
-		return endpoint;
-	}
+  public void setInitialized(boolean initialized) {
+    this.initialized = initialized;
+  }
 
-	public void setEndpoint(String endpoint)
-	{
-		this.endpoint = endpoint;
-	}
+  public String getEndpoint() {
+    return endpoint;
+  }
 
-	public String getServerURI()
-	{
-		return serverURI;
-	}
+  public void setEndpoint(String endpoint) {
+    this.endpoint = endpoint;
+  }
 
-	public void setServerURI(String aServerURI)
-	{
-		this.serverURI = aServerURI;
-		if ( aServerURI != null && aServerURI.startsWith("vm:") == true )
-		{
-			setRemote(false);
-		}
-		else
-		{
-			setRemote(true);
-		}
-	}
-	public void setWaitingForResponse(boolean isWaiting)
-	{
-		waitingForResponse = isWaiting;
-		
-	}
+  public String getServerURI() {
+    return serverURI;
+  }
 
-	private void startTimer(final int aTimeToWait, String aCasReferenceId, int command)
-	{
-	  /*
-		synchronized( monitor )
-		{
-			final String casReferenceId = aCasReferenceId;
-			final int cmd = command;
-			Date timeToRun = new Date(System.currentTimeMillis() + aTimeToWait);
-			
-			
-			setWaitingForResponse(true);
-//			timer = new Timer();
-			
-			
-			if ( controller != null )
-			{
-				timer = new Timer("Controller:"+controller.getComponentName()+":TimerThread-Endpoint_impl:"+endpoint+":"+System.nanoTime()+":Cmd:"+cmd);
-			}
-			else
-			{
-				timer = new Timer("TimerThread-Endpoint_impl:"+endpoint+":"+System.nanoTime()+":Cmd:"+cmd);
-			}
+  public void setServerURI(String aServerURI) {
+    this.serverURI = aServerURI;
+    if (aServerURI != null && aServerURI.startsWith("vm:") == true) {
+      setRemote(false);
+    } else {
+      setRemote(true);
+    }
+  }
 
-			
-			timer.schedule(new TimerTask() {
-				public void run()
-				{
-					if ( AsynchAEMessage.Process == cmd  )
-					{
-		         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-		           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
-				                "TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_cas_timeout_no_reply__INFO",
-				                new Object[] {  endpoint, aTimeToWait, casReferenceId });
-		         }
-					}
-					else if ( AsynchAEMessage.GetMeta == cmd )
-					{
-		         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-		           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
-				                "TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_meta_timeout_no_reply__INFO",
-				                new Object[] {  endpoint, aTimeToWait });
-		         }
-					}
-					else
-					{
-		         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-		           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
-				                "TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_cpc_timeout_no_reply__INFO",
-				                new Object[] {  endpoint, aTimeToWait });
-		         }
+  public void setWaitingForResponse(boolean isWaiting) {
+    waitingForResponse = isWaiting;
 
-					}
-					
-					waitingForResponse = false;
-					if ( timer != null )
-					{
-						timer.cancel();
-						timer.purge();
-					}
+  }
 
-					if ( controller != null )
-					{
+  private void startTimer(final int aTimeToWait, String aCasReferenceId, int command) {
+    /*
+     * synchronized( monitor ) { final String casReferenceId = aCasReferenceId; final int cmd =
+     * command; Date timeToRun = new Date(System.currentTimeMillis() + aTimeToWait);
+     * 
+     * 
+     * setWaitingForResponse(true); // timer = new Timer();
+     * 
+     * 
+     * if ( controller != null ) { timer = new
+     * Timer("Controller:"+controller.getComponentName()+":TimerThread-Endpoint_impl:"
+     * +endpoint+":"+System.nanoTime()+":Cmd:"+cmd); } else { timer = new
+     * Timer("TimerThread-Endpoint_impl:"+endpoint+":"+System.nanoTime()+":Cmd:"+cmd); }
+     * 
+     * 
+     * timer.schedule(new TimerTask() { public void run() { if ( AsynchAEMessage.Process == cmd ) {
+     * if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+     * UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+     * "TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+     * "UIMAEE_cas_timeout_no_reply__INFO", new Object[] { endpoint, aTimeToWait, casReferenceId });
+     * } } else if ( AsynchAEMessage.GetMeta == cmd ) { if
+     * (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+     * UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+     * "TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+     * "UIMAEE_meta_timeout_no_reply__INFO", new Object[] { endpoint, aTimeToWait }); } } else { if
+     * (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+     * UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+     * "TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+     * "UIMAEE_cpc_timeout_no_reply__INFO", new Object[] { endpoint, aTimeToWait }); }
+     * 
+     * }
+     * 
+     * waitingForResponse = false; if ( timer != null ) { timer.cancel(); timer.purge(); }
+     * 
+     * if ( controller != null ) {
+     * 
+     * ErrorContext errorContext = new ErrorContext(); if ( casReferenceId != null ) {
+     * errorContext.add(AsynchAEMessage.CasReference, String.valueOf(casReferenceId)); }
+     * errorContext.add(AsynchAEMessage.Command, cmd); errorContext.add(AsynchAEMessage.Endpoint,
+     * selfRef); if ( controller != null && controller.getErrorHandlerChain() != null ) { // Handle
+     * Timeout controller.getErrorHandlerChain().handle(new MessageTimeoutException(), errorContext,
+     * controller); } } } }, timeToRun); }
+     */
+  }
 
-							ErrorContext errorContext = new ErrorContext();
-							if ( casReferenceId != null )
-							{
-								errorContext.add(AsynchAEMessage.CasReference, String.valueOf(casReferenceId));
-							}
-							errorContext.add(AsynchAEMessage.Command, cmd);
-							errorContext.add(AsynchAEMessage.Endpoint, selfRef);
-							if ( controller != null && controller.getErrorHandlerChain() != null )
-							{
-								//	Handle Timeout
-								controller.getErrorHandlerChain().handle(new MessageTimeoutException(), errorContext, controller);
-							}
-					}
-				}
-			}, timeToRun);
-		}
-*/
-	}
-	public ServiceInfo getServiceInfo()
-	{
-		if ( serviceInfo == null )
-		{
-			serviceInfo = new ServiceInfo(isCasMultiplier);
-			serviceInfo.setBrokerURL(serverURI);
-			serviceInfo.setInputQueueName(endpoint);
-			serviceInfo.setState("Active");
-		}
-		return serviceInfo;
-	}
-	public void startProcessRequestTimer(String aCasReferenceId)
-	{
-		if ( getProcessRequestTimeout() > 0 )
-		{
-			startTimer(processRequestTimeout, aCasReferenceId, AsynchAEMessage.Process);
-		}
-		else
-		{
-			setWaitingForResponse(true);
-		}
+  public ServiceInfo getServiceInfo() {
+    if (serviceInfo == null) {
+      serviceInfo = new ServiceInfo(isCasMultiplier);
+      serviceInfo.setBrokerURL(serverURI);
+      serviceInfo.setInputQueueName(endpoint);
+      serviceInfo.setState("Active");
+    }
+    return serviceInfo;
+  }
 
-	}
+  public void startProcessRequestTimer(String aCasReferenceId) {
+    if (getProcessRequestTimeout() > 0) {
+      startTimer(processRequestTimeout, aCasReferenceId, AsynchAEMessage.Process);
+    } else {
+      setWaitingForResponse(true);
+    }
 
-	public void startMetadataRequestTimer()
-	{
-		if ( getMetadataRequestTimeout() > 0 )
-		{
-			startTimer(metadataRequestTimeout, null, AsynchAEMessage.GetMeta);
-		}
-		else
-		{
-			setWaitingForResponse(true);
-		}
-	}
+  }
 
-	public void startCollectionProcessCompleteTimer()
-	{
-		if ( getCollectionProcessCompleteTimeout() > 0 )
-		{
-			startTimer(collectionProcessCompleteTimeout, null, AsynchAEMessage.CollectionProcessComplete);
-		}
-		else
-		{
-			setWaitingForResponse(true);
-		}
+  public void startMetadataRequestTimer() {
+    if (getMetadataRequestTimeout() > 0) {
+      startTimer(metadataRequestTimeout, null, AsynchAEMessage.GetMeta);
+    } else {
+      setWaitingForResponse(true);
+    }
+  }
 
-	}
+  public void startCollectionProcessCompleteTimer() {
+    if (getCollectionProcessCompleteTimeout() > 0) {
+      startTimer(collectionProcessCompleteTimeout, null, AsynchAEMessage.CollectionProcessComplete);
+    } else {
+      setWaitingForResponse(true);
+    }
 
-	public void cancelTimer()
-	{
-	  /*
-		synchronized( monitor )
-		{
-			if (timer != null)
-			{
-				waitingForResponse = false;
-				timer.cancel();
-				timer = null;
-			}
-		}
-		*/
-	}
+  }
 
-	public boolean isWaitingForResponse()
-	{
+  public void cancelTimer() {
+    /*
+     * synchronized( monitor ) { if (timer != null) { waitingForResponse = false; timer.cancel();
+     * timer = null; } }
+     */
+  }
 
-		return waitingForResponse;
-	}
+  public boolean isWaitingForResponse() {
 
-	public boolean isRemote()
-	{
-		return isRemote;
-	}
+    return waitingForResponse;
+  }
 
-	public void setRemote(boolean aRemote)
-	{
-		isRemote = aRemote;
+  public boolean isRemote() {
+    return isRemote;
+  }
 
-	}
+  public void setRemote(boolean aRemote) {
+    isRemote = aRemote;
 
-	public String getDescriptor()
-	{
-		return descriptor;
-	}
+  }
 
-	public void setDescriptor(String aDescriptor)
-	{
-		descriptor = aDescriptor;
-	}
+  public String getDescriptor() {
+    return descriptor;
+  }
 
-	public void initialize() throws AsynchAEException
-	{
-		// TODO Auto-generated method stub
+  public void setDescriptor(String aDescriptor) {
+    descriptor = aDescriptor;
+  }
 
-	}
-	
-	public boolean isOpen()
-	{
-		return true;
-	}
-	public void close()
-	{
-		
-	}
-	public boolean isCasMultiplier()
-	{
-		return isCasMultiplier;
-	}
-	
-	public void setIsCasMultiplier(boolean trueORfalse)
-	{
-		isCasMultiplier = trueORfalse;
-		if ( isCasMultiplier ) {
-	    getServiceInfo().setCASMultiplier();
-		}
-	}
-	public void setShadowCasPoolSize( int aPoolSize )
-	{
-		shadowCasPoolSize = aPoolSize;
-	}
-	
-	public int getShadowPoolSize()
-	{
-		return shadowCasPoolSize;
-	}
-	
-	public Object getDestination()
-	{
-		return destination;
-	}
-	public void setDestination( Object aDestination)
-	{
-		destination = aDestination;
-	}
-	public void setRegisteredWithParent()
-	{
-		registeredWithParent = true;
-	}
-	
-	public boolean isRegisteredWithParent()
-	{
-		return registeredWithParent;
-	}
-	public void setInitialFsHeapSize(int aHeapSize)
-	{
-		initialHeapSize = aHeapSize;
-	}
-	public void setTempReplyDestination(boolean isTempReplyDestination )
-	{
-		tempReplyDestination = isTempReplyDestination;
-	}
-	
-	public boolean isTempReplyDestination()
-	{
-		return tempReplyDestination;
-	}
-	public void setReplyDestinationFailed()
-	{
-		replyDestinationFailed = true;
-	}
-	
-	public boolean replyDestinationFailed()
-	{
-		return replyDestinationFailed;
-	}
+  public void initialize() throws AsynchAEException {
+    // TODO Auto-generated method stub
 
-	public long getIdleTime() {
-		return idleTime;
-	}
+  }
 
-	public void setIdleTime(long idleTime) {
-		this.idleTime = idleTime;
-	}
-	
-	/*
-	 * Print name of the endpoint rather than class hash code
-	 */
-	public String toString() {
-		return endpoint;
-	}
-	
-	public void setEndpointServer( String anEndpointServer ){
-		endpointServer = anEndpointServer;
-	}
-	
-	public String getEndpointServer() {
-		return endpointServer;
-	}
-	
+  public boolean isOpen() {
+    return true;
+  }
+
+  public void close() {
+
+  }
+
+  public boolean isCasMultiplier() {
+    return isCasMultiplier;
+  }
+
+  public void setIsCasMultiplier(boolean trueORfalse) {
+    isCasMultiplier = trueORfalse;
+    if (isCasMultiplier) {
+      getServiceInfo().setCASMultiplier();
+    }
+  }
+
+  public void setShadowCasPoolSize(int aPoolSize) {
+    shadowCasPoolSize = aPoolSize;
+  }
+
+  public int getShadowPoolSize() {
+    return shadowCasPoolSize;
+  }
+
+  public Object getDestination() {
+    return destination;
+  }
+
+  public void setDestination(Object aDestination) {
+    destination = aDestination;
+  }
+
+  public void setRegisteredWithParent() {
+    registeredWithParent = true;
+  }
+
+  public boolean isRegisteredWithParent() {
+    return registeredWithParent;
+  }
+
+  public void setInitialFsHeapSize(int aHeapSize) {
+    initialHeapSize = aHeapSize;
+  }
+
+  public void setTempReplyDestination(boolean isTempReplyDestination) {
+    tempReplyDestination = isTempReplyDestination;
+  }
+
+  public boolean isTempReplyDestination() {
+    return tempReplyDestination;
+  }
+
+  public void setReplyDestinationFailed() {
+    replyDestinationFailed = true;
+  }
+
+  public boolean replyDestinationFailed() {
+    return replyDestinationFailed;
+  }
+
+  public long getIdleTime() {
+    return idleTime;
+  }
+
+  public void setIdleTime(long idleTime) {
+    this.idleTime = idleTime;
+  }
+
+  /*
+   * Print name of the endpoint rather than class hash code
+   */
+  public String toString() {
+    return endpoint;
+  }
+
+  public void setEndpointServer(String anEndpointServer) {
+    endpointServer = anEndpointServer;
+  }
+
+  public String getEndpointServer() {
+    return endpointServer;
+  }
+
   public void setConcurrentRequestConsumers(int aConsumerCount) {
     concurrentRequestConsumers = aConsumerCount;
   }
-  
+
   public int getConcurrentRequestConsumers() {
     return concurrentRequestConsumers;
   }
 
-  public void setConcurrentReplyConsumers(int aConsumerCount)  {
+  public void setConcurrentReplyConsumers(int aConsumerCount) {
     concurrentReplyConsumers = aConsumerCount;
-    
+
   }
-  
+
   public int getConcurrentReplyConsumers() {
     return concurrentReplyConsumers;
   }
-  public void setStatus( int aStatus) {
+
+  public void setStatus(int aStatus) {
     status = aStatus;
   }
-  
+
   public int getStatus() {
     return status;
   }
 
-  public void setDelegateKey( String aDelegateKey ) {
+  public void setDelegateKey(String aDelegateKey) {
     delegateKey = aDelegateKey;
   }
-  
+
   public String getDelegateKey() {
     return delegateKey;
   }
