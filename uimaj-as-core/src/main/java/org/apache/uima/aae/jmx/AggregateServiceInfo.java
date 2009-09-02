@@ -19,21 +19,18 @@
 
 package org.apache.uima.aae.jmx;
 
-public class AggregateServiceInfo 
-extends ServiceInfo implements AggregateServiceInfoMBean
-{
-	private static final long serialVersionUID = 6076764724935117459L;
-	/**
+public class AggregateServiceInfo extends ServiceInfo implements AggregateServiceInfoMBean {
+  private static final long serialVersionUID = 6076764724935117459L;
+
+  /**
 	 * 
 	 */
-	
-	public AggregateServiceInfo()
-	{
-		super(false);
-	}
-	
-	public AggregateServiceInfo( boolean isaCasMultiplier )
-	{
-		super(isaCasMultiplier);
-	}
+
+  public AggregateServiceInfo() {
+    super(false);
+  }
+
+  public AggregateServiceInfo(boolean isaCasMultiplier) {
+    super(isaCasMultiplier);
+  }
 }

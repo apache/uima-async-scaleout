@@ -21,15 +21,22 @@ package org.apache.uima.aae.jmx;
 
 import java.io.Serializable;
 
-public interface ServiceInfoMBean extends Serializable
-{
-	public String getState();
-	public String getInputQueueName();
-	public String getReplyQueueName();
-	public String getBrokerURL();
-	public String[] getDeploymentDescriptor();
-	public boolean isCASMultiplier();
-	public boolean isTopLevel();
-	public String getServiceKey();
-	public boolean isAggregate();
+public interface ServiceInfoMBean extends Serializable {
+  public String getState();
+
+  public String getInputQueueName();
+
+  public String getReplyQueueName();
+
+  public String getBrokerURL();
+
+  public String[] getDeploymentDescriptor();
+
+  public boolean isCASMultiplier();
+
+  public boolean isTopLevel();
+
+  public String getServiceKey();
+
+  public boolean isAggregate();
 }

@@ -21,69 +21,99 @@ package org.apache.uima.aae.jmx;
 
 public interface UimaASClientInfoMBean {
 
-	public void setApplicationName( String anApplicationName );
-	public String getApplicationName();
+  public void setApplicationName(String anApplicationName);
 
-	public void incrementTotalNumberOfCasesProcessed();
-	public long getTotalNumberOfCasesProcessed();
-	
-	public String getEndpointName();
-	public void setEndpointName(String endpointName);
+  public String getApplicationName();
 
-	public int getReplyWindowSize();
-	public void setReplyWindowSize(int replyWindowSize);
+  public void incrementTotalNumberOfCasesProcessed();
 
-	public int getCasPoolSize();
-	public void setCasPoolSize(int casPoolSize);
+  public long getTotalNumberOfCasesProcessed();
 
+  public String getEndpointName();
 
-	public void incrementTotalTimeToProcess( long aTotalTimeToProcess );
-	public String getTotalTimeToProcess();
-	public String getAverageTimeToProcessCas();
-    public String getMaxProcessTime();
-	
-	public void incrementTotalSerializationTime( long aTotalSerializationTime );
-	public String getTotalSerializationTime();
-	public String getAverageSerializationTime();
-    public String getMaxSerializationTime();
-	
-	public void incrementTotalDeserializationTime( long aTotalDeserializationTime );
-	public String getTotalDeserializationTime();
-	public String getAverageDeserializationTime();
-    public String getMaxDeserializationTime();
-	
-	public void incrementTotalIdleTime( long aTotalIdleTime );
-	public String getTotalIdleTime();
-	public String getAverageIdleTime();
-    public String getMaxIdleTime();
+  public void setEndpointName(String endpointName);
 
-    public void incrementTotalTimeWaitingForReply( long aTimeWaitingForReply );
-    public String getTotalTimeWaitingForReply();
-    public String getAverageTimeWaitingForReply();
-    public String getMaxTimeWaitingForReply();
-    
-    public void incrementTotalResponseLatencyTime( long aResponseLatencyTime );
-    public String getTotalResponseLatencyTime();
-    public String getAverageResponseLatencyTime();
-    public String getMaxResponseLatencyTime();
-    
-    public void incrementTotalTimeWaitingForCas( long aTimeWaitingForCas );
-    public long getTotalNumberOfCasesRequested();
-    public String getTotalTimeWaitingForCas();
-    public String getAverageTimeWaitingForCas();
-    public String getMaxTimeWaitingForCas();
- 
-    public long getMetaTimeoutErrorCount();
-    public void incrementMetaTimeoutErrorCount();
-    
-    public long getProcessTimeoutErrorCount();
-    public void incrementProcessTimeoutErrorCount();
-    
-    public long getProcessErrorCount();
-    public void incrementProcessErrorCount();
-    
-    public long getMetaErrorCount();
-    public void incrementMetaErrorCount();
+  public int getReplyWindowSize();
 
-    public void reset();
+  public void setReplyWindowSize(int replyWindowSize);
+
+  public int getCasPoolSize();
+
+  public void setCasPoolSize(int casPoolSize);
+
+  public void incrementTotalTimeToProcess(long aTotalTimeToProcess);
+
+  public String getTotalTimeToProcess();
+
+  public String getAverageTimeToProcessCas();
+
+  public String getMaxProcessTime();
+
+  public void incrementTotalSerializationTime(long aTotalSerializationTime);
+
+  public String getTotalSerializationTime();
+
+  public String getAverageSerializationTime();
+
+  public String getMaxSerializationTime();
+
+  public void incrementTotalDeserializationTime(long aTotalDeserializationTime);
+
+  public String getTotalDeserializationTime();
+
+  public String getAverageDeserializationTime();
+
+  public String getMaxDeserializationTime();
+
+  public void incrementTotalIdleTime(long aTotalIdleTime);
+
+  public String getTotalIdleTime();
+
+  public String getAverageIdleTime();
+
+  public String getMaxIdleTime();
+
+  public void incrementTotalTimeWaitingForReply(long aTimeWaitingForReply);
+
+  public String getTotalTimeWaitingForReply();
+
+  public String getAverageTimeWaitingForReply();
+
+  public String getMaxTimeWaitingForReply();
+
+  public void incrementTotalResponseLatencyTime(long aResponseLatencyTime);
+
+  public String getTotalResponseLatencyTime();
+
+  public String getAverageResponseLatencyTime();
+
+  public String getMaxResponseLatencyTime();
+
+  public void incrementTotalTimeWaitingForCas(long aTimeWaitingForCas);
+
+  public long getTotalNumberOfCasesRequested();
+
+  public String getTotalTimeWaitingForCas();
+
+  public String getAverageTimeWaitingForCas();
+
+  public String getMaxTimeWaitingForCas();
+
+  public long getMetaTimeoutErrorCount();
+
+  public void incrementMetaTimeoutErrorCount();
+
+  public long getProcessTimeoutErrorCount();
+
+  public void incrementProcessTimeoutErrorCount();
+
+  public long getProcessErrorCount();
+
+  public void incrementProcessErrorCount();
+
+  public long getMetaErrorCount();
+
+  public void incrementMetaErrorCount();
+
+  public void reset();
 }

@@ -21,19 +21,24 @@ package org.apache.uima.aae.jmx;
 
 import java.io.Serializable;
 
+public interface ServicePerformanceMBean extends Serializable {
+  public double getIdleTime();
 
-public interface ServicePerformanceMBean extends Serializable
-{
-	public double getIdleTime();
-	
-	public void reset();
-	
-	public long getNumberOfCASesProcessed();
-	public double getCasDeserializationTime();
-	public double getCasSerializationTime();
-	public double getAnalysisTime();
-	public double getCasPoolWaitTime();
-	public double getShadowCasPoolWaitTime();
-	public double getTimeSpentInCMGetNext();
-	public int getProcessThreadCount();
+  public void reset();
+
+  public long getNumberOfCASesProcessed();
+
+  public double getCasDeserializationTime();
+
+  public double getCasSerializationTime();
+
+  public double getAnalysisTime();
+
+  public double getCasPoolWaitTime();
+
+  public double getShadowCasPoolWaitTime();
+
+  public double getTimeSpentInCMGetNext();
+
+  public int getProcessThreadCount();
 }

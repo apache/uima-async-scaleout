@@ -19,110 +19,113 @@
 
 package org.apache.uima.aae.jmx;
 
-public class ServiceInfo implements ServiceInfoMBean
-{
-	/**
+public class ServiceInfo implements ServiceInfoMBean {
+  /**
 	 * 
 	 */
-//	private static final long serialVersionUID = -4662094240276750977L;
-	private static final String label="Service Info";
-	private String brokerURL="";
-	private String inputQueueName="";
-	private String replyQueueName="";
-	private String state="";
-	private String[] deploymentDescriptor= new String[] {""};
-	private boolean casMultiplier;
-	private boolean topLevel;
-	private String serviceKey;
-	private boolean aggregate;
-	
-	public ServiceInfo()
-	{
-		this(false);
-	}
-	
-	public ServiceInfo( boolean isaCasMultiplier )
-	{
-		casMultiplier = isaCasMultiplier;
-	}
-	public String getLabel()
-	{
-		return label;
-	}
-	public String getBrokerURL()
-	{
-		return brokerURL;
-	}
+  // private static final long serialVersionUID = -4662094240276750977L;
+  private static final String label = "Service Info";
 
-	public String[] getDeploymentDescriptor()
-	{
-		return deploymentDescriptor;
-	}
-	public void setDeploymentDescriptor(String deploymentDescriptor)
-	{
-		this.deploymentDescriptor[0] = deploymentDescriptor;
-	}
-	public void setBrokerURL(String aBrokerURL)
-	{
-		brokerURL = aBrokerURL;
-	}
-	public String getInputQueueName()
-	{
-		return inputQueueName;
-	}
-	public void setInputQueueName( String anInputQueueName)
-	{
-		inputQueueName = anInputQueueName;
-	}
-	public String getState()
-	{
-		return state;
-	}
-	public void setState( String aState )
-	{
-		state = aState;
-	}
-	public boolean isCASMultiplier()
-	{
-		return casMultiplier;
-	}
-	public void setCASMultiplier()
-	{
-		casMultiplier = true;
-	}
-	public void setTopLevel()
-	{
-		topLevel = true;
-	}
-	public boolean isTopLevel()
-	{
-		return topLevel;
-	}
+  private String brokerURL = "";
 
-	public String getServiceKey() {
-		return serviceKey;
-	}
+  private String inputQueueName = "";
 
-	public void setServiceKey(String serviceKey) {
-		this.serviceKey = serviceKey;
-	}
-	
-	public String getReplyQueueName()
-	{
-		return replyQueueName;
-	}
-	
-	public void setReplyQueueName(String aReplyQueueName)
-	{
-		replyQueueName = aReplyQueueName;
-	}
+  private String replyQueueName = "";
 
-	public boolean isAggregate() {
-		return aggregate;
-	}
+  private String state = "";
 
-	public void setAggregate(boolean aggregate) {
-		this.aggregate = aggregate;
-	}
+  private String[] deploymentDescriptor = new String[] { "" };
+
+  private boolean casMultiplier;
+
+  private boolean topLevel;
+
+  private String serviceKey;
+
+  private boolean aggregate;
+
+  public ServiceInfo() {
+    this(false);
+  }
+
+  public ServiceInfo(boolean isaCasMultiplier) {
+    casMultiplier = isaCasMultiplier;
+  }
+
+  public String getLabel() {
+    return label;
+  }
+
+  public String getBrokerURL() {
+    return brokerURL;
+  }
+
+  public String[] getDeploymentDescriptor() {
+    return deploymentDescriptor;
+  }
+
+  public void setDeploymentDescriptor(String deploymentDescriptor) {
+    this.deploymentDescriptor[0] = deploymentDescriptor;
+  }
+
+  public void setBrokerURL(String aBrokerURL) {
+    brokerURL = aBrokerURL;
+  }
+
+  public String getInputQueueName() {
+    return inputQueueName;
+  }
+
+  public void setInputQueueName(String anInputQueueName) {
+    inputQueueName = anInputQueueName;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String aState) {
+    state = aState;
+  }
+
+  public boolean isCASMultiplier() {
+    return casMultiplier;
+  }
+
+  public void setCASMultiplier() {
+    casMultiplier = true;
+  }
+
+  public void setTopLevel() {
+    topLevel = true;
+  }
+
+  public boolean isTopLevel() {
+    return topLevel;
+  }
+
+  public String getServiceKey() {
+    return serviceKey;
+  }
+
+  public void setServiceKey(String serviceKey) {
+    this.serviceKey = serviceKey;
+  }
+
+  public String getReplyQueueName() {
+    return replyQueueName;
+  }
+
+  public void setReplyQueueName(String aReplyQueueName) {
+    replyQueueName = aReplyQueueName;
+  }
+
+  public boolean isAggregate() {
+    return aggregate;
+  }
+
+  public void setAggregate(boolean aggregate) {
+    this.aggregate = aggregate;
+  }
 
 }
