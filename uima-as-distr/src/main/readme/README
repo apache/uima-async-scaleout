@@ -145,7 +145,7 @@ b. Run the command:
   and UIMA_HOME/apache-activemq-4.1.1/lib/optional directories. If you want to use a different
   version of ActiveMQ, please set ACTIVEMQ_HOME environment variable to the location of 
   ActiveMQ you intend to use. Also, if you want to deploy your own annotator that is 
-  installed in a different directory than UIMA_HOME/lib please set the USER_JAR_PATH 
+  installed in a different directory than UIMA_HOME/lib please set the UIMA_JAR_PATH 
   environment variable to point to the directories that contain your jar files. You
   may specify multiple directories using File.pathSeparator; each directory's contained 
   JARs will be added to the class path. The paths can also contain jar files.   
