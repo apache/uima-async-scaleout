@@ -383,7 +383,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       Long key = (Long) it.next();
       CasQueueEntry entry = threadRegistrar.get(key);
       if (entry != null) {
-        entry.getSemaphore().release();
+        entry.clear();
       }
     }
   }
@@ -449,7 +449,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         // may be sitting in the threadQueue.take() method. The reader will
         // first check the state of the 'running' flag and find it false which
         // will cause the reader to exit run() method
-        threadQueue.add(new CasQueueEntry(new Semaphore(1)));
+        threadQueue.add(new CasQueueEntry());
         threadRegistrar.clear();
       } catch (Exception e) {
         e.printStackTrace();
@@ -504,12 +504,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                           (double) waitingTime / (double) 1000000 });
             }
             if (running) { // only if the client is still running handle the new cas
-              try {
-                // Associate the CAS with the entry and release the semaphore
-                entry.setCas(cas);
-              } finally {
-                entry.getSemaphore().release();
-              }
+							//	Assigns a CAS and releases a semaphore
+	            entry.setCas(cas);
             } else {
               return; // Client is terminating
             }
@@ -549,14 +545,22 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     threadQueue.add(entry);
     if (entry != null) {
       while (running) {
-        // Wait until the CAS producer thread adds a CAS to the CasQueueEntry and
-        // releases the semaphore.
-        entry.getSemaphore().acquire();
-        if (entry.getCas() == null) {
-          // Should not happen unless we are terminating
+        CAS cas = null;
+        //  getCas() blocks until a CAS is set in the CAS producer thread
+        //  ( see serveCASes() above).
+        //  If the client is stopped, the cleanup code will force getCas()
+        //  to release a semaphore to prevent a hang.
+        if ( (cas = entry.getCas()) == null) {
           break;
         } else {
-          return entry.getCas();
+          //  We may have been waiting in entry.getCas() for awhile 
+          //  so first check the status of the client. If is not running
+          //  the semaphore in getCas() was forcefully released to prevent
+          //  a hang. If we are stopping just return null.
+          if ( !running ) {
+            break;
+          }
+          return cas;
         }
       } // while
     }
@@ -568,7 +572,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     if (threadRegistrar.containsKey(aThreadId)) {
       entry = threadRegistrar.get(aThreadId);
     } else {
-      entry = new CasQueueEntry(new Semaphore(1));
+    	//	Creates a new instance and acquires a semaphore. The semaphore
+    	//	is released in the CasQueueEntry.setCAS()
+      entry = new CasQueueEntry();
       threadRegistrar.put(aThreadId, entry);
     }
     return entry;
@@ -577,25 +583,39 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   protected void reset() {
   }
 
+  /**
+   * This class manages access to a CAS. A CAS is assigned
+   * to an instance of this class in the CAS producer thread and
+   * it is consumed in the getCAS() method. Access to a CAS
+   * is protected by a semaphore.
+   *
+   */
   private static class CasQueueEntry {
     private CAS cas;
 
-    private Semaphore semaphore = new Semaphore(1);
+    private Semaphore semaphore = null;
 
+    public CasQueueEntry() {
+      semaphore = new Semaphore(1);
+      //  Acquire the semaphore to force getCAS() to block
+      //  until setCAS() or clear() is called
+      semaphore.acquireUninterruptibly();
+    }
     public CAS getCas() {
+    	//	Wait until setCAS() is called
+      semaphore.acquireUninterruptibly();
       return cas;
     }
-
     public void setCas(CAS cas) {
       this.cas = cas;
+      //	Release semaphore so that getCAS() can return a CAS instance
+      semaphore.release();
     }
-
-    public CasQueueEntry(Semaphore aSharedSemaphore) {
-      semaphore = aSharedSemaphore;
-    }
-
-    public Semaphore getSemaphore() {
-      return semaphore;
+    //	Called when the client is stopping to
+    //	release a semaphore
+    public void clear() {
+      cas = null;
+      semaphore.release();
     }
 
   }
