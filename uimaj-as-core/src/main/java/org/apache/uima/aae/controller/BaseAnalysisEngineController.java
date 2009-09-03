@@ -20,11 +20,14 @@
 package org.apache.uima.aae.controller;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -466,6 +469,25 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
   }
 
+  /**
+   * Returns resources loaded by the URLClassLoader on startup.
+   * 
+   * @return
+   */
+  private String getLoadedJars() {
+    StringBuffer loadedJars = new StringBuffer("");
+    try {
+      if ( this.getClass().getClassLoader() instanceof URLClassLoader) {
+        URL[] urls = ((URLClassLoader)this.getClass().getClassLoader()).getURLs();
+        for( URL url : urls ) {
+          loadedJars.append(url.getFile()+File.pathSeparator);
+        }
+      }
+    } catch( Exception e) {
+      e.printStackTrace();
+    }
+    return loadedJars.toString();
+  }
   private void logPlatformInfo(String serviceName) {
     if (ManagementFactory.getPlatformMBeanServer() != null) {
       RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
@@ -480,6 +502,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           processPid = processPid.substring(0, endPos);
         }
       }
+    
+      String loadedJars = getLoadedJars();  
       DateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss ");
 
       StringBuffer platformInfo = new StringBuffer();
@@ -500,6 +524,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       platformInfo.append("\n+ JVM Version:" + bean.getVmVersion());
       platformInfo.append("\n+ JVM Input Args:" + bean.getInputArguments());
       platformInfo.append("\n+ JVM Classpath:" + bean.getClassPath());
+      if ( loadedJars != null && loadedJars.length() > 0 ) {
+        platformInfo.append("\n+ JVM Loaded Jars:" + loadedJars);
+      }
       platformInfo.append("\n+ JVM LIB_PATH:" + bean.getLibraryPath());
       platformInfo.append("\n+------------------------------------------------------------------");
       System.out.println(platformInfo.toString());
