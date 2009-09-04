@@ -40,8 +40,8 @@ fi
 
 # If the config file isn't there, copy it
 if [ ! -f "$ACTIVEMQ_BASE/conf/activemq-nojournal.xml" ] ; then
-  cp "$UIMA_HOME/config/activemq-nojournal.xml" "$ACTIVEMQ_BASE/conf/"
-  cp "$UIMA_HOME/config/log4j.properties" "$ACTIVEMQ_BASE/conf/"
+  cp "$UIMA_HOME/as_config/activemq-nojournal.xml" "$ACTIVEMQ_BASE/conf/"
+  cp "$UIMA_HOME/as_config/log4j.properties" "$ACTIVEMQ_BASE/conf/"
 fi
 
 if [ ! -x "$ACTIVEMQ_HOME/bin/activemq" ]; then
