@@ -31,7 +31,7 @@ if [ ! -f $1 ]
        exit;
 fi;
 
-# . "$UIMA_HOME/bin/setUimaClassPath.sh"
+. "$UIMA_HOME/bin/setUimaClassPath.sh"
 
 if [ "$JAVA_HOME" = "" ]
 then
@@ -45,4 +45,4 @@ then
   ACTIVEMQ_HOME=$UIMA_HOME/apache-activemq-4.1.1
 fi
 
-"$UIMA_JAVA_CALL" -cp "$UIMA_HOME/lib/uimaj-bootstrap.jar"  "-Duima.datapath=$UIMA_DATAPATH" "-Djava.util.logging.config.file=$UIMA_LOGGER_CONFIG_FILE" $UIMA_JVM_OPTS "-Duima.datapath=$UIMA_DATAPATH" "-Djava.util.logging.config.file=$UIMA_LOGGER_CONFIG_FILE" $UIMA_JVM_OPTS -Dorg.apache.uima.jarpath="$UIMA_HOME/lib:$ACTIVEMQ_HOME:$ACTIVEMQ_HOME/lib:$ACTIVEMQ_HOME/lib/optional:$USER_JAR_PATH" org.apache.uima.bootstrap.UimaBootstrap org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL "file:$UIMA_HOME/saxon/saxon8.jar" -xslt "$UIMA_HOME/bin/dd2spring.xsl" -dd $*
+"$UIMA_JAVA_CALL" "-Duima.datapath=$UIMA_DATAPATH" "-Djava.util.logging.config.file=$UIMA_LOGGER_CONFIG_FILE" $UIMA_JVM_OPTS -DUimaBootstrapSuppressClassPathDisplay -Dorg.apache.uima.jarpath="$UIMA_CLASSPATH:$ACTIVEMQ_HOME:$ACTIVEMQ_HOME/lib:$ACTIVEMQ_HOME/lib/optional:$UIMA_JAR_PATH" -jar "$UIMA_HOME/lib/uimaj-bootstrap.jar" org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL "file:$UIMA_HOME/saxon/saxon8.jar" -xslt "$UIMA_HOME/bin/dd2spring.xsl" -dd $*
