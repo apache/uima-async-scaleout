@@ -90,10 +90,10 @@ public class UIMA_Service implements ApplicationListener {
     // by Spring Framework to substitute a place holder in Spring xml.
     if (brokerURL != "") {
       System.setProperty("defaultBrokerURL", brokerURL);
+      System.out.println(">>> Setting defaultBrokerURL to:" + brokerURL);
     } else {
       System.setProperty("defaultBrokerURL", "tcp://localhost:61616");
     }
-    System.out.println(">>> Setting defaultBrokerURL to:" + System.getProperty("defaultBrokerURL"));
 
     if (System.getProperty(JmsConstants.SessionTimeoutOverride) != null) {
       System.out.println(">>> Setting Inactivity Timeout To: "
