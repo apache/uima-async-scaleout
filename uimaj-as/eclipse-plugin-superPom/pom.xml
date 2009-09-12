@@ -64,22 +64,11 @@
         <directory>src/main/resources</directory>
       </resource>
     </resources>
-
-    
-    <!-- plugin Management is configuration info, but does not 
-         cause the running of the mentioned plugins.  Each 
-         child pom can optionally include the plugin to run it
-      -->
-    <pluginManagement>
-      <plugins>
-      </plugins>
-    </pluginManagement>
     
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.4</version>
         <configuration>
           <manifest>.ignore</manifest>
           <pde>true</pde>
