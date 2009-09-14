@@ -139,6 +139,13 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
    */
   public void run() {
     String destination = null;
+    //  by default, add time to live to each message
+    boolean addTimeToLive = true;
+    // Check the environment for existence of NoTTL tag. If present,
+    // the deployer of the service wants to disable message expiration.
+    if (System.getProperty("NoTTL") != null) {
+      addTimeToLive = false;
+    }
 
     // Create and initialize the producer.
     try {
@@ -214,9 +221,10 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
             // are not auto evicted yet and accumulate taking up memory.
             long timeoutValue = cacheEntry.getProcessTimeout();
 
-            if (timeoutValue > 0) {
+            if (timeoutValue > 0 && addTimeToLive ) {
               // Set high time to live value
-              producer.setTimeToLive(10 * timeoutValue);
+              //producer.setTimeToLive(10 * timeoutValue);
+              message.setJMSExpiration(10 * timeoutValue);
             }
             if (pm.getMessageType() == AsynchAEMessage.Process) {
               cacheEntry.setCASDepartureTime(System.nanoTime());
