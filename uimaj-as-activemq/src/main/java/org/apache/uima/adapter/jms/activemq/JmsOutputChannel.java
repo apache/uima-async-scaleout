@@ -143,7 +143,7 @@ public class JmsOutputChannel implements OutputChannel {
   }
 
   public String getServerURI() {
-    return System.getProperty("BrokerURI");
+    return serverURI; 
   }
 
   public String getName() {
@@ -178,22 +178,8 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { System.getProperty("ActiveMQConnectors") });
       }
       // Aggregate controller set this System property at startup in
-      // org.apache.uima.adapter.jms.service.UIMA_Service.startInternalBroker()
       serviceProtocolList = System.getProperty("ActiveMQConnectors");
     }
-
-    try {
-      String uri = System.getProperty("BrokerURI");
-      setServerURI(uri);
-    } catch (Exception e) {
-      e.printStackTrace();
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "initialize", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
-                new Object[] { JmsConstants.threadName(), e });
-      }
-    }
-
   }
 
   /**
@@ -424,6 +410,7 @@ public class JmsOutputChannel implements OutputChannel {
        * Open connection to a broker, create JMS session and MessageProducer
        */
       endpointConnection.open();
+
       brokerConnectionEntry.getConnectionTimer().setConnectionCreationTimestamp(
               endpointConnection.connectionCreationTimestamp);
 
@@ -1059,6 +1046,7 @@ public class JmsOutputChannel implements OutputChannel {
       return;
     }
     long msgSize = 0;
+    
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
       anEndpoint.setReplyEndpoint(true);
