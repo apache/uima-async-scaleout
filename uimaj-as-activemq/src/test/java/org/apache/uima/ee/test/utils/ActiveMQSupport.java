@@ -20,39 +20,23 @@
 package org.apache.uima.ee.test.utils;
 
 import java.io.IOException;
-import java.net.BindException;
+import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.Session;
-import javax.management.ObjectName;
 
 import junit.framework.TestCase;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
-import org.apache.activemq.broker.Connector;
-import org.apache.activemq.broker.TransportConnection;
 import org.apache.activemq.broker.TransportConnector;
-import org.apache.activemq.broker.region.policy.IndividualDeadLetterStrategy;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
-import org.apache.activemq.command.ActiveMQDestination;
-import org.apache.activemq.command.ActiveMQQueue;
-import org.apache.uima.UIMAFramework;
-import org.apache.uima.aae.error.handler.GetMetaErrorHandler;
-import org.apache.uima.adapter.jms.JmsConstants;
-import org.apache.uima.util.Level;
 
 public class ActiveMQSupport extends TestCase {
   private static final Class CLASS_NAME = ActiveMQSupport.class;
@@ -63,7 +47,7 @@ public class ActiveMQSupport extends TestCase {
 
   protected static ThreadGroup brokerThreadGroup = null;
 
-  protected TransportConnector tcpConnector = null;
+  protected static TransportConnector tcpConnector = null;
 
   protected static final String relativePath = "src" + System.getProperty("file.separator")
           + "test" + System.getProperty("file.separator") + "resources"
@@ -75,9 +59,9 @@ public class ActiveMQSupport extends TestCase {
 
   private static Thread brokerThread = null;
 
-  private TransportConnector httpConnector = null;
+  protected static TransportConnector httpConnector = null;
 
-  public Semaphore brokerSemaphore = new Semaphore(1);
+  public static Semaphore brokerSemaphore = new Semaphore(1);
 
   protected synchronized void setUp() throws Exception {
     System.out.println("\nSetting Up New Test - Thread Id:" + Thread.currentThread().getId());
@@ -95,6 +79,8 @@ public class ActiveMQSupport extends TestCase {
             broker = createBroker();
             broker.start();
             broker.setMasterConnectorURI(uri);
+            addHttpConnector(8888);
+
             brokerSemaphore.release(); // broker started
           } catch (Exception e) {
             e.printStackTrace();
@@ -121,6 +107,16 @@ public class ActiveMQSupport extends TestCase {
     try {
       String httpURI = generateInternalURI("http", aDefaultPort);
       httpConnector = broker.addConnector(httpURI);
+      
+      //  Use reflection to determine if the AMQ version is at least 5.2. If it is, we must
+      //  plug in a broker to the httpConnector otherwise we get NPE when starting the connector.
+      //  AMQ version 4.1.1 doesn't exhibit this problem.
+      try {
+        Method m = httpConnector.getClass().getDeclaredMethod("setBrokerService", new Class[] {BrokerService.class});
+        m.invoke(httpConnector, broker);
+      } catch ( NoSuchMethodException e) {
+        //  Ignore, this is not AMQ 5.2
+      }
       System.out.println("Adding HTTP Connector:" + httpConnector.getConnectUri());
       httpConnector.start();
       return httpURI;
@@ -129,9 +125,21 @@ public class ActiveMQSupport extends TestCase {
       throw e;
     }
   }
+  protected String getHttpURI() throws Exception {
+    while ( httpConnector == null  ) {
+     synchronized(this) {
+       this.wait(100); 
+     }
+    }
+    return httpConnector.getConnectUri().toString();
+  }
+  protected void removeQueue(String aQueueName) throws Exception {
+    httpConnector.stop();
+  }
 
   protected void removeHttpConnector() throws Exception {
     httpConnector.stop();
+    broker.removeConnector(httpConnector);
   }
 
   private String generateInternalURI(String aProtocol, int aDefaultPort) throws Exception {
@@ -212,8 +220,10 @@ public class ActiveMQSupport extends TestCase {
       System.out.println(">>> Stopping Broker");
       if (tcpConnector != null) {
         tcpConnector.stop();
+        broker.removeConnector(tcpConnector);
         System.out.println("Broker Connector:" + tcpConnector.getUri().toString() + " is stopped");
       }
+      removeHttpConnector();
       broker.deleteAllMessages();
       broker.stop();
       System.out.println(">>> Broker Stopped");
