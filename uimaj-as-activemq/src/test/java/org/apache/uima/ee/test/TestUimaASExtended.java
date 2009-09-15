@@ -89,15 +89,109 @@ public class TestUimaASExtended extends BaseTestSupport {
             + System.getProperty("file.separator") + "bin" + System.getProperty("file.separator")
             + "dd2spring.xsl");
   }
+  public void testAggregateHttpTunnelling() throws Exception {
+    System.out.println("-------------- testAggregateHttpTunnelling -------------");
+    String httpURI = getHttpURI();
+    // Create Uima EE Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Deploy remote service
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    // Deploy top level aggregate that communicates with the remote via Http Tunnelling
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithHttpDelegate.xml");
+
+    // Initialize and run the Test. Wait for a completion and cleanup resources.
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            10, CPC_LATCH);
+  }
+  public void testClientHttpTunnellingToAggregate() throws Exception {
+    System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
+    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
+    // available the test fails
+    String httpURI = getHttpURI();
+    // Create Uima EE Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Deploy remote service
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
+    // Initialize and run the Test. Wait for a completion and cleanup resources.
+    System.out.println("-------- Connecting Client To Service: "+httpURI);
+    runTest(null, eeUimaEngine, httpURI, "TopLevelTaeQueue", 1, CPC_LATCH);
+  }
+  public void testClientHttpTunnelling() throws Exception {
+    System.out.println("-------------- testClientHttpTunnelling -------------");
+    String httpURI = getHttpURI();
+    // Create Uima EE Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Deploy remote service
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    // Initialize and run the Test. Wait for a completion and cleanup resources.
+    System.out.println("-------- Connecting Client To Service: "+httpURI);
+    runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, PROCESS_LATCH);
+  }
+
+
+  public void testClientHttpTunnellingWithDoubleByteText() throws Exception {
+    System.out.println("-------------- testClientHttpTunnellingWithDoubleByteText -------------");
+
+    BufferedReader in = null;
+    try {
+      File file = new File(relativeDataPath + "/DoubleByteText.txt");
+      System.out.println("Checking for existence of File:" + file.getAbsolutePath());
+      // Process only if the file exists
+      if (file.exists()) {
+        System.out
+                .println(" *** DoubleByteText.txt exists and will be sent through http connector.");
+        System.out.println(" ***   If the vanilla activemq release is being used,");
+        System.out
+                .println(" ***   and DoubleByteText.txt is bigger than 64KB or so, this test case will hang.");
+        System.out
+                .println(" *** To fix, override the classpath with the jar files in and under the");
+        System.out
+                .println(" ***   apache-uima-as/uima-as-distr/src/main/apache-activemq-X.y.z directory");
+        System.out.println(" ***   in the apache-uima-as source distribution.");
+
+        String httpURI = getHttpURI();
+      // Create Uima EE Client
+        BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+        // Deploy remote service
+        deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+
+        InputStream fis = new FileInputStream(file);
+        Reader rd = new InputStreamReader(fis, "UTF-8");
+        in = new BufferedReader(rd);
+        // Set the double-byte text. This is what will be sent to the service
+        String line = in.readLine();
+        super.setDoubleByteText(line);
+        int err = XMLUtils.checkForNonXmlCharacters(line);
+        if (err >= 0) {
+          fail("Illegal XML char at offset " + err);
+        }
+        System.out.println("-------- Connecting Client To Service: "+httpURI);
+        // Initialize and run the Test. Wait for a completion and cleanup resources.
+        runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
+      }
+    } catch (Exception e) {
+      // Double-Byte Text file not present. Continue on with the next test
+      e.printStackTrace();
+      fail("Could not complete test");
+    } finally {
+      if (in != null) {
+        in.close();
+      }
+    }
+  }
+
 
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
+    
     // Instantiate Uima AS Client
     BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy Uima AS Primitive Service
     deployService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "PersonTitleAnnotatorQueue");
+
     initialize(uimaAsEngine, appCtx);
     waitUntilInitialized();
 
@@ -1485,109 +1579,109 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, CPC_LATCH);
   }
 
-  public void testClientHttpTunnelling() throws Exception {
-    System.out.println("-------------- testClientHttpTunnelling -------------");
-    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-    // available the test fails
-    String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
-    // Create Uima EE Client
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy remote service
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    // Initialize and run the Test. Wait for a completion and cleanup resources.
-    runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
-    // Remove the HTTP Connector
-    removeHttpConnector();
-  }
-
-  public void testClientHttpTunnellingToAggregate() throws Exception {
-    System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
-    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-    // available the test fails
-    String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
-    // Create Uima EE Client
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy remote service
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
-    // Initialize and run the Test. Wait for a completion and cleanup resources.
-    runTest(null, eeUimaEngine, httpURI, "TopLevelTaeQueue", 1, CPC_LATCH);
-    // Remove the HTTP Connector
-    removeHttpConnector();
-  }
-
-  public void testClientHttpTunnellingWithDoubleByteText() throws Exception {
-    System.out.println("-------------- testClientHttpTunnellingWithDoubleByteText -------------");
-
-    BufferedReader in = null;
-    try {
-      File file = new File(relativeDataPath + "/DoubleByteText.txt");
-      System.out.println("Checking for existence of File:" + file.getAbsolutePath());
-      // Process only if the file exists
-      if (file.exists()) {
-        System.out
-                .println(" *** DoubleByteText.txt exists and will be sent through http connector.");
-        System.out.println(" ***   If the vanilla activemq release is being used,");
-        System.out
-                .println(" ***   and DoubleByteText.txt is bigger than 64KB or so, this test case will hang.");
-        System.out
-                .println(" *** To fix, override the classpath with the jar files in and under the");
-        System.out
-                .println(" ***   apache-uima-as/uima-as-distr/src/main/apache-activemq-X.y.z directory");
-        System.out.println(" ***   in the apache-uima-as source distribution.");
-
-        // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-        // available the test fails
-        String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
-        // Create Uima EE Client
-        BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-        // Deploy remote service
-        deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-
-        InputStream fis = new FileInputStream(file);
-        Reader rd = new InputStreamReader(fis, "UTF-8");
-        in = new BufferedReader(rd);
-        // Set the double-byte text. This is what will be sent to the service
-        String line = in.readLine();
-        super.setDoubleByteText(line);
-        int err = XMLUtils.checkForNonXmlCharacters(line);
-        if (err >= 0) {
-          fail("Illegal XML char at offset " + err);
-        }
-        // Initialize and run the Test. Wait for a completion and cleanup resources.
-        runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
-      }
-    } catch (Exception e) {
-      // Double-Byte Text file not present. Continue on with the next test
-      e.printStackTrace();
-      fail("Could not complete test");
-    } finally {
-      if (in != null) {
-        in.close();
-      }
-      // Remove the HTTP Connector
-      removeHttpConnector();
-    }
-  }
-
-  public void testAggregateHttpTunnelling() throws Exception {
-    System.out.println("-------------- testAggregateHttpTunnelling -------------");
-    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-    // available the test fails
-    addHttpConnector(DEFAULT_HTTP_PORT);
-    // Create Uima EE Client
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy remote service
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    // Deploy top level aggregate that communicates with the remote via Http Tunnelling
-    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithHttpDelegate.xml");
-
-    // Initialize and run the Test. Wait for a completion and cleanup resources.
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            10, CPC_LATCH);
-    // Remove the HTTP Connector
-    removeHttpConnector();
-  }
+//  public void testClientHttpTunnelling() throws Exception {
+//    System.out.println("-------------- testClientHttpTunnelling -------------");
+//    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
+//    // available the test fails
+//    String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
+//    // Create Uima EE Client
+//    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+//    // Deploy remote service
+//    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+//    // Initialize and run the Test. Wait for a completion and cleanup resources.
+//    runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
+//    // Remove the HTTP Connector
+//    removeHttpConnector();
+//  }
+//
+//  public void testClientHttpTunnellingToAggregate() throws Exception {
+//    System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
+//    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
+//    // available the test fails
+//    String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
+//    // Create Uima EE Client
+//    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+//    // Deploy remote service
+//    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+//    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
+//    // Initialize and run the Test. Wait for a completion and cleanup resources.
+//    runTest(null, eeUimaEngine, httpURI, "TopLevelTaeQueue", 1, CPC_LATCH);
+//    // Remove the HTTP Connector
+//    removeHttpConnector();
+//  }
+//
+//  public void testClientHttpTunnellingWithDoubleByteText() throws Exception {
+//    System.out.println("-------------- testClientHttpTunnellingWithDoubleByteText -------------");
+//
+//    BufferedReader in = null;
+//    try {
+//      File file = new File(relativeDataPath + "/DoubleByteText.txt");
+//      System.out.println("Checking for existence of File:" + file.getAbsolutePath());
+//      // Process only if the file exists
+//      if (file.exists()) {
+//        System.out
+//                .println(" *** DoubleByteText.txt exists and will be sent through http connector.");
+//        System.out.println(" ***   If the vanilla activemq release is being used,");
+//        System.out
+//                .println(" ***   and DoubleByteText.txt is bigger than 64KB or so, this test case will hang.");
+//        System.out
+//                .println(" *** To fix, override the classpath with the jar files in and under the");
+//        System.out
+//                .println(" ***   apache-uima-as/uima-as-distr/src/main/apache-activemq-X.y.z directory");
+//        System.out.println(" ***   in the apache-uima-as source distribution.");
+//
+//        // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
+//        // available the test fails
+//        String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
+//        // Create Uima EE Client
+//        BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+//        // Deploy remote service
+//        deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+//
+//        InputStream fis = new FileInputStream(file);
+//        Reader rd = new InputStreamReader(fis, "UTF-8");
+//        in = new BufferedReader(rd);
+//        // Set the double-byte text. This is what will be sent to the service
+//        String line = in.readLine();
+//        super.setDoubleByteText(line);
+//        int err = XMLUtils.checkForNonXmlCharacters(line);
+//        if (err >= 0) {
+//          fail("Illegal XML char at offset " + err);
+//        }
+//        // Initialize and run the Test. Wait for a completion and cleanup resources.
+//        runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
+//      }
+//    } catch (Exception e) {
+//      // Double-Byte Text file not present. Continue on with the next test
+//      e.printStackTrace();
+//      fail("Could not complete test");
+//    } finally {
+//      if (in != null) {
+//        in.close();
+//      }
+//      // Remove the HTTP Connector
+//      removeHttpConnector();
+//    }
+//  }
+//
+//  public void testAggregateHttpTunnelling() throws Exception {
+//    System.out.println("-------------- testAggregateHttpTunnelling -------------");
+//    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
+//    // available the test fails
+//    addHttpConnector(DEFAULT_HTTP_PORT);
+//    // Create Uima EE Client
+//    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+//    // Deploy remote service
+//    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+//    // Deploy top level aggregate that communicates with the remote via Http Tunnelling
+//    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithHttpDelegate.xml");
+//
+//    // Initialize and run the Test. Wait for a completion and cleanup resources.
+//    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+//            10, CPC_LATCH);
+//    // Remove the HTTP Connector
+//    removeHttpConnector();
+//  }
 
   /**
    * Tests exception thrown in the Uima EE Client when the Collection Reader is added after the uima
