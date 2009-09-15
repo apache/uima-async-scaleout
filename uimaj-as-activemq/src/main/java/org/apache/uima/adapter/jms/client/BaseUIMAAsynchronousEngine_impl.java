@@ -955,6 +955,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     try {
       if (clientCachedRequest.getFreeCasNotificationQueue() != null) {
         TextMessage msg = createTextMessage();
+        msg.setText("");
         msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
         msg
                 .setStringProperty(AsynchAEMessage.CasReference, clientCachedRequest

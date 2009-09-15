@@ -145,7 +145,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
       throw new JMSException(
               "Unable To Create JMS TextMessage. Reason: JMS Session Not Initialized");
     }
-    return session.createTextMessage();
+    return session.createTextMessage("");
   }
 
   public BytesMessage createBytesMessage() throws Exception {
