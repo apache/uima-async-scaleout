@@ -1215,6 +1215,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     Destination freeCASNotificationDestination = message.getJMSReplyTo();
     if (freeCASNotificationDestination != null) {
       TextMessage msg = createTextMessage();
+      msg.setText("");
       setReleaseCASMessage(msg, casReferenceId);
       // Create Message Producer for the Destination
       MessageProducer msgProducer = getMessageProducer(freeCASNotificationDestination);
