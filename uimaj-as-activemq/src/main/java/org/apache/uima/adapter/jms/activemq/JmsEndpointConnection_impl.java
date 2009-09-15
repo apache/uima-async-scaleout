@@ -134,14 +134,11 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
           String anEndpointName, AnalysisEngineController aController) throws AsynchAEException,
           ServiceShutdownException {
     try {
+      
       // If replying to http request, reply to a queue managed by this service broker using tcp
       // protocol
-      if (isReplyEndpoint && brokerUri.startsWith("http") && aController != null
-              && aController.getInputChannel() != null) {
-        org.apache.uima.aae.InputChannel iC = aController.getInputChannel(aController.getName());
-        if ((brokerUri.trim().length() == 0) && iC != null) {
-          brokerUri = iC.getServiceInfo().getBrokerURL();
-        }
+      if (isReplyEndpoint && brokerUri.startsWith("http") ) { 
+        brokerUri = ((JmsOutputChannel)aController.getOutputChannel()).getServerURI();
 
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -178,6 +175,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
         // Unable to create a connection
         return;
       }
+
       producerSession = conn.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
 
       if ((delegateEndpoint.getCommand() == AsynchAEMessage.Stop || isReplyEndpoint)
