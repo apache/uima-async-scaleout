@@ -23,27 +23,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.apache.uima</groupId>
 	<artifactId>uima-as-distr</artifactId>
-  
-  <!-- packaging is set to jar even though it causes an extraneous jar to be built
-       and deployed to the maven repos.
-       This is because of some issue with getting the assembly to work; see
-       http://article.gmane.org/gmane.comp.apache.uima.devel/3228/match=should+uimaj+distr+packaging
-    -->
-	<packaging>jar</packaging>
-	<version>${uimaj-as-release-version}</version>
+	<packaging>pom</packaging>
+	<version>2.3.0-incubating-SNAPSHOT</version> <!-- this comment is a flag for changeVersion -->
 	<name>Apache UIMA Asynchronous Scaleout - Resources and Assembly Descriptor for building the distribution</name>
-	<url>http://incubator.apache.org/uima</url>
-	<organization><name>The Apache Software Foundation</name></organization>
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-  <scm>
-    <url>http://svn.apache.org/viewvc/incubator/uima</url>
-  </scm>    
 	<parent>
 		<groupId>org.apache.uima</groupId>
 		<artifactId>uimaj-as</artifactId>
@@ -57,68 +39,46 @@
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-adapter-vinci</artifactId>
-      <version>${uimaj-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-adapter-soap</artifactId>
-      <version>${uimaj-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-core</artifactId>
-      <version>${uimaj-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-cpe</artifactId>
-      <version>${uimaj-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-examples</artifactId>
-      <version>${uimaj-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-tools</artifactId>
-      <version>${uimaj-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-configurator</artifactId>
-      <version>${uimaj-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-debug</artifactId>
-      <version>${uimaj-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-jcasgen</artifactId>
-      <version>${uimaj-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-pear-packager</artifactId>
-      <version>${uimaj-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-runtime</artifactId>
-      <version>${uimaj-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     
     <!-- uima-as -->
@@ -126,63 +86,53 @@
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-core</artifactId>
       <version>${uimaj-as-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-activemq</artifactId>
       <version>${uimaj-as-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-jms</artifactId>
       <version>${uimaj-as-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-camel</artifactId>
       <version>${uimaj-as-release-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-deployeditor</artifactId>
       <version>${uimaj-as-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
       <version>${uimaj-as-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-osgi-runtime</artifactId>
       <version>${uimaj-as-release-eclipse-version}</version>
-      <scope>compile</scope>
     </dependency>
     
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-test-util</artifactId>
       <version>${uimaj-release-version}</version>
-      <scope>test</scope>
     </dependency>
     
     <dependency>
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
       <version>3.1</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-pool</groupId>
       <artifactId>commons-pool</artifactId>
       <version>1.2</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
@@ -374,22 +324,10 @@
     
 	</dependencies>
 	<build>
-    <finalName>${artifactId}-empty-jar</finalName>
-		<pluginManagement>
-			<plugins>
-				<!-- For some reason v2.1 doesn't seem to work with the "sourcepath"
-					 option, so require v2.0 here. -->
-				<plugin>
-					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>2.0</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-    		
+    <resources/>
 		<plugins>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-        <version>2.2-beta-4</version>
 				<configuration>
 					<descriptors>
 						<descriptor>src/main/assembly/bin.xml</descriptor>
@@ -419,7 +357,6 @@
 						<configuration>
               <!--quiet>true</quiet-->
               <!-- needs to be 5 to process enums -->
-							<source>5</source>
 							<groups>
 								<group>
 									<title>Packages</title>
@@ -480,8 +417,8 @@
                 <ant dir="../uima-as-docbooks" inheritAll="false"/>
                 <!-- Build documentation for base UIMA tool book - 
                      needed by CVD -->
-                <ant dir="../uima-docbooks" 
-                     antfile="../uima-docbooks/build_tools.xml" inheritAll="false"/>
+                <!--ant dir="../uima-docbooks" 
+                     antfile="../uima-docbooks/build_tools.xml" inheritAll="false"/-->
                 <!-- build eclipse update site 
                      Deleted from here, moved to a "deploy" step -->
                   
