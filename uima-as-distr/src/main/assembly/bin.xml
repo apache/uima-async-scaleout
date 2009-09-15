@@ -24,7 +24,7 @@ under the License.
     <format>zip</format>
   </formats>
   
-  <baseDirectory>apache-uima-as</baseDirectory>
+  <baseDirectory>apache-uima</baseDirectory> <!-- so it is unzippable over base - needs same name -->
   <includeBaseDirectory>true</includeBaseDirectory>
   
   <dependencySets>
