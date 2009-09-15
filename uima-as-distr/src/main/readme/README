@@ -150,6 +150,14 @@ b. Run the command:
   may specify multiple directories using File.pathSeparator; each directory's contained 
   JARs will be added to the class path. The paths can also contain jar files.   
   
+  Note: Both UIMA AS client and UIMA AS service by default add a time-to-live (TTL) to 
+  every request message. This enables expiration of messages that are not consumed. 
+  Currently, the UIMA AS client multiplies the Process Timeout value by 10 and uses
+  this as TTL. The UIMA AS service sets TTL to the Timeout value multiplied by the number 
+  of outstanding requests. To disable TTL, add a system property -DNoTTL. A convenient 
+  way to set this parameter is by adding -DNoTTL to the env parameter UIMA_JVM_OPTS 
+  before running deployAsyncService and/or runRemoteAsyncAE.  
+  
 3.3 Calling a UIMA AS Asynchronous Service
 
 To test a remote UIMA service you can use the script:
