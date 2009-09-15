@@ -682,7 +682,10 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   public synchronized void setListenerContainer(UimaDefaultMessageListenerContainer messageListener) {
     this.messageListener = messageListener;
     System.setProperty("BrokerURI", messageListener.getBrokerUrl());
-    brokerURL = messageListener.getBrokerUrl();
+    if ( messageListener.getMessageSelector() !=null && messageListener.getMessageSelector().equals("Command=2001") ) {
+      brokerURL = messageListener.getBrokerUrl();
+      getController().getOutputChannel().setServerURI(brokerURL);
+    }
     if (!listenerContainerList.contains(messageListener)) {
       listenerContainerList.add(messageListener);
     }
