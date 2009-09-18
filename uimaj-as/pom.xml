@@ -46,6 +46,9 @@
     <module>../uimaj-as-core</module>
     <module>../uimaj-as-jms</module>
     <!-- activemq depends on jms -->
+    <!-- ordering here doesn't set the ordering of the build,
+         that is set according to dependencies
+         see http://maven.apache.org/pom.html#Aggregation -->
     <module>../uimaj-as-activemq</module>
     <module>../uimaj-as-camel</module>
     <module>eclipse-plugin-superPom</module>
