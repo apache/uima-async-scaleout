@@ -34,6 +34,7 @@ public class UimaAsEndpoint extends DefaultEndpoint<Exchange>{
 
 	private String brokerAddress;
 	private String queue;
+	private Integer casPoolSize;
 	
 	public UimaAsEndpoint(String uri, String brokerAddress, 
     		UimaAsComponent component) {
@@ -46,6 +47,20 @@ public class UimaAsEndpoint extends DefaultEndpoint<Exchange>{
     public void configureProperties(Map options) {
     	super.configureProperties(options);
     	queue = (String) options.remove("queue");
+    	
+    	if (options.containsKey("casPoolSize")) {
+    		String casPoolSizeString = (String) options.remove("casPoolSize");
+    		try {
+    			casPoolSize = Integer.parseInt(casPoolSizeString);
+    			if (casPoolSize < 1) {
+    				System.out.println("Warning casPoolSize must be larger than zero, fallback to default!");
+    				casPoolSize = null;
+    			}
+    		}
+    		catch (NumberFormatException e) {
+    			System.out.println("Warning cas pool size is invalid, fallback to default!");
+    		}
+    	}
     }
     
 	public Consumer<Exchange> createConsumer(Processor arg0) throws Exception {
@@ -53,7 +68,7 @@ public class UimaAsEndpoint extends DefaultEndpoint<Exchange>{
 	}
 
 	public Producer<Exchange> createProducer() throws Exception {
-		return new UimaAsProducer(brokerAddress, queue, this);
+		return new UimaAsProducer(brokerAddress, queue, casPoolSize, this);
 	}
 
 	public boolean isSingleton() {

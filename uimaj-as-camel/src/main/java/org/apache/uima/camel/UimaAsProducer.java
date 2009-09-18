@@ -118,7 +118,7 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
    */
   private final Map<String, ExchangeAsyncCallbackPair> intermediateMap;
 
-  public UimaAsProducer(String brokerAddress, String queue, Endpoint<Exchange> endpoint)
+  public UimaAsProducer(String brokerAddress, String queue, Integer casPoolSize, Endpoint<Exchange> endpoint)
           throws Exception {
     super(endpoint);
 
@@ -131,8 +131,10 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
     Map<String, Object> appCtx = new HashMap<String, Object>();
     appCtx.put(UimaAsynchronousEngine.ServerUri, brokerAddress);
     appCtx.put(UimaAsynchronousEngine.Endpoint, queue);
-    appCtx.put(UimaAsynchronousEngine.CasPoolSize, 15);
-
+    if (casPoolSize != null) {
+    	appCtx.put(UimaAsynchronousEngine.CasPoolSize, casPoolSize.intValue());
+    }
+    
     try {
       uimaAsEngine.initialize(appCtx);
     } catch (ResourceInitializationException e) {
