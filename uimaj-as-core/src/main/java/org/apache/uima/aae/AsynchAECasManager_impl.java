@@ -47,7 +47,7 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
 
   private int casPoolSize = 1;
 
-  private boolean initialized;
+  private volatile boolean initialized;
 
   private Map descriptorMap;
 
@@ -78,16 +78,15 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
   }
 
   public void initialize(int aCasPoolSize, String aContextName) throws Exception {
-    Properties performanceTuningSettings = new Properties();
-    if (initialHeapSize > 0) {
-      performanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
-              (int) initialHeapSize).toString());
-    }
-    initialize(aCasPoolSize, aContextName, performanceTuningSettings);
+    initialize(aCasPoolSize, aContextName, new Properties());
   }
 
-  public void initialize(int aCasPoolSize, String aContextName,
+  public synchronized void initialize(int aCasPoolSize, String aContextName,
           Properties aPerformanceTuningSettings) throws Exception {
+    if (initialHeapSize > 0 && !aPerformanceTuningSettings.containsKey(UIMAFramework.CAS_INITIAL_HEAP_SIZE)) {
+      aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
+              (int) initialHeapSize).toString());
+    }
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(), "initialize",
