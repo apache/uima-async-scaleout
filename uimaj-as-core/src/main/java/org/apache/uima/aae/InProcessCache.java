@@ -836,6 +836,10 @@ public class InProcessCache implements InProcessCacheMBean {
     public List getDelayedSingleStepList() {
       return delayedSingleStepList;
     }
+    
+    public void setMarker(Marker mark) {
+			this.marker = mark;
+		}
 
   }
 
