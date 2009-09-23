@@ -143,7 +143,7 @@ public class JmsOutputChannel implements OutputChannel {
   }
 
   public String getServerURI() {
-    return serverURI; 
+    return serverURI;
   }
 
   public String getName() {
@@ -211,13 +211,18 @@ public class JmsOutputChannel implements OutputChannel {
       }
       if (isReply) {
         serSharedData = cacheEntry.getDeserSharedData();
-        if (cacheEntry.acceptsDeltaCas()) {
+        if (cacheEntry.acceptsDeltaCas()
+                && (cacheEntry.getMarker() != null && cacheEntry.getMarker().isValid())) {
           serializedCas = uimaSerializer.serializeCasToXmi(aCAS, serSharedData, cacheEntry
                   .getMarker());
           cacheEntry.setSentDeltaCas(true);
         } else {
           serializedCas = uimaSerializer.serializeCasToXmi(aCAS, serSharedData);
           cacheEntry.setSentDeltaCas(false);
+        }
+        // if market is invalid, create a fresh marker.
+        if (cacheEntry.getMarker() != null && !cacheEntry.getMarker().isValid()) {
+          cacheEntry.setMarker(aCAS.createMarker());
         }
       } else {
         serSharedData = cacheEntry.getDeserSharedData();
@@ -528,7 +533,7 @@ public class JmsOutputChannel implements OutputChannel {
       TextMessage tm = endpointConnection.produceTextMessage("");
       tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
       tm.setText(""); // Need this to prevent the Broker from throwing an exception when sending a
-                      // message to C++ service
+      // message to C++ service
 
       populateHeaderWithRequestContext(tm, anEndpoint, aCommand);
 
@@ -1046,7 +1051,7 @@ public class JmsOutputChannel implements OutputChannel {
       return;
     }
     long msgSize = 0;
-    
+
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
       anEndpoint.setReplyEndpoint(true);
@@ -1133,11 +1138,20 @@ public class JmsOutputChannel implements OutputChannel {
       }
       if (serializer.equals("binary")) {
         if (entry.acceptsDeltaCas() && isReply) {
-          serializedCAS = uimaSerializer.serializeCasToBinary(cas, entry.getMarker());
-          entry.setSentDeltaCas(true);
+          if (entry.getMarker() != null && entry.getMarker().isValid()) {
+            serializedCAS = uimaSerializer.serializeCasToBinary(cas, entry.getMarker());
+            entry.setSentDeltaCas(true);
+          } else {
+            serializedCAS = uimaSerializer.serializeCasToBinary(cas);
+            entry.setSentDeltaCas(false);
+          }
         } else {
           serializedCAS = uimaSerializer.serializeCasToBinary(cas);
           entry.setSentDeltaCas(false);
+        }
+        // create a fresh marker
+        if (entry.getMarker() != null && !entry.getMarker().isValid()) {
+          entry.setMarker(cas.createMarker());
         }
       } else {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
