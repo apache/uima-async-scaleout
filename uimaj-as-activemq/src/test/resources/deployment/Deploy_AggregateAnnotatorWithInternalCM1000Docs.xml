@@ -42,7 +42,7 @@
 
           <remoteAnalysisEngine key="NoOp">
 	                  <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="tcp://localhost:8118"/>
-	                  <serializer method="xmi"/>
+	                  <serializer method="binary"/>
                       <asyncAggregateErrorConfiguration>
                             <getMetadataErrors maxRetries="3" timeout="5000" errorAction="continue" />
                             <processCasErrors maxRetries="0" timeout="5000" thresholdCount="1" thresholdAction="terminate" />
