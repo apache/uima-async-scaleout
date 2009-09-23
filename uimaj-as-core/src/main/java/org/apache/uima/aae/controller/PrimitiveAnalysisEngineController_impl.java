@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager;
@@ -83,10 +84,10 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   private AnalysisEngineInstancePool aeInstancePool = null;
 
   private String abortedCASReferenceId = null;
-
-  private Object mux = new Object();
-
-  private Object mux2 = new Object();
+  // Create a shared semaphore to serialize creation of AE instances.
+  // There is a single instance of this semaphore per JVM and it
+  // guards uima core code that is not thread safe.
+  private static Semaphore sharedInitSemaphore = new Semaphore(1);
 
   public PrimitiveAnalysisEngineController_impl(String anEndpointName,
           String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
@@ -154,10 +155,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public void initializeAnalysisEngine() throws ResourceInitializationException {
     ResourceSpecifier rSpecifier = null;
-    // Parse the descriptor in the calling thread.
     try {
+      //  Acquire single-permit semaphore to serialize instantiation of AEs.
+      //  This is done to control access to non-thread safe structures in the
+      //  core. The sharedInitSemaphore is a static and is shared by all instances
+      //  of this class. 
+      sharedInitSemaphore.acquire();
+      // Parse the descriptor in the calling thread.
       rSpecifier = UimaClassFactory.produceResourceSpecifier(super.aeDescriptor);
-      synchronized (mux) {
         AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
         if (aeInstancePool == null) {
           aeInstancePool = new AnalysisEngineInstancePoolWithThreadAffinity(analysisEnginePoolSize);
@@ -174,8 +179,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             throw new ResourceInitializationException(e);
           }
         }
-      }
-
     } catch (Exception e) {
       e.printStackTrace();
       super.notifyListenersWithInitializationStatus(e);
@@ -191,8 +194,12 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
 
       throw new ResourceInitializationException(e);
+    } finally {
+      //  Release the shared semaphore so that another instance of this class can instantiate
+      //  an Analysis Engine.
+      sharedInitSemaphore.release();
     }
-
+    
   }
 
   public boolean threadAssignedToAE() {
