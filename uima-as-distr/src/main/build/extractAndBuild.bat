@@ -29,8 +29,8 @@ REM Run with -notest to skip the unit tests
 @goto checkargs
 
 @:trunk
-@set leveldir=uima-as
-@set svnloc=trunk/uima-as
+@set leveldir=trunk
+@set svnloc=trunk
 @goto checkargs
 
 @:checkargs
@@ -44,11 +44,13 @@ REM Run with -notest to skip the unit tests
 
 @:usage
 @echo off
-echo running this command in a directory produces an extract as a subdirectory of that directory.
+echo Run this command in the same directory where all the base uima projects live
+echo Running this command in a directory produces an extract as a subdirectory of that directory;
+echo   whose contents are then copied into this directory (required for the build)
 echo Usage: extractAndBuild.bat level release-candidate [-notest] [-deploy]
 echo            (-notest and -deploy cannot be used together)
-echo  examples of the 1st 2 arguments, level release-candidate, are  trunk trunk   or  2.2.2  01
-echo  If trunk, repeat trunk, eg. extractAndBuild.bat trunk trunk 
+echo  Examples of the 1st 2 arguments, level release-candidate, are  trunk trunk   or  2.2.2  01
+echo  If trunk, use the word "trunk" for the 2nd argument, e.g. extractAndBuild.bat trunk trunk 
 @echo on
 @goto exit
 
@@ -58,14 +60,16 @@ echo  If trunk, repeat trunk, eg. extractAndBuild.bat trunk trunk
 
 @:deploy
 @set jvmarg="-DsignArtifacts=true"
-@set mvnCommand=source:jar deploy
+@set mvnCommand=clean deploy
 @goto execute
 
 @:execute
-svn checkout -r HEAD http://svn.apache.org/repos/asf/incubator/uima/sandbox/%svnloc%
-cd %leveldir%
+svn checkout -r HEAD http://svn.apache.org/repos/asf/incubator/uima/uima-as/%svnloc%
+xcopy %leveldir%\* . /E
+rmdir /S %leveldir%
 cd uimaj-as
 call mvn %jvmarg%  %mvnCommand%
+REM keep these next 2 "cd"s as two separate lines - got strange behavior when combining 2009
 cd ..
 cd uimaj-distr
 call mvn assembly:assembly
