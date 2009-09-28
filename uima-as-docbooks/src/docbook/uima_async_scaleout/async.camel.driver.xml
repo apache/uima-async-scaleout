@@ -27,7 +27,8 @@ under the License.
   <section id="ugr.async.camel.driver.component.overview">
     <title>Overview</title>
     <para>
-    Apache Camel is an integration framework based on the Enterprise Integration Patterns
+    <ulink url="http://camel.apache.org">Apache Camel</ulink>is an integration framework based on 
+    <ulink url="http://camel.apache.org/enterprise-integration-patterns.html">Enterprise Integration Patterns</ulink>
     which uses routes for rule-based message routing and mediation. The camel project
     has a large number of components which provide access to a wide variety of
     technologies and are the building blocks of the routes. The Asynchronous Scaleout Camel Driver
@@ -52,10 +53,10 @@ under the License.
     documentation.
     </para>
     <para>
-    The camel driver expects a string message body, if it is not of the type string
+    The camel driver expects a string message body; if it is not of the type string
     it might be automatically converted by camel type converters. The string message
-    body is set as document text on the CAS. In an Analysis Engine which receives such a
-    CAS CAS.getDocumentText() should be called ot retrieve the string.
+    body is set as the CAS's document text. An Analysis Engine calls
+    CAS CAS.getDocumentText() to retrieve the string.
     </para>
   </section>
   <section id="ugr.async.camel.driver.uri.format">
@@ -63,7 +64,7 @@ under the License.
     <para>The Asynchronous Scaleout Camel Driver is configured with a configuration string. The 
     configuration string must contain the broker location and name of the JMS queue used to
     communicate with UIMA AS. It has the following format
-    <programlisting>uimadriver:brokerURL?queue=nameofqueue&casPoolSize=n</programlisting>
+    <programlisting>uimadriver:brokerURL?queue=nameofqueue&amp;casPoolSize=n</programlisting>
     which could for example be specified as
     <programlisting>uimadriver:tcp://localhost:61616?queue=TextAnalysisQueue</programlisting>.
     The casPoolSize parameter is optional but if it is present n must be an integer
@@ -73,13 +74,13 @@ under the License.
   <section id="ugr.async.camel.driver.sample">
     <title>Sample</title>
     <para>Camel enables a developer to create quickly all kinds of applications out of
-    existing and custom components. The sample demonstrates how UIMA AS can now be integrated
-    with other technologies. Readers which are not familiar with camel should read
+    existing and custom components. The sample demonstrates how UIMA AS is integrated
+    with other technologies. Readers who are new to camel should read
     the <ulink url="http://camel.apache.org/book-getting-started.html">Getting Started</ulink>
     chapter in the camel documentation.</para>
     <para> 
-    First a simple sample. A user wants to test a UIMA AS processing pipeline, for
-    the test a set of test documents should be processed. The plain text test documents
+    First a simple sample: A user wants to test a UIMA AS processing pipeline, sending it
+    a set of test documents to process. The plain text test documents
     are located in a folder "/test-data". A camel route for this defined with
     <ulink url="http://camel.apache.org/dsl.html">Java DSL</ulink> could look like this:
     <programlisting>
@@ -89,11 +90,11 @@ under the License.
     In the route above the file component sends a message for every file to the
     uimadriver component. The message contains a reference to the file but not the
     content of the file itself. The uimadriver component expects a message with string body as input.
-    An internal camel type converter will read in the bytes of the file, decodes them
-    into characters with the default platform encoding and then creates a string object
-    which is passed to the uimadriver component. The uimadriver will then put the 
-    string into a CAS and sends it via the UIMA AS Client API to a processing pipeline,
-    results from the returned CAS cannot be retrieved in a camel route.
+    An internal camel type converter will read in the bytes of the file, decode them
+    into characters with the default platform encoding and then create a string object
+    which is passed to the uimadriver component. The uimadriver then puts the 
+    string into a CAS and sends it via the UIMA AS Client API to a processing pipeline.
+    Note that results from the returned CAS cannot be retrieved in a camel route.
     </para>
     <para>
     A more complex sample. A web site has an area where people can upload pictures. 
@@ -114,11 +115,11 @@ under the License.
     an image.
     </para>
     <para>
-    To unload the human controllers a system should automatically classify the pictures and
-    only assign questionable cases to human controllers. The automatic classification is
+    To lessen the workload on the human reviewers, a system should automatically classify the pictures and
+    only assign questionable cases to human reviewers. The automatic classification is
     done by an UIMA Analysis Engine. The AE can mark an image with one of three classes
     appropriate, non-appropriate and unknown. In the case of unknown the AE is not confident
-    enough which of the first two classes is correct. To be scalable the processing pipeline is hosted
+    enough which of the first two classes is correct. To be scalable, the processing pipeline is hosted
     by UIMA AS and contains three AEs, one to fetch the image from
     the database, a classification AE and an AE to write the class of the image back to the database.
     The first AE is typical a cas multiplier and receives a CAS which only contains the string identifier
@@ -140,6 +141,10 @@ under the License.
     The class is retrieved with the custom class-retriever component and written to a message header
     field, only if the class is unknown the image is assigned for human classification.
     </para>
+    
+    <para>Note: instead of using a CAS multiplier, a more straight-forward approach would use just one CAS, 
+      having 2 views: one view would contain the string identifier of the image, and the other view would 
+      have the image to be analyzed (or a reference to it in the DB).</para>
   </section>
   <section id="ugr.async.camel.driver.implementation">
   <title>Implementation</title>
@@ -150,7 +155,7 @@ under the License.
   <code>org.apache.uima.camel.UimaAsProducer</code> class. The <code>UimaAsProducer.process</code> method gets
   the string body of the message, wraps it in a CAS object and sends it to UIMA AS.
   Since the producer is asynchronous the camel message is registered with the reference id of
-  the sent CAS in an intermediate map, when the CAS comes back from UIMA AS the camel message is looked up
+  the sent CAS in an intermediate map, when the CAS comes back from UIMA AS, the camel message is looked up
   with the reference id of the CAS and the processing of the camel message is completed. 
   For further details please read the <code>UimaAsProducer</code> implementation code.
   </para>
