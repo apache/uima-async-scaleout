@@ -291,13 +291,32 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       ((TextMessage) msg).setText("");
     }
   }
-
+  private boolean connectionClosedOrInvalid() {
+    if ( sharedConnection == null ||
+         sharedConnection.getConnection() == null ||
+         ((ActiveMQConnection)sharedConnection.getConnection()).isClosed() ||
+         ((ActiveMQConnection)sharedConnection.getConnection()).isClosing() ||
+         ((ActiveMQConnection)sharedConnection.getConnection()).isTransportFailed()) {
+      return true;
+    }
+    return false;
+  }
   protected void setupConnection(String aBrokerURI) throws Exception {
     try {
       // Acquire global static semaphore
       sharedConnectionSemaphore.acquire();
-      if (sharedConnection == null) {
+      //  check the state of a connection
+      if ( connectionClosedOrInvalid() ) { // sharedConnection == null || sharedConnection.getConnection() == null || !) {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(aBrokerURI);
+        if ( sharedConnection != null && sharedConnection.getConnection() != null ) {
+          try {
+            //  Cleanup so that we dont leak connections in a broker
+            sharedConnection.getConnection().close();
+          } catch( Exception ex) {
+            //  Ignore exception while closing a bad connection
+          }
+          
+        }
         Connection connection = factory.createConnection();
         // This only effects Consumer
         addPrefetch((ActiveMQConnection) connection);
