@@ -23,7 +23,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.apache.uima</groupId>
 	<artifactId>uima-as-distr</artifactId>
-	<packaging>pom</packaging>
+	<packaging>jar</packaging>
 	<version>2.3.0-incubating-SNAPSHOT</version> <!-- this comment is a flag for changeVersion -->
 	<name>Apache UIMA Asynchronous Scaleout - Resources and Assembly Descriptor for building the distribution</name>
 	<parent>
