@@ -459,9 +459,15 @@ under the License.
       </para>
     
     <para>The &lt;serializer> element describes what method of serialization to use. This element is optional and it
-    may be set to either binary or xmi. If omitted, xmi serialization will be used by default. Xmi serialization 
-    can be quite verbose and produce large output for CASes containing many annotations. A more efficient and compact 
-    serialization is produced by binary serialization which trades output size for more CPU required. 
+    may be set to either <code>binary</code> or <code>xmi</code>. If omitted, <code>xmi</code> serialization 
+    will be used by default. <code>Xmi</code> serialization 
+    can be quite verbose and produce large output for CASes containing many annotations; on the plus side, 
+    it supports serialization between components where the type systems may not be exactly identical (for instance,
+    they could be different subsets of larger, common type systems).  <code>Binary</code> serialization produces
+    a smaller output size and is more efficient; on the minus side, it requires that the type systems 
+    for both components have exactly the same type and feature codes - which in practice means that the 
+    type systems have to be identical.   Also, the binary serialization format is new with 2.3.0 release, and is not always
+    available.  For example, C++ services do not (currently) support this format. 
     </para>
     <para>
       The &lt;inputQueue> element specifies the remote's input queue. The casMultiplier element inside a remoteAnalysisEngine element is only specified if the
