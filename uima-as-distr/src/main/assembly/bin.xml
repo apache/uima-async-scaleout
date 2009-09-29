@@ -40,6 +40,7 @@ under the License.
       <outputFileNameMapping>${artifact.artifactId}.jar</outputFileNameMapping>
       <outputDirectory>lib</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
+      <fileMode>644</fileMode> 
     </dependencySet>
 
     <!-- UIMA-AS included other projects -->
@@ -58,6 +59,7 @@ under the License.
       <useTransitiveDependencies>false</useTransitiveDependencies>
       <outputDirectory>apache-activemq-4.1.1/lib</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
+      <fileMode>644</fileMode> 
     </dependencySet>
     
     <dependencySet>
@@ -85,6 +87,7 @@ under the License.
       <useTransitiveDependencies>false</useTransitiveDependencies>
       <outputDirectory>apache-activemq-4.1.1/lib/optional</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
+      <fileMode>644</fileMode> 
     </dependencySet>
 
     <!--dependencySet>
@@ -109,11 +112,13 @@ under the License.
       <outputDirectory>eclipsePlugins</outputDirectory>
       <outputFileNameMapping>${artifact.build.finalName}.jar</outputFileNameMapping>
       <useProjectArtifact>false</useProjectArtifact>
+      <fileMode>644</fileMode> 
     </dependencySet>
   </dependencySets>
   
   <!-- Add other files - scripts, documentation, examples -->
   <fileSets>
+    <!-- UIMA-AS no longer includes base UIMA as of 2.3.0 -->
     <!-- base UIMA -->
     <!--fileSet>
       <directory>../uimaj-distr/src/main/scripts</directory>
@@ -141,11 +146,19 @@ under the License.
     <fileSet>
       <directory>src/main/scripts</directory>
       <outputDirectory>bin</outputDirectory>
+      <includes><include>**/*.sh</include></includes>
       <fileMode>755</fileMode>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/scripts</directory>
+      <outputDirectory>bin</outputDirectory>
+      <excludes><exclude>**/*.sh</exclude></excludes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>src/main/config</directory>
       <outputDirectory>as_config</outputDirectory>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>src/main/readme</directory>
@@ -155,6 +168,7 @@ under the License.
            extra (empty) version of the base dir - probably 
            a bug. -->
       <outputDirectory>uima-as/readme</outputDirectory>
+      <fileMode>644</fileMode>
     </fileSet>
     
     <fileSet>
@@ -166,6 +180,7 @@ under the License.
         <exclude>files</exclude>
         <exclude>argfile</exclude>        
       </excludes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uima-as-docbooks/target</directory>
@@ -176,6 +191,7 @@ under the License.
         <include>uima_async_scaleout/uima_async_scaleout.html</include>
         <include>uima_async_scaleout/css/**</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uima-as-docbooks/target/uima_async_scaleout</directory>
@@ -183,6 +199,7 @@ under the License.
       <includes>
         <include>uima_async_scaleout.pdf</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uima-as-docbooks/src</directory>
@@ -190,6 +207,7 @@ under the License.
       <includes>
         <include>index.html</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>    
     <!--fileSet>
       <directory>../uimaj-examples/src/main/java</directory>
@@ -229,22 +247,40 @@ under the License.
     <fileSet>
       <directory>src/main/examples</directory>
       <outputDirectory>examples</outputDirectory>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uimaj-as-activemq/src/main/java/org/apache/uima/examples/as</directory>
       <outputDirectory>examples/src/org/apache/uima/examples/as</outputDirectory>
+      <fileMode>644</fileMode>
     </fileSet>
     
     <!-- activemq -->
     <fileSet>
       <directory>src/main/apache-activemq-4.1.1</directory>
       <outputDirectory>apache-activemq-4.1.1</outputDirectory>
+      <includes><include>bin/**</include></includes>
+      <excludes><exclude>bin/**/*.*</exclude></excludes>
+      <fileMode>755</fileMode>
     </fileSet>  
-    
+    <fileSet>
+      <directory>src/main/apache-activemq-4.1.1</directory>
+      <outputDirectory>apache-activemq-4.1.1</outputDirectory>
+      <includes><include>bin/**/*.*</include></includes>
+      <fileMode>644</fileMode>
+    </fileSet>  
+    <fileSet>
+      <directory>src/main/apache-activemq-4.1.1</directory>
+      <outputDirectory>apache-activemq-4.1.1</outputDirectory>
+      <excludes><exclude>bin/**</exclude></excludes>
+      <fileMode>644</fileMode>
+    </fileSet>  
+        
     <!-- saxon -->    
     <fileSet>
       <directory>src/main/saxon</directory>
       <outputDirectory>saxon</outputDirectory>
+      <fileMode>644</fileMode>
     </fileSet>
   </fileSets>
   

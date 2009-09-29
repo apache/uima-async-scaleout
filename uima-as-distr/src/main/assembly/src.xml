@@ -38,7 +38,44 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
+      <excludes>
+        <exclude>src/main/readme/**</exclude>
+        <exclude>**/*.sh</exclude>
+        <exclude>src/main/apache-activemq-4.1.1/bin</exclude>
+      </excludes>
+      <fileMode>644</fileMode>
     </fileSet>
+
+    <fileSet>
+      <directory>.</directory>
+      <outputDirectory>uima-as-distr</outputDirectory>
+      <includes>
+        <include>src/**/*.sh</include>
+      </includes>
+      <fileMode>755</fileMode>
+    </fileSet>
+    
+    <fileSet>
+      <directory>.</directory>
+      <outputDirectory>uima-as-distr</outputDirectory>
+      <includes>
+        <include>src/main/apache-activemq-4.1.1/bin/**/*.*</include>
+      </includes>
+      <fileMode>644</fileMode>
+    </fileSet>
+
+    <fileSet>
+      <directory>.</directory>
+      <outputDirectory>uima-as-distr</outputDirectory>
+      <includes>
+        <include>src/main/apache-activemq-4.1.1/bin/**</include>
+      </includes>
+      <excludes>
+        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.*</exclude>
+      </excludes>
+      <fileMode>755</fileMode>
+    </fileSet>
+    
     <fileSet>
       <directory>src/main/readme</directory>
       <excludes>
@@ -52,6 +89,7 @@ under the License.
            extra (empty) version of the base dir - probably 
            a bug. -->
       <outputDirectory></outputDirectory>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>src/main/readme_src</directory>
@@ -61,6 +99,7 @@ under the License.
            extra (empty) version of the base dir - probably 
            a bug. -->
       <outputDirectory></outputDirectory>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uima-as-docbooks</directory>
@@ -71,6 +110,7 @@ under the License.
         <exclude>src/styles/titlepage/*.xsl</exclude>
         <exclude>src/olink/**/*.db</exclude>     
       </excludes>
+      <fileMode>644</fileMode>
     </fileSet>   
     <fileSet>
       <directory>../uima-docbook-tool</directory>
@@ -86,6 +126,7 @@ under the License.
         <include>README</include>
         <include>README.FIRST</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <!-- include part of the base docbook - need to build the
          tools documentation to produce the help files
@@ -113,6 +154,7 @@ under the License.
         <exclude>build_all_books.xml</exclude>
         <exclude>README.USER.txt</exclude>  <!-- remove, because it has misleading info in this context -->    
       </excludes>
+      <fileMode>644</fileMode>
     </fileSet>
     <!-- update site not part of the source distribution.  This is 
          something built after the release vote, as part of deployment -->
@@ -135,6 +177,7 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>  
     <fileSet>
       <directory>../uimaj-ep-runtime-deployeditor</directory>
@@ -143,6 +186,7 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>     
     <fileSet>
       <directory>../uimaj-as-osgi-runtime</directory>
@@ -150,6 +194,7 @@ under the License.
       <includes>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uimaj-as</directory>
@@ -158,6 +203,7 @@ under the License.
         <include>pom.xml</include>
         <include>eclipse-plugin-superPom/*</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uimaj-as-activemq</directory>
@@ -166,6 +212,7 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uimaj-as-camel</directory>
@@ -174,6 +221,7 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uimaj-as-core</directory>
@@ -182,6 +230,7 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uimaj-as-jms</directory>
@@ -190,14 +239,17 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
-    <fileSet>
+    <!-- next is base UIMA - no longer part of UIMA-AS distribution as of 2.3.0 -->
+    <!-- fileSet>
       <directory>../uimaj</directory>
       <outputDirectory>uimaj</outputDirectory>
       <includes>
         <include>eclipse-plugin-superPom/*</include>
         <include>pom.xml</include>
       </includes>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>../uimaj-distr</directory>
@@ -214,6 +266,6 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
-    </fileSet>  
+    </fileSet-->  
   </fileSets>  
 </assembly>
