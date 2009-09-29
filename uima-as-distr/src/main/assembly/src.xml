@@ -88,7 +88,7 @@ under the License.
            it also puts into the base dir, but creates an
            extra (empty) version of the base dir - probably 
            a bug. -->
-      <outputDirectory></outputDirectory>
+      <outputDirectory/>
       <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
@@ -98,7 +98,7 @@ under the License.
            it also puts into the base dir, but creates an
            extra (empty) version of the base dir - probably 
            a bug. -->
-      <outputDirectory></outputDirectory>
+      <outputDirectory/>
       <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
