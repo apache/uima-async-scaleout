@@ -133,9 +133,13 @@ a. Create a Deployment Descriptor.
 
 b. Run the command:
 
-     deployAsyncService.sh/cmd [testDD.xml]
+     deployAsyncService.sh/cmd [testDD.xml] [-brokerURL url]
 
-  The argument to the command is the deployment descriptor you created in step (a).
+  The argument to the command is the deployment descriptor you created in step (a). An optional argument
+  -brokerURL specifies a URL of the broker that the service will use to create connections to queues. This
+  argument takes effect only if your deployment descriptor does not explicitly name the broker URL in the 
+  <inputQueue ...> xml element. Omitting brokerURL from a deployment descriptor is a way to keep your
+  deployment descriptors portable. You don't need to edit your deployment descriptors when switching brokers.
 
   Note: If you use import by name in your deployment descriptor, UIMA AS searches the CLASSPATH
   as well as directories on UIMA_DATAPATH to resolve the import.
