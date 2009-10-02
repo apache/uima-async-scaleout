@@ -1,22 +1,33 @@
      Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.3.0-incubating README
      ---------------------------------------------------------------------------
 
-0. Changes in the 2.2.2 release
-  - Development has been moved to Apache, in the Apache UIMA incubator project
-  - Package names are changed to org.apache.uima...
-  - Name has been changed to Apache UIMA Asynchronous Scaleout (Apache UIMA-AS)
-  - Versioning aligned with Apache UIMA
-  - Build process changed to use Maven
+0. Changes in the 2.3.0 release
+  - UIMA-AS "graduated" from Sandbox, now a top-level (within UIMA) add-on
+  - UIMA-AS repackaged - no longer includes the base UIMA, which must be separately downloaded
+  - Many improvements in error handling and recovery
+  - General hardening / bug fixes
+  - Many improvements in JMX reporting
+  - Optimizations and tunings for larger deployments
+  - Support for late binding of broker urls and ports
+  - Support for passing configuration information in URLs to ActiveMQ
+  - Delta Cas format support added, including Delta Binary serialization where the type systems are identical
+  - Multiple remote CAS multiplier support added
+  - Using Java queuing instead of imbedded broker for local services (performance improvement)
+  - Support for high volume - multiple concurrent listener threads
+  - Initial support for Apache Camel and OSGI enablement added  
 
 
 1. Contents of Apache UIMA-AS binary distribution
 
 The Apache UIMA-AS binary distribution includes 
-  - Apache UIMA (exluding documentation) 
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
   - Apache ActiveMQ
   - Spring Framework
+
+It does not include the base UIMA binary distribution, which it depends on.
+You should download and unzip that distribution, and then download and unzip the 
+UIMA-AS distribtuion over the base distribution.
 
 UIMA-AS components include:
 
@@ -288,10 +299,9 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.2.2
+5. Known problems/limitations with Release 2.3.0
 
-  1. Remote CAS multiplier support is limited to a single, AS Primitive service.
-  2. No automatic refresh for broken connections with temp reply queues.
+  1. No automatic refresh for broken connections with temp reply queues.
 
 For up-to-date information on UIMA-AS issues, see 
 http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12310570

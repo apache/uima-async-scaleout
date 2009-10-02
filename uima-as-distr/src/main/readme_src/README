@@ -10,10 +10,13 @@ do the following steps:
 1) either check out of SVN the following projects into the same 
 "workspace" directory that you checked out the base UIMA:
    - uima-as-distr
+   - uima-as-docbooks
    - uimaj-as
    - uimaj-as-activemq
+   - uimaj-as-camel
    - uimaj-as-core
    - uimaj-as-jms
+   - uimaj-as-osgi-runtime
    - uimaj-ep-deployeditor
    - uimaj-ep-runtime-deployeditor
    
