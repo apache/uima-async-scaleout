@@ -20,17 +20,20 @@
 # Bourne shell syntax, this should hopefully run on pretty much anything.
 
 usage() {
+  echo "Run this command in the same directory where all the base uima projects live"
+  echo "Running this command in a directory produces an extract as a subdirectory of that directory;"
+  echo "  whose contents are then copied into this directory (required for the build)"
   echo "Usage: extractAndBuild.sh <level> <release candidate> [-notest] [-deploy]"
   echo "           (-notest and -deploy cannot be used together)"
-  echo " examples of <level> <release candidate> :  2.2.2 01"
-  echo " for trunk, use trunk trunk  (yes, repeat trunk twice)"
+  echo " the 1st 2 arguments, level release-candidate: trunk trunk or 2.2.2 01"
+  echo " If trunk, use the word \"trunk\" for the 2nd argument, e.g. extractAndBuild.bat trunk trunk"
 }
 
-vmargs=""
-mvnCommand=install
+jvmargs=""
+mvnCommand="clean install"
 
 # Check arguments
-if [ $# = 0 ]
+if [ $# -eq 0 -o $# -gt 3 ]
 then
   usage
   exit 1
@@ -38,17 +41,11 @@ fi
 
 if [ "$1" = "trunk" ]
 then
-  leveldir=uima-as
-  svnloc=trunk/uima-as
+  svnloc=trunk
+  leveldir=trunk
 else
   leveldir=uima-as-$1-$2
-  svnloc=tags/uima-as-$1/$1-$2
-fi
-
-if [ $# -gt "3" ]
-then
-  usage
-  exit 1
+  svnloc=tags/uima-as-$1/$leveldir
 fi
 
 if [ -n "$3" ]
@@ -56,11 +53,11 @@ then
 # Check for -notest switch.  If present, add the no-test define to the mvn command line.
   if [ "$3" = "-notest" ]
   then
-    vmargs="-Dmaven.test.skip=true"
+    jvmargs="-Dmaven.test.skip=true"
 # Check for -deploy switch.  If present, change maven command to deploy artifacts to remote Maven repo
   elif [ "$3" = "-deploy" ]
   then
-    vmargs="-DsignArtifacts=true"
+    jvmargs="-DsignArtifacts=true"
     mvnCommand="source:jar deploy"
   else
     usage
@@ -68,9 +65,10 @@ then
   fi
 fi
 
-svn checkout http://svn.apache.org/repos/asf/incubator/uima/sandbox/$svnloc
-cd $leveldir/uimaj-as
-mvn ${vmargs} $mvnCommand
+svn checkout -r HEAD http://svn.apache.org/repos/asf/incubator/uima/uima-as/$svnloc
+cp -r $leveldir/* . 
+cd uimaj-as
+mvn ${jvmargs} $mvnCommand
 cd ../uima-as-distr
 mvn assembly:assembly
 
