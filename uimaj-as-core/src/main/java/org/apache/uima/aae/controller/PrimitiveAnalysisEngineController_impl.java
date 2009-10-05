@@ -170,6 +170,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         if (analysisEngineMetadata == null) {
           analysisEngineMetadata = ae.getAnalysisEngineMetaData();
         }
+        //  Check if OperationalProperties allow replication of this AE. Throw exception if
+        //  the deployment descriptor says to scale the service *but* the AE descriptor's 
+        //  OperationalProperties disallow it.
+        if ( !analysisEngineMetadata.getOperationalProperties().isMultipleDeploymentAllowed() &&
+             aeInstancePool.size() >= 1 ) {
+          throw new ResourceInitializationException( UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_multiple_deployment_not_allowed__WARNING", new Object[] {this.getComponentName(), ae.getMetaData().getName()});
+        }
         aeInstancePool.checkin(ae);
         if (aeInstancePool.size() == analysisEnginePoolSize) {
           try {
