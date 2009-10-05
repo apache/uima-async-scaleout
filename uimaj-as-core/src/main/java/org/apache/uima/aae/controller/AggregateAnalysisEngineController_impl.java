@@ -269,17 +269,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	 * 
 	 */
   public Endpoint getMessageOrigin(String aCasReferenceId) {
-    synchronized (originMap) {
       if (originMap.containsKey(aCasReferenceId)) {
         return (Endpoint) originMap.get(aCasReferenceId);
-      }
     }
     return null;
   }
 
   public void removeMessageOrigin(String aCasReferenceId) {
-    synchronized (originMap) {
-
       if (originMap.containsKey(aCasReferenceId)) {
         originMap.remove(aCasReferenceId);
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
@@ -289,7 +285,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   new Object[] { getComponentName(), aCasReferenceId });
         }
       }
-    }
   }
 
   /**
@@ -299,9 +294,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
     FlowContainer flow = lookupFlow(aCasReferenceId);
     if (flow != null) {
-      synchronized (flowMap) {
         flowMap.remove(aCasReferenceId);
-      }
     }
     super.dropCAS(aCasReferenceId, dropCacheEntry);
   }
@@ -315,9 +308,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       }
 
-      synchronized (flowMap) {
-        flowMap.remove(aCasReferenceId);
-      }
+    flowMap.remove(aCasReferenceId);
     }
 
   }
@@ -746,7 +737,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private FlowContainer lookupFlow(String aCasReferenceId) {
     if (flowMap != null) {
-      synchronized (flowMap) {
         if (flowMap.containsKey(aCasReferenceId)) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
@@ -755,7 +745,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                     new Object[] { getComponentName(), aCasReferenceId });
           }
           return (FlowContainer) flowMap.get(aCasReferenceId);
-        }
       }
     }
     return null;
@@ -793,7 +782,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 new Object[] { getComponentName(), anInputCasReferenceId });
       }
       try {
-        synchronized (flowMap) {
           // Lookup a Flow object associated with an input CAS.
           if (flowMap.containsKey(anInputCasReferenceId)) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
@@ -814,9 +802,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             }
 
           }
-
-        }
-
         if (flow != null) {
 
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -856,9 +841,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // Save the subordinate Flow Object in a cache. Flow exists in the
           // cache until the CAS is fully processed or it is
           // explicitly deleted when processing of this CAS cannot continue
-          synchronized (flowMap) {
-            flowMap.put(aNewCasReferenceId, flow);
-          }
+          flowMap.put(aNewCasReferenceId, flow);
           // Register the fact that this is a new CAS and the fact that is was produced
           // by this aggregate. It is important to register this to determine how to
           // handle the CAS in delegate Aggregate services. When the CAS is processed
@@ -1096,9 +1079,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       "UIMAEE_retrieve_flow_object__FINEST",
                       new Object[] { getComponentName(), aCasReferenceId });
             }
-            synchronized (flowMap) {
-              flow = (FlowContainer) flowMap.get(aCasReferenceId);
-            }
+            flow = (FlowContainer) flowMap.get(aCasReferenceId);
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
                       "process", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1118,9 +1099,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             // until the CAS is fully processed or it is
             // explicitly deleted when processing of this CAS cannot
             // continue
-            synchronized (flowMap) {
-              flowMap.put(aCasReferenceId, flow);
-            }
+            flowMap.put(aCasReferenceId, flow);
             // Check if the local cache already contains an entry for the Cas id.
             // A colocated Cas Multiplier may have already registered this CAS
             // in the parent's controller

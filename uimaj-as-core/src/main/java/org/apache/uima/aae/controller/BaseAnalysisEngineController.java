@@ -1318,9 +1318,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         time = ((Long) value).longValue();
       }
 
-      synchronized (statsMap) {
-        statsMap.remove(key);
-      }
+      statsMap.remove(key);
       return time;
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -1418,9 +1416,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   private void dropStats(String aKey) {
     if (aKey != null && statsMap.containsKey(aKey)) {
-      synchronized (statsMap) {
         statsMap.remove(aKey);
-      }
     }
   }
 
@@ -1946,7 +1942,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   public void terminate(Throwable cause, String aCasReferenceId) {
 
-    synchronized (stopLatch) {
       if (stopLatch.getCount() > 0) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "terminate",
@@ -1957,7 +1952,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       } else {
         return;
       }
-    }
     if (!isTopLevelComponent()) {
       ((BaseAnalysisEngineController) parentController).stop();
     } else if (!isStopped()) {
