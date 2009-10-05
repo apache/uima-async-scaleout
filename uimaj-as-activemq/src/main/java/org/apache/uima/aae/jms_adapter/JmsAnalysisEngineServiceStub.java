@@ -55,6 +55,7 @@ import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceServiceException;
+import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.util.Level;
 
@@ -137,10 +138,19 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
   public ResourceMetaData callGetMetaData() throws ResourceServiceException {
     // metadata already retrieved during initialization
     try {
-      return uimaEEEngine.getMetaData();
+      //return uimaEEEngine.getMetaData();
+      
+      ResourceMetaData  rmd = uimaEEEngine.getMetaData();
+      if ( rmd != null ) {
+        ((ProcessingResourceMetaData)rmd).getOperationalProperties().setMultipleDeploymentAllowed(true);
+        return rmd;
+      }
+      
     } catch (ResourceInitializationException e) {
       throw new ResourceServiceException(e);
     }
+    
+    throw new ResourceServiceException(new Exception("Uima AS getMetaData() call failed."));
   }
 
   /**
