@@ -322,9 +322,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     if (springContainerRegistry != null) {
       // Register each container in a global map. When stopping the
       // client, each container in the map will be stopped.
-      synchronized (springContainerRegistry) {
-        springContainerRegistry.put(containerId, springAdminContext);
-      }
+      springContainerRegistry.put(containerId, springAdminContext);
     }
     return containerId;
   }
