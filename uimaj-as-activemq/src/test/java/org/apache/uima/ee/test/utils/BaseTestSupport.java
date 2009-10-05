@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.jms.Message;
@@ -196,7 +197,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     return (AsynchAEMessage.Request == messageType && AsynchAEMessage.GetMeta == command);
   }
 
-  protected Thread spinMonitorThread(final AtomicBoolean ctrlMonitor, int howMany,
+  protected Thread spinMonitorThread(final Semaphore ctrlSemaphore, int howMany,
           final int aLatchKind) throws Exception {
     final String name;
 
@@ -236,12 +237,8 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           // This is needed
           // so that the CASes are send out when the count down latch
           // is ready.
-          synchronized (ctrlMonitor) {
-            ctrlMonitor.set(true);
-            ctrlMonitor.notifyAll();
-          }
+          ctrlSemaphore.release();
           // Wait until the count down latch = 0
-          // cpcLatch.await();
           switch (aLatchKind) {
             case CPC_LATCH:
               // Initialize latch to open after CPC reply comes in.
@@ -275,14 +272,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     }
   }
 
-  protected void waitOnMonitor(final AtomicBoolean aMonitor) throws Exception {
+  protected void waitOnMonitor(final Semaphore ctrlSemaphore ) throws Exception {
     // Wait until the count down latch thread is ready
-    synchronized (aMonitor) {
-      while (aMonitor.get() == false) {
-        aMonitor.wait();
-      }
-    }
-
+   try {
+     ctrlSemaphore.acquire();
+   } catch( InterruptedException e) {
+   }
   }
 
   protected void runTestWithMultipleThreads(String serviceDeplyDescriptor, String queueName,
@@ -314,11 +309,11 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
     // Wait until the top level service returns its metadata
     waitUntilInitialized();
-    final AtomicBoolean ctrlMonitor = new AtomicBoolean();
-    t2 = spinMonitorThread(ctrlMonitor, howManyCASesPerRunningThread * howManyRunningThreads,
+    final Semaphore ctrlSemaphore = new Semaphore(1);
+    t2 = spinMonitorThread(ctrlSemaphore, howManyCASesPerRunningThread * howManyRunningThreads,
             PROCESS_LATCH);
     // Wait until the CPC Thread is ready.
-    waitOnMonitor(ctrlMonitor);
+    waitOnMonitor(ctrlSemaphore);
 
     if (failOnTimeout) {
       // Spin a thread and wait for awhile before killing the remote service.
@@ -351,7 +346,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     }
     // Wait until ALL CASes return from the service
     t2.join();
-    t1 = spinMonitorThread(ctrlMonitor, 1, CPC_LATCH);
+    t1 = spinMonitorThread(ctrlSemaphore, 1, CPC_LATCH);
 
     if (!isStopped && !unexpectedException) {
       System.out.println("runTest: Sending CPC");
@@ -371,10 +366,10 @@ public abstract class BaseTestSupport extends ActiveMQSupport
   protected void runCrTest(BaseUIMAAsynchronousEngine_impl aUimaEeEngine, int howMany)
           throws Exception {
     engine = aUimaEeEngine;
-    final AtomicBoolean ctrlMonitor = new AtomicBoolean();
-    spinMonitorThread(ctrlMonitor, howMany, PROCESS_LATCH);
+    final Semaphore ctrlSemaphore = new Semaphore(1);
+    spinMonitorThread(ctrlSemaphore, howMany, PROCESS_LATCH);
     aUimaEeEngine.process();
-    waitOnMonitor(ctrlMonitor);
+    waitOnMonitor(ctrlSemaphore);
   }
 
   protected void runTest(Map appCtx, BaseUIMAAsynchronousEngine_impl aUimaEeEngine,
@@ -433,19 +428,21 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     // Wait until the top level service returns its metadata
     waitUntilInitialized();
     if (howMany > 0) {
-      final AtomicBoolean ctrlMonitor = new AtomicBoolean();
+      Semaphore ctrlSemaphore = null;
       // Create a thread that will block until an exception is returned,
       // or 2 threads that wait for 'howMany' CASes and then a CPC reply
       if (aLatchKind == EXCEPTION_LATCH) {
-        t1 = spinMonitorThread(ctrlMonitor, 1, EXCEPTION_LATCH);
+        ctrlSemaphore = new Semaphore(1);
+        t1 = spinMonitorThread(ctrlSemaphore, 1, EXCEPTION_LATCH);
       } else {
-        t1 = spinMonitorThread(ctrlMonitor, 1, CPC_LATCH);
-        t2 = spinMonitorThread(ctrlMonitor, howMany, PROCESS_LATCH);
+        ctrlSemaphore = new Semaphore(2);
+        t1 = spinMonitorThread(ctrlSemaphore, 1, CPC_LATCH);
+        t2 = spinMonitorThread(ctrlSemaphore, howMany, PROCESS_LATCH);
       }
 
       if (!isStopped) {
         // Wait until the monitor thread(s) start.
-        waitOnMonitor(ctrlMonitor);
+        waitOnMonitor(ctrlSemaphore);
 
         long startTime = System.currentTimeMillis();
         if (!isStopped) {
@@ -515,19 +512,21 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     // Wait until the top level service returns its metadata
     waitUntilInitialized();
     for (int i = 0; i < howMany; i++) {
-      final AtomicBoolean ctrlMonitor = new AtomicBoolean();
+      Semaphore ctrlSemaphore = null;
       // Create a thread that will block until the CPC reply come back
       // from the top level service
       if (aLatchKind == EXCEPTION_LATCH) {
-        t1 = spinMonitorThread(ctrlMonitor, 1, EXCEPTION_LATCH);
+        ctrlSemaphore = new Semaphore(1);
+        t1 = spinMonitorThread(ctrlSemaphore, 1, EXCEPTION_LATCH);
       } else {
-        t1 = spinMonitorThread(ctrlMonitor, 1, CPC_LATCH);
-        t2 = spinMonitorThread(ctrlMonitor, 1, PROCESS_LATCH);
+        ctrlSemaphore = new Semaphore(2);
+        t1 = spinMonitorThread(ctrlSemaphore, 1, CPC_LATCH);
+        t2 = spinMonitorThread(ctrlSemaphore, 1, PROCESS_LATCH);
       }
 
       if (!isStopped) {
         // Wait until the CPC Thread is ready.
-        waitOnMonitor(ctrlMonitor);
+        waitOnMonitor(ctrlSemaphore);
         if (!isStopped) {
           // Send an in CAS to the top level service
           sendCAS(aUimaEeEngine, 1, sendCasAsynchronously);
