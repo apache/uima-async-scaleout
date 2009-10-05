@@ -720,16 +720,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * registered in the local registry under a unique id.
    * 
    */
-  public void undeploy(String aSpringContainerId, int stop_level) throws Exception
-
-  {
+  public void undeploy(String aSpringContainerId, int stop_level) throws Exception {
     if (aSpringContainerId == null) {
       return;
     }
 
     UimaEEAdminSpringContext adminContext = null;
-    synchronized (springContainerRegistry) {
-      if (!springContainerRegistry.containsKey(aSpringContainerId)) {
+    if (!springContainerRegistry.containsKey(aSpringContainerId)) {
         return;
         // throw new InvalidContainerException("Invalid Spring container Id:" + aSpringContainerId +
         // ". Unable to undeploy the Spring container");
@@ -791,7 +788,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       }
       // Remove the container from a local registry
       springContainerRegistry.remove(aSpringContainerId);
-    }
   }
 
   /**
