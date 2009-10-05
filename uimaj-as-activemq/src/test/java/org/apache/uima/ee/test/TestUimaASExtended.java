@@ -278,6 +278,26 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
   /**
+   * Tests detection of misconfiguration between deployement descriptor and AE descriptor.
+   * The AE descriptor is configured to allow one instance of the AE while the deployment
+   * descriptor attempts to scale out the service containing the AE. ResourceInitializationException
+   * is expected.
+   * 
+   * @throws Exception
+   */
+  public void testMultiInstanceDeployFailureInPrimitiveService() throws Exception {
+    System.out.println("-------------- testMultiInstanceDeployFailureInPrimitiveService -------------");
+    // Instantiate Uima EE Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    try {
+      // Deploy Uima EE Primitive Service
+      deployService(eeUimaEngine, relativePath + "/Deploy_ScaledPersonTitleAnnotator.xml");
+      fail("Expected ResourceInitializationException Due to Misconfiguration but instead the service initialized successfully");
+    } catch ( ResourceInitializationException e) {
+      // expected
+    }
+  }
+  /**
    * Tests processing of an Exception that a service reports on CPC
    * 
    * @throws Exception
