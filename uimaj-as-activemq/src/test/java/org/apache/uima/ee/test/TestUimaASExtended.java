@@ -1986,6 +1986,23 @@ public class TestUimaASExtended extends BaseTestSupport {
     // PROCESS_LATCH);
   }
 
+  /**
+   * Tests use of a JMS Service Adapter and an override of the MultipleDeploymentAllowed. 
+   * In this test, the AE descriptor of the remote service is configured with MultipleDeploymentAllowed=false
+   * Without the override this causes an exception when instantiating Uima aggregate with
+   * MultipleDeploymentAllowed=true. 
+   * 
+   * @throws Exception
+   */
+  public void testJmsServiceAdapterWithOverride() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapterWithOverride -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_SingleInstancePersonTitleAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceAndScaleoutOverride.xml");
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            10, PROCESS_LATCH);
+  }
+
   public void testJmsServiceAdapterWithException() throws Exception {
     System.out.println("-------------- testJmsServiceAdapterWithException -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
