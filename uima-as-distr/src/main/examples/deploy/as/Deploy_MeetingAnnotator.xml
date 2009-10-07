@@ -30,7 +30,7 @@
   <deployment protocol="jms" provider="activemq">
     <service>
       <custom name="run_top_level_CPP_service_as_separate_process"/>
-      <inputQueue endpoint="MeetingAnnotator" brokerURL="tcp://localhost:61616"/>
+      <inputQueue endpoint="MeetingAnnotator" brokerURL="${defaultBrokerURL}"/>
       <topDescriptor>
        <import location="../../../uimacpp/examples/tutorial/descriptors/MeetingAnnotatorCPP.xml"/>
       </topDescriptor>

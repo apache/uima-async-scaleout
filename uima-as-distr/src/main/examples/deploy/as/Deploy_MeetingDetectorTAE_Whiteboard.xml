@@ -29,7 +29,7 @@
   
   <deployment protocol="jms" provider="activemq">
     <service>
-      <inputQueue endpoint="MeetingDetectorTaeWhiteboardQueue" brokerURL="tcp://localhost:61616"/>
+      <inputQueue endpoint="MeetingDetectorTaeWhiteboardQueue" brokerURL="${defaultBrokerURL}"/>
       <topDescriptor>
         <import location="../../descriptors/flow_controller/MeetingDetectorTAE_Whiteboard.xml"/>
       </topDescriptor>

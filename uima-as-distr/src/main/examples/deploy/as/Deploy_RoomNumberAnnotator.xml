@@ -29,7 +29,7 @@
   
   <deployment protocol="jms" provider="activemq">
     <service>
-      <inputQueue endpoint="RoomNumberAnnotatorQueue" brokerURL="tcp://localhost:61616"/>
+      <inputQueue endpoint="RoomNumberAnnotatorQueue" brokerURL="${defaultBrokerURL}"/>
       <topDescriptor>
        <import location="../../descriptors/tutorial/ex2/RoomNumberAnnotator.xml"/> 
       </topDescriptor>
