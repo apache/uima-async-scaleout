@@ -137,9 +137,12 @@ To connect to a broker running behind a firewall using HTTP tunneling, see secti
 a. Create a Deployment Descriptor.
   Examples can be found in the examples/deploy/as directory,
   and the syntax is documented in docs/pdf/uima_async_scaleout.pdf.
-  One of the things that the deployment descriptor contains is the URL of the broker,
-  which must match the URL of the broker you started in step 3.1 (note that if running
-  everything on the same node, you can substitute "localhost" for the actual host name).
+  
+  Note: One of the things that the deployment descriptor may contain is a broker placeholder with 
+  this syntax: ${defaultBrokerURL}. The placeholder is replaced at runtime with an actual broker
+  URL. The value for the placeholder comes from System properties. The brokerURL attribute of <inputQueue ...>
+  element is optional. If not present, a default of tcp://localhost:61616 will be used.
+
   The examples assume the broker is listening on tcp://localhost:61616.
 
 b. Run the command:
@@ -149,8 +152,9 @@ b. Run the command:
   The argument to the command is the deployment descriptor you created in step (a). An optional argument
   -brokerURL specifies a URL of the broker that the service will use to create connections to queues. This
   argument takes effect only if your deployment descriptor does not explicitly name the broker URL in the 
-  <inputQueue ...> xml element. Omitting brokerURL from a deployment descriptor is a way to keep your
-  deployment descriptors portable. You don't need to edit your deployment descriptors when switching brokers.
+  <inputQueue ...> xml element *or* the brokerURL attribute is set to a placeholder ${defaultBrokerURL}. 
+  Omitting brokerURL or using a placeholder is a way to keep your deployment descriptors portable. You don't 
+  need to edit your deployment descriptors when switching brokers.
 
   Note: If you use import by name in your deployment descriptor, UIMA AS searches the CLASSPATH
   as well as directories on UIMA_DATAPATH to resolve the import.
@@ -173,6 +177,7 @@ b. Run the command:
   way to set this parameter is by adding -DNoTTL to the env parameter UIMA_JVM_OPTS 
   before running deployAsyncService and/or runRemoteAsyncAE.  
   
+
 3.3 Calling a UIMA AS Asynchronous Service
 
 To test a remote UIMA service you can use the script:
@@ -271,8 +276,50 @@ Connect a JMX console to this service with:
 If your console is not on the same machine as the broker replace localhost by
 the name of the broker's machine.  For more details see http://activemq.apache.org/jmx.html
 
+3.8 Monitoring UIMA AS service
+
+UIMA AS service monitoring is available via JMX and jConsole. To enble this, please set the following 
+before starting a service:
+
+set UIMA_JVM_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8009 
+                  -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+
+The above configures JMX Server to run on port 8009 and enables remote monitoring of the process. Connect
+jConsole using similare approach as described in 3.7 above but this using the following:
+
+         $JAVA_HOME/bin/jconsole service:jmx:rmi:///jndi/rmi://localhost:8009/jmxrmi
+
+In the left pane locate and expand org.apache.uima to view UIMA components enabled for JMX monitoring.
+
+3.9 Stopping UIMA AS service
+
+A service can be stopped from a command line or remotely using jConsole and JMX. When the service is
+launched it displays a prompt on stdout:
+
+    Enter 'q' to quiesce and stop the service or 's' to stop it now: 
+
+It reads stdin expecting either 'q' or 's', ignoring all other characters. When 'q' is typed, the
+service will quiesce and stop. As part of this, the service closes its input queue and waits until all CASes 
+still "in-play" are finished. When the input CAS is returned the service stops. When 's' is typed the service
+closes its input queue and immediately releases all CASes being processed and stops.
+
+To stop UIMA AS process remotely or if the process runs in a background use jConsole and JMX. Using approach 
+described in 3.8 above launch jConsole. Once the connection is created, in the left pane open:
+
+org.apache.uima
+    ee.jms.service
+        <Your Annotator Name> Uima EE Service
+              Controller
+                   Operations
+                           
+Here you will find two buttons labeled:
+          CompleteProcessingAndStop
+          StopNow
+
+CompleteProcessingAndStop will initiate quiesce while StopNow will initiate a hard stop.
 
 4. Migration from CPM to UIMA-AS
+
 
 Migrating a collection processing engine from the CPM to UIMA-AS is straightforward.
 
