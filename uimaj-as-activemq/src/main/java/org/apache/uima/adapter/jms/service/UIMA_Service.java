@@ -91,7 +91,7 @@ public class UIMA_Service implements ApplicationListener {
     if (brokerURL != "") {
       System.setProperty("defaultBrokerURL", brokerURL);
       System.out.println(">>> Setting defaultBrokerURL to:" + brokerURL);
-    } else {
+    } else if ( System.getProperty("defaultBrokerURL") == null) {  // perhaps already set using -D
       System.setProperty("defaultBrokerURL", "tcp://localhost:61616");
     }
 
