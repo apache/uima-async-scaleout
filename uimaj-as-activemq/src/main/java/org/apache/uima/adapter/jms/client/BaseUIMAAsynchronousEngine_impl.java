@@ -456,7 +456,28 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     System.out.println(">>>> Client Activated Temp Reply Queue:"
             + consumerDestination.getQueueName());
   }
-
+  
+  /**
+   * Replaces place holder with syntax ${pname} with a system property whose name is pname
+   * 
+   * @param aPlaceholder to resolve
+   * @return - the actual broker URL
+   * @throws ResourceInitializationException
+   */
+  private String replacePlaceholder(String aPlaceholder) throws ResourceInitializationException {
+    //  find placeholder starting and endpoint positions
+    int startPos = aPlaceholder.indexOf("{");
+    int endPos = aPlaceholder.indexOf("}");
+    //  extract the name
+    String placeholder = aPlaceholder.substring(startPos+1, endPos);
+    //  using the name, find the broker URL. This property must exist or exception is thrown
+    String url = System.getProperty(placeholder);
+    //  the property is missing 
+    if ( url == null ) {
+      throw new ResourceInitializationException(new Exception("UIMA AS Client Initialization Exception. Value for placeholder:"+placeholder+" is not defined in the environment. Set System property:"+placeholder+" to the broker URL."));
+    }
+    return url;
+  }
   /**
    * Initialize the uima ee client. Takes initialization parameters from the
    * <code>anApplicationContext</code> map.
@@ -506,6 +527,18 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     asynchManager = new AsynchAECasManager_impl(rm);
 
     brokerURI = (String) anApplicationContext.get(UimaAsynchronousEngine.ServerUri);
+    
+    //  Check if a placeholder is passed in instead of actual Broker URL. The placeholder
+    //  has this syntax ${placeholderName}. A system property with placeholderName
+    //  must exist for successful placeholder resolution.
+    if ( brokerURI.startsWith("${")) {
+      //  resolve placeholder
+      //  throws ResourceInitializationException if placeholder is not defined in
+      //  System properties
+      brokerURI = replacePlaceholder(brokerURI); 
+    }
+    
+    
     String endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.Endpoint);
     clientSideJmxStats.setEndpointName(endpoint);
     int casPoolSize = 1;
