@@ -204,6 +204,29 @@ public class TestUimaASExtended extends BaseTestSupport {
     uimaAsEngine.collectionProcessingComplete();
     uimaAsEngine.stop();
   }
+  
+  public void testClientBrokerPlaceholderSubstitution() throws Exception {
+    System.out.println("-------------- testClientBrokerPlaceholderSubstitution -------------");
+    // Instantiate Uima AS Client
+    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Deploy Uima AS Primitive Service
+    deployService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
+
+    System.setProperty( "defaultBrokerURL3", broker.getMasterConnectorURI());
+    Map<String, Object> appCtx = buildContext("${defaultBrokerURL}","PersonTitleAnnotatorQueue");
+
+    initialize(uimaAsEngine, appCtx);
+    waitUntilInitialized();
+    for (int i = 0; i < 10; i++) {
+      CAS cas = uimaAsEngine.getCAS();
+      cas.setDocumentText("Some Text");
+      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+      uimaAsEngine.sendCAS(cas);
+    }
+    uimaAsEngine.collectionProcessingComplete();
+    uimaAsEngine.stop();
+    
+  }
 
   public void testClientCpcTimeout() throws Exception {
     System.out.println("-------------- testClientCpcTimeout -------------");
@@ -1985,6 +2008,21 @@ public class TestUimaASExtended extends BaseTestSupport {
     // runTest(null,eeUimaEngine,"tcp://hbca-3.watson.ibm.com:61616","TopLevelTaeQueue", 10,
     // PROCESS_LATCH);
   }
+  /*
+   * Tests Uima AS client placeholder handling and substitution. The Uima Aggregate instantiates
+   * UIMA AS client proxy using Jms Client Descriptor that contains a placeholder
+   * ${defaultBrokerURL} instead of hard coded Broker URL. The client parses the 
+   * placeholder string, retrieves the name (defaultBrokerURL) and uses it to look
+   * up tha actual broker URL in System properties.
+   */
+  public void testJmsServiceAdapterWithPlaceholder() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapterWithPlaceholder -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceUsingPlaceholder.xml");
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            10, PROCESS_LATCH);
+  }
 
   /**
    * Tests use of a JMS Service Adapter and an override of the MultipleDeploymentAllowed. 
@@ -2050,6 +2088,9 @@ public class TestUimaASExtended extends BaseTestSupport {
     Assert.fail("Expected ResourceInitializationException Not Thrown. Instead Got Clean Run");
   }
 
+
+  
+  
   public void testDeployAgainAndAgain() throws Exception {
     System.out.println("-------------- testDeployAgainAndAgain -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl(); // here or
