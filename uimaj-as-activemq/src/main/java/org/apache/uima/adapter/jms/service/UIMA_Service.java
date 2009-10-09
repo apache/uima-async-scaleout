@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidClassException;
+import java.net.Socket;
+
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UimaContext;
 import org.apache.uima.UimaContextAdmin;
@@ -386,6 +388,9 @@ public class UIMA_Service implements ApplicationListener {
         System.out.println(">>> Failed to Deploy UIMA Service. Check Logs for Details");
         System.exit(1);
       }
+      // Add a shutdown hook to catch kill signal and to force quiesce and stop
+      ServiceShutdownHook shutdownHook = service.new ServiceShutdownHook(serviceDeployer);
+      Runtime.getRuntime().addShutdownHook(shutdownHook);
       // Check if we should start an optional JMX-based monitor that will provide service metrics
       // The monitor is enabled by existence of -Djmx.monitor.frequency=<number> parameter. By
       // default
@@ -423,5 +428,21 @@ public class UIMA_Service implements ApplicationListener {
       e.printStackTrace();
     }
   }
+  class ServiceShutdownHook extends Thread {
 
+    public SpringContainerDeployer serviceDeployer;
+
+    public ServiceShutdownHook(SpringContainerDeployer serviceDeployer) {
+      this.serviceDeployer = serviceDeployer;
+    }
+
+    public void run() {
+      try {
+        System.err.println("Uima AS Service Wrapper Caught Kill Signal - Initiating Quiesce and Stop");
+        serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+      } catch( Exception e) {
+          e.printStackTrace();
+      }
+    }
+  } 
 }
