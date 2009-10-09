@@ -666,6 +666,10 @@
       <!-- xsl:variable name="errorHandlerChainID" select="f:getErrorHandlerChainID(.)"/ --> 
       <xsl:choose>
         <xsl:when test="../../u:service[@i:isTopLvlCpp eq 'yes']">
+          <!-- create bean to do placeholder substitution Jira UIMA-1288 -->
+          <bean id="placeholderSubstitution" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+            <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>  
+          </bean>
           <bean id="{$ctlrID}"
             class="org.apache.uima.aae.controller.UimacppServiceController">
             
