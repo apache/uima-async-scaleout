@@ -3,7 +3,7 @@
 
 0. Changes in the 2.3.0 release
   - UIMA-AS "graduated" from Sandbox, now a top-level (within UIMA) add-on
-  - UIMA-AS repackaged - no longer includes the base UIMA, which must be separately downloaded
+  - UIMA-AS repackaged - no longer includes the base UIMA. You must download a comparable version of base UIMA, separately
   - Many improvements in error handling and recovery
   - General hardening / bug fixes
   - Many improvements in JMX reporting
@@ -12,9 +12,10 @@
   - Support for passing configuration information in URLs to ActiveMQ
   - Delta Cas format support added, including Delta Binary serialization where the type systems are identical
   - Multiple remote CAS multiplier support added
-  - Using Java queuing instead of imbedded broker for local services (performance improvement)
+  - Using Java queuing instead of embedded broker for local services (performance improvement)
   - Support for high volume - multiple concurrent listener threads
-  - Initial support for Apache Camel and OSGI enablement added  
+  - Initial support for Apache Camel and OSGI enablement added
+  - New launcher allows specifying directories containing Jars; all Jars found will be added to the classpath
 
 
 1. Contents of Apache UIMA-AS binary distribution
@@ -349,6 +350,18 @@ An example of this kind of migration is embodied by the sample descriptors:
 5. Known problems/limitations with Release 2.3.0
 
   1. No automatic refresh for broken connections with temp reply queues.
+  
+  2. When connecting to an AMQ broker behind a firewall, avoid using the maxInactivityDuration=0 
+     decoration on the brokerURL (see: http://activemq.apache.org/configuring-wire-formats.html)
+     as it turns off AMQ 'keep alive' messaging. A firewall may close ports if it is 
+     configured to detect stale connections. 
+
+  3. UIMA AS does not (yet) support PEAR specifiers. The deployment descriptor should not point to PEAR file. 
+     Instead, PEARs must be unzipped and classpath adjusted to point to required resources.
+
+  4. To run multiple UIMA AS services on the same machine, a unique JMX port must be provided 
+     by setting the following environment variable:
+     set UIMA_JVM_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=<unique port#>  -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
 
 For up-to-date information on UIMA-AS issues, see 
 http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12310570
