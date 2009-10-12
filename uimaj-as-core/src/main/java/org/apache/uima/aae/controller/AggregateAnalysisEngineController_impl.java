@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager;
@@ -136,6 +137,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   // prevents more than one thread to call collectionProcessComplete on the FC
   private volatile boolean doSendCpcReply = false;
+  //	Guards FC's next() method. Single thread access is allowed at any given time
+  private Semaphore flowSemaphore = new Semaphore(1);
 
   /**
    * 
@@ -2009,6 +2012,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           throws AsynchAEException {
     Step step = null;
     try {
+      //  Guard a call to next(). Allow one thread and block the rest
+      flowSemaphore.acquire();
       step = aFlow.next();
     } catch (Exception e) {
       e.printStackTrace();
@@ -2033,6 +2038,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         ex.printStackTrace();
       }
       return;
+    } finally {
+      //  Allow next thread to call next() above
+      flowSemaphore.release();
     }
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
