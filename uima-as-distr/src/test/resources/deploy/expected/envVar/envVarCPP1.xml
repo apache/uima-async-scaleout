@@ -13,6 +13,10 @@
 <!--======================================================-->
    <!-- Primitive or non-Async Aggr: MeetingDetectorTaeQueue -->
    <!--======================================================-->
+   <bean id="placeholderSubstitution"
+         class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+   </bean>
    <bean id="primitive_ctlr_MeetingDetectorTaeQueue_1"
          class="org.apache.uima.aae.controller.UimacppServiceController">
 
