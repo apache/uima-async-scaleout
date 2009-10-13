@@ -414,11 +414,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       Endpoint cEndpoint = null;
       // synchronized to prevent more than one thread to call collectionProcessComplete() on
       // the Flow Controller.
-      synchronized (flowControllerContainer) {
-        if (doSendCpcReply == false && sendReply && allDelegatesCompletedCollection()
+      if (flowControllerContainer != null) {
+        synchronized (flowControllerContainer) {
+          if (doSendCpcReply == false && sendReply && allDelegatesCompletedCollection()
                 && ((cEndpoint = getClientEndpoint()) != null)) {
-          doSendCpcReply = true;
-          if (flowControllerContainer != null) {
+            doSendCpcReply = true;
             flowControllerContainer.collectionProcessComplete();
           }
         }
@@ -2013,8 +2013,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     Step step = null;
     try {
       //  Guard a call to next(). Allow one thread and block the rest
-      flowSemaphore.acquire();
-      step = aFlow.next();
+      synchronized( flowControllerContainer ) {
+        step = aFlow.next();
+      }
     } catch (Exception e) {
       e.printStackTrace();
       // Any error here is automatic termination
@@ -2038,11 +2039,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         ex.printStackTrace();
       }
       return;
-    } finally {
-      //  Allow next thread to call next() above
-      flowSemaphore.release();
     }
-
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
               "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_step__FINEST",
