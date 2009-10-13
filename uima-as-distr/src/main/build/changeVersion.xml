@@ -94,7 +94,8 @@
     <replace dir="${wksp}" includes=
       "uimaj-as-activemq/pom.xml,
        uimaj-as-core/pom.xml,
-       uimaj-as-jms/pom.xml
+       uimaj-as-jms/pom.xml,
+       uimaj-as-camel/pom.xml
 -     " summary="yes"
       token="&lt;version&gt;${uima.as.prev.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"
       value="&lt;version&gt;${uima.as.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"/>     
@@ -103,10 +104,12 @@
   <target name="eclipse-plugins">
     <replace dir="${wksp}" includes=
       "uimaj-ep-deployeditor/pom.xml,
-       uimaj-ep-runtime-deployeditor/pom.xml
+       uimaj-ep-runtime-deployeditor/pom.xml,
+       uimaj-as-osgi-runtime/pom.xml
 -     " summary="yes"
       token="&lt;version&gt;${uima.as.eclipse.prev.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"
-      value="&lt;version&gt;${uima.as.eclipse.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"/>    
+      value="&lt;version&gt;${uima.as.eclipse.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"/>
+          
     <replace file="${wksp}/uimaj-ep-runtime-deployeditor/pom.xml"
       token='&lt;Fragment-Host>org.apache.uima.runtime;bundle-version="${uima.as.prev.version.base}"&lt;/Fragment-Host>'
       value='&lt;Fragment-Host>org.apache.uima.runtime;bundle-version="${uima.as.version.base}"&lt;/Fragment-Host>'/>

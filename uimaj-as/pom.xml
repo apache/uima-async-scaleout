@@ -24,19 +24,19 @@
   <groupId>org.apache.uima</groupId>
   <artifactId>uimaj-as</artifactId>
   <packaging>pom</packaging>
-  <version>2.3.0-incubating-SNAPSHOT</version> <!-- this comment is a flag for changeVersion -->
+  <version>2.3.0-incubating</version> <!-- this comment is a flag for changeVersion -->
   
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uimaj</artifactId>   
     <!-- the version of base UIMA this version goes with -->
-    <version>2.3.0-incubating-SNAPSHOT</version> <!-- this comment is a flag for changeVersion -->
+    <version>2.3.0-incubating</version> <!-- this comment is a flag for changeVersion -->
     <relativePath>../uimaj</relativePath>
     
   </parent>
   <properties>
-      <uimaj-as-release-version>2.3.0-incubating-SNAPSHOT</uimaj-as-release-version>
-      <uimaj-as-release-eclipse-version>2.3.0.incubating-SNAPSHOT</uimaj-as-release-eclipse-version>
+      <uimaj-as-release-version>2.3.0-incubating</uimaj-as-release-version>
+      <uimaj-as-release-eclipse-version>2.3.0.incubating</uimaj-as-release-eclipse-version>
   </properties>
 
   <name>Apache UIMA Asynch Scaleout framework</name>

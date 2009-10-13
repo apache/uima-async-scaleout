@@ -24,12 +24,12 @@
 	<groupId>org.apache.uima</groupId>
 	<artifactId>uima-as-distr</artifactId>
 	<packaging>jar</packaging>
-	<version>2.3.0-incubating-SNAPSHOT</version> <!-- this comment is a flag for changeVersion -->
+	<version>2.3.0-incubating</version> <!-- this comment is a flag for changeVersion -->
 	<name>Apache UIMA Asynchronous Scaleout - Resources and Assembly Descriptor for building the distribution</name>
 	<parent>
 		<groupId>org.apache.uima</groupId>
 		<artifactId>uima-common-distribution</artifactId>
-		<version>2.3.0-incubating-SNAPSHOT</version> <!-- this comment is a flag for changeVersion -->
+		<version>2.3.0-incubating</version> <!-- this comment is a flag for changeVersion -->
       <relativePath>../uimaj/distr-superPom</relativePath>
 	</parent>
   
