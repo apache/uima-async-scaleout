@@ -49,7 +49,7 @@
   
   <target name="all" depends=
    "uimaj-as,
-    uima-as-distr, 
+    uima-as-distr,
     normal-modules,
     eclipse-plugins, 
     eclipse-features, 
@@ -78,18 +78,21 @@
        <replacefilter token="&lt;version&gt;${uima.as.prev.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"
                      value="&lt;version&gt;${uima.as.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"/>
        <replacefilter token="&lt;version&gt;${uima.eclipse.prev.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion - eclipse -->"
-                     value="&lt;version&gt;${uima.eclipse.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion - eclipse -->"/>
-     
+                     value="&lt;version&gt;${uima.eclipse.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion - eclipse -->"/>     
     </replace>
   </target>
   
-  <target name="uima-as-distr">
+  <target name="uima-as-distr">    
     <replace file="${wksp}/uima-as-distr/pom.xml" summary="yes">
-       <replacefilter token="&lt;version&gt;${uima.as.prev.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"
+      <replacefilter token="&lt;version&gt;${uima.as.prev.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"
                      value="&lt;version&gt;${uima.as.version}&lt;/version&gt; &lt;!-- this comment is a flag for changeVersion -->"/>
-    </replace>  
+      <replacefilter token="&lt;uimaj-as-release-version&gt;${uima.as.prev.version}&lt;/uimaj-as-release-version&gt;"
+                     value="&lt;uimaj-as-release-version&gt;${uima.as.version}&lt;/uimaj-as-release-version&gt;"/>    
+      <replacefilter token="&lt;uimaj-as-release-eclipse-version&gt;${uima.as.eclipse.prev.version}&lt;/uimaj-as-release-eclipse-version&gt;"
+                     value="&lt;uimaj-as-release-eclipse-version&gt;${uima.as.eclipse.version}&lt;/uimaj-as-release-eclipse-version&gt;"/>    
+    </replace>      
   </target>
-  
+    
   <target name="normal-modules">
     <replace dir="${wksp}" includes=
       "uimaj-as-activemq/pom.xml,

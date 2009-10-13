@@ -34,8 +34,8 @@
 	</parent>
   
   <properties>
-    <uimaj-as-release-version>2.3.0-incubating-SNAPSHOT</uimaj-as-release-version> <!-- this comment is a flag for changeVersion -->
-    <uimaj-as-release-eclipse-version>2.3.0.incubating-SNAPSHOT</uimaj-as-release-eclipse-version> <!-- this comment is a flag for changeVersion -->
+    <uimaj-as-release-version>2.3.0-incubating</uimaj-as-release-version> <!-- this comment is a flag for changeVersion -->
+    <uimaj-as-release-eclipse-version>2.3.0.incubating</uimaj-as-release-eclipse-version> <!-- this comment is a flag for changeVersion -->
 
     <!-- property used in multiple places in distr-superPom -->
     <assemblyFinalName>uima-as-${uimaj-release-version}</assemblyFinalName>
