@@ -70,5 +70,5 @@ cp -r $leveldir/* .
 cd uimaj-as
 mvn ${jvmargs} $mvnCommand
 cd ../uima-as-distr
-mvn assembly:assembly
+mvn clean install
 
