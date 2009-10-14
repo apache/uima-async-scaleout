@@ -75,6 +75,35 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
     this.jmxInfo = new HashMap();
     this.lastRefreshTime = 0;
   }
+  
+  synchronized public String quiesceAndStop() throws IOException {
+
+	  if (socket != null) {
+		// System.out.println("UimacppServiceManagement::quiesceAndStop()
+		// Sending QUIESCEANDSTOP");
+	
+		writer.write("QUIESCEANDSTOP");
+		writer.flush();
+	
+		BufferedReader in = new BufferedReader(new InputStreamReader(socket
+				.getInputStream()));
+	
+		StringBuffer sb = new StringBuffer();
+		int c = in.read();
+		while (c >= 0) {
+		  sb.append((char) c);
+		  c = in.read();
+		  if (c == '\n') {
+			break;
+		  }
+		}
+		System.out.println("UimacppServiceManagement service reports QuiesceAndStop " + sb.toString());
+		return sb.toString();
+		} else {
+		  throw new IOException("Error: no socket connection.");
+		}
+	}
+
 
   synchronized public String getStatisticsAsString() throws IOException {
 
@@ -341,7 +370,19 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
       writer.write("SHUTDOWN");
       writer.flush();
       // System.out.println("UimacppServiceManagement sent shutdown message");
-
+  		BufferedReader in = new BufferedReader(new InputStreamReader(socket
+  				.getInputStream()));
+  	
+  		StringBuffer sb = new StringBuffer();
+  		int c = in.read();
+  		while (c >= 0) {
+  		  sb.append((char) c);
+  		  c = in.read();
+  		  if (c == '\n') {
+  			break;
+  		  }
+  		}
+  	  System.out.println("UimacppServiceManagement service reports shutdown " + sb.toString());
       return;
     } else {
       System.err.println("Error no connection");
@@ -351,5 +392,9 @@ public class UimacppServiceManagement implements UimacppServiceManagementMBean {
   public String getUniqueMBeanName() {
     return uniqueMBeanName;
   }
+
+	synchronized public void quiesceAndShutdown() throws IOException {
+		quiesceAndStop();
+	}
 
 }

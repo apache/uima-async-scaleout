@@ -65,5 +65,7 @@ public interface UimacppServiceManagementMBean extends ManagementObject, java.io
   public void decreaseAEInstances(int num);
 
   public void shutdown() throws IOException;
+  
+  public void quiesceAndShutdown() throws IOException;
 
 }

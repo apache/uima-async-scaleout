@@ -108,6 +108,8 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   private Boolean InitializedState = false;
 
   private Exception InitializedStatus = null;
+  
+  private Boolean isStopped = false;
 
   /**
    * Configure and start a Uima C++ service that connects to an ActiveMQ queue broker. This class
@@ -145,6 +147,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
       this.terminateOnCPCError = terminateOnCPCError;
       this.initialFsHeapSize = initialFsHeapSize;
       this.startingDirectory = envVarMap.get(STARTING_DIRECTORY);
+      this.isStopped = false;
 
       /* start a listener */
       server = new ServerSocket(0);
@@ -269,7 +272,8 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
       this.initialFsHeapSize = initialFsHeapSize;
       this.startingDirectory = envVarMap.get(STARTING_DIRECTORY);
       this.jmxMgmt = jmxManagement;
-
+      this.isStopped = false;
+      
       /* start a listener */
       server = new ServerSocket(0);
       port = server.getLocalPort();
@@ -598,7 +602,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
         }
         if (sb.toString().equalsIgnoreCase("0")) {
           System.out.println("Uima C++ service at " + queueName + " Ready to process...");
-          WaitThread wt = new WaitThread(uimacppProcess, uimaLogger, listeners);
+          WaitThread wt = new WaitThread(uimacppProcess, uimaLogger, this);
           Thread wThread = new Thread(wt);
           wThread.start();
         } else {
@@ -650,6 +654,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
     }
     commandConnection.close();
     server.close();
+    this.isStopped = true;
   }
 
   public String getStatistics() throws IOException {
@@ -779,9 +784,26 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   }
 
   public void quiesceAndStop() {
-    terminate();
+		try {
+		  String msg = this.mbean.quiesceAndStop();
+		  //System.out.println("UimacppServiceController service reports QuiesceAndStop " + msg);
+		  this.uimaLogger.log(Level.INFO, "Service reports QuiesceAndStop " + msg );
+		} catch (IOException e ) {
+		  this.uimaLogger.log(Level.SEVERE, e.getMessage());
+		}
   }
 
+  public boolean isStopped() {
+    return this.isStopped;
+  }
+  
+  public void setStopped() {
+    this.isStopped = true;
+  }
+  
+  public ArrayList<ControllerCallbackListener> getCallbackListeners() {
+	  return this.listeners;
+  }
 }
 
 /**
@@ -931,6 +953,7 @@ class StderrHandler implements Runnable {
       while (c >= 0) {
         sb.append((char) c);
         if (c == '\n') {
+          System.out.println(sb.toString());
           logger.log(Level.INFO, sb.toString());
           sb.delete(0, sb.length());
         }
@@ -954,12 +977,16 @@ class WaitThread implements Runnable {
   private org.apache.uima.util.Logger uimaLogger;
 
   private List<ControllerCallbackListener> listeners;
+  
+  private UimacppServiceController controller;
 
   public WaitThread(Process aprocess, org.apache.uima.util.Logger logger,
-          List<ControllerCallbackListener> llist) throws IOException {
+         // List<ControllerCallbackListener> llist) throws IOException {
+	      UimacppServiceController cntlr) throws IOException {
     this.uimacppProcess = aprocess;
     this.uimaLogger = logger;
-    this.listeners = llist;
+    this.controller = cntlr;
+    this.listeners = this.controller.getCallbackListeners();
   }
 
   public void run() {
@@ -968,6 +995,7 @@ class WaitThread implements Runnable {
     try {
       rc = uimacppProcess.waitFor();
       message += "rc=" + rc;
+      controller.setStopped();
       if (listeners != null) {
         for (int i = 0; i < listeners.size(); i++) {
           ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
