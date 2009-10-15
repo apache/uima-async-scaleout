@@ -55,7 +55,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
   private volatile boolean serviceInitializationCompleted;
 
   private volatile boolean serviceInitializationException;
-
+  
   private Semaphore serviceInitializationSemaphore = new Semaphore(1);
 
   private ConcurrentHashMap springContainerRegistry = null;
@@ -429,7 +429,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       serviceInitializationSemaphore.release();
     }
     if (serviceInitializationException) {
-      throw new ResourceInitializationException();
+      throw new ResourceInitializationException(new Exception("Details of failure(s) written to UIMA log"));
     }
   }
 

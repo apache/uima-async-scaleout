@@ -31,7 +31,6 @@ import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.command.ActiveMQDestination;
-import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
@@ -42,17 +41,10 @@ import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
-import org.apache.uima.cas.CAS;
-import org.apache.uima.collection.CollectionReader;
-import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.ee.test.utils.BaseTestSupport;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
-import org.apache.uima.util.Level;
-import org.apache.uima.util.XMLInputSource;
-
-import com.thoughtworks.xstream.XStream.InitializationException;
 
 public class TestUimaASBasic extends BaseTestSupport {
   private static final int DEFAULT_HTTP_PORT = 8888;
