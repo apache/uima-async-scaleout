@@ -29,6 +29,9 @@
     <delegateAnalysisEngine key="NoOp">
       <import location="NoOpAnnotator.xml"/>
     </delegateAnalysisEngine>
+    <delegateAnalysisEngine key="NoOp2">
+      <import location="NoOpAnnotator.xml"/>
+    </delegateAnalysisEngine>
     <delegateAnalysisEngine key="SimpleCasGenerator">
       <import location="../multiplier/SimpleCasGenerator.xml"/>
     </delegateAnalysisEngine>
@@ -50,6 +53,7 @@
         <mandatory>true</mandatory>
         <overrides>
           <parameter>NoOp/ErrorFrequency</parameter>
+          <parameter>NoOp2/ErrorFrequency</parameter>
         </overrides>
       </configurationParameter>
       <configurationParameter>
@@ -141,7 +145,7 @@
         <value>
           <array>
             <string>SimpleCasGenerator</string>
-            <string>NoOp</string>
+            <string>NoOp,NoOp2</string>
             <string>NoOpAnnotatorWithCpcCheck</string>
           </array>
         </value>
@@ -152,6 +156,7 @@
         <value>
           <array>
             <string>NoOp</string>
+            <string>NoOp2</string>
           </array>
         </value>
       </nameValuePair>

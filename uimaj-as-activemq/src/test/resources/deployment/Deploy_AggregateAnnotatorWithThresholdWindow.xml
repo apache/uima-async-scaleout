@@ -51,6 +51,14 @@
               <collectionProcessCompleteErrors timeout="0" additionalErrorAction="terminate"/>
             </asyncAggregateErrorConfiguration>
           </analysisEngine>
+          <analysisEngine key="NoOp2" async="false">
+            <scaleout numberOfInstances="1"/>
+            <asyncAggregateErrorConfiguration>
+              <getMetadataErrors maxRetries="0" timeout="5000" errorAction="continue"/>
+              <processCasErrors maxRetries="0" timeout="5000" continueOnRetryFailure="true" thresholdCount="3" thresholdWindow="7" thresholdAction="disable"/>
+              <collectionProcessCompleteErrors timeout="0" additionalErrorAction="terminate"/>
+            </asyncAggregateErrorConfiguration>
+          </analysisEngine>
           <analysisEngine key="NoOpAnnotatorWithCpcCheck" async="false">
             <scaleout numberOfInstances="1"/>
             <asyncAggregateErrorConfiguration>
