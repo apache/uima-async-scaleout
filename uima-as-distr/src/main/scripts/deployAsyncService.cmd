@@ -15,36 +15,12 @@
 @REM   specific language governing permissions and limitations
 @REM   under the License.
 
+
 @if .%1 == . goto usage
 @if NOT exist %1 goto usage
 
-@if not defined UIMA_HOME goto USAGE_UIMA
-@goto RUN
-
-:USAGE_UIMA
-@echo UIMA_HOME environment variable is not set 
-@goto end
-
-:RUN
-@setlocal
-
-@call "%UIMA_HOME%\bin\setUimaClassPath"
-
-@rem set spring_file=%~n1_spring.xml
-@rem ddmake does not work because it will not rebuild if the component descriptor changed
-@rem but the deployment descriptor did not.  For now we always build the Spring XML.
-@rem call ddmake %1
-@rem call dd2spring %1 %spring_file%
-
-@rem Set ActiveMQ home
-
-
-@if "%ACTIVEMQ_HOME%"=="" (set ACTIVEMQ_HOME=%UIMA_HOME%\apache-activemq-4.1.1)
-
-@if "%JAVA_HOME%"=="" (set UIMA_JAVA_CALL=java) else (set UIMA_JAVA_CALL=%JAVA_HOME%\bin\java)
-echo %ACTIVEMQ_HOME%
-
-@"%UIMA_JAVA_CALL%" "-Duima.datapath=%UIMA_DATAPATH%" "-Djava.util.logging.config.file=%UIMA_LOGGER_CONFIG_FILE%" %UIMA_JVM_OPTS% -DUimaBootstrapSuppressClassPathDisplay -Dorg.apache.uima.jarpath="%UIMA_CLASSPATH%;%ACTIVEMQ_HOME%;%ACTIVEMQ_HOME%\lib;%ACTIVEMQ_HOME%\lib\optional;%UIMA_JAR_PATH%" -jar "%UIMA_HOME%\lib\uimaj-bootstrap.jar" org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL "file:%UIMA_HOME%\saxon\saxon8.jar" -xslt "%UIMA_HOME%\bin\dd2spring.xsl" -dd %*
+@rem call common script that will launch the Uima AS service
+@call runUimaClass org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL file:%UIMA_HOME%\saxon\saxon8.jar -xslt %UIMA_HOME%\bin\dd2spring.xsl -dd %*
 
 @goto end
 :usage

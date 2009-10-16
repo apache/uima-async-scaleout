@@ -15,24 +15,4 @@
 @REM   specific language governing permissions and limitations
 @REM   under the License.
 
-@if not defined UIMA_HOME goto USAGE_UIMA
-@goto RUN
-
-:USAGE_UIMA
-@echo UIMA_HOME environment variable is not set 
-@goto EXIT
-
-:RUN
-@setlocal
-@call "%UIMA_HOME%\bin\setUimaClassPath"
-
-@rem Set ActiveMQ home
-@if "%ACTIVEMQ_HOME%"=="" (set ACTIVEMQ_HOME=%UIMA_HOME%\apache-activemq-4.1.1)
-
-@if "%JAVA_HOME%"=="" (set UIMA_JAVA_CALL=java) else (set UIMA_JAVA_CALL=%JAVA_HOME%\bin\java)
-
-echo %ACTIVEMQ_HOME%
-
-
-@"%UIMA_JAVA_CALL%"  "-Duima.datapath=%UIMA_DATAPATH%" "-Djava.util.logging.config.file=%UIMA_LOGGER_CONFIG_FILE%" %UIMA_JVM_OPTS% -DUimaBootstrapSuppressClassPathDisplay -Dorg.apache.uima.jarpath="%UIMA_CLASSPATH%;%ACTIVEMQ_HOME%;%ACTIVEMQ_HOME%\lib;%ACTIVEMQ_HOME%\lib\optional;%UIMA_JAR_PATH%" -jar "%UIMA_HOME%\lib\uimaj-bootstrap.jar" org.apache.uima.examples.as.RunRemoteAsyncAE %*
-:EXIT
+@call runUimaClass org.apache.uima.examples.as.RunRemoteAsyncAE %*

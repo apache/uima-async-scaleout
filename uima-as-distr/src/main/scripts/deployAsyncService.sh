@@ -16,33 +16,13 @@
 #   specific language governing permissions and limitations
 #   under the License.
 
-if [ "$UIMA_HOME" = "" ]
-then
-  echo UIMA_HOME environment variable is not set
-  exit 1
-fi
-
 if [ $# -lt 1 ]
   then echo "You must specify one or more deployment descriptors.  Usage: deployAsyncService.sh file-path-of-deployment-descriptor [another-dd ...]"
-       exit;
+       exit 1;
 fi;
 if [ ! -f $1 ]
   then echo "File '"$1"' does not exist";
-       exit;
+       exit 1;
 fi;
 
-. "$UIMA_HOME/bin/setUimaClassPath.sh"
-
-if [ "$JAVA_HOME" = "" ]
-then
-  UIMA_JAVA_CALL=java
-else
-  UIMA_JAVA_CALL="$JAVA_HOME/bin/java"
-fi
-
-if [ "$ACTIVEMQ_HOME" = "" ]
-then
-  ACTIVEMQ_HOME=$UIMA_HOME/apache-activemq-4.1.1
-fi
-
-"$UIMA_JAVA_CALL" "-Duima.datapath=$UIMA_DATAPATH" "-Djava.util.logging.config.file=$UIMA_LOGGER_CONFIG_FILE" $UIMA_JVM_OPTS -DUimaBootstrapSuppressClassPathDisplay -Dorg.apache.uima.jarpath="$UIMA_CLASSPATH:$ACTIVEMQ_HOME:$ACTIVEMQ_HOME/lib:$ACTIVEMQ_HOME/lib/optional:$UIMA_JAR_PATH" -jar "$UIMA_HOME/lib/uimaj-bootstrap.jar" org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL "file:$UIMA_HOME/saxon/saxon8.jar" -xslt "$UIMA_HOME/bin/dd2spring.xsl" -dd $*
+. runUimaClass.sh org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL "file:$UIMA_HOME/saxon/saxon8.jar" -xslt "$UIMA_HOME/bin/dd2spring.xsl" -dd $*
