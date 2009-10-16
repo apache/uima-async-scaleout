@@ -22,6 +22,7 @@ package org.apache.uima.aae.error.handler;
 import java.net.ConnectException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
@@ -59,8 +60,14 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
     delegateMap = new HashMap();
   }
 
+  /*
+   * Copy map provided by dd2spring but create unique Threshold objects if necessary (UIMA-1623)
+   */
   public ProcessCasErrorHandler(Map aDelegateMap) {
     delegateMap = aDelegateMap;
+    for (Map.Entry<String, Threshold> entry : (Set<Map.Entry<String, Threshold>>)delegateMap.entrySet()) {
+      entry.setValue(entry.getValue().initialize());
+    }
   }
 
   private Endpoint getDestination(AnalysisEngineController aController, ErrorContext anErrorContext) {

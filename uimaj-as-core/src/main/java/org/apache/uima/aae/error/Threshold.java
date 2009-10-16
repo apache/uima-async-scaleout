@@ -26,7 +26,7 @@ public class Threshold {
 
   private String action;
 
-  private long window;
+  private int window;
 
   private int maxRetries;
 
@@ -39,20 +39,25 @@ public class Threshold {
   public Threshold() {
   }
 
+  // Copy constructor used when a duplicate object has R/W storage so cannot be shared
+  private Threshold(Threshold t) {
+    window = t.window;
+    threshold = t.threshold;
+    action = t.action;
+    maxRetries = t.maxRetries;
+    continueOnRetryFailure = t.continueOnRetryFailure;
+    if (window >= threshold && threshold > 1) {
+      errorSequences = new long[threshold - 1];
+      Arrays.fill(errorSequences, -window);
+    }
+  }
+
   public long getWindow() {
     return window;
   }
 
   public void setWindow(long aWindow) {
-    window = aWindow;
-    // Need to save error sequences if watching for more than 1 error in a window
-    // Initialize array with values outside the window
-    if (aWindow >= threshold && threshold > 1) {
-      errorSequences = new long[threshold - 1];
-      Arrays.fill(errorSequences, -window);
-    } else {
-      errorSequences = null;
-    }
+    window = (int) aWindow;
   }
 
   public long getThreshold() {
@@ -61,14 +66,23 @@ public class Threshold {
 
   public void setThreshold(long aCount) {
     threshold = (int) aCount;
+  }
+
+  public Threshold initialize() {
     // Need to save error sequences if watching for more than 1 error in a window
-    // Initialize array with values outside the window
+    // If first use of this instance, initialize array with values outside the window
+    // If shared by another delegate create a copy
     if (window >= threshold && threshold > 1) {
-      errorSequences = new long[threshold - 1];
-      Arrays.fill(errorSequences, -window);
+      if (errorSequences == null) {
+        errorSequences = new long[threshold - 1];
+        Arrays.fill(errorSequences, -window);
+        return this;
+      } else {
+        return new Threshold(this);     // Original in use so make a copy
+      } 
     } else {
-      errorSequences = null;
-    }
+       return this;
+   }
   }
 
   public boolean exceeded(long value) {
@@ -83,7 +97,6 @@ public class Threshold {
       return false;
     }
     ++errorCount;
-    // casCount += errorCount; // HACK! Currently count doesn't include errors
 
     // If no window check if total errors have REACHED the threshold
     if (errorSequences == null) {
@@ -98,7 +111,8 @@ public class Threshold {
       }
     }
     // If insert fails then have reached threshold.
-    // (Should not be called again after returning true!)
+    // Should not be called again after returning true as may return false!
+    // But may be called again if no action specified, but then it doesn't matter.
     return true;
   }
 
