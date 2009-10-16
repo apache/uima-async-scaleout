@@ -475,11 +475,13 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       }
 
     }
+    isStopping = true;
+    aUimaEeEngine.stop();
+
+    // Finally fail test if unhappy ... must be last call as acts like "throw"
     if (unexpectedException) {
       fail("Unexpected exception returned");
     }
-    isStopping = true;
-    aUimaEeEngine.stop();
   }
 
   /**

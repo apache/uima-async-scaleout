@@ -511,7 +511,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
   public void testQuiesceAndStop() throws Exception {
-    System.out.println("-------------- testAggregateWithFailedRemoteDelegate -------------");
+    System.out.println("-------------- testQuiesceAndStop -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue");
