@@ -419,7 +419,8 @@ public class UIMA_Service implements ApplicationListener {
           }
           // This is a polling loop. Sleep for 1 sec
           try {
-            Thread.sleep(1000);
+        	if (!topLevelControllor.isStopped()) 
+              Thread.sleep(1000);
           } catch (InterruptedException ex) {
           }
         } // while
@@ -438,8 +439,11 @@ public class UIMA_Service implements ApplicationListener {
 
     public void run() {
       try {
-        System.err.println("Uima AS Service Wrapper Caught Kill Signal - Initiating Quiesce and Stop");
-        serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+    	AnalysisEngineController topLevelController = serviceDeployer.getTopLevelController();
+    	if (topLevelController != null && !topLevelController.isStopped() ) {
+          System.err.println("Uima AS Service Wrapper Caught Kill Signal - Initiating Quiesce and Stop");
+          serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+    	}
       } catch( Exception e) {
           e.printStackTrace();
       }
