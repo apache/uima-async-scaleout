@@ -575,15 +575,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               delegate.getEndpoint().setConcurrentReplyConsumers(cc);
             }
           }
-          String selector = "";
-          if (__listenerRef.getMessageSelector() != null) {
-            selector = " Selector:" + __listenerRef.getMessageSelector();
-          }
-          if (getDestination() != null) {
+          //  Show ready message on the console only if this listener is *not* listening
+          //  on an input queue. Input queue listeners are not started until the service
+          //  is fully initialized
+          if (__listenerRef.getMessageListener() == null && getDestination() != null) {
             System.out.println("Service:" + controller.getComponentName()
-                    + " Listener Ready. Broker:" + getBrokerUrl() + " Queue:" + getDestination()
-                    + selector);
-          }
+                    + " Listener Ready. Broker:" + getBrokerUrl() + " Queue:" + getDestination());
+          } 
 
         } catch (Exception e) {
           e.printStackTrace();
@@ -737,7 +735,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   public void doDestroy() {
     super.destroy();
   }
-
+  public void setMessageSelector( String messageSelector) {
+    super.setMessageSelector(messageSelector);
+    //  turn off auto startup. Selectors are only used on input queues. We dont
+    //  want listeners on this queue to start now. Once the service initializes 
+    //  we will start listeners on input queue.
+    this.setAutoStartup(false);
+  }
   /**
    * Spins a shutdown thread and stops Sprint and ActiveMQ threads.
    * 

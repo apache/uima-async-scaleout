@@ -165,20 +165,22 @@ public class UIMA_Service implements ApplicationListener {
     springDeployer.deploy(springContextFiles);
     // Poll the deployer for the initialization status. Wait for either successful
     // initialization or failure.
-    while (!springDeployer.isInitialized() && !springDeployer.initializationFailed()) {
+    while (!springDeployer.isInitialized() ) { 
+      if ( springDeployer.initializationFailed()) {
+        throw new ResourceInitializationException();
+      }
       synchronized (springDeployer) {
         springDeployer.wait(100);
       }
     }
     // Check if the deployer failed
-    if (springDeployer.initializationFailed()) {
-      throw new ResourceInitializationException();
-    }
     // Register this class to receive Spring container notifications. Specifically, looking
     // for an even signaling the container termination. This is done so that we can stop
     // the monitor thread
     FileSystemXmlApplicationContext context = springDeployer.getSpringContext();
     context.addApplicationListener(this);
+    springDeployer.startListeners();
+    
     return springDeployer;
   }
 

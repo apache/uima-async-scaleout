@@ -696,7 +696,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
     SpringContainerDeployer springDeployer = new SpringContainerDeployer(springContainerRegistry);
     try {
-      return springDeployer.deploy(springContext);
+      String id = springDeployer.deploy(springContext);
+      if ( springDeployer.isInitialized() ) {
+        springDeployer.startListeners();
+      }
+      return id;
     } catch (ResourceInitializationException e) {
       running = true;
       throw e;
@@ -728,7 +732,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
     SpringContainerDeployer springDeployer = new SpringContainerDeployer(springContainerRegistry);
     try {
-      return springDeployer.deploy(springContextFiles);
+      String id = springDeployer.deploy(springContextFiles);
+      if ( springDeployer.isInitialized() ) {
+        springDeployer.startListeners();
+      }
+      return id;
     } catch (ResourceInitializationException e) {
       running = true;
       throw e;

@@ -32,6 +32,7 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.Controller;
 import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.ControllerLifecycle;
 import org.apache.uima.aae.controller.Endpoint;
@@ -283,6 +284,8 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       // when either the controller successfully initialized or it failed
       // during initialization
       waitForServiceNotification();
+      //  success, the service initialized
+      startListeners();
     } catch (Exception e) {
       // Query the container for objects that implement
       // ControllerLifecycle interface. These
@@ -326,7 +329,49 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     }
     return containerId;
   }
-
+  /**
+   * Starts Spring listeners on input queues. These listeners are not auto started
+   * during initialization. Only after successful service initialization these listeners are
+   * activated.
+   * 
+   * @param listeners - list of listeners to start
+   * @param ctx - spring context
+   * @throws Exception
+   */
+  private void doStartListeners(String[] listeners, FileSystemXmlApplicationContext ctx ) throws Exception {
+    for (int i = 0; listeners != null && i < listeners.length; i++) {
+      UimaDefaultMessageListenerContainer listener = 
+        (UimaDefaultMessageListenerContainer) ctx.getBean(listeners[i]);
+      //  Only start those listeners that are not running yet. 
+      if ( listener != null && !listener.isRunning()) {
+        if ( topLevelController != null ) 
+        System.out.println("Controller:"+topLevelController.getComponentName()+" Activating Listener on Queue:"+listener.getDestination()+" Selector:"+listener.getMessageSelector()+" Broker:"+listener.getBrokerUrl());
+        listener.start();
+      }
+    }
+  }
+  public void startListeners() throws Exception {
+    if ( springContainerRegistry == null || springContainerRegistry.size() == 0) {
+      if ( context != null ) {
+        String[] listeners = context
+        .getBeanNamesForType(org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer.class);
+        doStartListeners(listeners, context);
+      }
+    } else {
+        Iterator registryIterator = springContainerRegistry.keySet().iterator();
+        while( registryIterator.hasNext()) {
+          String id = (String)registryIterator.next();
+          UimaEEAdminSpringContext springAdminContext = (UimaEEAdminSpringContext)springContainerRegistry.get(id);
+          FileSystemXmlApplicationContext ctx = 
+            (FileSystemXmlApplicationContext)springAdminContext.getSpringContainer();
+          if ( ctx != null ) {
+            String[] listeners = ctx
+            .getBeanNamesForType(org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer.class);
+            doStartListeners(listeners, ctx);
+          }
+        }
+      }
+  }
   public String deploy(String springContextFile) throws ResourceInitializationException {
     if (springContextFile == null) {
       throw new ResourceInitializationException(new Exception("Spring Context File Not Specified"));
