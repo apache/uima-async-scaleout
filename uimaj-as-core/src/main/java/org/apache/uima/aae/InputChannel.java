@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae;
 
+import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.MessageContext;
 
@@ -41,7 +42,7 @@ public interface InputChannel extends Channel {
 
   public void destroyListener(String anEndpointName, String aDelegateKey);
 
-  public void createListener(String aDelegateKey) throws Exception;
+  public void createListener(String aDelegateKey, Endpoint endpointToUpdate) throws Exception;
 
   public boolean isFailed(String aDelegateKey);
 
