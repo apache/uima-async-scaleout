@@ -317,7 +317,69 @@ public class JmsOutputChannel implements OutputChannel {
     }
     return (int) INACTIVITY_TIMEOUT; // default
   }
+  /**
+   * Stop JMS connection and close all sessions associated with this connection
+   * 
+   * @param brokerConnectionEntry
+   */
+  private void invalidateConnectionAndEndpoints(BrokerConnectionEntry brokerConnectionEntry ) {
+    Connection conn = brokerConnectionEntry.getConnection();
+    try {
+       if ( conn != null && ((ActiveMQConnection)conn).isClosed()) {
+         brokerConnectionEntry.getConnection().stop();
+         brokerConnectionEntry.getConnection().close();
+         brokerConnectionEntry.setConnection(null);
+         for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerConnectionEntry.endpointMap
+                .entrySet()) {
+           endpoints.getValue().close(); // close session and producer
+         }
+       }
+    } catch (Exception e) {
+      // Ignore this for now. Attempting to close connection that has been closed
+      // Ignore we are shutting down
+    } finally {
+       brokerConnectionEntry.endpointMap.clear();
+       connectionMap.remove(brokerConnectionEntry.getBrokerURL());
+       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+         UIMAFramework.getLogger(CLASS_NAME).logrb(
+                 Level.INFO,
+                 CLASS_NAME.getName(),
+                 "invalidateConnectionAndEndpoints",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                 "UIMAJMS_service_closing_connection__INFO",
+                 new Object[] { getAnalysisEngineController().getComponentName(),
+                   brokerConnectionEntry.getBrokerURL() });
+       }
+    }
+    brokerConnectionEntry.setConnection(null);
 
+  }
+  private String getDestinationName(Endpoint anEndpoint) {
+    String destination = anEndpoint.getEndpoint();
+    if (anEndpoint.getDestination() != null
+            && anEndpoint.getDestination() instanceof ActiveMQDestination) {
+      destination = ((ActiveMQDestination) anEndpoint.getDestination()).getPhysicalName();
+    }
+    return destination;
+  }
+  private String getLookupKey(Endpoint anEndpoint) {
+    String key = anEndpoint.getEndpoint() + anEndpoint.getServerURI();
+    String destination = getDestinationName(anEndpoint);
+    if ( anEndpoint.getDelegateKey() != null ) {
+      key = anEndpoint.getDelegateKey() + "-"+destination;
+    } else {
+      key = "Client-"+destination;
+    }
+    return key;
+  }
+  private BrokerConnectionEntry createConnectionEntry(String brokerURL)  {
+    BrokerConnectionEntry brokerConnectionEntry = new BrokerConnectionEntry();
+    connectionMap.put(brokerURL, brokerConnectionEntry);
+    ConnectionTimer connectionTimer = new ConnectionTimer(brokerConnectionEntry);
+    connectionTimer.setAnalysisEngineController(getAnalysisEngineController());
+    brokerConnectionEntry.setConnectionTimer(connectionTimer);
+    return brokerConnectionEntry;
+  }
   /**
    * Returns {@link JmsEndpointConnection_impl} instance bound to a destination defined in the
    * {@link Endpoint} The endpoint identifies the destination that should receive the message. This
@@ -350,29 +412,23 @@ public class JmsOutputChannel implements OutputChannel {
     BrokerConnectionEntry brokerConnectionEntry = null;
     if (connectionMap.containsKey(anEndpoint.getServerURI())) {
       brokerConnectionEntry = (BrokerConnectionEntry) connectionMap.get(anEndpoint.getServerURI());
+      brokerConnectionEntry.setBrokerURL(anEndpoint.getServerURI());
+      if ( JmsEndpointConnection_impl.connectionClosedOrFailed(brokerConnectionEntry) ) {
+        invalidateConnectionAndEndpoints(brokerConnectionEntry);
+        brokerConnectionEntry = createConnectionEntry(anEndpoint.getServerURI());
+      }
       // Findbugs thinks that the above may return null, perhaps due to a race condition. Add
       // the null check just in case
       if (brokerConnectionEntry == null) {
         throw new AsynchAEException("Controller:"
                 + getAnalysisEngineController().getComponentName()
                 + " Unable to Lookup Broker Connection For URL:" + anEndpoint.getServerURI());
-      }
+      } 
     } else {
-      brokerConnectionEntry = new BrokerConnectionEntry();
-      connectionMap.put(anEndpoint.getServerURI(), brokerConnectionEntry);
-      ConnectionTimer connectionTimer = new ConnectionTimer(brokerConnectionEntry);
-      connectionTimer.setAnalysisEngineController(getAnalysisEngineController());
-      brokerConnectionEntry.setConnectionTimer(connectionTimer);
+      brokerConnectionEntry = createConnectionEntry(anEndpoint.getServerURI());
     }
-
-    // create a key to lookup the endpointConnection object
-    String key = anEndpoint.getEndpoint() + anEndpoint.getServerURI();
-    String destination = anEndpoint.getEndpoint();
-    if (anEndpoint.getDestination() != null
-            && anEndpoint.getDestination() instanceof ActiveMQDestination) {
-      destination = ((ActiveMQDestination) anEndpoint.getDestination()).getPhysicalName();
-      key = destination;
-    }
+    String key = getLookupKey(anEndpoint);
+    String destination = getDestinationName(anEndpoint);
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(
               Level.FINE,
@@ -396,6 +452,21 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { getAnalysisEngineController().getComponentName(), destination,
                     anEndpoint.getServerURI() });
       }
+      if (getAnalysisEngineController() instanceof AggregateAnalysisEngineController && anEndpoint.isTempReplyDestination() ) {
+        try {
+          if ( !((JmsInputChannel)getAnalysisEngineController().getInputChannel()).isListenerActiveOnDestination((Destination)anEndpoint.getDestination() )) {
+            //  Create a new temp queue, new listener on it and inject new temp queue into the current
+            //  endpoint object
+            getAnalysisEngineController().getInputChannel().createListener(anEndpoint.getDelegateKey(), anEndpoint);
+            //  The key is partly composed of a temp queue name so get the current temp queue name
+            key = getLookupKey(anEndpoint);
+            destination = getDestinationName(anEndpoint);
+          }
+        } catch( Exception e) {
+          throw new AsynchAEException(e);
+        }
+      }
+
       endpointConnection = new JmsEndpointConnection_impl(brokerConnectionEntry, anEndpoint,
               getAnalysisEngineController());
       brokerConnectionEntry.addEndpointConnection(key, endpointConnection);
@@ -408,7 +479,7 @@ public class JmsOutputChannel implements OutputChannel {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
                 "getEndpointConnection", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_open_new_connection_to_endpoint__FINE",
-                new Object[] { destination, anEndpoint.getServerURI() });
+                new Object[] { getDestinationName(anEndpoint), anEndpoint.getServerURI() });
       }
 
       /**
@@ -429,8 +500,6 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { getAnalysisEngineController().getComponentName(), destination,
                     anEndpoint.getServerURI() });
       }
-      // Cache the connection for future use. If not used, connections expire after 50000 millis
-      // connectionMap.put( key, endpointConnection);
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -1362,8 +1431,8 @@ public class JmsOutputChannel implements OutputChannel {
           aMessage.setStringProperty(AsynchAEMessage.MessageFrom, replyTo);
 
         }
-
         Object destination;
+        
         if ((destination = anEndpoint.getDestination()) != null) {
           aMessage.setJMSReplyTo((Destination) destination);
           aMessage.setStringProperty(UIMAMessage.ServerURI, anEndpoint.getServerURI());

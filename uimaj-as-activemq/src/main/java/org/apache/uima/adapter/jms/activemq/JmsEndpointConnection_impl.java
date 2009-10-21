@@ -126,17 +126,18 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   }
 
   public boolean isOpen() {
-    if (failed || producerSession == null || connectionClosedOrFailed()) {
+    if (failed || producerSession == null || connectionClosedOrFailed(brokerDestinations)) {
       return false;
     }
     return ((ActiveMQSession) producerSession).isRunning();
   }
 
-  private boolean connectionClosedOrFailed() {
-    if (brokerDestinations.getConnection() == null
-            || ((ActiveMQConnection) brokerDestinations.getConnection()).isClosed()
-            || ((ActiveMQConnection) brokerDestinations.getConnection()).isClosing()
-            || ((ActiveMQConnection) brokerDestinations.getConnection()).isTransportFailed()) {
+  protected static boolean connectionClosedOrFailed(BrokerConnectionEntry aBrokerDestinationMap) {
+    Connection connection = aBrokerDestinationMap.getConnection();
+    if (connection == null
+            || ((ActiveMQConnection) connection).isClosed()
+            || ((ActiveMQConnection) connection).isClosing()
+            || ((ActiveMQConnection) connection).isTransportFailed()) {
       return true;
     }
     return false;
@@ -173,7 +174,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
         //  Check connection status and create a new one (if necessary) as an atomic operation
         try {
           connectionSemaphore.acquire();
-          if (connectionClosedOrFailed()) {
+          if (connectionClosedOrFailed(brokerDestinations)) {
             // Create one shared connection per unique brokerURL.
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
@@ -349,37 +350,33 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   }
 
   public TextMessage produceTextMessage(String aTextMessage) throws AsynchAEException {
-    Assert.notNull(producerSession);
-    boolean done = false;
-    int retryCount = 4;
-    while (retryCount > 0) {
-      try {
-        retryCount--;
-
-        if (aTextMessage == null) {
+    if ( producerSession == null ) {
+      throw new AsynchAEException("Controller:"+controller.getComponentName()+" Unable to create JMS Message. Producer Session Not Initialized (Null)");
+    }
+    try {
+       if (aTextMessage == null) {
           return producerSession.createTextMessage();
-        } else {
+       } else {
           return producerSession.createTextMessage(aTextMessage);
-        }
-
-      } catch (javax.jms.IllegalStateException e) {
+       }
+     } catch (javax.jms.IllegalStateException e) {
         try {
           open();
         } catch (ServiceShutdownException ex) {
           ex.printStackTrace();
         } catch (AsynchAEException ex) {
-
           throw ex;
         }
       } catch (Exception e) {
         throw new AsynchAEException(e);
-      }
     }
     throw new AsynchAEException(new InvalidMessageException("Unable to produce Message Object"));
   }
 
   public BytesMessage produceByteMessage() throws AsynchAEException {
-    Assert.notNull(producerSession);
+    if ( producerSession == null ) {
+      throw new AsynchAEException("Controller:"+controller.getComponentName()+" Unable to create JMS Message. Producer Session Not Initialized (Null)");
+    }
     boolean done = false;
     int retryCount = 4;
     while (retryCount > 0) {
@@ -402,8 +399,9 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   }
 
   public ObjectMessage produceObjectMessage() throws AsynchAEException {
-    Assert.notNull(producerSession);
-
+    if ( producerSession == null ) {
+      throw new AsynchAEException("Controller:"+controller.getComponentName()+" Unable to create JMS Message. Producer Session Not Initialized (Null)");
+    }
     try {
       if (!((ActiveMQSession) producerSession).isRunning()) {
         open();
@@ -523,6 +521,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       // Succeeded sending the CAS
       return true;
     } catch (Exception e) {
+      e.printStackTrace();
       // If the controller has been stopped no need to send messages
       if (controller.isStopped()) {
         return true;
@@ -588,7 +587,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       // Fetch an InputChannel that handles messages for a given delegate
       InputChannel iC = controller.getReplyInputChannel(delegateKey);
       // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
-      iC.createListener(delegateKey);
+      iC.createListener(delegateKey, null);
     }
   }
 

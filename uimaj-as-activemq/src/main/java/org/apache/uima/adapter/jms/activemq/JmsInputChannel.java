@@ -859,7 +859,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
 
-  public void createListener(String aDelegateKey) throws Exception {
+  public void createListener(String aDelegateKey, Endpoint endpointToUpdate) throws Exception {
     if (getController() instanceof AggregateAnalysisEngineController) {
       Delegate delegate = ((AggregateAnalysisEngineController) getController())
               .lookupDelegate(aDelegateKey);
@@ -903,13 +903,30 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
                 aDelegateKey, false);
         // Override the reply destination.
         endpoint.setDestination(newListener.getDestination());
+        if ( endpointToUpdate != null) {
+          endpointToUpdate.setDestination(newListener.getDestination());
+        }
         Object clone = ((Endpoint_impl) endpoint).clone();
         newListener.setTargetEndpoint((Endpoint) clone);
         endpoint.setStatus(Endpoint.OK);
+        System.out
+        .println(".... Listener Started on New Temp Reply Queue ...");
       }
     }
   }
-
+  public boolean isListenerActiveOnDestination(Destination destination ) {
+    List<UimaDefaultMessageListenerContainer> listeners = new ArrayList<UimaDefaultMessageListenerContainer>();
+    for (int i = 0; i < listenerContainerList.size(); i++) {
+      UimaDefaultMessageListenerContainer mListener = (UimaDefaultMessageListenerContainer) listenerContainerList
+              .get(i);
+      if ( mListener.getDestination() != null && 
+           mListener.getDestination() == destination &&
+           mListener.isRunning()) {
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * Given an endpoint name returns all listeners attached to this endpoint. There can be multiple
    * listeners on an endpoint each with a different selector to receive targeted messages like
