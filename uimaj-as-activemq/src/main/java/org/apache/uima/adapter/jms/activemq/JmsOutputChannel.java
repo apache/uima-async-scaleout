@@ -19,7 +19,12 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.NotSerializableException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.util.Date;
@@ -1064,12 +1069,32 @@ public class JmsOutputChannel implements OutputChannel {
       JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
       // Create Message that will contain serialized Exception with stack
       ObjectMessage om = endpointConnection.produceObjectMessage();
-      if (wrapper == null) {
-        om.setObject(t);
-      } else {
-        om.setObject(wrapper);
+      //  Now try to catch non-serializable exception. The Throwable passed into this method may
+      //  not be serializable. Catch the exception, and create a wrapper containing stringified  
+      //  stack trace.
+      try {
+          //  serialize the Throwable
+          if (wrapper == null) {
+            om.setObject(t);
+          } else {
+            om.setObject(wrapper);
+          }
+      } catch( RuntimeException e) {
+          //  Check if we failed due to non-serializable object in the Throwable
+          if ( e.getCause() != null && e.getCause() instanceof NotSerializableException ) {
+            //  stringify the stack trace
+            StringWriter sw = new StringWriter();
+            t.printStackTrace(new PrintWriter(sw));
+            wrapper = new UimaEEServiceException(sw.toString());
+            //  serialize the new wrapper
+            om.setObject(wrapper);
+          } else {
+            throw e;  // rethrow
+          }
+        } catch( Exception e) {
+          throw e; // rethrow
       }
-      // Add common header properties
+        // Add common header properties
       populateHeaderWithResponseContext(om, anEndpoint, aCommand); // AsynchAEMessage.Process);
 
       om.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.Exception);
@@ -2294,15 +2319,16 @@ public class JmsOutputChannel implements OutputChannel {
                   brokerDestinations.getConnection().stop();
                   brokerDestinations.getConnection().close();
                   brokerDestinations.setConnection(null);
-                  for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerDestinations.endpointMap
-                          .entrySet()) {
-                    endpoints.getValue().close(); // close session and producer
-                    brokerDestinations.endpointMap.remove(endpoints.getValue());
-                  }
-                  connectionMap.remove(endpoint.getServerURI());
                 } catch (Exception e) {
                   // Ignore this for now. Attempting to close connection that has been closed
                   // Ignore we are shutting down
+                } finally {
+                  for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerDestinations.endpointMap
+                          .entrySet()) {
+                    endpoints.getValue().close(); // close session and producer
+                  }
+                  brokerDestinations.endpointMap.clear();
+                  connectionMap.remove(endpoint.getServerURI());
                 }
               }
               brokerDestinations.setConnection(null);
