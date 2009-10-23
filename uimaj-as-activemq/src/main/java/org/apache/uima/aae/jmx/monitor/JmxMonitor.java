@@ -49,9 +49,9 @@ import org.apache.uima.util.impl.CasPoolManagementImplMBean;
 public class JmxMonitor implements Runnable {
   private static final Class CLASS_NAME = JmxMonitor.class;
 
-  public static final String CheckpointFrequency = "jmx.monitor.frequency";
+  public static final String CheckpointFrequency = "uima.jmx.monitor.frequency";
 
-  public static final String FormatterListener = "jmx.monitor.formatter";
+  public static final String FormatterListener = "uima.jmx.monitor.formatter";
 
   private boolean running = false;
 
