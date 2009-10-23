@@ -1640,7 +1640,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         dropStats(aCasReferenceId, endpoint.getEndpoint());
       }
     } catch (Exception e) {
-      e.printStackTrace();
       HashMap map = new HashMap();
       map.put(AsynchAEMessage.Command, AsynchAEMessage.Process);
       map.put(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -1939,10 +1938,17 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
     endpoint.setFinal(true);
     if (!isStopped()) {
-      if (endpoint.isRemote()) {
-        sendReplyToRemoteClient(cacheEntry, casStateEntry, endpoint);
-      } else {
-        sendReplyToCollocatedClient(cacheEntry, casStateEntry, endpoint);
+      try {
+        if (endpoint.isRemote()) {
+          sendReplyToRemoteClient(cacheEntry, casStateEntry, endpoint);
+        } else {
+          sendReplyToCollocatedClient(cacheEntry, casStateEntry, endpoint);
+        }
+      } catch ( Exception e) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "replyToClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+
       }
     }
     return endpoint;
@@ -2785,4 +2791,5 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
     return null;
   }
+  
 }
