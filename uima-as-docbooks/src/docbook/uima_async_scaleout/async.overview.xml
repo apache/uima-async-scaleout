@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-       "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+       "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"[
+<!ENTITY % uimaents SYSTEM "../entities.ent">  
+]>
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -39,25 +41,26 @@ under the License.
     <para>Terms used in describing AS capabilities include: </para>
     <variablelist>
       <varlistentry>
-        <term> <emphasis role="bold">AS </emphasis></term>
+        <term> <emphasis role="bold">AS</emphasis></term>
         <listitem>
           <para>Asynchronous Scaleout - a name given to the capability described here</para></listitem>
       </varlistentry>
       <varlistentry>
-        <term> <emphasis role="bold">AS-JMS/AMQ/Spring </emphasis></term>
+        <term> <emphasis role="bold">AS-JMS/AMQ/Spring</emphasis></term>
         <listitem>
           <para>A variety of AS, based on JMS (Java Messaging Services), Active MQ, an Apache Open Source
             implementation of JMS, and the Spring framework. This variety is the one described in detail in this
             document. </para></listitem></varlistentry>
       <varlistentry>
-        <term> <emphasis role="bold">Queue </emphasis></term>
+        <term> <emphasis role="bold">Queue</emphasis></term>
         <listitem>
           <para>Queues are the basic mechanism of asynchronous communication. One or more &quot;producers&quot;
             send messages to a queue, and a queue can have one or more &quot;consumers&quot; that receive messages.
-            Messages in UIMA AS are usually CASes, or references to CASes. Queues are identified by a 2 part name. The
+            Messages in UIMA AS are usually CASes, or references to CASes. 
+            Some queues are simple internal structures; others are JMS queues which are identified by a 2 part name: the
             first part is the Queue Broker; the second part is a Queue Name.</para></listitem></varlistentry>
       <varlistentry>
-        <term> <emphasis role="bold">AS Component </emphasis></term>
+        <term> <emphasis role="bold">AS Component</emphasis></term>
         <listitem>
           <para>An AS client or service. AS clients send requests to AS service queues and receive back responses on
             reply queues. AS services can be AS Primitives or AS aggregates (see following).</para>
@@ -79,23 +82,23 @@ under the License.
       </varlistentry>
       -->
       <varlistentry>
-        <term> <emphasis role="bold">AS Primitive </emphasis></term>
+        <term> <emphasis role="bold">AS Primitive</emphasis></term>
         <listitem>
           <para>An AS service that is either a Primitive Analysis Engine
             <!-- or Service Client Proxy --> or an Aggregate AE whose Delegates are <emphasis role="bold">
             not</emphasis> AS-enabled</para></listitem></varlistentry>
       <varlistentry>
-        <term> <emphasis role="bold">AS Aggregate </emphasis></term>
+        <term> <emphasis role="bold">AS Aggregate</emphasis></term>
         <listitem>
           <para>An AS service that is an Aggregate Analysis Engine where the Delegates are also AS
             components.</para></listitem></varlistentry>
       <varlistentry>
-        <term> <emphasis role="bold">AS Client </emphasis></term>
+        <term> <emphasis role="bold">AS Client</emphasis></term>
         <listitem>
           <para>A component sending requests to AS services. An AS client is typically an application using the UIMA
             AS client API, a JMS Service Client Proxy, or an AS Aggregate.</para></listitem></varlistentry>
       <varlistentry>
-        <term> <emphasis role="bold">co-located </emphasis></term>
+        <term> <emphasis role="bold">co-located</emphasis></term>
         <listitem>
           <para>two running pieces of code are co-located if they run in the same JVM and share the same UIMA framework
             implementation and components.</para></listitem></varlistentry>
@@ -116,14 +119,14 @@ under the License.
       </varlistentry>
       -->
       <varlistentry>
-        <term> <emphasis role="bold">Queue Broker </emphasis></term>
+        <term> <emphasis role="bold">Queue Broker</emphasis></term>
         <listitem>
           <para>Queue brokers manage one or more named queues. The brokers are identified using a URL, representing
             where they are on the network. When the queue broker is co-located with the AS client and service, CASes
             are passed by reference, avoiding serialization / deserialization. </para></listitem>
       </varlistentry>
       <varlistentry>
-        <term> <emphasis role="bold">Transport Connector </emphasis></term>
+        <term> <emphasis role="bold">Transport Connector</emphasis></term>
         <listitem>
           <para>AS components connect to queue brokers via transport connectors. UIMA AS will typically use
             &quot;tcp&quot; connectors. &quot;http&quot; connectors are also available, and are useful for
@@ -152,7 +155,8 @@ under the License.
           <row>
             <entry>Putting components together</entry>
             <entry>
-              <para>Aggregates are the only way to put components together. </para>
+              <para>Provides a consistent, single, unified way to put components together, using
+                the base UIMA "aggregate" capability.</para>
             </entry>
             <entry>
               <para> <emphasis role="bold">Two methods of putting components together</emphasis>
@@ -169,24 +173,33 @@ under the License.
             <entry>
               <para>An aggregate can be run <emphasis role="bold">asynchronously</emphasis> using the AS
                 mechanism, with a queue in front of each delegate, or it can by run <emphasis role="bold">
-                synchronously</emphasis>. When run asynchronously, <emphasis>all</emphasis> of the
-                delegates will have queues in front of them, and AS Primitive delegates can be individually scaled
-                out (replicated) as needed. </para>
+                synchronously</emphasis>.
+              </para>
+              <para>
+                When run asynchronously, <emphasis>all</emphasis> of the
+                delegates will have queues in front of them, and delegates which are AS Primitives can be individually scaled
+                out (replicated) as needed.
+                Also, multiple CASes can be in-process, at different steps in the pipeline, even without 
+                replicating any components.</para>
             </entry>
             <entry>All aggregates are run synchronously. In an aggregate, only one component is running at a
-              time.</entry></row>
+              time; there is only one CAS at a time being processed within the aggregate.</entry></row>
           <row>
             <entry>CAS flow</entry>
-            <entry>Any, including custom user-defined sequence using user-provided flow controller.
+            <entry>Any, including custom user-defined sequence using user-provided flow controller.  
+              Parallel flows are supported.
             </entry>
             <entry>Fixed linear flow between CAS processors. A single CAS processor can be an aggregate, and within
               the aggregate, can have any flow including custom user-defined sequence using user-provided flow
               controller.</entry></row>
           <row>
             <entry>Threading</entry>
-            <entry>Each instance of a component runs in its own thread.</entry>
+            <entry>Each instance of a component runs in its own thread; the same thread used to call 
+              <code>initialize()</code> for a particular instance of a component
+              is used when calling <code>process()</code>.</entry>
             <entry>One thread for the collection reader, one for the CAS Consumers, &quot;n&quot; threads for the
-              main pipeline.</entry></row>
+              main pipeline, with no guarantees that the same thread for the <code>initialize()</code> call
+              is used for the <code>process()</code> call.</entry></row>
           <!--row>
           <entry>Load Balancing</entry>
           <entry>Queue in front of each (set of replicated) component(s); when component is available, it 
@@ -263,20 +276,21 @@ under the License.
             <entry>When using Vinci protocol, requires opening a large number of ports for each deployed service.
               SOAP connected services require one open port.</entry></row>
           <row>
-            <entry>Monitoring</entry>
+            <entry>Monitoring and Tuning</entry>
             <entry>
               <para>JMX (Java Management Extensions) are enabled for recording many kinds of statistical
-                information, and can be used to monitor (and, in the future, control) the operations of AS
-                configured systems. </para>
+                information, and can be used to monitor (and control) the operations of AS
+                configured systems.  Statistics are provided and summarized from remote delegates, to aid in tuning
+                scaled-out deployments.</para>
             </entry>
             <entry>
-              <para>Limited JMX information</para>
+              <para>Some JMX information</para>
             </entry></row>
           <row>
             <entry>Collection Reader</entry>
             <entry>Supported for backwards compatibility. New programs should use the CAS Multiplier instead,
               which is more general, or have the application pass in CASes to be processed. The compatibility
-              support wraps Collection Readers as Cas Multipliers.</entry>
+              support wraps Collection Readers as Cas Multipliers.  Note: this is supported and implemented in base UIMA.</entry>
             <entry>Is always first element in linear CPE sequence chain</entry></row></tbody></tgroup>
     </informaltable>
     <!--     
@@ -408,7 +422,11 @@ under the License.
               <para>scale out parts independently of other parts, to appropriate degree</para></listitem>
             <listitem>
               <para>more options for protocols for remote connections, including some that don't require many
-                ports through firewalls</para></listitem></orderedlist></listitem>
+                ports through firewalls</para></listitem>
+            <listitem>
+              <para>
+                support multiple CASes in process simultaneously within an aggregate pipeline</para></listitem>
+          </orderedlist></listitem>
         <listitem>
           <para>Build upon widely accepted Apache-licensed open source middleware</para></listitem>
         <listitem>
@@ -529,10 +547,12 @@ under the License.
               queues. </para></listitem></itemizedlist> </para>
       <para>Parts can be co-located or not; when they're not, we say they're remote. Remote includes running on the
         same host, but in a different process space, using a different JVM or other native process. Connections
-        between the parts are done using the JMS (Java Messaging Service) protocols, and in this version the support
-        for this is provided by the ActiveMQ implementation from apache.org. </para> <note>
-      <para>For high availability, the Queue Brokers can be, themselves, replicated over many hosts, with
-        fail-over capability provided by the underlying ActiveMQ implementation.</para></note>
+        between the non-co-located parts are done using the JMS (Java Messaging Service) protocols, 
+        using ActiveMQ from apache.org.</para> 
+          
+      <note>          
+        <para>For high availability, the Queue Brokers can be, themselves, replicated over many hosts, with
+          fail-over capability provided by the underlying ActiveMQ implementation.</para></note>
       <!-- ======================================================= -->
       <!-- |                 Multiples for scaleout              | -->
       <!-- ======================================================= -->
@@ -547,7 +567,8 @@ under the License.
         <para>There are two ways replication can be specified.
           <orderedlist>
             <listitem>
-              <para>In the deployment descriptor, set the numberOfInstances attribute to a number bigger than
+              <para>In the deployment descriptor, for an AS Primitive component, 
+                set the numberOfInstances attribute of the &lt;scaleout> element to a number bigger than
                 one.</para></listitem>
             <!--listitem><para>In the deployment descriptor, hook up multiple &lt;service> 
             elements to the same input queue</para></listitem-->
@@ -556,28 +577,46 @@ under the License.
             </listitem></orderedlist></para>
         <para>The first way is limited to replicating an AS Primitive. An AS Primitive can be the whole component of
           the service, or it can be at the bottom of an aggregate hierarchy of co-located parts. </para>
-        <para>Replicating an AS Primitive has the effect of replicating all of its components, since no queues are
+        <para>Replicating an AS Primitive has the effect of replicating all of its nested components (if it is an aggregate), 
+          since no queues are
           used below its input queue. </para></section>
       <!-- ======================================================= -->
       <!-- |                    Queues                           | -->
       <!-- ======================================================= -->
       <section id="ugr.async.ov.concepts.deploying.queues">
         <title>Queues</title>
-        <para>Asynchronous operation uses queues to connect components. Each queue is defined by a queue name and
-          the URL of its Queue Broker. AS services register as queue consumers to obtain CASes to work on (as input) and
-          to send CASes they're finished with (as output) to the reply queue specified by the AS client. </para>
-        <para>For the AS-JMS/AMQ/Spring implementation, the queue implementation is provided by ActiveMQ queue
-          broker. A single Queue Broker can manage multiple queues. By default UIMA AS configures the Queue Broker to
-          use in-memory queues, so the queue is resident on the same JVM as its managing Queue Broker. ActiveMQ offers
+        <para>Asynchronous operation uses queues to connect components.  For co-located components,
+          the UIMA AS framework uses custom very-lightweight queuing mechanisms.  For non-co-located
+          components, it uses JMS queues, managed by ActiveMQ Queue Brokers, which can be running
+          on the other nodes in a network.
+        </para>
+        
+        <para>AS Aggregate delegates specified as &lt;analysisEngine> elements (or by default)
+          are co-located, and use custom lightweight queuing.  AS Aggregate delegates specified using 
+          &lt;remoteAnalysisEngine</para> are not co-located, and use JMS queuing.
+        
+        <para>For JMS queues, each queue is defined by a queue name and
+          the URL of its Queue Broker. AS services register as queue consumers to obtain CASes to work on 
+          (as input) and
+          to send CASes they're finished with (as output) to a reply queue connected to the AS client.</para>
+          
+        <para>The queue implementation for JMS is provided by ActiveMQ queue
+          broker. A single Queue Broker can manage multiple queues. 
+          By default UIMA AS configures the Queue Broker to
+          use in-memory queues; the queue is resident on the same JVM as its managing Queue Broker. ActiveMQ offers
           several failsafe options, including the use of disk-based queues and redundant master/slave broker
-          configurations. </para>
+          configurations.</para>
+          
         <para>The decisions about where to deploy Queue Brokers are deployment decisions, made based on issues such
           as domain of control, firewalls, CPU / memory resources, etc. Of particular interest for distributed
           applications is that a UIMA AS service can be deployed behind a firewall but still be publicly available by
           using a queue broker that is available publicly. </para>
+          
         <para>When components are co-located, an optimization is done so that CASes are not actually sent as they
           would be over the network; rather, a reference to the in-memory Java object is passed using the queue.
-          </para> <warning>
+          </para>
+          
+        <warning>
         <para>Do not hook up different kinds of services to the same input queue. The framework expects that multiple
           services all listening to a particular input queue are sharing the workload of processing CASes sent to
           that queue. The framework does not currently verify that all services on a queue are the same kind, but
@@ -591,26 +630,31 @@ under the License.
           co-located delegates (if any). A service is an AS component, having one top level input queue, to which
           CASes are sent for processing.</para>
         <para>Each deployment descriptor has a reference to an associated Analysis Engine descriptor, which can be
-          an aggregate, a primitive (including CAS Consumers), or a service client descriptor.</para>
-        <para>AS Components and their associated queue brokers can be co-located on the same host/jvm; the
-          deployment descriptor indicates which components (if any) are co-located on its host/jvm, and specifies
-          remote queues (queue-brokers and queue-names) for all other components.</para>
+          an aggregate, or a primitive (including CAS Consumers).</para>
+        <para>AS Components can be co-located (this is the default); the
+          deployment descriptor specifies
+          remote queues (queue-brokers and queue-names) for non-co-located components.</para>
         
         <para>All services need to be manually started using an appropriate deployment descriptor (describing the
           things to be set up on that server). There are several scripts provided including deployAsyncService,
-          that do this. The client API also supports a deploy method for doing this with the same JVM.</para>
+          that do this. The client API also supports a deploy method for doing this within the same JVM.</para>
         
         <section id="ugr.async.ov.concepts.deployment_descriptors.aggregate">
           <title>Deploying UIMA aggregates</title>
           <para>UIMA aggregates can either be run asynchronously as AS Aggregates, or synchronously (as AS
-            Primitives). AS Aggregates have a queue in front of each delegate; results from each delegate are sent to
-            a receiving (internal) queue. UIMA aggregates run as AS Primitives send CASes synchronously to each
+            Primitives). AS Aggregates have an input and a reply queue associated with each delegate, and can
+            process multiple CASes at a time. 
+            UIMA aggregates that are run as AS Primitives send CASes synchronously, one a time, to each
             delegate, without using any queuing mechanism.</para>
+            
           <para>Each delegate in an AS Aggregate can be specified to be local or remote. Local means co-located using
-            internal (hidden) queues; remote means all others, including delegates running in a different JVM, or
-            in the same JVM but that can be shared by multiple clients For each delegate which is remote, the
-            deployment descriptor specifies the delegate's input queue. If the delegate is local, an hidden,
-            internal queue is automatically created for that delegate.</para></section>
+            internal queues; remote means all others, including delegates running in a different JVM, or
+            in the same JVM but that can be shared by multiple clients.  
+            For each delegate which is remote, the
+            deployment descriptor specifies the delegate's input queue; a corresponding 
+            reply queue is also automatically set up. 
+            If the delegate is local, internal
+            input and reply queues are automatically created for that delegate.</para></section>
         <!-- of aggregate descriptors --></section></section>
     <!-- of deployment alternatives -->
     <!-- ======================================================= -->
@@ -619,8 +663,7 @@ under the License.
     <section id="ugr.async.ov.concepts.first_limits">
       <title>Current design limitations</title>
       <titleabbrev>Limits</titleabbrev>
-      <para>This section describes limitations of the initial support for AS. Some of these limitations are due to
-        the functionality being staged over several releases. </para>
+      <para>This section describes limitations of the current support for AS.</para>
       <!--
       <para>There are several kinds of limitations:
       <itemizedlist spacing="compact">
@@ -661,6 +704,17 @@ under the License.
       <section id="ugr.async.ov.concepts.first_limits.resource_sharing">
         <title>Resource Sharing limits</title>
         <para>Resource Sharing works for co-located delegates, only. </para></section>
+      <section id="ugr.async.ov.concepts.first_limits.service_descriptors">
+        <title>Use of service descriptors inside AS Aggregates</title>
+         <para>Vinci services <emphasis role="bold">cannot</emphasis> be used within
+          an AS Aggregate because they do not comply to the UIMA standard requiring
+          preservation of feature structure IDs.</para>
+        <para>Any JMS Client services should be respecified in the deployment descriptor directly
+          as UIMA AS Remote Services.</para>
+        <para>SOAP services can be used, but only if they are wrapped inside another aggregate
+          (which might contain just the one SOAP service descriptor), where the wrapping aggregate
+          is deployed as an AS Primitive.</para>
+      </section>  
       <!--
       <section id="ugr.async.ov.concepts.first_limits.xyz">
       <title>XYZ limits</title>
@@ -674,7 +728,7 @@ under the License.
         service descriptor for an AS service, the JMS service descriptor (see <xref 
         linkend="ugr.async.ov.concepts.jms_descriptor"/>), which can be used along with Vinci
         and/or SOAP services in base UIMA applications. Conversely, Vinci services
-        <emphasis role="bold"> cannot</emphasis> be used within a UIMA AS service
+        <emphasis role="bold">cannot</emphasis> be used within a UIMA AS service
         because they do not comply to the UIMA standard requiring preservation of feature
         structure IDs. SOAP service calls currently use a binary serialization of the CAS
         which does preserve IDs and therefore can be called from a UIMA AS service.
@@ -714,7 +768,8 @@ under the License.
       co-located components to reinitialize. </para>
     <section id="ugr.async.ov.concepts.application.api">
       <title>Application API</title>
-      <para>Please see the sample code.</para>
+      <para>See <xref linkend="ugr.ref.async.api"/>
+        and the sample code.</para>
       <!--
       <para>AS provides an interface, <literal>UIMAAsynchronousEngine</literal>, to enable
       the driver code to instantiate and initialize a set of AS components, and run them.
@@ -807,15 +862,16 @@ under the License.
     <!-- ======================================================= -->
     <section id="ugr.async.ov.concepts.collection_process_complete">
       <title>Collection Process Complete</title>
-      <para>Applications may want to signal a chain of annotators being used in a particular &quot;run&quot; when
+      <para>An application may want to signal a chain of annotators that are being used in a 
+        particular &quot;run&quot; when
         all CASes for this run have been processed, and any final computation and outputting is to be done; it calls the
         collectionProcessComplete method to do this. This is frequently done when using stateful components which
         are accumulating information over multiple documents. </para>
       <para>It is up to the application to determine when the run is finished and there are no more CASes to process. It
         then calls this method on the top level analysis engine; the framework propagates this method call to all
         delegates of this aggregate, and this is repeated recursively for all delegate aggregates. </para>
-      <para>This call is synchronous, meaning when this call is issued by an application, the framework will block
-        the thread issuing the call until all processing of CASes within the aggregate has completed and the
+      <para>This call is synchronous; the framework will block
+        the thread issuing the call until all processing of CASes within the service has completed and the
         collectionProcessComplete method has returned (or timed out) from every component it was sent to.
         <!--If the top level component
         is an Aggregate, the components of that aggregate receive this
@@ -922,17 +978,29 @@ under the License.
     <section id="ugr.async.ov.concepts.mc.what">
       <title>Instrumentation provided</title>
          <para>UIMA AS Service has a built-in, JMX-based instrumentation that enables service monitoring. It 
-         provides service metrics collected in real-time at configurable checkpoint intervals. The main purpose 
+         provides service metrics collected in real-time at configurable checkpoint intervals (typically, every second). 
+         The main purpose 
          of the monitor is to help in detecting overloaded and idle services. Overloaded services are those 
          that are not able to keep up with the work load. Idle services are those that are not receiving enough 
          work and stay idle. To detect both conditions, the monitor provides the following metrics: </para>
+         
+         <section id="ugr.async.ov.concepts.mc.checkpoint">
+           <title>Checkpoint intervals</title>
+           <para>
+            Many of the measures are done with respect to a checkpoint.  This is nothing more than a defined
+            interval of time (perhaps 1 second), 
+            and is configured with the Java startup -Duima.jmx.monitor.checkpoint.interval parameter.
+           </para>
+         </section>
+         
+
 
 	<itemizedlist>
           <listitem>
             <para>Input queue depth: number of CASes waiting to be processed by a service</para>
           </listitem>
           <listitem>
-            <para>Reply queue depth: number of CASes  processed by a service and delivered to a client's queue</para>
+            <para>Reply queue depth: number of CASes returned to the client but not yet picked up by the client</para>
           </listitem>
           <listitem>
             <para>Number of CASes processed since the last checkpoint</para>
@@ -944,7 +1012,7 @@ under the License.
             <para>Time spent in analysis since the last checkpoint</para>
           </listitem>
           <listitem>
-            <para>Cas Pool size</para>
+            <para>Number of un-checked-out CASes in the Cas Pool</para>
           </listitem>
     </itemizedlist> 
 
@@ -974,14 +1042,16 @@ under the License.
            is not able to keep up with the load. There are more CASes arriving at the queue than the service can process. 
            Consider increasing number of processig threads in the JVm or start another instance of the service.</para>
 
-    <para>The main metric for detecting idle service is the idle time. If it is high, it indicates that the service is not 
-          receiving enough CASes. This can be caused by a bottleneck in the service's client which can also be supported by 
-          high reply queue depth. Ideally, the idle time should be at zero, which means that the service receives enough CASes 
+    <para>The main metric for detecting idle service is the idle time. If it is high, it can indicate that the service is not 
+          receiving enough CASes. This can be caused by a bottleneck in the service's client; supporting evidence for this
+          can be a high reply queue depth for the client - indicating the client is overloaded. 
+          Ideally, the idle time should be at zero, which means that the service receives enough CASes 
           to process. The idle time is shown as a delta from the last time the checkpoint was made.</para>
 
-    <para>Cas Pool size at zero indicates misconfiguration or a bottleneck in a service's client. It should also be supported 
-          by a high idle time. In this case, the service does not have enough CASes in its pool (misconfiguration) and is 
-          forced to wait. A typical reason is a slow client which should be supported by a high reply queue depth. Consider 
+    <para>Zero un-checked-out CASes in the Cas Pool can point to a bottleneck in a service's client; supporting
+      evidence for this can be a high idle time. In this case, the service does not have enough CASes in its pool and is 
+          forced to wait. Remember that a CAS is not returned to the Service's CAS pool until the client signals it can be.
+          A typical reason is a slow client (look for evidence such as a high reply queue depth). Consider 
           incrementing service's Cas pool and check the client's metrics to determine a reason why it is slow.</para>
 
     <para>The monitor provides an API to plug in a custom formatter for displaying service metrics. A default implementation 
@@ -1074,7 +1144,9 @@ under the License.
     <para>For more information on the customResourceSpecifier see <olink targetdoc="references"
         targetptr="ugr.ref.xml.component_descriptor.custom_resource_specifiers"></olink>. </para>
   </section>
-  <section id="ugr.async.ov.concepts.collection_reader">
+  
+  <!-- next section omitted - this is in base UIMA -->
+  <!--section id="ugr.async.ov.concepts.collection_reader">
     <title>Collection Reader support</title>
     <para>Collection Readers are supported for backwards compatibility; new programs should use the Cas
       Multiplier. (The reason for this is that Cas Multipliers can be run multiple times in one run, and can be
@@ -1086,5 +1158,5 @@ under the License.
       Collection Reader's reconfigure() method (except for the very first call to process(), which is ignored).
       This is done so that if a Collection Reader reacts to reconfigure() by resetting its state to be at the beginning
       of the collection, then when deployed as a CAS Multiplier service it can be reused multiple times without having
-      to restart the service.</para></section>
+      to restart the service.</para></section-->
   </chapter>
