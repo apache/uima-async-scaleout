@@ -575,12 +575,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     // their internal transports.
     if (this instanceof AggregateAnalysisEngineController) {
       // Get a list of all colocated delegate controllers.
-      List childControllers = ((AggregateAnalysisEngineController_impl) this).childControllerList;
-
-      for (int i = 0; i < childControllers.size(); i++) {
-        AnalysisEngineController ctrl = (AnalysisEngineController) childControllers.get(i);
-        // Force initialization
-        ctrl.initializeVMTransport(parentControllerReplyConsumerCount);
+      List<AnalysisEngineController> childControllers = ((AggregateAnalysisEngineController_impl) this).childControllerList;
+      synchronized( childControllers ) {
+        for( AnalysisEngineController ctrl: childControllers ) {
+          // Force initialization
+          ctrl.initializeVMTransport(parentControllerReplyConsumerCount);
+        }
       }
     }
 
@@ -1732,22 +1732,20 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       ((AggregateAnalysisEngineController_impl) this).stopTimers();
       // Stops ALL input channels of this service including the reply channels
       stopInputChannels(InputChannel.CloseAllChannels);
-
-      int childControllerListSize = ((AggregateAnalysisEngineController_impl) this)
-              .getChildControllerList().size();
-      // send terminate event to all collocated child controllers
-      if (childControllerListSize > 0) {
-        for (int i = 0; i < childControllerListSize; i++) {
-          AnalysisEngineController childController = (AnalysisEngineController) ((AggregateAnalysisEngineController_impl) this)
-                  .getChildControllerList().get(i);
-
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "stop",
-                    UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_stop_delegate__INFO",
-                    new Object[] { getComponentName(), childController.getComponentName() });
+      
+      List<AnalysisEngineController> colocatedControllerList = 
+        ((AggregateAnalysisEngineController_impl)this).getChildControllerList();
+      synchronized(colocatedControllerList) {
+        if ( colocatedControllerList.size() > 0 ) {
+          for( AnalysisEngineController childController : colocatedControllerList ) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "stop",
+                      UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_stop_delegate__INFO",
+                      new Object[] { getComponentName(), childController.getComponentName() });
+            }
+            childController.stop();
+            childController.getControllerLatch().release();
           }
-          childController.stop();
-          childController.getControllerLatch().release();
         }
       }
     }
@@ -1970,12 +1968,15 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
 
   private AnalysisEngineController lookupDelegateController(String aName) {
-    List delegateControllers = ((AggregateAnalysisEngineController) this).getChildControllerList();
-    for (int i = 0; i < delegateControllers.size(); i++) {
-      AnalysisEngineController delegateController = (AnalysisEngineController) ((AggregateAnalysisEngineController_impl) this)
-              .getChildControllerList().get(i);
-      if (delegateController.getName().equals(aName)) {
-        return delegateController;
+    List<AnalysisEngineController> colocatedControllerList = 
+      ((AggregateAnalysisEngineController_impl)this).getChildControllerList();
+    synchronized(colocatedControllerList) {
+      if ( colocatedControllerList.size() > 0 ) {
+        for( AnalysisEngineController childController : colocatedControllerList ) {
+          if (childController.getName().equals(aName)) {
+            return childController;
+          }
+        }
       }
     }
     return null; // no match
@@ -2135,15 +2136,15 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
 
   public AnalysisEngineController getCasMultiplierController(String cmKey) {
-    int childControllerListSize = ((AggregateAnalysisEngineController_impl) this)
-            .getChildControllerList().size();
-    if (childControllerListSize > 0) {
-      for (int i = 0; i < childControllerListSize; i++) {
-        AnalysisEngineController childController = (AnalysisEngineController) ((AggregateAnalysisEngineController_impl) this)
-                .getChildControllerList().get(i);
-        if (childController.isCasMultiplier()
-                && ((BaseAnalysisEngineController) childController).delegateKey.equals(cmKey)) {
-          return childController;
+    List<AnalysisEngineController> colocatedControllerList = 
+      ((AggregateAnalysisEngineController_impl)this).getChildControllerList();
+    synchronized(colocatedControllerList) {
+      if ( colocatedControllerList.size() > 0 ) {
+        for( AnalysisEngineController childController : colocatedControllerList ) {
+          if (childController.isCasMultiplier()
+                  && ((BaseAnalysisEngineController) childController).delegateKey.equals(cmKey)) {
+            return childController;
+          }
         }
       }
     }
@@ -2465,13 +2466,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           // Get a list of all colocated delegate controllers from the Aggregate
           List<AnalysisEngineController> delegateControllerList = ((AggregateAnalysisEngineController_impl) this).childControllerList;
           // Iterate over all colocated delegates
-          for (int i = 0; i < delegateControllerList.size(); i++) {
-            // Get the next delegate's controller
-            AnalysisEngineController delegateController = (AnalysisEngineController) delegateControllerList
-                    .get(i);
-            if (delegateController != null && !delegateController.isStopped()) {
-              // get the CPU time for all processing threads in the current controller
-              totalCpuProcessTime += delegateController.getAnalysisTime();
+          synchronized( delegateControllerList) {
+            for( AnalysisEngineController delegateController : delegateControllerList ) {
+              if (delegateController != null && !delegateController.isStopped()) {
+                // get the CPU time for all processing threads in the current controller
+                totalCpuProcessTime += delegateController.getAnalysisTime();
+              }
             }
           }
         } else // Primitive Controller

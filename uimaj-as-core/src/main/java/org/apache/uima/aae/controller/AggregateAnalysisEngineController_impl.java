@@ -121,7 +121,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   protected volatile boolean initialized = false;
 
-  protected List childControllerList = new ArrayList();
+  protected List<AnalysisEngineController> childControllerList = new ArrayList<AnalysisEngineController>();
 
   private ConcurrentHashMap delegateStats = new ConcurrentHashMap();
 
@@ -190,7 +190,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               "UIMAEE_register_controller__FINE",
               new Object[] { getComponentName(), aChildController.getComponentName() });
     }
-    childControllerList.add(aChildController);
+    synchronized(childControllerList) {
+      childControllerList.add(aChildController);
+    }
   }
 
   public void saveStatsFromService(String aServiceEndpointName, Map aServiceStats) {
@@ -1291,10 +1293,14 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   public void sendRequestForMetadataToRemoteDelegates() throws AsynchAEException {
-    for (int i = 0; i < childControllerList.size(); i++) {
-      if (childControllerList.get(i) instanceof AggregateAnalysisEngineController) {
-        ((AggregateAnalysisEngineController) childControllerList.get(i))
-                .sendRequestForMetadataToRemoteDelegates();
+    synchronized(childControllerList) {
+      if ( childControllerList.size() > 0 ) {
+        for( AnalysisEngineController childController : childControllerList ) {
+          if (childController instanceof AggregateAnalysisEngineController) {
+            ((AggregateAnalysisEngineController) childController)
+              .sendRequestForMetadataToRemoteDelegates();
+          }
+        }
       }
     }
     Endpoint[] delegateEndpoints = new Endpoint[destinationMap.size()];
@@ -2729,8 +2735,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (originMap != null) {
       originMap.clear();
     }
+    
     if (childControllerList != null) {
-      childControllerList.clear();
+      synchronized( childControllerList ) {
+        childControllerList.clear();
+      }
     }
     if (delegateStats != null) {
       delegateStats.clear();
@@ -2766,11 +2775,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    */
   public void onInitialize() {
     // For each collocated delegate
-    for (int i = 0; i < childControllerList.size(); i++) {
-      AnalysisEngineController delegateController = (AnalysisEngineController) childControllerList
-              .get(i);
-      // notify the delegate
-      delegateController.onInitialize();
+    synchronized(childControllerList) {
+      if ( childControllerList.size() > 0 ) {
+        for( AnalysisEngineController childController : childControllerList ) {
+          // notify the delegate
+          childController.onInitialize();
+        }
+      }
     }
   }
 
