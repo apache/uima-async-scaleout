@@ -19,6 +19,9 @@
 
 package org.apache.uima.aae.jmx;
 
+import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
+
 public class ServiceInfo implements ServiceInfoMBean {
   /**
 	 * 
@@ -32,9 +35,9 @@ public class ServiceInfo implements ServiceInfoMBean {
 
   private String replyQueueName = "";
 
-  private String state = "";
+  private String state="";
 
-  private String[] deploymentDescriptor = new String[] { "" };
+  private String deploymentDescriptorPath = "";
 
   private boolean casMultiplier;
 
@@ -44,12 +47,11 @@ public class ServiceInfo implements ServiceInfoMBean {
 
   private boolean aggregate;
 
-  public ServiceInfo() {
-    this(false);
-  }
-
-  public ServiceInfo(boolean isaCasMultiplier) {
+  private AnalysisEngineController controller;
+  
+  public ServiceInfo(boolean isaCasMultiplier, AnalysisEngineController controller) {
     casMultiplier = isaCasMultiplier;
+    this.controller = controller;
   }
 
   public String getLabel() {
@@ -60,12 +62,12 @@ public class ServiceInfo implements ServiceInfoMBean {
     return brokerURL;
   }
 
-  public String[] getDeploymentDescriptor() {
-    return deploymentDescriptor;
+  public String getDeploymentDescriptorPath() {
+    return deploymentDescriptorPath;
   }
 
-  public void setDeploymentDescriptor(String deploymentDescriptor) {
-    this.deploymentDescriptor[0] = deploymentDescriptor;
+  public void setDeploymentDescriptorPath(String deploymentDescriptorPath) {
+    this.deploymentDescriptorPath = deploymentDescriptorPath;
   }
 
   public void setBrokerURL(String aBrokerURL) {
@@ -81,7 +83,11 @@ public class ServiceInfo implements ServiceInfoMBean {
   }
 
   public String getState() {
-    return state;
+    if ( controller != null ) {
+      return controller.getState().name();
+    } else {
+      return state;
+    }
   }
 
   public void setState(String aState) {
