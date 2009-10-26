@@ -19,6 +19,8 @@
 
 package org.apache.uima.aae.jmx;
 
+import org.apache.uima.aae.controller.AnalysisEngineController;
+
 public class PrimitiveServiceInfo extends ServiceInfo implements PrimitiveServiceInfoMBean// ,
                                                                                           // ServiceInfoMBean
 // extends ServiceInfo implements PrimitiveServiceInfoMBean//, ServiceInfoMBean
@@ -27,16 +29,12 @@ public class PrimitiveServiceInfo extends ServiceInfo implements PrimitiveServic
 	 * 
 	 */
   private static final long serialVersionUID = -6416623322329673083L;
-
+ 
   /**
 	 * 
 	 */
-  public PrimitiveServiceInfo() {
-    super(false);
-  }
-
-  public PrimitiveServiceInfo(boolean isaCasMultiplier) {
-    super(isaCasMultiplier);
+  public PrimitiveServiceInfo(boolean isaCasMultiplier, AnalysisEngineController controller ) {
+    super(isaCasMultiplier, controller);
   }
 
   private int instanceCount = 0;
