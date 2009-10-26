@@ -45,6 +45,7 @@ import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.Threshold;
@@ -337,6 +338,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if (controller != null && controller.isStopped()) {
       return;
     }
+    if ( controller != null ) {
+      controller.changeState(ServiceState.FAILED);
+    }
     if (endpoint == null) {
       super.handleListenerSetupFailure(t, true);
       String controllerId = "";
@@ -355,6 +359,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       // available. The connection to a broker cannot be established. Keep trying until
       // the broker becomes available.
       refreshConnectionUntilSuccessful();
+      if ( controller != null ) {
+        controller.changeState(ServiceState.RUNNING);
+      }
       System.out.println(controllerId + " Listener Established Connection to Broker:"
               + getBrokerUrl());
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -874,6 +881,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       // Make sure all threads are started. This forces each thread to call
       // PrimitiveController to initialize the next instance of AE
       ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().prestartAllCoreThreads();
+      //  Change the state of a collocated service
+      if ( !controller.isTopLevelComponent() ) {
+        controller.changeState(ServiceState.RUNNING);
+      }
     }
   }
 

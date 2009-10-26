@@ -41,6 +41,7 @@ import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.InvalidMessageException;
 import org.apache.uima.aae.handler.Handler;
@@ -738,10 +739,16 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 
   public ServiceInfo getServiceInfo() {
     if (serviceInfo == null) {
-      serviceInfo = new ServiceInfo();
+      serviceInfo = new ServiceInfo(false,controller);
       serviceInfo.setBrokerURL(getBrokerURL());
       serviceInfo.setInputQueueName(getName());
-      serviceInfo.setState("Active");
+      if ( controller == null ) {
+        serviceInfo.setState(ServiceState.INITIALIZING.name());
+      } else {
+        if ( controller.isCasMultiplier()) {
+          serviceInfo.setCASMultiplier();
+        }
+      }
     }
     return serviceInfo;
   }

@@ -37,6 +37,7 @@ import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.ControllerLifecycle;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.UimacppServiceController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
@@ -344,8 +345,10 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
         (UimaDefaultMessageListenerContainer) ctx.getBean(listeners[i]);
       //  Only start those listeners that are not running yet. 
       if ( listener != null && !listener.isRunning()) {
-        if ( topLevelController != null ) 
-        System.out.println("Controller:"+topLevelController.getComponentName()+" Activating Listener on Queue:"+listener.getDestination()+" Selector:"+listener.getMessageSelector()+" Broker:"+listener.getBrokerUrl());
+        if ( topLevelController != null ) {
+          System.out.println("Controller:"+topLevelController.getComponentName()+" Activating Listener on Queue:"+listener.getDestination()+" Selector:"+listener.getMessageSelector()+" Broker:"+listener.getBrokerUrl());
+          topLevelController.changeState(ServiceState.RUNNING);
+        }
         listener.start();
       }
     }
@@ -362,12 +365,14 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
         while( registryIterator.hasNext()) {
           String id = (String)registryIterator.next();
           UimaEEAdminSpringContext springAdminContext = (UimaEEAdminSpringContext)springContainerRegistry.get(id);
-          FileSystemXmlApplicationContext ctx = 
-            (FileSystemXmlApplicationContext)springAdminContext.getSpringContainer();
-          if ( ctx != null ) {
-            String[] listeners = ctx
-            .getBeanNamesForType(org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer.class);
-            doStartListeners(listeners, ctx);
+          if ( springAdminContext != null ) {
+            FileSystemXmlApplicationContext ctx = 
+              (FileSystemXmlApplicationContext)springAdminContext.getSpringContainer();
+            if ( ctx != null ) {
+              String[] listeners = ctx
+              .getBeanNamesForType(org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer.class);
+              doStartListeners(listeners, ctx);
+            }
           }
         }
       }
