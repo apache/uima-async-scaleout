@@ -569,6 +569,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if (anApplicationContext.containsKey(UimaAsynchronousEngine.SerializationStrategy)) {
       super.serializationStrategy = (String) anApplicationContext
               .get(UimaAsynchronousEngine.SerializationStrategy);
+      clientSideJmxStats.setSerialization(super.serializationStrategy);
     }
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
