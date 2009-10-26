@@ -33,10 +33,6 @@ public interface UimaASClientInfoMBean {
 
   public void setEndpointName(String endpointName);
 
-  public int getReplyWindowSize();
-
-  public void setReplyWindowSize(int replyWindowSize);
-
   public int getCasPoolSize();
 
   public void setCasPoolSize(int casPoolSize);
@@ -116,4 +112,8 @@ public interface UimaASClientInfoMBean {
   public void incrementMetaErrorCount();
 
   public void reset();
+
+  public void setSerialization(String serializationStrategy);
+  
+  public String getSerialization();
 }

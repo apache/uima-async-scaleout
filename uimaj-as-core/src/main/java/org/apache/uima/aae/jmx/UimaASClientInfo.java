@@ -75,6 +75,7 @@ public class UimaASClientInfo implements UimaASClientInfoMBean {
 
   private long _metaErrorCount;
 
+  private String serializationStrategy="xmi";  // default
   public synchronized void reset() {
     idleTime = 0;
     serializationTime = 0;
@@ -341,5 +342,13 @@ public class UimaASClientInfo implements UimaASClientInfoMBean {
       maxTimeWaitingForCas = aTimeWaitingForCas;
     }
     totalTimeWaitingForCas += aTimeWaitingForCas;
+  }
+
+  public String getSerialization() {
+    return serializationStrategy;
+  }
+
+  public void setSerialization(String serializationStrategy) {
+    this.serializationStrategy = serializationStrategy;
   }
 }
