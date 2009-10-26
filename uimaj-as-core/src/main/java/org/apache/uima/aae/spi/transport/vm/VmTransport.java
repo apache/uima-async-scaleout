@@ -39,6 +39,7 @@ import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.error.UimaSpiException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UIMAMessage;
@@ -184,6 +185,7 @@ public class VmTransport implements UimaTransport {
         executor.setThreadFactory(tf);
         executor.prestartAllCoreThreads();
       }
+      controller.changeState(ServiceState.RUNNING);
     }
     return executor;
   }
