@@ -25,6 +25,7 @@ import java.util.TimerTask;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.MessageTimeoutException;
@@ -342,10 +343,14 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   public ServiceInfo getServiceInfo() {
     if (serviceInfo == null) {
-      serviceInfo = new ServiceInfo(isCasMultiplier);
+      serviceInfo = new ServiceInfo(isCasMultiplier, null);
       serviceInfo.setBrokerURL(serverURI);
       serviceInfo.setInputQueueName(endpoint);
-      serviceInfo.setState("Active");
+      if ( controller == null ) {
+        serviceInfo.setState(ServiceState.INITIALIZING.name());
+      } else {
+        serviceInfo.setState(controller.getState().name());
+      }
     }
     return serviceInfo;
   }

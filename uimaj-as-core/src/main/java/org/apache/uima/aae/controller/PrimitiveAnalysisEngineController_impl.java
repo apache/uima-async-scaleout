@@ -240,9 +240,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
 
       if (serviceInfo == null) {
-        serviceInfo = new PrimitiveServiceInfo(isCasMultiplier());
+        serviceInfo = new PrimitiveServiceInfo(isCasMultiplier(), this);
       }
-
+      serviceInfo.setServiceKey(delegateKey);
       serviceInfo.setAnalysisEngineInstanceCount(analysisEnginePoolSize);
 
       if (!isStopped()) {
@@ -769,17 +769,15 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public PrimitiveServiceInfo getServiceInfo() {
     if (serviceInfo == null) {
-      serviceInfo = new PrimitiveServiceInfo();
+      serviceInfo = new PrimitiveServiceInfo(isCasMultiplier(), this);
+      serviceInfo.setServiceKey(delegateKey);
     }
     if (isTopLevelComponent() && getInputChannel() != null) {
       serviceInfo.setInputQueueName(getInputChannel().getServiceInfo().getInputQueueName());
       serviceInfo.setBrokerURL(super.getBrokerURL());
+      serviceInfo.setDeploymentDescriptorPath(super.aeDescriptor);
     }
 
-    serviceInfo.setState("Running");
-    if (isCasMultiplier()) {
-      serviceInfo.setCASMultiplier();
-    }
     return serviceInfo;
   }
 

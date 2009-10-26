@@ -103,6 +103,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         AnalysisEngineController, EventSubscriber {
   private static final Class CLASS_NAME = BaseAnalysisEngineController.class;
 
+  public static enum ServiceState { INITIALIZING, RUNNING, DISABLED, STOPPING, FAILED };
+  
+  protected ServiceState currentState = ServiceState.INITIALIZING;
+  
   private static final long DoNotProcessTTL = 30 * 60 * 1000; // 30 minute time to live
 
   protected volatile ControllerLatch latch = new ControllerLatch(this);
@@ -804,10 +808,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (remote) {
       serviceInfo = getInputChannel().getServiceInfo();
     } else {
-      serviceInfo = new ServiceInfo();
+      serviceInfo = new ServiceInfo(isCasMultiplier(), this);
       serviceInfo.setBrokerURL(getBrokerURL());
       serviceInfo.setInputQueueName(getName());
-      serviceInfo.setState("Active");
+      //  if a colocated service, set its key as defined in the AE descriptor
+      if ( !this.isTopLevelComponent() ) {
+        serviceInfo.setServiceKey(delegateKey);
+      }
+      //serviceInfo.setState(getState().name());
     }
     ServiceInfo pServiceInfo = null;
 
@@ -919,7 +927,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       sInfo.setBrokerURL(aServiceInfo.getBrokerURL());
       sInfo.setInputQueueName(aServiceInfo.getInputQueueName());
       sInfo.setState(aServiceInfo.getState());
-      sInfo.setDeploymentDescriptor(deploymentDescriptor);
+      sInfo.setDeploymentDescriptorPath(aeDescriptor);
       if (isCasMultiplier()) {
         sInfo.setCASMultiplier();
       }
@@ -1583,7 +1591,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       serviceInfo = ((AggregateAnalysisEngineController) this).getServiceInfo();
     }
     if (serviceInfo != null) {
-      serviceInfo.setDeploymentDescriptor(deploymentDescriptor);
+      serviceInfo.setDeploymentDescriptorPath(aeDescriptor);
     }
 
   }
@@ -2760,5 +2768,17 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     daemonServiceExecutor = Executors.newScheduledThreadPool(1);
     daemonServiceExecutor.scheduleWithFixedDelay(new UimaAsServiceCleanupThread(this), 0,
             sleepInterval, TimeUnit.MILLISECONDS);
+  }
+  
+  public void changeState(ServiceState state) {
+    synchronized(currentState) {
+      currentState = state;
+    }
+  }
+  
+  public ServiceState getState() {
+    synchronized(currentState) {
+      return currentState;
+    }
   }
 }

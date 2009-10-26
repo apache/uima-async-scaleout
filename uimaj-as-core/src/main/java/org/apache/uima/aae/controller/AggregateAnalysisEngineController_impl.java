@@ -38,6 +38,7 @@ import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.ControllerDelegate;
 import org.apache.uima.aae.delegate.Delegate;
@@ -670,7 +671,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // Change state of the delegate
         ServiceInfo sf = getDelegateServiceInfo(key);
         if (sf != null) {
-          sf.setState("Disabled");
+          sf.setState(ServiceState.DISABLED.name());
         }
         synchronized (disabledDelegateList) {
           disabledDelegateList.add(key);
@@ -1323,12 +1324,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           Endpoint endpoint = ((Endpoint) destinationMap.get(key));
           if (key != null && endpoint != null) {
             ServiceInfo serviceInfo = endpoint.getServiceInfo();
-            PrimitiveServiceInfo pServiceInfo = new PrimitiveServiceInfo();
+            PrimitiveServiceInfo pServiceInfo = new PrimitiveServiceInfo(endpoint.isCasMultiplier(), null);
             pServiceInfo.setBrokerURL(serviceInfo.getBrokerURL());
             pServiceInfo.setInputQueueName(serviceInfo.getInputQueueName());
             if (endpoint.getDestination() != null) {
               pServiceInfo.setReplyQueueName(endpoint.getDestination().toString());
             }
+            pServiceInfo.setServiceKey(key);
             pServiceInfo.setState(serviceInfo.getState());
             pServiceInfo.setAnalysisEngineInstanceCount(1);
 
@@ -2328,6 +2330,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         endpoint.setWaitingForResponse(false);
         endpoint.cancelTimer();
         boolean collocatedAggregate = false;
+        if ( endpoint.getServiceInfo() != null ) {
+          endpoint.getServiceInfo().setState(ServiceState.RUNNING.name());
+        }
         ResourceMetaData resource = null;
         ServiceInfo remoteDelegateServiceInfo = null;
         if (aTypeSystem.trim().length() > 0) {
@@ -2484,6 +2489,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     initialized = true;
     // Notify client listener that the initialization of the controller was successfull
     notifyListenersWithInitializationStatus(null);
+    //  If this is a collocated aggregate change its state to RUNNING from INITIALIZING.
+    //  The top level aggregate state is changed when listeners on its input queue are
+    //  succesfully started in SpringContainerDeployer.doStartListeners() method.
+    if ( !isTopLevelComponent() ) {
+      changeState(ServiceState.RUNNING);
+    }
   }
 
   private String findKeyForValue(String fromDestination) {
@@ -2555,7 +2566,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (key != null && !delegateStatMap.containsKey(key)) {
       if (key != null) {
         ServiceInfo serviceInfo = anEndpoint.getServiceInfo();
-        PrimitiveServiceInfo pServiceInfo = new PrimitiveServiceInfo();
+        PrimitiveServiceInfo pServiceInfo = new PrimitiveServiceInfo(serviceInfo.isCASMultiplier(),null);
         pServiceInfo.setBrokerURL(serviceInfo.getBrokerURL());
         pServiceInfo.setInputQueueName(serviceInfo.getInputQueueName());
         pServiceInfo.setState(serviceInfo.getState());
@@ -2666,7 +2677,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public AggregateServiceInfo getServiceInfo() {
     if (serviceInfo == null) {
-      serviceInfo = new AggregateServiceInfo(isCasMultiplier());
+      serviceInfo = new AggregateServiceInfo(isCasMultiplier(), this);
       // if this is a top level service and the input channel not yet initialized
       // block in getInputChannel() on the latch
       if (isTopLevelComponent() && getInputChannel() != null) {
@@ -2676,8 +2687,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         serviceInfo.setInputQueueName(getName());
         serviceInfo.setBrokerURL("vm://localhost");
       }
-      serviceInfo.setDeploymentDescriptor("");
-      serviceInfo.setState("Running");
+      serviceInfo.setDeploymentDescriptorPath(super.aeDescriptor);
+      //serviceInfo.setState(super.getState().name());
     }
     return serviceInfo;
   }
