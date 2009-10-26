@@ -28,6 +28,7 @@ import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaEEAdminContext;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandlerChain;
@@ -224,4 +225,8 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public boolean isEndpointOnDontProcessList(String anEndpointName);
 
   public void evictExpiredEntries();
+  
+  public void changeState(ServiceState state);
+  
+  public ServiceState getState();
 }
