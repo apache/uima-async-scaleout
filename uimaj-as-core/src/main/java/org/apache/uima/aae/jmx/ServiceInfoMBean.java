@@ -30,8 +30,8 @@ public interface ServiceInfoMBean extends Serializable {
 
   public String getBrokerURL();
 
-  public String[] getDeploymentDescriptor();
-
+  public String getDeploymentDescriptorPath();
+  
   public boolean isCASMultiplier();
 
   public boolean isTopLevel();
