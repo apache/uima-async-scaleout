@@ -48,6 +48,7 @@ import org.apache.activemq.ActiveMQConnection;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.UIDGenerator;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaASStatusCallbackListener;
@@ -409,7 +410,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           clearThreadRegistrar();
           releaseCacheEntries();
         } catch (Exception ex) {
-          ex.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", new Object[] { ex });
+          }
         }
 
         // Unblock threads
@@ -452,7 +457,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         threadQueue.add(new CasQueueEntry());
         threadRegistrar.clear();
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                  "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", new Object[] { e });
+        }
       }
     }
   }
@@ -497,7 +506,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
               UIMAFramework.getLogger(CLASS_NAME).logrb(
                       Level.FINEST,
                       CLASS_NAME.getName(),
-                      "getCAS",
+                      "serveCASes.run()",
                       JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                       "UIMAJMS_new_cas_FINEST",
                       new Object[] { "Time Waiting for CAS",
@@ -510,7 +519,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
               return; // Client is terminating
             }
           } catch (Exception e) {
-            e.printStackTrace();
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                      "serveCASes.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_exception__WARNING", new Object[] { e });
+            }
           }
         }
       }
@@ -1234,7 +1247,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                         message.getStringProperty(AsynchAEMessage.CasReference) });
           }
         } catch (Exception e) {
-          e.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "handleProcessReplyFromCasMultiplier", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1651,7 +1663,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         handleServiceInfo(message);
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
+
     }
   }
 
@@ -2195,7 +2212,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                 cas = null; // not supported for collocated
               }
             } catch (Exception e) {
-              e.printStackTrace();
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                        "startTimer.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_exception__WARNING", new Object[] { e });
+              }
             }
           }
 

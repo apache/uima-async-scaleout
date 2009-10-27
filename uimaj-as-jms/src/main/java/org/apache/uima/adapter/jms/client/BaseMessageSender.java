@@ -32,6 +32,7 @@ import javax.jms.MessageProducer;
 import javax.jms.TextMessage;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
@@ -157,7 +158,11 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     } catch (Exception e) {
       workerThreadFailed = true;
       exception = e;
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
       return;
 
     } finally {
@@ -283,7 +288,11 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
   private void handleException(Exception e, String aDestination) {
     workerThreadFailed = true;
     exception = e;
-    e.printStackTrace();
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+              "handleException", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_exception__WARNING", new Object[] { e });
+    }
     // Notify the engine that there was an exception.
     engine.onException(e, aDestination);
 

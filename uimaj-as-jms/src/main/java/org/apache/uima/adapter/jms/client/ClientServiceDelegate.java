@@ -153,7 +153,6 @@ public class ClientServiceDelegate extends Delegate {
         }
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,

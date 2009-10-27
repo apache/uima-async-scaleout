@@ -23,6 +23,7 @@ import java.net.ConnectException;
 
 import javax.jms.JMSException;
 
+import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -33,8 +34,13 @@ import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.ErrorHandlerBase;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.util.Level;
 
 public class JMSExceptionHandler extends ErrorHandlerBase implements ErrorHandler {
+  private static final Class CLASS_NAME = JMSExceptionHandler.class;
+ 
+  
   public boolean handleError(Throwable t, ErrorContext anErrorContext,
           AnalysisEngineController aController) {
     if (t instanceof JMSException) {
@@ -53,7 +59,11 @@ public class JMSExceptionHandler extends ErrorHandlerBase implements ErrorHandle
         } else {
           System.out.println("No Handler for JMS Exception Cause ::" + cause.getLocalizedMessage());
         }
-        t.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
+                  new Object[] { Thread.currentThread().getName(), t });
+        }
 
       }
       return true;
