@@ -590,7 +590,11 @@ public class InProcessCache implements InProcessCacheMBean {
           sequence = aMessageAccessor.getMessageLongProperty(AsynchAEMessage.CasSequence);
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                  "CacheEntry", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", new Object[] { e });
+        }
       }
     }
 

@@ -21,7 +21,9 @@ package org.apache.uima.aae;
 
 import java.util.concurrent.ThreadFactory;
 
+import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.util.Level;
 import org.springframework.core.task.TaskRejectedException;
 
 /**
@@ -33,6 +35,9 @@ import org.springframework.core.task.TaskRejectedException;
  * 
  */
 public class UimaAsThreadFactory implements ThreadFactory {
+  
+  private static final Class CLASS_NAME = UimaAsThreadFactory.class;
+  
   private PrimitiveAnalysisEngineController controller;
 
   private ThreadGroup theThreadGroup;
@@ -75,13 +80,16 @@ public class UimaAsThreadFactory implements ThreadFactory {
             // TaskExecutor is terminated.
             r.run();
           } catch (Exception e) {
-            // e.printStackTrace();
             return;
           }
         }
       });
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "CacheEntry", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
     return newThread;
   }

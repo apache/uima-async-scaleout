@@ -514,7 +514,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     try {
       handleAction(anAction, anEndpointName, anErrorContext);
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "takeAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
   }
 
@@ -569,7 +573,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               // Send reply back to the client. Use internal (non-jms) transport
               transport.getUimaMessageDispatcher(endpoint.getEndpoint()).dispatch(message);
             } catch (Exception e) {
-              e.printStackTrace();
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                        "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_exception__WARNING", new Object[] { e });
+              }
             }
           } else {
             getOutputChannel().sendRequest(AsynchAEMessage.CollectionProcessComplete, endpoint);
@@ -606,7 +614,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   public void handleInitializationError(Exception ex) {
-    ex.printStackTrace();
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+              "handleInitializationError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_exception__WARNING", new Object[] { ex });
+    }
     // Any problems in completeInitialization() is a reason to stop
     notifyListenersWithInitializationStatus(ex);
     super.stop();
@@ -689,7 +701,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                     "disableDelegates", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_exception__WARNING", new Object[] { ex });
           }
-          ex.printStackTrace();
           if (aCasReferenceId != null) {
             CasStateEntry parentCasCacheEntry = getLocalCache().getTopCasAncestor(aCasReferenceId);
             if (parentCasCacheEntry != null && aDelegateList.size() > 0) {
@@ -711,13 +722,21 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         try {
           completeInitialization();
         } catch (ResourceInitializationException ex) {
-          ex.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "disableDelegates", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", new Object[] { ex });
+          }
           handleInitializationError(ex);
           return;
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "disableDelegates", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
       throw new AsynchAEException(e);
     }
 
@@ -863,7 +882,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
       } catch (Throwable t) {
         // Any error here is automatic termination
-        t.printStackTrace();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "process",
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
@@ -981,7 +999,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 "abortProcessingCas", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_exception__WARNING", new Object[] { e });
       }
-      e.printStackTrace();
     }
 
     return false;
@@ -1064,7 +1081,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
                   new Object[] { e });
         }
-        e.printStackTrace();
       } finally {
         // If just handled the delayed step, return as there is nothing else to do
         if (handlingDelayedStep) {
@@ -1116,7 +1132,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
         } catch (Exception ex) {
           // Any error here is automatic termination
-          ex.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "process", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1416,7 +1431,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       parentCASCacheEntry = getInProcessCache().getCacheEntryForCAS(
               casStateEntry.getInputCasReferenceId());
     } catch (Exception ex) {
-      ex.printStackTrace();
+
       if (UIMAFramework.getLogger().isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.INFO,
@@ -1654,7 +1669,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       if (endpoint != null) {
         map.put(AsynchAEMessage.Endpoint, endpoint);
       }
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "finalStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
       handleError(map, e);
     } finally {
       if (replySentToClient) {
@@ -2031,7 +2050,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         step = aFlow.next();
       }
     } catch (Exception e) {
-      e.printStackTrace();
       // Any error here is automatic termination
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
               "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -2050,7 +2068,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_exception__WARNING", new Object[] { e });
         }
-        ex.printStackTrace();
       }
       return;
     }
@@ -2087,7 +2104,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
 
     } catch (Exception e) {
-      e.printStackTrace();
       HashMap map = new HashMap();
       map.put(AsynchAEMessage.Command, AsynchAEMessage.Process);
       map.put(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -2105,7 +2121,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         transport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
 
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                  "dispatch", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", new Object[] { e });
+        }
       }
     } else {
       // Check delegate's state before sending it a CAS. The delegate

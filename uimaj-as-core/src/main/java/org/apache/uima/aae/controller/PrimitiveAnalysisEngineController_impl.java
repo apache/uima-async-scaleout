@@ -183,12 +183,20 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           try {
             postInitialize();
           } catch (Exception e) {
-            e.printStackTrace();
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                      "initializeAnalysisEngine", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_exception__WARNING", new Object[] { e });
+            }
             throw new ResourceInitializationException(e);
           }
         }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "initializeAnalysisEngine", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
       super.notifyListenersWithInitializationStatus(e);
       if (isTopLevelComponent()) {
         super.notifyListenersWithInitializationStatus(e);
@@ -267,13 +275,17 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             latch.openLatch(getName(), isTopLevelComponent(), true);
 
           } catch (Exception e) {
-            e.printStackTrace();
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                      "postInitialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_exception__WARNING", new Object[] { e });
+            }
             throw new AsynchAEException(e);
           }
         } else {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, getClass().getName(),
-                    "initialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "postInitialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_cas_manager_wrapper_notdefined__CONFIG", new Object[] {});
           }
         }
@@ -282,23 +294,21 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     } catch (AsynchAEException e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                "initialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "postInitialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_exception__WARNING", new Object[] { e });
       }
-      e.printStackTrace();
       throw e;
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                "initialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "postInitialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_exception__WARNING", new Object[] { e });
       }
-      e.printStackTrace();
       throw new AsynchAEException(e);
     }
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "initialize",
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "postInitialize",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_initialized_controller__INFO",
               new Object[] { getComponentName() });
     }
@@ -367,7 +377,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         try {
           aeInstancePool.checkin(ae);
         } catch (Exception ex) {
-          ex.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -400,7 +409,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     try {
       parentCasStateEntry = getLocalCache().lookupEntry(aCasReferenceId);
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "process", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
       return;
     }
 
@@ -645,7 +658,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         localCache.remove(aCasReferenceId);
       }
     } catch (Throwable e) {
-      e.printStackTrace();
       processingFailed = true;
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -661,7 +673,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         try {
           aeInstancePool.checkin(ae);
         } catch (Exception e) {
-          e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "process", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", new Object[] { e });
+          }
         }
       }
       // drop the CAS if it has been successfully processed. If there was a failure, the Error
@@ -724,7 +740,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         super.handleAction(anAction, anEndpointName, anErrorContext);
       }
     } catch (Exception e) {
-      e.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "takeAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -787,7 +802,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       try {
         aeInstancePool.destroy();
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                  "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", new Object[] { e });
+        }
       }
     }
     try {
@@ -795,7 +814,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         transport.getValue().stopIt();
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
 
     if (cmOutstandingCASes != null) {
