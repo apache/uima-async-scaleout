@@ -31,9 +31,10 @@ under the License.
   <toc/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.overview.xml" />
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.errorhandling.xml"/> 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.errorhandling.xml"/>
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ref.async.deployment.xml" />
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ref.async.api.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.monitoring.and.tuning.xml"/> 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="async.camel.driver.xml" />
 
   <!--

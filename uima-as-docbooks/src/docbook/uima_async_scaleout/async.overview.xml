@@ -970,111 +970,17 @@ under the License.
   <section id="ugr.async.ov.concepts.mc">
     <title>Monitoring and Controlling an AS application</title>
     <titleabbrev>Monitoring &amp; Controlling</titleabbrev>
-    <para>JMX (Java Management Extensions) are used for monitoring and controlling an AS application. This
-      capability is being staged; initial versions have some monitoring capability, but little controlling
-      capability.</para>
-    <para>The first versions of AS will use the standard GUI tooling available as part of Java 5 to display the JMX
-      results. Later versions may include additional UIMA-specific tooling for this.</para>
-    <section id="ugr.async.ov.concepts.mc.what">
-      <title>Instrumentation provided</title>
-         <para>UIMA AS Service has a built-in, JMX-based instrumentation that enables service monitoring. It 
-         provides service metrics collected in real-time at configurable checkpoint intervals (typically, every second). 
-         The main purpose 
-         of the monitor is to help in detecting overloaded and idle services. Overloaded services are those 
-         that are not able to keep up with the work load. Idle services are those that are not receiving enough 
-         work and stay idle. To detect both conditions, the monitor provides the following metrics: </para>
-         
-         <section id="ugr.async.ov.concepts.mc.checkpoint">
-           <title>Checkpoint intervals</title>
-           <para>
-            Many of the measures are done with respect to a checkpoint.  This is nothing more than a defined
-            interval of time (perhaps 1 second), 
-            and is configured with the Java startup -Duima.jmx.monitor.checkpoint.interval parameter.
-           </para>
-         </section>
+    <para>JMX (Java Management Extensions) are used for monitoring and controlling an AS application.
+      As of release 2.3.0, extensive monitoring facilities have been implemented; these are described
+      in a separate chapter on <xref linkend="ugr.async.mt">Monitoring and Tuning</xref>.
+      The only controlling facility provided is to stop a service.</para>
+    
+           <para>In addition, a configurable Monitoring program is provided which works with the JMX provided measurements
+            and aggregates and samples these over specified intervals, and creates monitoring entries in the
+            UIMA log, for tuning purposes.  You can use this to detect overloaded and/or idle services;
+            see the <xref linkend="ugr.async.mt">Monitoring and Tuning</xref> chapter for details.</para>
          
 
-
-	<itemizedlist>
-          <listitem>
-            <para>Input queue depth: number of CASes waiting to be processed by a service</para>
-          </listitem>
-          <listitem>
-            <para>Reply queue depth: number of CASes returned to the client but not yet picked up by the client</para>
-          </listitem>
-          <listitem>
-            <para>Number of CASes processed since the last checkpoint</para>
-          </listitem>
-          <listitem>
-            <para>Idle time since the last checkpoint</para>
-          </listitem>
-          <listitem>
-            <para>Time spent in analysis since the last checkpoint</para>
-          </listitem>
-          <listitem>
-            <para>Number of un-checked-out CASes in the Cas Pool</para>
-          </listitem>
-    </itemizedlist> 
-
-    <para>In addition to the performance metrics the monitor also provides basic service information:</para>
-	<itemizedlist>
-          <listitem>
-            <para>Service name</para>
-          </listitem>
-          <listitem>
-            <para>Is service top level</para>
-          </listitem>
-          <listitem>
-            <para>Is service remote</para>
-          </listitem>
-          <listitem>
-            <para>Is service a cas multiplier</para>
-          </listitem>
-          <listitem>
-            <para>Number of processing threads</para>
-          </listitem>
-          <listitem>
-            <para>Service uptime</para>
-          </listitem>
-    </itemizedlist> 
-
-    <para>The main metric for detecting an overloaded service is the input queue depth. If it is growing or high, the service 
-           is not able to keep up with the load. There are more CASes arriving at the queue than the service can process. 
-           Consider increasing number of processig threads in the JVm or start another instance of the service.</para>
-
-    <para>The main metric for detecting idle service is the idle time. If it is high, it can indicate that the service is not 
-          receiving enough CASes. This can be caused by a bottleneck in the service's client; supporting evidence for this
-          can be a high reply queue depth for the client - indicating the client is overloaded. 
-          Ideally, the idle time should be at zero, which means that the service receives enough CASes 
-          to process. The idle time is shown as a delta from the last time the checkpoint was made.</para>
-
-    <para>Zero un-checked-out CASes in the Cas Pool can point to a bottleneck in a service's client; supporting
-      evidence for this can be a high idle time. In this case, the service does not have enough CASes in its pool and is 
-          forced to wait. Remember that a CAS is not returned to the Service's CAS pool until the client signals it can be.
-          A typical reason is a slow client (look for evidence such as a high reply queue depth). Consider 
-          incrementing service's Cas pool and check the client's metrics to determine a reason why it is slow.</para>
-
-    <para>The monitor provides an API to plug in a custom formatter for displaying service metrics. A default implementation 
-          is provided in the UIMA AS runtime. A custom formatter must implement JmxMonitorListener interface and can be 
-          plugged in to the monitor with the following API:
-          <programlisting><![CDATA[ jmxMonitor.addJmxMonitorListener(customJmxListener);]]></programlisting></para>
-
-
-
-    <para>To easiest way to start a service with JMX monitoring enabled is to configure UIMA's property: UIMA_JVM_OPTS:</para>
-
-    <programlisting>
-    <![CDATA[set UIMA_JVM_OPTS=-Dcom.sun.management.jmxremote 
-    -Dcom.sun.management.jmxremote.port=8009 
-    -Dcom.sun.management.jmxremote.authenticate=false 
-    -Dcom.sun.management.jmxremote.ssl=false 
-    -Djmx.monitor.frequency=1000 
-    -Djmx.monitor.formatter=<custom formatter class>]]></programlisting>
-
-	<para>The above configures JMX MBeanServer to run on port 8009 with no authentication. It also sets the checkpoint interval 
-	to 1 second and plugs in a custom formatter for displaying metrics. Please note that the default formatter logs the metrics in 
-	UIMA Log at INFO level.</para>      
-      
       <!--
       <para>The implementation provides the following kinds of instrumentation via JMX:
         <itemizedlist>
@@ -1106,9 +1012,7 @@ under the License.
           </listitem>
           </itemizedlist> </para>
      -->     
-     </section>
-    <!-- of ugr.async.ov.concepts.mc.what --></section>
-  <!-- of ugr.async.ov.concepts.mc -->
+  </section><!-- of ugr.async.ov.concepts.mc -->
   <!-- ======================================================= -->
   <!-- |                 JMS Service Descriptor              | -->
   <!-- ======================================================= -->
