@@ -45,6 +45,8 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.client.UimaASStatusCallbackListener;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.analysis_engine.AnalysisEngineServiceStub;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
@@ -61,6 +63,9 @@ import org.apache.uima.util.Level;
 
 public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener implements
         AnalysisEngineServiceStub {
+  
+  private static final Class CLASS_NAME = JmsAnalysisEngineServiceStub.class;
+
   public static final String PARAM_BROKER_URL = "brokerUrl";
 
   public static final String PARAM_ENDPOINT = "endpoint";
@@ -216,7 +221,11 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
             // System.out.println("CPC wakeup");
           } catch (InterruptedException e) {
             // Only here if something interrupts this thread
-            e.printStackTrace();
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "callCollectionProcessComplete", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
+                      new Object[] { Thread.currentThread().getName(), e });
+            }
           }
         }
       }

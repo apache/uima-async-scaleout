@@ -36,9 +36,12 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 import org.apache.activemq.broker.jmx.QueueViewMBean;
+import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.jmx.ServiceInfoMBean;
 import org.apache.uima.aae.jmx.ServicePerformanceMBean;
 import org.apache.uima.aae.spi.transport.vm.UimaVmQueueMBean;
+import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.util.Level;
 import org.apache.uima.util.impl.CasPoolManagementImplMBean;
 
 /**
@@ -498,7 +501,11 @@ public class JmxMonitor implements Runnable {
         entry.incrementAnalysisTime(analysisTime);
 
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "collectStats", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+        }
       }
 
     } // for
@@ -520,7 +527,11 @@ public class JmxMonitor implements Runnable {
           mbsc.getMBeanCount(); // test the server
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+        }
       }
       ServiceMetrics[] metrics = collectStats(initial, uptime);
       initial = false;

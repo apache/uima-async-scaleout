@@ -136,7 +136,11 @@ public class UIMA_Service implements ApplicationListener {
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_deploy_desc__FINEST",
                   new Object[] { deployDescriptor });
         } catch (IOException e) {
-          e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "initialize", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+          }
         } finally {
           if (fis != null) {
             try {
@@ -221,7 +225,7 @@ public class UIMA_Service implements ApplicationListener {
       JmxMonitorListener listener = null;
       String formatterListenerClass = null;
       // Check if a custom monitor formatter listener class is provided. The user provides this
-      // formatter by adding a -Djmx.monitor.formatter=<class> parameter which specifies a class
+      // formatter by adding a -Duima.jmx.monitor.formatter=<class> parameter which specifies a class
       // that implements {@link JmxMonitorListener} interface
       if ((formatterListenerClass = System.getProperty(JmxMonitor.FormatterListener)) != null) {
         Object object = null;
@@ -394,7 +398,7 @@ public class UIMA_Service implements ApplicationListener {
       ServiceShutdownHook shutdownHook = service.new ServiceShutdownHook(serviceDeployer);
       Runtime.getRuntime().addShutdownHook(shutdownHook);
       // Check if we should start an optional JMX-based monitor that will provide service metrics
-      // The monitor is enabled by existence of -Djmx.monitor.frequency=<number> parameter. By
+      // The monitor is enabled by existence of -Duima.jmx.monitor.frequency=<number> parameter. By
       // default
       // the monitor is not enabled.
       String monitorCheckpointFrequency;
@@ -428,7 +432,11 @@ public class UIMA_Service implements ApplicationListener {
         } // while
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "main", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
   }
   class ServiceShutdownHook extends Thread {
@@ -447,7 +455,11 @@ public class UIMA_Service implements ApplicationListener {
           serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
     	}
       } catch( Exception e) {
-          e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+        }
       }
     }
   } 

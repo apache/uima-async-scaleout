@@ -578,7 +578,6 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { getAnalysisEngineController().getName(), anEndpoint.getEndpoint() });
       }
     } catch (ServiceShutdownException e) {
-      e.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendRequest",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_jms_shutdown__INFO",
@@ -742,7 +741,11 @@ public class JmsOutputChannel implements OutputChannel {
         // Not supported
       }
     } catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendRequest", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
 
     catch (AsynchAEException e) {
@@ -827,7 +830,11 @@ public class JmsOutputChannel implements OutputChannel {
         // Not supported
       }
     } catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     } catch (AsynchAEException e) {
       throw e;
     }
@@ -860,7 +867,11 @@ public class JmsOutputChannel implements OutputChannel {
         // Not supported
       }
     } catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     } catch (AsynchAEException e) {
       throw e;
     }
@@ -915,7 +926,11 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
     catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
 
     catch (AsynchAEException e) {
@@ -960,7 +975,11 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
     catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
 
     catch (AsynchAEException e) {
@@ -1026,7 +1045,11 @@ public class JmsOutputChannel implements OutputChannel {
         // Not supported
       }
     } catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
 
     catch (AsynchAEException e) {
@@ -1121,7 +1144,11 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { getAnalysisEngineController().getName(), anEndpoint.getEndpoint() });
       }
     } catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     } catch (AsynchAEException e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendReply",
@@ -1192,7 +1219,11 @@ public class JmsOutputChannel implements OutputChannel {
       }
       endpointConnection.send(tm, msgSize, false);
     } catch (JMSException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
       // Unable to establish connection to the endpoint. Log it and continue
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendReply",
@@ -1202,9 +1233,17 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
     catch (ServiceShutdownException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
       throw new AsynchAEException(e);
     } finally {
       try {
@@ -2170,7 +2209,11 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { getAnalysisEngineController().getName() });
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
   }
 

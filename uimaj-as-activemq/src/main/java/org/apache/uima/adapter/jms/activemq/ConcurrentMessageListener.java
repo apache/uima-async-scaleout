@@ -171,11 +171,10 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
           // increment number of child CASes this parent has in play
           parentEntry.incrementSubordinateCasInPlayCount();
         } catch (Exception e) {
-          e.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-                    "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
-                    new Object[] { e });
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
           }
         }
       }
@@ -188,11 +187,10 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
           try {
             delegateListener.onMessage(message, session);
           } catch (Exception e) {
-            e.printStackTrace();
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                       "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAEE_exception__WARNING", new Object[] { e });
+                      "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
             }
           }
         }

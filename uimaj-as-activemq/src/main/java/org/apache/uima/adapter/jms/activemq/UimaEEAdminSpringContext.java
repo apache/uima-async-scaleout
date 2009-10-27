@@ -134,7 +134,11 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
             }
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+          }
         }
       }
     }.start();
@@ -158,7 +162,11 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
             springContainer.destroy();
             springContainer = null;
           } catch (Exception e) {
-            e.printStackTrace();
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "shutdown", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+            }
           }
         }
       }.start();

@@ -651,10 +651,10 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       }
 
     } catch (Throwable t) {
-      t.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "onMessage",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING", t);
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), t });
       }
       controller.getErrorHandlerChain().handle(t, HandlerBase.populateErrorContext(messageContext),
               controller);
@@ -1033,7 +1033,12 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         }
         // }
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "destroyListener", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+        }
+
       }
     }
   }

@@ -161,7 +161,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "handleListenerFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
   }
 
@@ -207,7 +211,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                     new Object[] { controller.getComponentName(), endpoint.getDestination() });
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+          }
         }
       }
     } else if (disableListener(t)) {
@@ -292,7 +300,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               ((AggregateAnalysisEngineController) controller).disableDelegates(list);
               terminate = false; // just disable the delegate and continue
             } catch (Exception e) {
-              e.printStackTrace();
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                        "handleQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+              }
               terminate = true;
             }
           }
@@ -315,7 +327,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           }
           shutdown();
         } catch (Exception e) {
-          e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "handleQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+          }
         }
       }
     }.start();
@@ -374,7 +390,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     }
 
     // Connection failure that occurs AFTER the service initialized.
-    t.printStackTrace();
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+              "handleListenerSetupFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), t });
+    }
 
     synchronized (mux) {
       if (!failed) {
@@ -415,7 +435,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if (awaitingShutdown) {
       return;
     }
-    t.printStackTrace();
     String endpointName = (getDestination() == null) ? ""
             : ((ActiveMQDestination) getDestination()).getPhysicalName();
 
@@ -464,7 +483,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       injectTaskExecutor();
       super.initialize();
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "initializeContainer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
     }
   }
 
@@ -515,7 +538,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           concurrentListener = new ConcurrentMessageListener(cc, ml);
           super.setMessageListener(concurrentListener);
         } catch (Exception e) {
-          e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "afterPropertiesSet", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+          }
           return;
         }
       } else {
@@ -591,7 +618,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           } 
 
         } catch (Exception e) {
-          e.printStackTrace();
+         
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                   "afterPropertiesSet", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_jms_listener_failed_WARNING",
@@ -710,7 +737,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if (awaitingShutdown) {
       return;
     }
-    arg0.printStackTrace();
     String endpointName = (getDestination() == null) ? ""
             : ((ActiveMQDestination) getDestination()).getPhysicalName();
 

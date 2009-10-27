@@ -402,7 +402,6 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
                 new Object[] { Thread.currentThread().getId(), e });
       }
-      e.printStackTrace();
       throw e;
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -410,7 +409,6 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
                 new Object[] { Thread.currentThread().getId(), e });
       }
-      e.printStackTrace();
       throw new ResourceInitializationException(e);
     }
 
@@ -427,7 +425,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       }
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
-                "deploySpringContainer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "deploy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_deploy_container__CONFIG", new Object[] { springContextFiles[i] });
       }
     }
@@ -439,10 +437,18 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       context = new FileSystemXmlApplicationContext(springContextFiles);
       return initializeContainer(context);
     } catch (ResourceInitializationException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "deploy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
       throw e;
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "deploy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
       throw new ResourceInitializationException(e);
     }
 
