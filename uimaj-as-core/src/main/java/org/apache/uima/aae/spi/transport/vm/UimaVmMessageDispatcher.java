@@ -72,7 +72,6 @@ public class UimaVmMessageDispatcher implements UimaMessageDispatcher {
             System.out.println("!!!!!!!!!!!!!!! Wrong Type of UimaListener");
           }
         } catch (Exception e) {
-          e.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,

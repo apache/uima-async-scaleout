@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.UIDGenerator;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
@@ -190,16 +191,16 @@ public class VmTransport implements UimaTransport {
     return executor;
   }
 
-  public void registerWithJMX(AnalysisEngineController aController, String queueKind /*
-                                                                                      * ReplyQueue
-                                                                                      * or
-                                                                                      * InputQueue
-                                                                                      */) {
+  public void registerWithJMX(AnalysisEngineController aController, String queueKind ) {
     try {
       ((UimaVmQueue) workQueue).setConsumerCount(context.getConcurrentConsumerCount());
       aController.registerVmQueueWithJMX(workQueue, queueKind);
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "registerWithJMX", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
 
   }

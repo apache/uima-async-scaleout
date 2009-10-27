@@ -95,7 +95,6 @@ public class JmxManager implements JmxManagement {
       }
       ((MBeanServer) platformMBeanServer).registerMBean(anMBeanToRegister, aName);
     } catch (Exception e) {
-      e.printStackTrace();
       UIMAFramework.getLogger()
               .logrb(Level.WARNING, JmxMBeanAgent.class.getName(), "registerMBean",
                       LOG_RESOURCE_BUNDLE, "UIMA_JMX_failed_to_register_mbean__WARNING", e);
