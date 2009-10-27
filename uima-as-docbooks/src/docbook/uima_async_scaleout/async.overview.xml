@@ -1039,7 +1039,7 @@ under the License.
   </parameters>
 </customResourceSpecifier>]]></programlisting>
     
-    <para>The resouceClassName must be set exactly as shown. Set the brokerURL and endpoint parameters to the
+    <para>The resourceClassName must be set exactly as shown. Set the brokerURL and endpoint parameters to the
       appropriate values for the UIMA AS Service you want to call. These are the same settings you would use in a
       deployment descriptor to specify the location of a remote delegate. Note that this is a synchronous adapter,
       which processes one CAS at a time, so it will not take advantage of the scalability that UIMA AS provides. To
@@ -1047,6 +1047,21 @@ under the License.
       <xref linkend="ugr.ref.async.api"/>.</para>
     <para>For more information on the customResourceSpecifier see <olink targetdoc="references"
         targetptr="ugr.ref.xml.component_descriptor.custom_resource_specifiers"></olink>. </para>
+  </section>
+  
+  <section id="ugr.async.ov.concepts.lifecycle">
+    <title>Life cycle</title>
+    
+    <para>Running UIMA AS applications involves deploying (starting) UIMA AS services, perhaps over a wide area
+      network, perhaps on many machines.  UIMA AS as a few preliminary tools to help.  These include the ability
+      of the <xref linkend="ugr.ref.async.api">Client API</xref> to deploy UIMA AS services (limited to deployment within the same 
+      JVM), and scripts such as <code>deployAsyncService</code> that start up a UIMA AS Service.</para>
+        
+    <para><code>deployAsyncService</code> has a facility that launches a keyboard listener after starting, which 
+      listens for a "s" or "q" keystroke.  The "s" stops the service immediately, and the "q" quiesces the service,
+      letting any in-process work finish before stopping.</para>
+      
+    <para>JMX beans for services include a control option to stop the service.</para>
   </section>
   
   <!-- next section omitted - this is in base UIMA -->
