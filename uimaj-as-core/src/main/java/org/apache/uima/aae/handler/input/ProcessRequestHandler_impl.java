@@ -414,7 +414,11 @@ public class ProcessRequestHandler_impl extends HandlerBase {
             getController().getOutputChannel().sendReply(AsynchAEMessage.ServiceInfo,
                     aMessageContext.getEndpoint(), casReferenceId);
           } catch (Exception e) {
-            e.printStackTrace();
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                      "handleProcessRequestFromRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_exception__WARNING", new Object[] { e });
+            }
           }
         }
       }
@@ -489,7 +493,6 @@ public class ProcessRequestHandler_impl extends HandlerBase {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "handleProcessRequestFromRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -572,7 +575,6 @@ public class ProcessRequestHandler_impl extends HandlerBase {
                       UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
                       new Object[] { e });
             }
-            e.printStackTrace();
             return;
           }
           // Safety check. The input Cas should not be null here
@@ -632,7 +634,7 @@ public class ProcessRequestHandler_impl extends HandlerBase {
                 }
               }
             } catch (Exception e) {
-              e.printStackTrace();
+             
               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                         "handleProcessRequestWithCASReference",
@@ -847,7 +849,11 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       getController().getOutputChannel().sendReply(AsynchAEMessage.Ping,
               aMessageContext.getEndpoint());
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handlePingRequest", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
 
   }
@@ -950,7 +956,11 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // Not a Request nor Command. Delegate to the next handler in the chain
       super.delegate(messageContext);
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handle", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
       getController().getErrorHandlerChain().handle(e,
               HandlerBase.populateErrorContext((MessageContext) anObjectToHandle), getController());
     }

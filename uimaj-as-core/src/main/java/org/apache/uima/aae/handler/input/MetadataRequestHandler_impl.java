@@ -85,7 +85,6 @@ public class MetadataRequestHandler_impl extends HandlerBase {
           }
         }
       } catch (Exception e) {
-        e.printStackTrace();
         getController().getErrorHandlerChain().handle(e,
                 HandlerBase.populateErrorContext((MessageContext) anObjectToHandle),
                 getController());

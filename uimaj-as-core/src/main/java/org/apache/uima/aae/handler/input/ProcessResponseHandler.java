@@ -316,7 +316,6 @@ public class ProcessResponseHandler extends HandlerBase {
         // The reply came late. The CAS was removed from the cache.
         return;
       }
-      e.printStackTrace();
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
       errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
@@ -396,7 +395,6 @@ public class ProcessResponseHandler extends HandlerBase {
       }
     } catch (Exception e) {
 
-      e.printStackTrace();
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
       errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
@@ -426,7 +424,11 @@ public class ProcessResponseHandler extends HandlerBase {
 
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "handleProcessResponseWithCASReference", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", new Object[] { e });
+          }
         }
       }
     }
@@ -536,7 +538,6 @@ public class ProcessResponseHandler extends HandlerBase {
                 getController());
       }
     } catch (Exception e) {
-      e.printStackTrace();
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
       errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
@@ -554,7 +555,6 @@ public class ProcessResponseHandler extends HandlerBase {
                 .processCollectionCompleteReplyFromDelegate(delegateKey, true);
       }
     } catch (Exception e) {
-      e.printStackTrace();
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.CollectionProcessComplete);
       errorContext.add(AsynchAEMessage.Endpoint, aMessageContext.getEndpoint());
@@ -572,7 +572,11 @@ public class ProcessResponseHandler extends HandlerBase {
     try {
 
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handlePingReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
   }
 

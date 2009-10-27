@@ -221,7 +221,6 @@ public abstract class ErrorHandlerBase {
           return true;
         } catch (Exception e) {
           anEndpoint.cancelTimer();
-          e.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "retryLastCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,

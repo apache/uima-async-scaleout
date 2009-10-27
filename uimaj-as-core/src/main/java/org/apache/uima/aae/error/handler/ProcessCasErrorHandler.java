@@ -151,7 +151,6 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           }
         }
       } catch (Exception e) {
-        e.printStackTrace();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "sendExceptionToParent", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -447,8 +446,6 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           flowControllerContinueFlag = ((AggregateAnalysisEngineController) aController)
                   .continueOnError(casReferenceId, key, (Exception) t);
         } catch (Exception exc) {
-          exc.printStackTrace();
-
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -558,7 +555,6 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
             sendExceptionToClient(t, casReferenceId, endpoint, aController);
           }
         } catch (Exception e) {
-          e.printStackTrace();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -601,7 +597,6 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           }
         }
       } catch (Exception e) {
-        e.printStackTrace();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -615,7 +610,6 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           sendExceptionToClient(t, casReferenceId, endpoint, aController);
         }
       } catch (Exception e) {
-        e.printStackTrace();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -651,7 +645,6 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
 
       aController.dropStats(casReferenceId, aController.getName());
     } catch (Exception e) {
-      e.printStackTrace();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
