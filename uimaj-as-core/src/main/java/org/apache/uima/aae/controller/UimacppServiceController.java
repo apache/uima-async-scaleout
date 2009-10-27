@@ -40,6 +40,7 @@ import javax.management.ObjectName;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.jmx.JmxManagement;
 import org.apache.uima.aae.jmx.JmxManager;
 import org.apache.uima.internal.util.JmxMBeanAgent;
@@ -58,6 +59,7 @@ import org.springframework.beans.factory.DisposableBean;
  */
 public class UimacppServiceController extends AnalysisEngineControllerAdapter implements
         ControllerLifecycle, DisposableBean {
+  private static final Class CLASS_NAME = UimacppServiceController.class;
 
   private static final String STARTING_DIRECTORY = "UIMACPP_STARTING_DIRECTORY";
 
@@ -729,8 +731,11 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
        **/
 
     } catch (ResourceInitializationException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, UimacppServiceController.class.getName(),
+                "main", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
 
   }
@@ -744,9 +749,17 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
     try {
       shutdown();
     } catch (IOException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "terminate", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "terminate", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
   }
 
@@ -759,9 +772,17 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
     try {
       shutdown();
     } catch (IOException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "destroy", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "destroy", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
   }
 
@@ -868,6 +889,8 @@ class LoggerHandler implements Runnable {
  * accept socket connection from C++ service.
  */
 class ConnectionHandler implements Runnable {
+  private static final Class CLASS_NAME = ConnectionHandler.class;
+
   UimacppServiceController controller;
 
   ConnectionHandler(UimacppServiceController controller) {
@@ -882,9 +905,17 @@ class ConnectionHandler implements Runnable {
       aSocket = controller.server.accept();
       controller.handleConnection(aSocket);
     } catch (SocketTimeoutException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     } catch (IOException e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
     }
 
   }
