@@ -66,7 +66,7 @@ echo  If trunk, use the word "trunk" for the 2nd argument, e.g. extractAndBuild.
 @:execute
 svn checkout -r HEAD http://svn.apache.org/repos/asf/incubator/uima/uima-as/%svnloc%
 xcopy %leveldir%\* . /E
-rmdir /S %leveldir%
+rmdir /S /Q %leveldir%
 cd uimaj-as
 call mvn %jvmarg%  %mvnCommand%
 REM keep these next 2 "cd"s as two separate lines - got strange behavior when combining 2009
