@@ -54,6 +54,7 @@ import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.TypeSystem;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.collection.EntityProcessStatus;
@@ -298,6 +299,49 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
+  }
+  public void testTypeSystemMerge() throws Exception {
+    System.out.println("-------------- testTypeSystemMerge -------------");
+    // Instantiate Uima EE Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Deploy Uima EE Primitive Service
+    deployService(eeUimaEngine, relativePath+ "/Deploy_GovernmentOfficialRecognizer.xml");
+    deployService(eeUimaEngine, relativePath+ "/Deploy_NamesAndPersonTitlesRecognizer.xml");
+    deployService(eeUimaEngine, relativePath+ "/Deploy_TokenSentenceRecognizer.xml");
+    deployService(eeUimaEngine, relativePath+ "/Deploy_AggregateToTestTSMerge.xml");
+    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+    "TopLevelTaeQueue");
+    
+    try {
+      initialize(eeUimaEngine, appCtx);
+      waitUntilInitialized();
+      //  Check if the type system returned from the service contains
+      //  expected types
+      CAS cas = eeUimaEngine.getCAS();
+      TypeSystem ts = cas.getTypeSystem();
+      //  "example.EmailsAddress" type was 'contributed' by the Flow Controller
+      if ( ts.getType("example.EmailAddress") == null ) {
+        fail("Incomplete Type system. Expected Type 'example.EmailAddress' missing from the CAS type system");
+      } else if ( ts.getType("example.GovernmentOfficial") == null) {
+        fail("Incomplete Type system. Expected Type 'example.GovernmentOfficial' missing from the CAS type system");
+      } else if ( ts.getType("example.Name") == null) {
+        fail("Incomplete Type system. Expected Type 'example.Name' missing from the CAS type system");
+      } else if ( ts.getType("example.PersonTitle") == null) {
+        fail("Incomplete Type system. Expected Type 'example.PersonTitle' missing from the CAS type system");
+      } else if ( ts.getType("example.PersonTitleKind") == null) {
+        fail("Incomplete Type system. Expected Type 'example.PersonTitleKind' missing from the CAS type system");
+      } else if ( ts.getType("org.apache.uima.examples.tokenizer.Sentence") == null) {
+        fail("Incomplete Type system. Expected Type 'org.apache.uima.examples.tokenizer.Sentence' missing from the CAS type system");
+      } else if ( ts.getType("org.apache.uima.examples.tokenizer.Token") == null) {
+        fail("Incomplete Type system. Expected Type 'org.apache.uima.examples.tokenizer.Token' missing from the CAS type system");
+      } 
+      
+    } catch (ResourceInitializationException e) {
+        fail("Initialization Exception");
+    } catch (Exception e) {
+    } finally {
+      eeUimaEngine.stop();
+    }
   }
 
   /**
