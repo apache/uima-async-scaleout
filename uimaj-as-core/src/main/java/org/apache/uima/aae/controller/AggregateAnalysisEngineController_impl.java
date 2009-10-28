@@ -32,13 +32,11 @@ import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager;
-import org.apache.uima.aae.EECasManager_impl;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
-import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.ControllerDelegate;
 import org.apache.uima.aae.delegate.Delegate;
@@ -2464,11 +2462,15 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (errorHandlerChain == null) {
       plugInDefaultErrorHandlerChain();
     }
-
-    // Create CAS Pool with a given Context.
     AnalysisEngineDescription specifier = (AnalysisEngineDescription) super.getResourceSpecifier();
     aggregateMetadata = specifier.getAnalysisEngineMetaData();
+    flowControllerContainer = UimaClassFactory.produceAggregateFlowControllerContainer(specifier,
+            flowControllerDescriptor, analysisEngineMetaDataMap, getUimaContextAdmin(),
+            ((AnalysisEngineDescription) getResourceSpecifier()).getSofaMappings(), super
+                    .getManagementInterface());
     if (isTopLevelComponent()) {
+      //  Add FC's meta
+      getCasManagerWrapper().addMetadata((ProcessingResourceMetaData)flowControllerContainer.getMetaData());
       // Top level component is the outer most component in the containment hierarchy.
       getCasManagerWrapper().initialize("AggregateContext");
       aggregateMetadata.setTypeSystem(getCasManagerWrapper().getMetadata().getTypeSystem());
@@ -2477,12 +2479,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       aggregateMetadata.setFsIndexCollection(getCasManagerWrapper().getMetadata()
               .getFsIndexCollection());
     }
-
-    flowControllerContainer = UimaClassFactory.produceAggregateFlowControllerContainer(specifier,
-            flowControllerDescriptor, analysisEngineMetaDataMap, getUimaContextAdmin(),
-            ((AnalysisEngineDescription) getResourceSpecifier()).getSofaMappings(), super
-                    .getManagementInterface());
-
     if (disabledDelegateList.size() > 0) {
       flowControllerContainer.removeAnalysisEngines(disabledDelegateList);
     }
