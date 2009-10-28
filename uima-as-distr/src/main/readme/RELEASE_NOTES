@@ -42,7 +42,8 @@ issues you find at http://issues.apache.org/jira/browse/uima.
 5. List of JIRA Issues Fixed in this Release
 
 
-Release Notes - UIMA-AS - Version 2.3.0
+
+Release Notes - UIMA - Version 2.3AS
 
 
 ** Bug
@@ -190,8 +191,21 @@ Release Notes - UIMA-AS - Version 2.3.0
     * [UIMA-1579] - The cas pool size of the camel uima driver must be configurable
     * [UIMA-1580] - Synchronize AsynchAECasManager initialize() method to fix NPE while merging type systems
     * [UIMA-1584] - Document Delta CAS XMI format
+    * [UIMA-1593] - AEs that declare multipleDeploymentAllowed=false can't be deployed as services and called from multiple clients in the same JVM
+    * [UIMA-1609] - binary assembly wrongly including FOP files
+    * [UIMA-1615] - make build-from-sources work
+    * [UIMA-1624] - Uima AS service should start listeners on its input queue on succesfull initialization only
+    * [UIMA-1626] - JmsOutputChannel.sendReply(Throwable t, ...) fails if exception is not serializeable
+    * [UIMA-1630] - Fix IndexOutOfBounds exception in BaseAnalysisEngineController
+    * [UIMA-1632] - UIMA AS service does not recover from broker failure and subsequent restart
+    * [UIMA-1633] - UimaASStatusCallbackListener javadoc should say when aStatus can be null
+    * [UIMA-1636] - Modify property names used to enable and configure UIMA AS Jmx Monitor 
+    * [UIMA-1637] - Update JMX MBeans exposed by UIMA AS
+    * [UIMA-1638] - Remove dumping stack traces to stdout in UIMA AS
+    * [UIMA-1640] - UIMA AS aggregate is not merging Flow Controller's metadata
 
 ** Improvement
+    * [UIMA-841] - move Eclipse feature maven builds into feature projects
     * [UIMA-844] - Add connection recovery for temp queues in the JMS Listener object
     * [UIMA-927] - Provide a way to drain Dead Letter Queue 
     * [UIMA-998] - The UIMA website should have a list of known problems and any work-arounds
@@ -208,7 +222,6 @@ Release Notes - UIMA-AS - Version 2.3.0
     * [UIMA-1163] - set svn:eol-style to native for source files in UIMA project
     * [UIMA-1173] - BaseUIMAAsynchronousEngine_impl.getCAS() should queue requests
     * [UIMA-1189] - Remove excessive synchronization from Uima As
-    * [UIMA-1192] - runAECpp should include -lenient option
     * [UIMA-1211] - Optimize UIMA-AS Logging by Testing The Log Level
     * [UIMA-1262] - Make changes to superPoms active before they are *installed*
     * [UIMA-1274] - Add binary serialization option to JMS service descriptor
@@ -234,7 +247,12 @@ Release Notes - UIMA-AS - Version 2.3.0
     * [UIMA-1574] - uima-as assembly is to be unzipped over base, but cannot be, because top level dir names differ
     * [UIMA-1575] - Change eclipse update site and feature generation to use common maven mechanisms
     * [UIMA-1578] - The uimaj-as-camel documentation should be extended and reviewed
+    * [UIMA-1585] - Run RAT on projects, fix missing licenses, add RAT running to POM, document exclusions
     * [UIMA-1590] - fix extractAndBuild scripts
+    * [UIMA-1612] - Removed Unused classes from UIMA AS org.apache.uima.aae.error.handler package
+    * [UIMA-1613] - run Rat consistently for all maven assemblies
+    * [UIMA-1622] - Make uima-as dependencies more precise
+    * [UIMA-1635] - uima-as docs review fixes for 2.3.0 level
 
 ** New Feature
     * [UIMA-1017] - Client API does not support the CAS multiplier interface
@@ -260,10 +278,5 @@ Release Notes - UIMA-AS - Version 2.3.0
     * [UIMA-1413] - Add uimaj-as-camel to uima as distribution
     * [UIMA-1479] - Move UIMA-AS out of sandbox, change to an "add-on" packaging style to the core
     * [UIMA-1555] - repackage UIMA-AS to work as an add-on to base UIMA
-
-
-
-
-
-
+    * [UIMA-1614] - update 2.3.0-incubating-SNAPSHOT to drop the snapshot in prep for release
 
