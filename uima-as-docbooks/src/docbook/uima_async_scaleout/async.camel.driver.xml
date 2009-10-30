@@ -64,11 +64,13 @@ under the License.
     <para>The Asynchronous Scaleout Camel Driver is configured with a configuration string. The 
     configuration string must contain the broker location and name of the JMS queue used to
     communicate with UIMA AS. It has the following format
-    <programlisting>uimadriver:brokerURL?queue=nameofqueue&amp;casPoolSize=n</programlisting>
+    <programlisting>uimadriver:brokerURL?queue=nameofqueue&amp;CasPoolSize=n&amp;Timeout=t</programlisting>
     which could for example be specified as
     <programlisting>uimadriver:tcp://localhost:61616?queue=TextAnalysisQueue</programlisting>.
-    The casPoolSize parameter is optional but if it is present n must be an integer
+    The CasPoolSize parameter is optional but if it is present n must be an integer
     which is larger than zero, otherwise the UIMA AS default will be used.
+    The Timeout parameter is optional but if present t in milliseconds must zero or 
+    larger.
     </para>
   </section>
   <section id="ugr.async.camel.driver.sample">
