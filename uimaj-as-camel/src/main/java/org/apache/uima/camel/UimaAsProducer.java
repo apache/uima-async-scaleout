@@ -70,7 +70,7 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
     }
     
     public void initializationComplete(EntityProcessStatus aStatus) {
-    	if (aStatus.isException()) {
+    	if (aStatus != null && aStatus.isException()) {
     		LOG.warn("Error on initializing: " + aStatus.getStatusMessage());
     	}
     }
@@ -103,7 +103,7 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
     }
 
     public void collectionProcessComplete(EntityProcessStatus aStatus) {
-    	if (aStatus.isException()) {
+    	if (aStatus != null && aStatus.isException()) {
     		LOG.warn("Error on collection process complete: " + aStatus.getStatusMessage());
     	}
     }
