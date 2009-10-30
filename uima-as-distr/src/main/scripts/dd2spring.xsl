@@ -2566,10 +2566,17 @@
             "replace(
               replace(
                replace(
-                replace($inputQueue/@brokerURL,'\?.*', '')
-                        ,':','_c_')
-                       ,'//','_ss_')
-                     ,'/', '_s_')"/>     
+                replace(
+                 replace(
+                  replace(
+                   replace( $inputQueue/@brokerURL,'\?.*', '')
+                           ,',','_cm_')
+                          ,':','_c_')
+                         ,'//','_ss_')
+                       ,'/', '_s_')
+                      ,'\(','_op_')
+                     ,'\)','_cp_')
+                     "/>     
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
