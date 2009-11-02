@@ -16,6 +16,12 @@
 #   specific language governing permissions and limitations
 #   under the License.
 
+if [ "$UIMA_HOME" = "" ]
+then
+  echo UIMA_HOME environment variable is not set
+  exit 1
+fi
+
 if [ $# -lt 1 ]
   then echo "You must specify one or more deployment descriptors.  Usage: deployAsyncService.sh file-path-of-deployment-descriptor [another-dd ...]"
        exit 1;
@@ -25,4 +31,4 @@ if [ ! -f $1 ]
        exit 1;
 fi;
 
-. runUimaClass.sh org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL "file:$UIMA_HOME/saxon/saxon8.jar" -xslt "$UIMA_HOME/bin/dd2spring.xsl" -dd $*
+. "$UIMA_HOME/bin/runUimaClass.sh" org.apache.uima.adapter.jms.service.UIMA_Service -saxonURL "file:$UIMA_HOME/saxon/saxon8.jar" -xslt "$UIMA_HOME/bin/dd2spring.xsl" -dd $*
