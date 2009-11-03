@@ -23,4 +23,4 @@ then
   exit 1
 fi
 
-. "$UIMA_HOME/bin/runUimaClass.sh" org.apache.uima.examples.as.RunRemoteAsyncAE $*
+"$UIMA_HOME/bin/runUimaClass.sh" org.apache.uima.examples.as.RunRemoteAsyncAE $*
