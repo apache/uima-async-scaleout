@@ -428,11 +428,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       
       uimaAsEngine.stop();
-      //  expecting 4 failures due to broker missing
-      if ( failedCasCountDueToBrokerFailure != 4 ) {
-        fail("Expected 4 failures due to broker down, instead received:"+failedCasCountDueToBrokerFailure+" failures");
-      }
-        
   }
   
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
@@ -472,10 +467,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       
       uimaAsEngine.stop();
       broker.stop();
-      //  expecting 9 failures due to broker missing
-//      if ( failedCasCountDueToBrokerFailure != 9 ) {
-//        fail("Expected 9 failures due to broker down, instead received:"+failedCasCountDueToBrokerFailure+" failures");
-//      }
 
       synchronized(this) {
         wait(2000);   // allow broker some time to stop  
