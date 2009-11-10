@@ -2016,7 +2016,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
           if (delegate != null) {
             // Get a list of all CASes this aggregate has dispatched to the Cas Multiplier
-            List<DelegateEntry> pendingList = delegate.getDelegateCasesPendingRepy();
+            List<DelegateEntry> pendingList = delegate.getDelegateCasesPendingReply();
             if (pendingList != null) {
               Iterator<DelegateEntry> it2 = pendingList.iterator();
               // For each CAS pending reply send a Stop message to the CM
