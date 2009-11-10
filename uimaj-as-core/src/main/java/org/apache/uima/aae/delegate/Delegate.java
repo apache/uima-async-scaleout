@@ -168,8 +168,12 @@ public abstract class Delegate {
     }
   }
 
-  public List<DelegateEntry> getDelegateCasesPendingRepy() {
+  public List<DelegateEntry> getDelegateCasesPendingReply() {
     return outstandingCasList;
+  }
+
+  public List<DelegateEntry> getDelegateCasesPendingDispatch() {
+    return pendingDispatchList;
   }
 
   public void addNewCasToOutstandingList(String aCasReferenceId) {
@@ -570,19 +574,6 @@ public abstract class Delegate {
    *          - command for which the timer is started
    */
   private synchronized void startDelegateTimer(final String aCasReferenceId, final int aCommand) {
-    // Check if we are awaiting a Ping reply. While awaiting ping reply dont start
-    // a new timer.
-    if (isAwaitingPingReply()) {
-      // Ping is actually a GetMeta request
-      if (aCommand == AsynchAEMessage.GetMeta) {
-        // Cancel any outstanding timers. A timer for a Ping message is about to
-        // be started. Another thread may have started a Process timer.
-        cancelDelegateTimer();
-      } else {
-        // We are waiting for a ping reply, don't start a new timer
-        return;
-      }
-    }
     final long timeToWait = getTimeoutValueForCommand(aCommand);
     Date timeToRun = new Date(System.currentTimeMillis() + timeToWait);
     timer = new Timer("Controller:" + getComponentName() + ":Request TimerThread-Endpoint_impl:"
@@ -590,7 +581,6 @@ public abstract class Delegate {
     final Delegate delegate = this;
     timer.schedule(new TimerTask() {
       public void run() {
-        cancelDelegateTimer();
         delegate.setState(TIMEOUT_STATE);
         ErrorContext errorContext = new ErrorContext();
         errorContext.add(AsynchAEMessage.Command, aCommand);
@@ -603,16 +593,8 @@ public abstract class Delegate {
                     new Object[] { delegate.getKey(), timeToWait, aCasReferenceId });
           }
           errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
-        } else if (AsynchAEMessage.GetMeta == aCommand) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
-                    "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_meta_timeout_no_reply__INFO",
-                    new Object[] { delegate.getKey(), timeToWait });
-          }
-          // Check if this is a Ping timeout. If it is and there are CASes on
-          // the list of CASes pending reply, treat this timeout as Process
-          // Timeout
+          //  Check if this is a Ping timeout and associate this with
+          //	the oldest CAS from the list of CASes pending reply.
           if (isAwaitingPingReply() && getCasPendingReplyListSize() > 0) {
             String casReferenceId = getOldestCasIdFromOutstandingList();
             errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
@@ -620,6 +602,14 @@ public abstract class Delegate {
             // by the ProcessCasErrorHandler.
             errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
             errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
+          }
+        } else if (AsynchAEMessage.GetMeta == aCommand) {
+          System.out.println("getMeta Timeout on delegate:"+delegate.getKey());
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+                    "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_meta_timeout_no_reply__INFO",
+                    new Object[] { delegate.getKey(), timeToWait });
           }
         } else if (AsynchAEMessage.CollectionProcessComplete == aCommand) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
@@ -762,5 +752,15 @@ public abstract class Delegate {
       return casReferenceId;
     }
   }
-
+  public String toString(){
+    StringBuffer sb = new StringBuffer();
+    List<DelegateEntry> copyOfOutstandingCASes = 
+      new ArrayList<DelegateEntry>(outstandingCasList);
+    for (DelegateEntry entry : copyOfOutstandingCASes) {
+      try {
+        sb.append("["+entry.getCasReferenceId()+"]");
+      } catch( Exception e ) {}
+    }
+    return sb.toString();
+  }
 }
