@@ -123,6 +123,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   protected InitialContext jndiContext;
   
+  private ObjectName clientJmxObjectName = null;
   public BaseUIMAAsynchronousEngine_impl() {
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
             "UIMA-AS version " + UIMAFramework.getVersionString());
@@ -147,8 +148,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    */
   public String getEndPointName() throws ResourceProcessException {
     try {
-      return ((ActiveMQDestination) sender.getMessageProducer().getDestination()).getPhysicalName();
-      // return (((ActiveMQDestination) producer.getDestination()).getPhysicalName());
+      return clientSideJmxStats.getEndpointName();
     } catch (Exception e) {
       throw new ResourceProcessException(e);
     }
@@ -273,7 +273,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
           } catch (JMSException exx) {
           }
         }
+        // unregister client
         if (jmxManager != null) {
+          jmxManager.unregisterMBean(clientJmxObjectName);
           jmxManager.destroy();
         }
       } catch (Exception e) {
@@ -618,8 +620,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       applicationName += "_" + uuid;
       jmxManager = new JmxManager("org.apache.uima");
       clientSideJmxStats.setApplicationName(applicationName);
-      ObjectName on = new ObjectName("org.apache.uima:name=" + applicationName);
-      jmxManager.registerMBean(clientSideJmxStats, on);
+      clientJmxObjectName = new ObjectName("org.apache.uima:name=" + applicationName);
+      jmxManager.registerMBean(clientSideJmxStats, clientJmxObjectName);
 
       Properties props = new Properties();
       props.setProperty(Context.INITIAL_CONTEXT_FACTORY,"org.apache.activemq.jndi.ActiveMQInitialContextFactory");
