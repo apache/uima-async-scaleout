@@ -905,6 +905,12 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
           }
         }
         newListener.afterPropertiesSet();
+        if ( controller != null && controller.isStopped() ) {
+          System.out.println("Controller:"+controller.getComponentName()+" Stopping New Listener. The Service is stopping");
+          newListener.stop();
+          //  we are aborting, the controller has been stopped
+          return;
+        }
         // Get the endpoint object for a given delegate key from the Aggregate
         Endpoint endpoint = ((AggregateAnalysisEngineController) getController()).lookUpEndpoint(
                 aDelegateKey, false);
