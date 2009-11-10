@@ -32,6 +32,7 @@ import javax.jms.TextMessage;
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.util.Level;
 
@@ -73,7 +74,23 @@ public class ActiveMQMessageSender extends BaseMessageSender {
     producerMap.put(destination, mProducer);
     return mProducer;
   }
-
+  /**
+   * This is called when a new Connection is created after broker is restarted
+   */
+  public void setConnection(Connection aConnection) {
+    connection = aConnection;
+    cleanup();
+    try {
+      initializeProducer();
+    } catch( Exception e) {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "setConnection", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+      }
+    }
+    
+  }
   private String getBrokerURL() {
     try {
       return ((ActiveMQConnection) connection).getBrokerInfo().getBrokerURL();
@@ -142,16 +159,16 @@ public class ActiveMQMessageSender extends BaseMessageSender {
 
   public TextMessage createTextMessage() throws Exception {
     if (session == null) {
-      throw new JMSException(
-              "Unable To Create JMS TextMessage. Reason: JMS Session Not Initialized");
+    //	Force initialization of Producer
+      initializeProducer();
     }
     return session.createTextMessage("");
   }
 
   public BytesMessage createBytesMessage() throws Exception {
     if (session == null) {
-      throw new JMSException(
-              "Unable To Create JMS BytesMessage. Reason: JMS Session Not Initialized");
+    //	Force initialization of Producer
+      initializeProducer();
     }
     return session.createBytesMessage();
   }
@@ -159,18 +176,21 @@ public class ActiveMQMessageSender extends BaseMessageSender {
   /**
    * Cleanup any jms resources used by the worker thread
    */
-  protected void cleanup() throws Exception {
+  protected void cleanup() { 
     try {
       if (session != null) {
         session.close();
+        session = null;
       }
       if (producer != null) {
         producer.close();
+        producer = null;
       }
-      producerMap.clear();
     } catch (Exception e) {
       System.out.println("JMS Exception While Closing Session - Ignoring");
       // Ignore we are shutting down
+    } finally {
+      producerMap.clear();
     }
   }
 }
