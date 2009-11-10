@@ -20,6 +20,7 @@
 package org.apache.uima.adapter.jms.client;
 
 import javax.jms.BytesMessage;
+import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.MessageProducer;
 import javax.jms.TextMessage;
@@ -39,4 +40,6 @@ public interface MessageSender {
   public MessageProducer getMessageProducer(Destination destination) throws Exception;
 
   public BytesMessage createBytesMessage() throws Exception;
+  
+  public void setConnection(Connection connection);
 }
