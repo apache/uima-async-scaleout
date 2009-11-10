@@ -1328,7 +1328,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       delegateEndpoints[indx++] = (Endpoint) destinationMap.get((String) it.next());
     }
     // Now send GetMeta request to all remote delegates
-    for (int i = 0; i < delegateEndpoints.length; i++) {
+    for (int i = 0; !isStopped() && i < delegateEndpoints.length; i++) {
       if (delegateEndpoints[i].isRemote()) {
         delegateEndpoints[i].initialize();
         delegateEndpoints[i].setController(this);
@@ -1377,7 +1377,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           if (isStopped()) {
             return;
           }
-          if (delegateEndpoints[i].getStatus() == Endpoint.OK) {
+          if (delegateEndpoints[i].getStatus() == Endpoint.OK ) {
             dispatchMetadataRequest(delegateEndpoints[i]);
           }
         }
@@ -2289,7 +2289,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   public PrimitiveServiceInfo getDelegateServiceInfo(String aDelegateKey) {
-    if (delegateStatMap.containsKey(aDelegateKey) == false) {
+    if (delegateStatMap == null || aDelegateKey == null || delegateStatMap.containsKey(aDelegateKey) == false) {
       return null;
     }
     Object[] delegateStats;
