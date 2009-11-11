@@ -922,6 +922,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 replyEndpoint, AsynchAEMessage.Process);
       }
     } catch (Exception ex) {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "process",
+                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
+                new Object[] { ex });
+      }
     }
   }
 
