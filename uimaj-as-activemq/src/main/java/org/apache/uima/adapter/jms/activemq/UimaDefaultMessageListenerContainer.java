@@ -458,7 +458,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       } catch (Exception e) {
       }
     }
-    String brokerURL = ((ActiveMQConnectionFactory) connectionFactory).getBrokerURL();
     super.setConnectionFactory(connectionFactory);
   }
 
@@ -706,10 +705,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       endpoint.setDestination(aDestination);
       if (aDestination instanceof TemporaryQueue) {
         endpoint.setTempReplyDestination(true);
-        String serviceName = "";
-        if (controller != null) {
-          serviceName = ">>>Controller:" + controller.getComponentName();
-        }
         Object pojoListener = getPojoListener();
         if (pojoListener != null && pojoListener instanceof InputChannel) {
           ((JmsInputChannel) pojoListener).setListenerContainer(this);
