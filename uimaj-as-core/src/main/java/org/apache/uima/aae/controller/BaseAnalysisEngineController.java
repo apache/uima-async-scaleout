@@ -2785,9 +2785,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
   
   public void changeState(ServiceState state) {
-    synchronized(currentState) {
-      currentState = state;
-    }
+    currentState = state;
   }
   
   public ServiceState getState() {
