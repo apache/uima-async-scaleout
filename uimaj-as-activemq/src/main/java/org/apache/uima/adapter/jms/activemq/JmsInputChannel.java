@@ -928,7 +928,6 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   public boolean isListenerActiveOnDestination(Destination destination ) {
-    List<UimaDefaultMessageListenerContainer> listeners = new ArrayList<UimaDefaultMessageListenerContainer>();
     for (int i = 0; i < listenerContainerList.size(); i++) {
       UimaDefaultMessageListenerContainer mListener = (UimaDefaultMessageListenerContainer) listenerContainerList
               .get(i);
