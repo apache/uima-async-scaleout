@@ -417,11 +417,6 @@ public class JmsOutputChannel implements OutputChannel {
     BrokerConnectionEntry brokerConnectionEntry = null;
     if (connectionMap.containsKey(anEndpoint.getServerURI())) {
       brokerConnectionEntry = (BrokerConnectionEntry) connectionMap.get(anEndpoint.getServerURI());
-      brokerConnectionEntry.setBrokerURL(anEndpoint.getServerURI());
-      if ( JmsEndpointConnection_impl.connectionClosedOrFailed(brokerConnectionEntry) ) {
-        invalidateConnectionAndEndpoints(brokerConnectionEntry);
-        brokerConnectionEntry = createConnectionEntry(anEndpoint.getServerURI());
-      }
       // Findbugs thinks that the above may return null, perhaps due to a race condition. Add
       // the null check just in case
       if (brokerConnectionEntry == null) {
@@ -429,6 +424,11 @@ public class JmsOutputChannel implements OutputChannel {
                 + getAnalysisEngineController().getComponentName()
                 + " Unable to Lookup Broker Connection For URL:" + anEndpoint.getServerURI());
       } 
+      brokerConnectionEntry.setBrokerURL(anEndpoint.getServerURI());
+      if ( JmsEndpointConnection_impl.connectionClosedOrFailed(brokerConnectionEntry) ) {
+        invalidateConnectionAndEndpoints(brokerConnectionEntry);
+        brokerConnectionEntry = createConnectionEntry(anEndpoint.getServerURI());
+      }
     } else {
       brokerConnectionEntry = createConnectionEntry(anEndpoint.getServerURI());
     }
