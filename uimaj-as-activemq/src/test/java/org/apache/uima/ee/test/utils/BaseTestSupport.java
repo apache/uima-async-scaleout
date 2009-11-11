@@ -963,14 +963,14 @@ public abstract class BaseTestSupport extends ActiveMQSupport
   }
 
   protected void spinShutdownThread(final BaseUIMAAsynchronousEngine_impl uimaEEEngine, long when,
-          final String aSpringContainerId, final int stop_level) throws Exception {
+          final String[] aSpringContainerIds, final int stop_level) throws Exception {
     Date timeToRun = new Date(System.currentTimeMillis() + when);
     final Timer timer = new Timer();
     timer.schedule(new TimerTask() {
       public void run() {
         timer.cancel();
         timer.purge();
-        if (aSpringContainerId == null) {
+        if (aSpringContainerIds == null) {
           isStopping = true;
           System.out.println(">>>> runTest: Stopping UIMA EE Engine");
           uimaEEEngine.stop();
@@ -987,7 +987,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         } else {
           try {
             System.out.println(">>>> runTest: Quiescing Service And Stopping it");
-            uimaEEEngine.undeploy(aSpringContainerId, stop_level);
+            for( int i = aSpringContainerIds.length; i > 0; i--) {
+              uimaEEEngine.undeploy(aSpringContainerIds[i-1], stop_level);
+            }
           } catch (Exception e) {
             e.printStackTrace();
           }
