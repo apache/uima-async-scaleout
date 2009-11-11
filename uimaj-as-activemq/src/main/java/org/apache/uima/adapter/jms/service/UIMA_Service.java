@@ -395,7 +395,7 @@ public class UIMA_Service implements ApplicationListener {
         System.exit(1);
       }
       // Add a shutdown hook to catch kill signal and to force quiesce and stop
-      ServiceShutdownHook shutdownHook = service.new ServiceShutdownHook(serviceDeployer);
+      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
       Runtime.getRuntime().addShutdownHook(shutdownHook);
       // Check if we should start an optional JMX-based monitor that will provide service metrics
       // The monitor is enabled by existence of -Duima.jmx.monitor.frequency=<number> parameter. By
@@ -439,7 +439,7 @@ public class UIMA_Service implements ApplicationListener {
       }
     }
   }
-  class ServiceShutdownHook extends Thread {
+  static class ServiceShutdownHook extends Thread {
 
     public SpringContainerDeployer serviceDeployer;
 
