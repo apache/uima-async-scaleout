@@ -757,9 +757,9 @@ public abstract class Delegate {
     List<DelegateEntry> copyOfOutstandingCASes = 
       new ArrayList<DelegateEntry>(outstandingCasList);
     for (DelegateEntry entry : copyOfOutstandingCASes) {
-      try {
+      if ( entry != null && entry.getCasReferenceId() != null ) {
         sb.append("["+entry.getCasReferenceId()+"]");
-      } catch( Exception e ) {}
+      } 
     }
     return sb.toString();
   }
