@@ -737,6 +737,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    */
   private String sendCAS(CAS aCAS, ClientRequest requestToCache) throws ResourceProcessException {
     synchronized (sendMux) {
+      if ( requestToCache == null ) {
+        throw new ResourceProcessException(new Exception("Invalid Process Request. Cache Entry is Null"));
+      }
       String casReferenceId = requestToCache.getCasReferenceId();
       try {
         if (!running) {
