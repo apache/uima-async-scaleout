@@ -434,7 +434,32 @@ uimaAsEngine.undeploy(id);
     </para>
   </section>
       
-    
+  <section id="ugr.ref.async.api.recovery">
+    <title>Recovering from broker failure</title>
+    <para>
+      The Client API has a built in recovery strategy to handle cases where a
+      broker fails or becomes unreachable, and then, later becomes available
+      again.  
+    </para>  
+    <para>
+      Before sending a new request to a broker, the client checks the state of 
+      its connection. If the connection has failed, 
+      the client enters a loop where it will attemp to reconnect 
+      every 5 seconds.  One message is logged to notify this 
+      is happening.  The recovery attempt stops when
+      the the connection is recovered, or when all UIMA AS clients 
+      that are sharing this failed connection, terminate.
+      </para>
+      <para>
+      During the recovery attempt, any CASes that are submitted via the
+      client APIs will fail or timeout.  
+      If the application uses the sendAndReceive() synchronous API, 
+      the failure will be delivered by an exception. 
+      If the application client uses the sendCAS() asynchronous API, 
+      the failure will be delivered via the normal callback listener that 
+      the application registered with the UIMA AS client.
+    </para>    
+  </section>  
     <!--======================================================-->    
     <!--                  Sample Code                         -->    
     <!--======================================================-->    
