@@ -457,21 +457,6 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { getAnalysisEngineController().getComponentName(), destination,
                     anEndpoint.getServerURI() });
       }
-      if (getAnalysisEngineController() instanceof AggregateAnalysisEngineController && anEndpoint.isTempReplyDestination() ) {
-        try {
-          if ( !((JmsInputChannel)getAnalysisEngineController().getInputChannel()).isListenerActiveOnDestination((Destination)anEndpoint.getDestination() )) {
-            //  Create a new temp queue, new listener on it and inject new temp queue into the current
-            //  endpoint object
-            getAnalysisEngineController().getInputChannel().createListener(anEndpoint.getDelegateKey(), anEndpoint);
-            //  The key is partly composed of a temp queue name so get the current temp queue name
-            key = getLookupKey(anEndpoint);
-            destination = getDestinationName(anEndpoint);
-          }
-        } catch( Exception e) {
-          throw new AsynchAEException(e);
-        }
-      }
-
       endpointConnection = new JmsEndpointConnection_impl(brokerConnectionEntry, anEndpoint,
               getAnalysisEngineController());
       brokerConnectionEntry.addEndpointConnection(key, endpointConnection);
