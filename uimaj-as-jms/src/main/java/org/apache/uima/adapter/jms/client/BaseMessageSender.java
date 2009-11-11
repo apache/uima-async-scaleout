@@ -171,22 +171,24 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
           //  fetch the cache entry for this CAS
           ClientRequest cacheEntry = (ClientRequest) engine.getCache().get(
                   pm.get(AsynchAEMessage.CasReference));
-          //  We are rejecting any Process requests until connection to broker
-          //  is recovered
-          cacheEntry.setProcessException();
-          //  if the request was via synchronous API dont notify listeners
-          //  instead the code will throw exception to the client
-          boolean notifyListener = (cacheEntry.isSynchronousInvocation() == false);
-          //  handle rejected request
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
-                    "reject", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_client_rejected_process_request_broker_down__INFO", new Object[] { messageKind });
+          if ( cacheEntry != null ) {
+            //  We are rejecting any Process requests until connection to broker
+            //  is recovered
+            cacheEntry.setProcessException();
+            //  if the request was via synchronous API dont notify listeners
+            //  instead the code will throw exception to the client
+            boolean notifyListener = (cacheEntry.isSynchronousInvocation() == false);
+            //  handle rejected request
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+                      "reject", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_client_rejected_process_request_broker_down__INFO", new Object[] { messageKind });
+            }
+            //  Sets the state of a remote delegate to handle subsequent requests
+            engine.serviceDelegate.setState(Delegate.TIMEOUT_STATE);
+            //  handle exception but dont rethrow the exception
+            engine.handleException(e, cacheEntry.getCasReferenceId(), null, cacheEntry, notifyListener, false);
           }
-          //  Sets the state of a remote delegate to handle subsequent requests
-          engine.serviceDelegate.setState(Delegate.TIMEOUT_STATE);
-          //  handle exception but dont rethrow the exception
-          engine.handleException(e, cacheEntry.getCasReferenceId(), null, cacheEntry, notifyListener, false);
         } else {
           //  Dont handle GetMeta Ping. Let it flow through. The Ping will be done once the connection is recovered
           if ( !engine.serviceDelegate.isAwaitingPingReply()) {
