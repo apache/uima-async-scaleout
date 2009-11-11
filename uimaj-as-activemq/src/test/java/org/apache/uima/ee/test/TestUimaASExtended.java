@@ -95,7 +95,6 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
   public void testAggregateHttpTunnelling() throws Exception {
     System.out.println("-------------- testAggregateHttpTunnelling -------------");
-    String httpURI = getHttpURI();
     // Create Uima EE Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
