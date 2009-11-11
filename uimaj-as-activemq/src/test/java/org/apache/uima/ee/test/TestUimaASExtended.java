@@ -191,6 +191,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * the broker shutdown result in GetMeta ping and a subsequent timeout.
    * @throws Exception
    */
+  
   public void testSyncClientRecoveryFromBrokerStop() throws Exception  {
     System.out.println("-------------- testSyncClientRecoveryFromBrokerStop -------------");
      // Instantiate Uima AS Client
@@ -236,7 +237,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       if ( errorCount != 5 ) {
         fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
       }
-      
+      System.clearProperty("BrokerURL");
       
   }
   /**
@@ -299,6 +300,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       if ( errorCount != 5 ) {
         fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
       }
+      System.clearProperty("BrokerURL");
       
       synchronized(this) {
         wait(3000);   // allow broker some time to stop  
@@ -389,8 +391,8 @@ public class TestUimaASExtended extends BaseTestSupport {
     synchronized(this) {
        wait(3000);   // allow broker some time to stop  
     }
+    System.clearProperty("BrokerURL");
 }
-
   /**
    * This test starts a broker on port 8200, starts NoOp Annotator, and
    * using asynchronous send() sends a total of 15 CASes for analysis. After processing 11th
@@ -428,6 +430,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       
       uimaAsEngine.stop();
+      System.clearProperty("BrokerURL");
   }
   
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
@@ -471,6 +474,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       synchronized(this) {
         wait(2000);   // allow broker some time to stop  
       }
+      System.clearProperty("BrokerURL");
   }
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
@@ -854,26 +858,29 @@ public class TestUimaASExtended extends BaseTestSupport {
     appCtx.put(UimaAsynchronousEngine.Timeout, 10000);
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 300);
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, 1);
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    String containerId = deployService(eeUimaEngine, relativePath
+    String containers[] = new String[2];
+    containers[0] = deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    containers[1] =  deployService(eeUimaEngine, relativePath
             + "/Deploy_AggregateAnnotatorWithInternalCM1000Docs.xml");
-    spinShutdownThread(eeUimaEngine, 2000, containerId, SpringContainerDeployer.QUIESCE_AND_STOP);
+    spinShutdownThread(eeUimaEngine, 2000, containers, SpringContainerDeployer.QUIESCE_AND_STOP);
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
-            "TopLevelTaeQueue", 2, EXCEPTION_LATCH);
+            "TopLevelTaeQueue", 3, EXCEPTION_LATCH);
   }
 
   public void testStopNow() throws Exception {
     System.out.println("-------------- testAggregateWithFailedRemoteDelegate -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    String containerId = deployService(eeUimaEngine, relativePath
+    String containers[] = new String[2];
+
+    containers[0] = deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    containers[1] = deployService(eeUimaEngine, relativePath
             + "/Deploy_AggregateAnnotatorWithInternalCM1000Docs.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue");
     // Set an explicit process timeout so to test the ping on timeout
     appCtx.put(UimaAsynchronousEngine.Timeout, 4000);
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 300);
-    spinShutdownThread(eeUimaEngine, 3000, containerId, SpringContainerDeployer.STOP_NOW);
+    spinShutdownThread(eeUimaEngine, 3000, containers, SpringContainerDeployer.STOP_NOW);
     //  send may fail since we forcefully stop the service. Tolerate
     //  ResourceProcessException
     addExceptionToignore(ResourceProcessException.class); 
