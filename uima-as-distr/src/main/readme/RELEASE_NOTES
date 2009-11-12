@@ -43,6 +43,7 @@ issues you find at http://issues.apache.org/jira/browse/uima.
 
 
 
+
 Release Notes - UIMA - Version 2.3AS
 
 
@@ -203,6 +204,20 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1637] - Update JMX MBeans exposed by UIMA AS
     * [UIMA-1638] - Remove dumping stack traces to stdout in UIMA AS
     * [UIMA-1640] - UIMA AS aggregate is not merging Flow Controller's metadata
+    * [UIMA-1643] - UIMA AS client does not recover correctly when the connection to a broker fails
+    * [UIMA-1644] - uimaj-as-camel throws a NullPointerException when a null status is returned on initializationComplete
+    * [UIMA-1645] - uimaj-as-camel needs a timeout parameter
+    * [UIMA-1646] - Using failover in broker URL causes XML exception
+    * [UIMA-1647] - Scripts fail to call runUimaClass.sh 
+    * [UIMA-1648] - UIMA AS lib path contains duplicate entries
+    * [UIMA-1649] - deployAsyncService.sh log4j warnings 
+    * [UIMA-1651] - We should remove runRemoteAsyncAEmultiple.cmd
+    * [UIMA-1654] - UIMA AS client doesnt remove its MBean from the JMX Server on shutdown
+    * [UIMA-1655] - Fix NPE in UIMA AS service while creating a new listener
+    * [UIMA-1656] - UIMA AS aggregate should not attempt to send getMeta request to remotes when its stopping
+    * [UIMA-1657] - UIMA AS client fails if a failover broker uri with multiple endpoints is used
+    * [UIMA-1658] - UIMA AS worker does not respond to client initialize after failover
+    * [UIMA-1659] - UIMA AS aggregate creates a redundant temp reply queue for each delegate
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
@@ -253,6 +268,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1613] - run Rat consistently for all maven assemblies
     * [UIMA-1622] - Make uima-as dependencies more precise
     * [UIMA-1635] - uima-as docs review fixes for 2.3.0 level
+    * [UIMA-1660] - uimaj-as-camel should support failover in configruation string
 
 ** New Feature
     * [UIMA-1017] - Client API does not support the CAS multiplier interface
