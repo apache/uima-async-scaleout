@@ -71,9 +71,7 @@ public class JmsMessageContext implements MessageContext {
         endpoint.setDestination(aMessage.getJMSReplyTo());
       }
       if (aMessage.propertyExists(UIMAMessage.ServerURI)) {
-        String selectedServerURI = chooseServerURI(aMessage
-                .getStringProperty(UIMAMessage.ServerURI));
-        endpoint.setServerURI(selectedServerURI);
+        endpoint.setServerURI(aMessage.getStringProperty(UIMAMessage.ServerURI));
         endpoint.setRemote(endpoint.getServerURI().startsWith("vm") == false);
       }
       // Check if the client attached a special property that needs to be echoed back.
@@ -90,30 +88,6 @@ public class JmsMessageContext implements MessageContext {
 
   public String getEndpointName() {
     return endpointName;
-  }
-
-  private String chooseServerURI(String aServerURIList) {
-    String serverURI = aServerURIList;
-
-    if (serverURI.indexOf(',') > 0) {
-      StringTokenizer st = new StringTokenizer(serverURI, ",");
-
-      while (st.hasMoreTokens()) {
-        String token = st.nextToken().trim();
-        if (token.startsWith("tcp")) {
-          // Normally this is the server URI for a java service.
-          serverURI = token;
-          break;
-        } else if (token.startsWith("http")) {
-          // http will only be in the list of uri's if the service is bahind the firewall.
-          // If present, this service needs to respond with http protocol as well.
-          serverURI = token;
-          break; // dont need to analyze this further. Will respond via http
-        }
-      }
-    }
-
-    return serverURI;
   }
 
   public boolean propertyExists(String aKey) throws AsynchAEException {
