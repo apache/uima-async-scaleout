@@ -37,6 +37,9 @@ import org.apache.activemq.broker.TransportConnector;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
+import org.apache.uima.UIMAFramework;
+import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.util.Level;
 
 public class ActiveMQSupport extends TestCase {
   private static final Class CLASS_NAME = ActiveMQSupport.class;
@@ -83,7 +86,11 @@ public class ActiveMQSupport extends TestCase {
 
             brokerSemaphore.release(); // broker started
           } catch (Exception e) {
-            e.printStackTrace();
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "setUp", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+            }
           }
         }
       };
@@ -104,16 +111,19 @@ public class ActiveMQSupport extends TestCase {
   }
 
   protected String addHttpConnector(int aDefaultPort) throws Exception {
+    return addHttpConnector(broker, aDefaultPort);
+  }
+  protected String addHttpConnector(BrokerService aBroker, int aDefaultPort) throws Exception {
     try {
       String httpURI = generateInternalURI("http", aDefaultPort);
-      httpConnector = broker.addConnector(httpURI);
+      httpConnector = aBroker.addConnector(httpURI);
       
       //  Use reflection to determine if the AMQ version is at least 5.2. If it is, we must
       //  plug in a broker to the httpConnector otherwise we get NPE when starting the connector.
       //  AMQ version 4.1.1 doesn't exhibit this problem.
       try {
         Method m = httpConnector.getClass().getDeclaredMethod("setBrokerService", new Class[] {BrokerService.class});
-        m.invoke(httpConnector, broker);
+        m.invoke(httpConnector, aBroker);
       } catch ( NoSuchMethodException e) {
         //  Ignore, this is not AMQ 5.2
       }
@@ -121,7 +131,11 @@ public class ActiveMQSupport extends TestCase {
       httpConnector.start();
       return httpURI;
     } catch (Exception e) {
-      e.printStackTrace();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "addHttpConnector", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+      }
       throw e;
     }
   }
@@ -157,7 +171,11 @@ public class ActiveMQSupport extends TestCase {
         success = true;
         return uri;
       } catch (Exception e) {
-        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "generateInternalURI", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+        }
         throw e;
       } finally {
         try {
