@@ -183,6 +183,105 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
     }
   }
+  
+  /**
+   * Tests support for ActiveMQ failover protocol expressed in broker
+   * URL as follows "failover:(tcp:IP:Port1,tcp:IP:Port2)". The test launches a secondary
+   * broker on port 8200, launches a Primitive service that uses that broker,
+   * and finally configures the UIMA AS Client to connect to ther broker on port
+   * 8200 and specifies broker on port 8118 as an alternative. This test 
+   * only tests ability of UIMA AS to handle a complex URL, and it does *not*
+   * test the actual failover from one broker to the next. 
+   * 
+   * @throws Exception
+   */
+  public void testBrokerFailoverSupportUsingHTTP() throws Exception  {
+    System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
+     // Instantiate Uima AS Client
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+      BrokerService broker = createBroker(8200, false);
+      broker.start();
+      addHttpConnector(broker, 1088);
+      
+      System.setProperty("BrokerURL", "tcp://localhost:8200");
+      // Deploy Uima AS Primitive Service
+      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+      //  Client will use a failover protocol and use broker on port 8200
+      //  as primary
+      Map<String, Object> appCtx = buildContext("failover:(http://localhost:1088,http://localhost:8888)?randomize=false","NoOpAnnotatorQueue");
+      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      initialize(uimaAsEngine, appCtx);
+      waitUntilInitialized();
+      int errorCount = 0;
+      for (int i = 0; i < 15; i++) {
+        CAS cas = uimaAsEngine.getCAS();
+        cas.setDocumentText("Some Text");
+        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+        try {
+          uimaAsEngine.sendAndReceiveCAS(cas);
+        } catch( Exception e) {
+          errorCount++;
+        } finally {
+          cas.release();
+        }
+      }
+      uimaAsEngine.stop();
+      System.clearProperty("BrokerURL");
+      broker.stop();
+      synchronized(this) {
+        wait(3000);   // allow broker some time to stop  
+      }
+  }
+
+  /**
+   * Tests support for ActiveMQ failover protocol expressed in broker
+   * URL as follows "failover:(tcp:IP:Port1,tcp:IP:Port2)". The test launches a secondary
+   * broker on port 8200, launches a Primitive service that uses that broker,
+   * and finally configures the UIMA AS Client to connect to ther broker on port
+   * 8200 and specifies broker on port 8118 as an alternative. This test 
+   * only tests ability of UIMA AS to handle a complex URL, and it does *not*
+   * test the actual failover from one broker to the next. 
+   * 
+   * @throws Exception
+   */
+  public void testBrokerFailoverSupportUsingTCP() throws Exception  {
+    System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
+     // Instantiate Uima AS Client
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+      BrokerService broker = createBroker(8200, false);
+      broker.start();
+      System.setProperty("BrokerURL", "tcp://localhost:8200");
+      // Deploy Uima AS Primitive Service
+      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+      //  Client will use a failover protocol and use broker on port 8200
+      //  as primary
+      Map<String, Object> appCtx = buildContext("failover:(tcp://localhost:8200,tcp://localhost:8118)?randomize=false","NoOpAnnotatorQueue");
+      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      initialize(uimaAsEngine, appCtx);
+      waitUntilInitialized();
+      int errorCount = 0;
+      for (int i = 0; i < 15; i++) {
+        CAS cas = uimaAsEngine.getCAS();
+        cas.setDocumentText("Some Text");
+        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+        try {
+          uimaAsEngine.sendAndReceiveCAS(cas);
+        } catch( Exception e) {
+          errorCount++;
+        } finally {
+          cas.release();
+        }
+      }
+      uimaAsEngine.stop();
+      System.clearProperty("BrokerURL");
+      broker.stop();
+      synchronized(this) {
+        wait(3000);   // allow broker some time to stop  
+      }
+  }
+  
   /**
    * This test starts a broker on port 8200, starts NoOp Annotator, and
    * using synchronous sendAndReceive() sends 10 CASes for analysis. Before sending 11th, the test
