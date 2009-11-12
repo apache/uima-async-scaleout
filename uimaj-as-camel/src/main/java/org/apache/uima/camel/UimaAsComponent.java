@@ -44,9 +44,9 @@ public class UimaAsComponent extends DefaultComponent<Exchange> {
     		throw new RuntimeCamelException("Unsupported scheme: " + scheme);
     	}
     	
-    	// get string between first : and first ?
+    	// get string between first : and last ?
     	int indexBeginBrokerUrl = uri.indexOf(':');
-    	int indexEndBrokerUrl = uri.indexOf('?');
+    	int indexEndBrokerUrl = uri.lastIndexOf('?');
     	
     	if (indexBeginBrokerUrl == -1 || indexEndBrokerUrl == -1 ||
     			indexBeginBrokerUrl + 1 == uri.length()) {
