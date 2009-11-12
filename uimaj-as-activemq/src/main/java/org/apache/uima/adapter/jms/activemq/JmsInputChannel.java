@@ -556,7 +556,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
                     CLASS_NAME.getName(),
                     "onMessage",
                     JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_dropping_msg_client_is_dead__INFO",
+                    "UIMAJMS_dropping_msg_client_is_dead__INFO",
                     new Object[] { controller.getComponentName(),
                         messageContext.getEndpoint().getDestination(), casRefId });
           }
