@@ -90,6 +90,19 @@ public class Dd2SpringTest extends TestCase{
     
   }
   
+  public void testDd2Spring_dfltPrimMultiInstanceSame() throws Exception {
+    checkDd2Spring("defaultingPrimAEMultInstanceSameCasPool.xml");  
+  }
+
+  public void testDd2Spring_dfltPrimMultiInstanceDiff() throws Exception {
+//    checkDd2Spring("defaultingPrimAEMultInstanceDiffCasPool.xml");  
+    checkDd2SpringErrMsg(
+        "defaultingPrimAEMultInstanceDiffCasPool.xml",
+        "running test defaultingPrimAEMultInstanceDiffCasPool.xml: \n" +
+"      *** WARN: line-number: 26 Top level Async Primitive specifies a scaleout of numberOfInstances=\"40\", but also specifies a Cas Pool size of numberOfCASes=\"30\".  The Cas Pool size is being forced to be the same as the scaleout.");
+
+  }
+
   public void testAggregateWithInnerAggregateCM() throws Exception {
     checkDd2Spring("aggregateWithInnerAggregateCM.xml");  
   }

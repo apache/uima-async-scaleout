@@ -1462,7 +1462,7 @@
       <xsl:choose>
         <xsl:when test="not(u:casPool)">
           <xsl:choose>
-            <xsl:when test="u:service/u:analysisEngine[(not(@async)) or (@async = ('no', 'false'))]/u:scaleout/@numberOfInstances">
+            <xsl:when test=             "u:service/u:analysisEngine[(not(@async)) or (@async = ('no', 'false'))]/u:scaleout/@numberOfInstances">
               <u:casPool numberOfCASes="{u:service/u:analysisEngine[(not(@async)) or (@async = ('no', 'false'))]/u:scaleout/@numberOfInstances}"
                  initialFsHeapSize="defaultFsHeapSize"/>
             </xsl:when>
@@ -1492,7 +1492,37 @@
   <!--     <casPool>               -->
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~ --> 
   <xsl:template mode="addDefaults" match="u:casPool">
-    <u:casPool numberOfCASes="{if (./@numberOfCASes) then ./@numberOfCASes else '1'}"
+    
+    <!-- UIMA-1666
+       if it's an non-async primitive at the top level which is scaled out,
+         if the scaleout != the caspool size, give a warning message and force the caspool size to be the scaleout
+    -->
+    <xsl:variable name="isTopLvlSync" as="xs:boolean" select=
+      "if (../u:service/u:analysisEngine[(not(@async)) or (@async = ('no', 'false'))]) then fn:true() else fn:false()"/>
+    
+    <xsl:variable name="nbrInstances" select="../u:service/u:analysisEngine/u:scaleout/@numberOfInstances"/>
+    
+    <xsl:variable name="casPoolSize" as="xs:integer">      
+      <xsl:choose>
+        <xsl:when test="$isTopLvlSync and 
+          $nbrInstances and
+          ./@numberOfCASes and
+         ($nbrInstances ne ./@numberOfCASes)">
+          <xsl:sequence select="f:msgWithLineNumber(
+                'WARN',
+                ('Top level Async Primitive specifies a scaleout of', $nbrInstances,
+                 ', but also specifies a Cas Pool size of', ./@numberOfCASes,
+                 '.  The Cas Pool size is being forced to be the same as the scaleout.'), 
+                .)"/>
+          <xsl:sequence select="$nbrInstances"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:sequence select="if (./@numberOfCASes) then ./@numberOfCASes else '1'"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+
+    <u:casPool numberOfCASes="{$casPoolSize}"
                initialFsHeapSize="{if (./@initialFsHeapSize) then ./@initialFsHeapSize else 'defaultFsHeapSize'}"/>
   </xsl:template>
     
