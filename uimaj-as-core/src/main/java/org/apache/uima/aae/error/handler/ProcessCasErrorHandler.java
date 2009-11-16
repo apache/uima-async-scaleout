@@ -430,8 +430,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
     // step in the flow. Dont increment parallel delegate response count if a delegate was just
     // disabled above. The count has been already incremented in handleAction() method of the
     // AnalysisEngineController.
-    if (!disabledDueToExceededThreshold
-            && casStateEntry != null
+    if (  casStateEntry != null
             && totalNumberOfParallelDelegatesProcessingCas > 1
             && (casStateEntry.howManyDelegatesResponded() < totalNumberOfParallelDelegatesProcessingCas)) {
       casStateEntry.incrementHowManyDelegatesResponded();
