@@ -233,7 +233,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         wait(3000);   // allow broker some time to stop  
       }
   }
-
+  
   /**
    * Tests support for ActiveMQ failover protocol expressed in broker
    * URL as follows "failover:(tcp:IP:Port1,tcp:IP:Port2)". The test launches a secondary
@@ -1706,6 +1706,31 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
   }
+  /**
+   * This test launches four remote delegates and an aggregate. Three of the delegates:
+   * SlowNoOp1, SlowNoOp2, and NoOp are processing CASes in parallel. SlowNoOp1 and SlowNoOp2
+   * are configured with a very long delay that exceeds timeout values specified in the aggregate 
+   * deployment descriptor. The SlowNoOp1 times out 3 times and is disabled,
+   * SlowNoOp2 times out 4 times and is disabled. The test tests ability
+   * of an aggregate to recover from the timeouts and subsequent disable and carry
+   * on processing with remaining delegates.  
+   * 
+   * @throws Exception
+   */
+  public void testMutlipleDelegateTimeoutsInParallelFlows() throws Exception {
+    System.out.println("-------------- testTimeoutDelegateInParallelFlows -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator2.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SlowNoOpAnnotator1.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SlowNoOpAnnotator2.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithSlowParallelDelegates.xml");
+    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+            "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.Timeout, 30000);
+
+    runTest(appCtx, eeUimaEngine, null, null, 1, PROCESS_LATCH);
+  }
 
   /**
    * 
@@ -1723,7 +1748,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             "TopLevelTaeQueue");
     // Set an explicit process timeout so one of the 1st parallels is disabled but 2nd parallel flow
     // continues.
-    appCtx.put(UimaAsynchronousEngine.Timeout, 20000);
+    appCtx.put(UimaAsynchronousEngine.Timeout, 200000);
 
     runTest(appCtx, eeUimaEngine, null, null, 1, PROCESS_LATCH);
   }
