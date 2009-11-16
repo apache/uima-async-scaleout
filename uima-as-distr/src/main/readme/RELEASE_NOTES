@@ -41,9 +41,6 @@ issues you find at http://issues.apache.org/jira/browse/uima.
 
 5. List of JIRA Issues Fixed in this Release
 
-
-
-
 Release Notes - UIMA - Version 2.3AS
 
 
@@ -218,6 +215,10 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1657] - UIMA AS client fails if a failover broker uri with multiple endpoints is used
     * [UIMA-1658] - UIMA AS worker does not respond to client initialize after failover
     * [UIMA-1659] - UIMA AS aggregate creates a redundant temp reply queue for each delegate
+    * [UIMA-1662] - uima-as extract and build script has copy/paste error - is building base uima instead of uima-as
+    * [UIMA-1663] - All directories in UIMA distribution should be 755
+    * [UIMA-1665] - UIMA AS aggregate not handling timeouts correctly for parallel delegates
+    * [UIMA-1666] - CasPoolSize should equal numberOfInstances when deploying a primitive component
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
@@ -295,4 +296,3 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1479] - Move UIMA-AS out of sandbox, change to an "add-on" packaging style to the core
     * [UIMA-1555] - repackage UIMA-AS to work as an add-on to base UIMA
     * [UIMA-1614] - update 2.3.0-incubating-SNAPSHOT to drop the snapshot in prep for release
-
