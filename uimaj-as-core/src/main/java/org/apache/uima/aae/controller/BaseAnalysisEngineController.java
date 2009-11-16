@@ -1127,31 +1127,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             forceTimeoutOnPendingCases(key);
           }
         }
-
-        if (endpoint != null) {
-          try {
-            // Fetch all Cas entries currently awaiting reply from the delegate that was just
-            // disabled. In case the delegate was in a parallel step, we need to adjust the
-            // the number of responses received to account for the failed delegate. This
-            // enables the processing to continue.
-            CacheEntry[] entries = getInProcessCache().getCacheEntriesForEndpoint(
-                    endpoint.getEndpoint());
-            if (entries != null) {
-              for (int i = 0; i < entries.length; i++) {
-                CasStateEntry cse = localCache.lookupEntry(entries[i].getCasReferenceId());
-                // Check if this is a parallel step
-                int parallelDelegateCount = cse.getNumberOfParallelDelegates();
-                // Check if all delegated responded
-                if (parallelDelegateCount > 1
-                        && cse.howManyDelegatesResponded() < parallelDelegateCount) {
-                  // increment responders
-                  cse.incrementHowManyDelegatesResponded();
-                }
-              }
-            }
-          } catch (Exception e) {
-          }
-        }
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                   "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
