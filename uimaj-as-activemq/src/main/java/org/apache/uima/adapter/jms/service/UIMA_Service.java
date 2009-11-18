@@ -409,7 +409,7 @@ public class UIMA_Service implements ApplicationListener {
       }
       AnalysisEngineController topLevelControllor = serviceDeployer.getTopLevelController();
       if (topLevelControllor != null) {
-        System.out.println("Enter 'q' to quiesce and stop the service or 's' to stop it now:");
+        System.out.println("Press 'q'+'Enter' to quiesce and stop the service or 's'+'Enter' to stop it now.\nNote: selected option is not echoed on the console.");
         // Loop forever or until the service is stopped
         while (!topLevelControllor.isStopped()) {
           if (System.in.available() > 0) {
