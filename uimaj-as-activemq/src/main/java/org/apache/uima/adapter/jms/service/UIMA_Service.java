@@ -408,8 +408,9 @@ public class UIMA_Service implements ApplicationListener {
         service.startMonitor(Long.parseLong(monitorCheckpointFrequency));
       }
       AnalysisEngineController topLevelControllor = serviceDeployer.getTopLevelController();
+      String prompt = "Press 'q'+'Enter' to quiesce and stop the service or 's'+'Enter' to stop it now.\nNote: selected option is not echoed on the console.";
       if (topLevelControllor != null) {
-        System.out.println("Press 'q'+'Enter' to quiesce and stop the service or 's'+'Enter' to stop it now.\nNote: selected option is not echoed on the console.");
+        System.out.println(prompt);
         // Loop forever or until the service is stopped
         while (!topLevelControllor.isStopped()) {
           if (System.in.available() > 0) {
@@ -419,8 +420,7 @@ public class UIMA_Service implements ApplicationListener {
             } else if (c == 'q') {
               serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
             } else if (Character.isLetter(c) || Character.isDigit(c)) {
-              System.out
-                      .println("Enter 'q' to quiesce and stop the service or 's' to stop it now:");
+              System.out.println(prompt);
             }
           }
           // This is a polling loop. Sleep for 1 sec
