@@ -126,7 +126,8 @@ Note: only one broker can be started at a time on the same machine with the same
       configuration file, or on different machines from the same writable directory.
 
 When the broker starts it will print a message such as:
-  INFO: Listening for connections at: tcp://yourHostname:61616
+
+  INFO TransportServerThreadSupport - Listening for connections at: tcp://yourHostname:61616
 
 Note this URL since you will need it to run services and clients.
 
