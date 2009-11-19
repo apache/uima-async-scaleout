@@ -158,6 +158,7 @@
             </Import-Package>
             <Embed-Dependency>*;scope=compile;inline=true</Embed-Dependency>
             <Fragement-Host>org.apache.uima.runtime</Fragement-Host>
+            <Eclipse-RegisterBuddy>org.apache.uima.runtime</Eclipse-RegisterBuddy>
           </instructions>
         </configuration>
       </plugin>
