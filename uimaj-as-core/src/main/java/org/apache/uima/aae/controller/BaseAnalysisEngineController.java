@@ -2045,6 +2045,17 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             System.out.println(">>> Instance Hashcode:" + hashCode() + " Controller:"
                     + getComponentName() + " Stopping Collocated Delegate Cas Multiplier:"
                     + casMultiplier.getKey());
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(
+                        Level.INFO,
+                        getClass().getName(),
+                        "stopCasMultiplier",
+                        UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_stopping_collocated_cm_INFO",
+                        new Object[] { getComponentName(), casMultiplier.getComponentName(),
+                            aCasReferenceId });
+              }
+            
             AnalysisEngineController cm = getCasMultiplierController(casMultiplier.getKey());
             cm.addAbortedCasReferenceId(aCasReferenceId);
           }
