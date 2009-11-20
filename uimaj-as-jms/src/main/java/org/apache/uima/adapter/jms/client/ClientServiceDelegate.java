@@ -20,6 +20,7 @@ package org.apache.uima.adapter.jms.client;
 
 import javax.jms.Destination;
 
+import org.apache.derby.catalog.GetProcedureColumns;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.delegate.Delegate;
@@ -131,8 +132,7 @@ public class ClientServiceDelegate extends Delegate {
                   if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                             "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                            "UIMAJMS_client_process_timedout__INFO",
-                            new Object[] { getGetMetaTimeout() });
+                            "UIMAJMS_client_process_timeout__INFO", new Object[] { super.getCasProcessTimeout() });
                   }
                   System.out.println(">>>>> Client Process Timed out. Cas Id:"+casReferenceId+" Notifying Listeners");
                   clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
