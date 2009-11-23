@@ -164,12 +164,13 @@ b. Run the command:
   Note: deployAsyncService.sh/cmd scripts launch UimaBootstrap main program which loads UIMA jars
   dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-4.1.1, UIMA_HOME/apache-activemq-4.1.1/lib,
   and UIMA_HOME/apache-activemq-4.1.1/lib/optional directories. If you want to use a different
-  version of ActiveMQ, please set ACTIVEMQ_HOME environment variable to the location of 
+  version of ActiveMQ, set ACTIVEMQ_HOME environment variable to the location of 
   ActiveMQ you intend to use. Also, if you want to deploy your own annotator that is 
-  installed in a different directory than UIMA_HOME/lib please set the UIMA_CLASSPATH 
-  environment variable to point to the directories that contain your jar files. You
+  installed in a different directory than UIMA_HOME/lib, set the UIMA_CLASSPATH 
+  environment variable to point to the directories that contain your jar files and/or classes. You
   may specify multiple directories using File.pathSeparator; each directory's contained 
-  JARs will be added to the class path. The paths can also contain jar files.   
+  JARs will be added to the class path. If a directory contains no jar files, the directory
+  itself is added to the class path.  The paths can also contain jar files.   
   
   Note: Both UIMA AS client and UIMA AS service by default add a time-to-live (TTL) to 
   every request message. This enables expiration of messages that are not consumed. 
@@ -225,10 +226,12 @@ Start two terminal windows, each with an environments setup as described in sect
 3.5 Calling a UIMA AS Asynchronous Service from an Existing UIMA Application
 
 You can also call a UIMA AS Service from the DocumentAnalyzer or any other UIMA
-application using a new JMS client. However, note that this is a synchronous interface,
-that is, it will process only one CAS at a time, so it will not take advantage of the
-scalability that UIMA AS provides.  To process more than one CAS at a
-time, you must use the Asynchronous UIMA AS Client as described in section 3.3.
+application using a new JMS client Service Descriptor
+(see section 1.7 in the UIMA Asynchronous Scaleout documentation). 
+However, note that this is a synchronous interface, that is, it will process only 
+one CAS at a time, so it will not take advantage of the scalability that UIMA AS 
+provides.  To process more than one CAS at a time, you must use the Asynchronous 
+UIMA AS Client as described in section 3.3.
 
 An example JMS client service descriptor is provided in
 
@@ -244,27 +247,13 @@ A service running behind a firewall can be accessed as long as its input queue
 is on a broker that is accessable. For example, the service can register with a
 public broker running outside the firewall.
 
-By default, the reply queue used by an aggregate when calling a remote delegate is located
-on the host where the aggregate is running. This will not work if there is a firewall blocking
-the service from replying to this reply queue, or any other reason that the symbolic or actual IP
-address of the aggregate's host is not accessable by the service.
-
-There are two ways to fix this problem, the easiest being to specify that the reply queue 
-should be created on the service's broker. This is done by adding
-   <replyQueue location="remote"/>
-to the remoteAnalysisEngine definition for the remote delegate.
-
-The client API used by runRemoteAsyncAE always creates a reply queue on the service's broker.
-These "remote" reply queues are JMS temporary queues, which means that they will be
-deleted when the client aggregate or application terminates.
-
-A more complicated approach is for the client to use an HTTP connector. In this case
-UIMA AS always creates reply queues on the service's broker.
+Clients may also use an HTTP connector. In this case UIMA AS creates reply queues 
+on the service's broker.
 
 Note: There are bugs in the standard ActiveMQ HTTP connector core librarys (which we have
-      patched) associated with CASes larger than 64KB
-      and with doublebyte characters. The ActiveMQ jars distributed with UIMA AS
-      include the bug fixes described in http://issues.apache.org/activemq/browse/AMQ-1308
+      patched) associated with CASes larger than 64KB and with doublebyte characters. 
+      The ActiveMQ jars distributed with UIMA AS include the bug fixes described in 
+      http://issues.apache.org/activemq/browse/AMQ-1308
       
 3.7 Monitoring a broker and its queues
 
@@ -275,23 +264,25 @@ Connect a JMX console to this service with:
          $JAVA_HOME/bin/jconsole service:jmx:rmi:///jndi/rmi://localhost:1099/jmxrmi
          
 (Note: jconsole is available in Java SDK (not JRE) distributions from Sun)         
-If your console is not on the same machine as the broker replace localhost by
-the name of the broker's machine.  For more details see http://activemq.apache.org/jmx.html
+If your console is not on the same machine as the broker, replace localhost by
+the name of the broker's machine.  The default ports for the broker (61616) and 
+for the JMX server (1099) can be overridden in the broker configuration file 
+created when the broker is first started. For more details see 
+http://activemq.apache.org/jmx.html
 
 3.8 Monitoring UIMA AS service
 
 UIMA AS service monitoring is available via JMX and jConsole. To enable this, please set the following 
 before starting a service:
 
-set UIMA_JVM_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8009 
+set UIMA_JVM_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=<uniquePortNumber, e.g. 8009> 
                   -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
 
-The above configures JMX Server to run on port 8009 and enables remote monitoring of the process. Connect
-jConsole using similare approach as described in 3.7 above but this using the following:
+Connect a jConsole to this JMX service as described in 3.7 above using the appropriate port, e.g.
 
          $JAVA_HOME/bin/jconsole service:jmx:rmi:///jndi/rmi://localhost:8009/jmxrmi
 
-In the left pane locate and expand org.apache.uima to view UIMA components enabled for JMX monitoring.
+Under the MBeans tab, expand org.apache.uima in the left panel to view UIMA components enabled for JMX monitoring.
 
 3.9 Stopping UIMA AS service
 
@@ -354,15 +345,14 @@ An example of this kind of migration is embodied by the sample descriptors:
   
   2. When connecting to an AMQ broker behind a firewall, avoid using the maxInactivityDuration=0 
      decoration on the brokerURL (see: http://activemq.apache.org/configuring-wire-formats.html)
-     as it turns off AMQ 'keep alive' messaging. A firewall may close ports if it is 
-     configured to detect stale connections. 
+     as it turns off AMQ 'keep alive' messaging. Without these, a firewall may assume a connection
+     has become stale and close its ports. 
 
   3. UIMA AS does not (yet) support PEAR specifiers. The deployment descriptor should not point to PEAR file. 
      Instead, PEARs must be unzipped and classpath adjusted to point to required resources.
 
-  4. To run multiple UIMA AS services on the same machine, a unique JMX port must be provided 
-     by setting the following environment variable:
-     set UIMA_JVM_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=<unique port#>  -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+  4. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
+     JMX port (see section 3.8).
 
 For up-to-date information on UIMA-AS issues, see 
 http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12310570
