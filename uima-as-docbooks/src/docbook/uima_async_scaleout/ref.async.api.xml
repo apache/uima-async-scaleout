@@ -153,7 +153,9 @@ under the License.
         <listitem>
           <para><code>void sendAndReceiveCAS(CAS aCAS)</code>:
             Send a CAS, wait for response. On success aCAS contains the analysis results.
-            Throws an exception on error.
+            Throws an exception on error.  Note that this interface cannot be used 
+            to interface to a CAS Multiplier service, because it will block until the
+            parent comes back, and any child CASes will be ignored.
           </para>
         </listitem>
 
@@ -182,6 +184,19 @@ under the License.
           <para>This is an asynchronous call, and can be called at any time.</para>
         </listitem>
 
+        <listitem>
+          <para><code>void stopProducingCases()</code>: Send stop signals for all CASes that are
+            currently in process (where the API is expecting responses). If a CAS is a parent
+            of child CASes being produced by a CAS Multiplier, this operation will also
+            signal the CAS Multiplier to stop producing new CASes.</para>
+        </listitem>
+        
+        <listitem>
+          <para><code>void stopProducingCases(String aCasReferenceId)</code>: send a stop
+            request to a UIMA-AS Service for a particular CAS-id.  If that CAS is a parent
+            of child CASes being produced by a CAS Multiplier, this operation will also
+            signal the CAS Multiplier to stop producing new CASes.</para>
+        </listitem>
       </itemizedlist></para>
 
     </section>

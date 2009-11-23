@@ -185,7 +185,7 @@ under the License.
                   <entry>reply queueName</entry>
                   <entry>The internally generated name of the reply queue</entry>
                   <entry>string</entry>
-                  <entry>const</entry>
+                  <entry>const (but could change due to reconnection recovery)</entry>
                 </row>
                 <row>
                   <entry>broker URL</entry>
@@ -311,9 +311,10 @@ under the License.
               </row>
               <row>
                 <entry>process thread count</entry>
-                <entry>The number of threads available to process requests</entry>
+                <entry>The number of threads available to process requests (number
+                  of instances of a primitive)</entry>
                 <entry>count</entry>
-                <entry>inst</entry>
+                <entry>const</entry>
               </row>
             </tbody>
           </tgroup>
@@ -884,14 +885,20 @@ under the License.
     <para>The main metric for detecting idle service is the idle time. If it is high, it can indicate that the service is not 
           receiving enough CASes. This can be caused by a bottleneck in the service's client; supporting evidence for this
           can be a high reply queue depth for the client - indicating the client is overloaded. 
-          Ideally, the idle time should be at zero, which means that the service receives enough CASes 
-          to process, continually.</para>
+          If the idle time is zero, the service may be saturated; adding more instances could
+          relieve a bottleneck.</para>
 
     <para>A CasPool free Cas Count of 0 can point to a bottleneck in a service's client; supporting
       evidence for this can be a high idle time. In this case, the service does not have enough CASes in its pool and is 
-          forced to wait. Remember that a CAS is not returned to the Service's CAS pool until the client signals it can be.
+          forced to wait. Remember that a CAS is not returned to the Service's CAS pool until the client 
+          (which can be a parent asynchronous aggregate) signals it can be.
           A typical reason is a slow client (look for evidence such as a high reply queue depth). Consider 
           incrementing service's Cas pool and check the client's metrics to determine a reason why it is slow.</para>
+     
+    <para>An asynchronous system must have something that limits the generation of
+       new work to do. CasPools are the mechanism used by UIMA AS to do this.
+       Also, because CASes can have large memory requirements, it is
+       important to limit the number and sizes of CASes in a process.</para>     
       
     </section>
 
@@ -946,6 +953,7 @@ under the License.
               <entry>This parameter indicates the number of threads that will be deployed to read from the remote reply queue.
                 Set to > 1 if deserialization time of replies is a bottleneck.</entry>
             </row>
+                      
           </tbody>
         </tgroup>
       </informaltable>     
