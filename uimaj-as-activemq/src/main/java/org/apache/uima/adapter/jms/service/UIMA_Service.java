@@ -262,7 +262,7 @@ public class UIMA_Service implements ApplicationListener {
       // the monitor is stopped allowing the service to terminate.
       monitorThread.start();
       System.out.println(">>> Started JMX Monitor.\n\t>>> MBean Server Port:" + jmxServerPort
-              + "\n\t>>> Monitor Checkpoint Frequency:" + samplingFrequency
+              + "\n\t>>> Monitor Sampling Interval:" + samplingFrequency
               + "\n\t>>> Monitor Formatter Class:" + listener.getClass().getName());
     }
 
@@ -398,11 +398,11 @@ public class UIMA_Service implements ApplicationListener {
       ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
       Runtime.getRuntime().addShutdownHook(shutdownHook);
       // Check if we should start an optional JMX-based monitor that will provide service metrics
-      // The monitor is enabled by existence of -Duima.jmx.monitor.frequency=<number> parameter. By
+      // The monitor is enabled by existence of -Duima.jmx.monitor.interval=<number> parameter. By
       // default
       // the monitor is not enabled.
       String monitorCheckpointFrequency;
-      if ((monitorCheckpointFrequency = System.getProperty(JmxMonitor.CheckpointFrequency)) != null) {
+      if ((monitorCheckpointFrequency = System.getProperty(JmxMonitor.SamplingInterval)) != null) {
         // Found monitor checkpoint frequency parameter, configure and start the monitor.
         // If the monitor fails to initialize the service is not effected.
         service.startMonitor(Long.parseLong(monitorCheckpointFrequency));
