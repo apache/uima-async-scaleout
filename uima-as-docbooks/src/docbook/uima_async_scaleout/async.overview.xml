@@ -593,7 +593,7 @@ under the License.
         
         <para>AS Aggregate delegates specified as &lt;analysisEngine> elements (or by default)
           are co-located, and use custom lightweight queuing.  AS Aggregate delegates specified using 
-          &lt;remoteAnalysisEngine</para> are not co-located, and use JMS queuing.
+          &lt;remoteAnalysisEngine are not co-located, and use JMS queuing.</para>
         
         <para>For JMS queues, each queue is defined by a queue name and
           the URL of its Queue Broker. AS services register as queue consumers to obtain CASes to work on 
@@ -704,7 +704,7 @@ under the License.
       <section id="ugr.async.ov.concepts.first_limits.resource_sharing">
         <title>Resource Sharing limits</title>
         <para>Resource Sharing works for co-located delegates, only. </para></section>
-      <section id="ugr.async.ov.concepts.first_limits.service_descriptors">
+      <!--section id="ugr.async.ov.concepts.first_limits.service_descriptors">
         <title>Use of service descriptors inside AS Aggregates</title>
          <para>Vinci services <emphasis role="bold">cannot</emphasis> be used within
           an AS Aggregate because they do not comply to the UIMA standard requiring
@@ -714,7 +714,7 @@ under the License.
         <para>SOAP services can be used, but only if they are wrapped inside another aggregate
           (which might contain just the one SOAP service descriptor), where the wrapping aggregate
           is deployed as an AS Primitive.</para>
-      </section>  
+      </section-->  
       <!--
       <section id="ugr.async.ov.concepts.first_limits.xyz">
       <title>XYZ limits</title>
@@ -732,7 +732,11 @@ under the License.
         because they do not comply to the UIMA standard requiring preservation of feature
         structure IDs. SOAP service calls currently use a binary serialization of the CAS
         which does preserve IDs and therefore can be called from a UIMA AS service.
-      </para></section></section>
+      </para>
+      <para>To use SOAP services within a UIMA AS deployment, wrap them inside another aggregate
+          (which might contain just the one SOAP service descriptor), where the wrapping aggregate
+          is deployed as an AS Primitive.</para>
+      </section></section>
   <!-- of ov.concepts.first_limits -->
   <!-- ======================================================= -->
   <!-- |             Application Level Concepts              | -->

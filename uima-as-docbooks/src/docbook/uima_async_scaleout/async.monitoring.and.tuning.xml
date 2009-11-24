@@ -726,7 +726,7 @@ under the License.
             <listitem><para><code>-Duima.jmx.monitor.interval=1000</code> - (optional; default is 1000) specifies the 
               sampling interval in milliseconds</para></listitem>
             <listitem><para><code>-Duima.jmx.monitor.formatter=&lt;CustomFormatterClassName></code></para></listitem>
-            <listitem><para><code>-Dcom.sun.management.jmxremote</code> - enable JMX</para></listitem>            
+            <listitem><para><code>-Dcom.sun.management.jmxremote</code> - enable JMX (only needed for local monitoring, not needed if port is specified)</para></listitem>            
             <listitem><para><code>-Dcom.sun.management.jmxremote.port=8009</code></para></listitem>
             <listitem><para><code>-Dcom.sun.management.jmxremote.authenticate=false</code></para></listitem>
             <listitem><para><code>-Dcom.sun.management.jmxremote.ssl=false</code></para></listitem>
