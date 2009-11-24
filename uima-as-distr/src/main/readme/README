@@ -164,13 +164,12 @@ b. Run the command:
   Note: deployAsyncService.sh/cmd scripts launch UimaBootstrap main program which loads UIMA jars
   dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-4.1.1, UIMA_HOME/apache-activemq-4.1.1/lib,
   and UIMA_HOME/apache-activemq-4.1.1/lib/optional directories. If you want to use a different
-  version of ActiveMQ, set ACTIVEMQ_HOME environment variable to the location of 
+  version of ActiveMQ, set the ACTIVEMQ_HOME environment variable to the location of 
   ActiveMQ you intend to use. Also, if you want to deploy your own annotator that is 
   installed in a different directory than UIMA_HOME/lib, set the UIMA_CLASSPATH 
-  environment variable to point to the directories that contain your jar files and/or classes. You
-  may specify multiple directories using File.pathSeparator; each directory's contained 
-  JARs will be added to the class path. If a directory contains no jar files, the directory
-  itself is added to the class path.  The paths can also contain jar files.   
+  environment variable to point to one or more Classpath entries;  these entries can either be
+  directories of Java class files, Jar files, or directories of Jar files (in which case, all the 
+  Jars are added in an arbitrary order). Separate multiple entries using File.pathSeparator.    
   
   Note: Both UIMA AS client and UIMA AS service by default add a time-to-live (TTL) to 
   every request message. This enables expiration of messages that are not consumed. 
@@ -230,8 +229,9 @@ application using a new JMS client Service Descriptor
 (see section 1.7 in the UIMA Asynchronous Scaleout documentation). 
 However, note that this is a synchronous interface, that is, it will process only 
 one CAS at a time, so it will not take advantage of the scalability that UIMA AS 
-provides.  To process more than one CAS at a time, you must use the Asynchronous 
-UIMA AS Client as described in section 3.3.
+provides.  To process more than one CAS at a time, you can use the Asynchronous 
+UIMA AS Client as described in section 3.3, or write your own application using the
+UIMA AS Client APIs.
 
 An example JMS client service descriptor is provided in
 
@@ -245,10 +245,8 @@ section in the Apache UIMA Reference manual.
 
 A service running behind a firewall can be accessed as long as its input queue
 is on a broker that is accessable. For example, the service can register with a
-public broker running outside the firewall.
-
-Clients may also use an HTTP connector. In this case UIMA AS creates reply queues 
-on the service's broker.
+public broker running outside the firewall. Alternatively the broker may be configured 
+to tunnel over HTTP. For details see http://activemq.apache.org/configuring-transports.html
 
 Note: There are bugs in the standard ActiveMQ HTTP connector core librarys (which we have
       patched) associated with CASes larger than 64KB and with doublebyte characters. 

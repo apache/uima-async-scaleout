@@ -26,13 +26,13 @@
       <usageManager id="memory-manager" limit="150 MB"/>
     </memoryManager>
 
-    <!-- Broker listens on port 61616 by default -->
+    <!-- Broker listens on port 61616 (this is the port used as an example in the docs) -->
     <transportConnectors>
        <transportConnector name="default" uri="tcp://localhost:61616"/>
     </transportConnectors>
     
     <!-- Broker's JMX server can be monitored on port 1099 
-         (Note: this is the default) --->
+         (Note: this is the default) -->
     <managementContext>
       <managementContext connectorPort="1099"/>
     </managementContext>
