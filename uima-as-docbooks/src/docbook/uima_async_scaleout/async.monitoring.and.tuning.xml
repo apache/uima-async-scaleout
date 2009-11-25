@@ -43,14 +43,14 @@ under the License.
           clients to collect and aggregate measurements over a cluster of remotely-deployed
           components.</para>
       </listitem>
-      <listitem>
+      <!--listitem>
         <para>UIMA AS includes a Monitor component that can optionally be turned on to
           sample the JMX data at
           a specified interval, and write the results into the UIMA log (or to the
           console if no log is configured) in several formats, one of which is 
           convenient for reading, and the other is convenient for importing into
           a spreadsheet program.</para>
-      </listitem>
+      </listitem-->
     </itemizedlist>
   </para>
   
@@ -86,10 +86,10 @@ under the License.
       <para>JMX information is provided by a hierarchy of JMX Beans.  More
         background and information on JMX and the jconsole tool is available on the web.</para>
         
-      <para>This section will first describe the basic JMX Beans, and then
+      <!--para>This section will first describe the basic JMX Beans, and then
         later describe a UIMA AS monitor tool that can sample the values of these beans at
         a specified interval and write the results to the UIMA log in various
-        formats.</para>
+        formats.</para-->
     
     <section id="ugr.async.mt.jmx_monitoring">
       <title>JMX Information from UIMA AS</title>
@@ -685,7 +685,7 @@ under the License.
     </section>  
     </section>  
     
-    <section id="ugr.async.mt.jmx_sampling">
+    <!--section id="ugr.async.mt.jmx_sampling">
       <title>Logging Sampled JMX information at intervals</title>
       
       <para>
@@ -866,7 +866,7 @@ under the License.
           </itemizedlist> 
         </para>
       </section>
-    </section>
+    </section-->
   </section>
   
   <section id="ugr.async.mt.tuning">
@@ -962,7 +962,7 @@ under the License.
     
   </section>
   
-  <section id="ugr.async.mt.limits">
+  <!--section id="ugr.async.mt.limits">
     <title>Limitations</title>
     <para>The current (2.3.0) implementation has the following limitations:
       <itemizedlist>
@@ -983,6 +983,6 @@ under the License.
         </listitem>        
       </itemizedlist>
     </para>
-  </section>
+  </section-->
    
 </chapter>
