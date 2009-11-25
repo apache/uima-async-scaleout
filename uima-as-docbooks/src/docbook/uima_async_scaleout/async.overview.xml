@@ -593,7 +593,7 @@ under the License.
         
         <para>AS Aggregate delegates specified as &lt;analysisEngine> elements (or by default)
           are co-located, and use custom lightweight queuing.  AS Aggregate delegates specified using 
-          &lt;remoteAnalysisEngine are not co-located, and use JMS queuing.</para>
+          &lt;remoteAnalysisEngine> are not co-located, and use JMS queuing.</para>
         
         <para>For JMS queues, each queue is defined by a queue name and
           the URL of its Queue Broker. AS services register as queue consumers to obtain CASes to work on 
