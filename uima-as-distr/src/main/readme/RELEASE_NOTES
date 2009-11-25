@@ -41,6 +41,7 @@ issues you find at http://issues.apache.org/jira/browse/uima.
 
 5. List of JIRA Issues Fixed in this Release
 
+
 Release Notes - UIMA - Version 2.3AS
 
 
@@ -213,12 +214,17 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1655] - Fix NPE in UIMA AS service while creating a new listener
     * [UIMA-1656] - UIMA AS aggregate should not attempt to send getMeta request to remotes when its stopping
     * [UIMA-1657] - UIMA AS client fails if a failover broker uri with multiple endpoints is used
-    * [UIMA-1658] - UIMA AS worker does not respond to client initialize after failover
     * [UIMA-1659] - UIMA AS aggregate creates a redundant temp reply queue for each delegate
     * [UIMA-1662] - uima-as extract and build script has copy/paste error - is building base uima instead of uima-as
     * [UIMA-1663] - All directories in UIMA distribution should be 755
     * [UIMA-1665] - UIMA AS aggregate not handling timeouts correctly for parallel delegates
     * [UIMA-1666] - CasPoolSize should equal numberOfInstances when deploying a primitive component
+    * [UIMA-1671] - UIMA AS client fails to localize exception message when executed in an OSGI server
+    * [UIMA-1672] - BaseAnalysisEngineController.stopCasMultiplier should log stopping also to log file
+    * [UIMA-1673] - uimaee_messages.properties contains key UIMAEE_stopping_collocated_cm_INFO twice
+    * [UIMA-1674] - Exception thrown from CasMultiplier.process should be reported to client as failure
+    * [UIMA-1675] - UIMA AS client does not log time out error correctly
+    * [UIMA-1681] - Wrong value for JMX monitoring property
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
@@ -270,6 +276,8 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1622] - Make uima-as dependencies more precise
     * [UIMA-1635] - uima-as docs review fixes for 2.3.0 level
     * [UIMA-1660] - uimaj-as-camel should support failover in configruation string
+    * [UIMA-1670] - uima-as startup issues
+    * [UIMA-1677] - UIMA-AS Doc updates from proofreading
 
 ** New Feature
     * [UIMA-1017] - Client API does not support the CAS multiplier interface
