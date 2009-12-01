@@ -38,11 +38,12 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
-      <excludes>
+      <!-- next is needed to build the bin so keep it -->
+      <!--excludes>
         <exclude>src/main/readme/**</exclude>
         <exclude>**/*.sh</exclude>
         <exclude>src/main/apache-activemq-4.1.1/bin/**</exclude>
-      </excludes>
+      </excludes-->
       <fileMode>644</fileMode>
     </fileSet>
 
@@ -105,10 +106,7 @@ under the License.
       <directory>../uima-as-docbooks</directory>
       <outputDirectory>uima-as-docbooks</outputDirectory>
       <excludes>
-        <exclude>target/**</exclude>
-        <exclude>.*</exclude>   
-        <exclude>src/styles/titlepage/*.xsl</exclude>
-        <exclude>src/olink/**/*.db</exclude>     
+        <exclude>target/**</exclude>   
       </excludes>
       <fileMode>644</fileMode>
     </fileSet>   
@@ -134,6 +132,9 @@ under the License.
       <includes>
         <include>src/**</include>
         <include>pom.xml</include>
+        <include>META-INF</include>
+        <include>icons/**</include>
+        <include>plugin.xml</include>       
       </includes>
       <fileMode>644</fileMode>
     </fileSet>  
@@ -143,9 +144,18 @@ under the License.
       <includes>
         <include>src/**</include>
         <include>pom.xml</include>
+        <include>META-INF</include>
       </includes>
       <fileMode>644</fileMode>
-    </fileSet>     
+    </fileSet> 
+    <fileSet>
+      <directory>../uimaj-eclipse-feature-deployeditor</directory>
+      <outputDirectory>/uimaj-eclipse-feature-deployeditor</outputDirectory>
+      <excludes>
+        <exclude>target/**</exclude>
+      </excludes>
+      <fileMode>644</fileMode>
+    </fileSet>            
     <fileSet>
       <directory>../uimaj-as-osgi-runtime</directory>
       <outputDirectory>uimaj-as-osgi-runtime</outputDirectory>
