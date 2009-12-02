@@ -41,7 +41,6 @@ issues you find at http://issues.apache.org/jira/browse/uima.
 
 5. List of JIRA Issues Fixed in this Release
 
-
 Release Notes - UIMA - Version 2.3AS
 
 
@@ -225,6 +224,8 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1674] - Exception thrown from CasMultiplier.process should be reported to client as failure
     * [UIMA-1675] - UIMA AS client does not log time out error correctly
     * [UIMA-1681] - Wrong value for JMX monitoring property
+    * [UIMA-1683] - fix copyright notice in the NOTICE files
+    * [UIMA-1687] - correct top-level svn license/notice files
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
@@ -278,6 +279,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1660] - uimaj-as-camel should support failover in configruation string
     * [UIMA-1670] - uima-as startup issues
     * [UIMA-1677] - UIMA-AS Doc updates from proofreading
+    * [UIMA-1689] - fix some miscompares between svn export and source-distribution
 
 ** New Feature
     * [UIMA-1017] - Client API does not support the CAS multiplier interface
