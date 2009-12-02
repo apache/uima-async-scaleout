@@ -65,7 +65,7 @@ then
   fi
 fi
 
-svn checkout -r HEAD http://svn.apache.org/repos/asf/incubator/uima/uima-as/$svnloc
+svn export -r HEAD http://svn.apache.org/repos/asf/incubator/uima/uima-as/$svnloc
 cp -r $leveldir/* . 
 cd uimaj-as
 mvn ${jvmargs} $mvnCommand
