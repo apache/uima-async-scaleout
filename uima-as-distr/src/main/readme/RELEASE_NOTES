@@ -226,6 +226,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1681] - Wrong value for JMX monitoring property
     * [UIMA-1683] - fix copyright notice in the NOTICE files
     * [UIMA-1687] - correct top-level svn license/notice files
+    * [UIMA-1692] - add missing license headers to .project files etc. in uimaj-eclipse-... projects
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
@@ -280,6 +281,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1670] - uima-as startup issues
     * [UIMA-1677] - UIMA-AS Doc updates from proofreading
     * [UIMA-1689] - fix some miscompares between svn export and source-distribution
+    * [UIMA-1691] - change checkout to export in extract and build scripts
 
 ** New Feature
     * [UIMA-1017] - Client API does not support the CAS multiplier interface
@@ -306,3 +308,4 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1479] - Move UIMA-AS out of sandbox, change to an "add-on" packaging style to the core
     * [UIMA-1555] - repackage UIMA-AS to work as an add-on to base UIMA
     * [UIMA-1614] - update 2.3.0-incubating-SNAPSHOT to drop the snapshot in prep for release
+    
