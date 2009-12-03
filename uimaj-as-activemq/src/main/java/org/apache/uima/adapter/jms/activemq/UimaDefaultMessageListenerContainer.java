@@ -357,7 +357,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if ( controller != null ) {
       controller.changeState(ServiceState.FAILED);
     }
-    if (endpoint == null) {
+    //	check if endpoint object has been fully initialized. If it is not 
+    //  initialized, most likely the broker is not available and we
+    //	go into a silent re-connect retry. 
+    if (endpoint == null || endpoint.getDestination() == null ) {
       super.handleListenerSetupFailure(t, true);
       String controllerId = "";
       if (controller != null) {
@@ -371,9 +374,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
       System.out.println(controllerId + " Listener Unable to Connect to Broker:" + getBrokerUrl()
               + " Retrying ....");
-      // This code executes during initialization of the service. The Endpoint is not yet
-      // available. The connection to a broker cannot be established. Keep trying until
-      // the broker becomes available.
+			// Use Spring to retry connection until successful. This call is
+			// blocking this thread.
       refreshConnectionUntilSuccessful();
       if ( controller != null ) {
         controller.changeState(ServiceState.RUNNING);
@@ -388,14 +390,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
       return;
     }
-
     // Connection failure that occurs AFTER the service initialized.
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
               "handleListenerSetupFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), t });
     }
-
     synchronized (mux) {
       if (!failed) {
         // Check if this listener is attached to a temp queue. If so, this is a listener
