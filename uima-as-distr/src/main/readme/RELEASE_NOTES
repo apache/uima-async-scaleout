@@ -308,4 +308,3 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1479] - Move UIMA-AS out of sandbox, change to an "add-on" packaging style to the core
     * [UIMA-1555] - repackage UIMA-AS to work as an add-on to base UIMA
     * [UIMA-1614] - update 2.3.0-incubating-SNAPSHOT to drop the snapshot in prep for release
-    
