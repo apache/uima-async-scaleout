@@ -435,6 +435,7 @@
                 <exclude>uima-as-distr/src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
                 <exclude>uima-as-docbooks/src/olink/**</exclude> <!-- generated cross ref database for Apache FOP -->
                 <exclude>uima-docbooks/src/olink/**</exclude> <!-- generated cross ref database for Apache FOP -->
+                <exclude>uima-as-docbooks/src/styles/titlepage/titlepage-*.xsl</exclude> <!-- generated files by docbook -->
                 <exclude>uimaj-as-activemq/src/test/resources/data/DoubleByteText.txt</exclude> <!-- test data -->
               </excludes>
             </configuration>
