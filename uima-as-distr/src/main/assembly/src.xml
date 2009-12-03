@@ -38,12 +38,11 @@ under the License.
         <include>src/**</include>
         <include>pom.xml</include>
       </includes>
-      <!-- next is needed to build the bin so keep it -->
-      <!--excludes>
-        <exclude>src/main/readme/**</exclude>
-        <exclude>**/*.sh</exclude>
+      <excludes>
+        <!--exclude>src/main/readme/**</exclude-->
+        <exclude>src/**/*.sh</exclude>
         <exclude>src/main/apache-activemq-4.1.1/bin/**</exclude>
-      </excludes-->
+      </excludes>
       <fileMode>644</fileMode>
     </fileSet>
 
@@ -52,31 +51,31 @@ under the License.
       <outputDirectory>uima-as-distr</outputDirectory>
       <includes>
         <include>src/**/*.sh</include>
+    <!-- marks scripts, .so files as executable 
+         skip .bat .jar .conf and .jnilib -->
+        <include>src/main/apache-activemq-4.1.1/bin/**</include>
       </includes>
+      <excludes>
+        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.bat</exclude>
+        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.jar</exclude>
+        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.conf</exclude>
+        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.jnilib</exclude>        
+      </excludes>
       <fileMode>755</fileMode>
-    </fileSet>
-    
-    <fileSet>
-      <directory>.</directory>
-      <outputDirectory>uima-as-distr</outputDirectory>
-      <includes>
-        <include>src/main/apache-activemq-4.1.1/bin/**/*.*</include>
-      </includes>
-      <fileMode>644</fileMode>
     </fileSet>
 
     <fileSet>
       <directory>.</directory>
       <outputDirectory>uima-as-distr</outputDirectory>
       <includes>
-        <include>src/main/apache-activemq-4.1.1/bin/**</include>
+        <include>src/main/apache-activemq-4.1.1/bin/**/*.bat</include>
+        <include>src/main/apache-activemq-4.1.1/bin/**/*.jar</include>
+        <include>src/main/apache-activemq-4.1.1/bin/**/*.conf</include>
+        <include>src/main/apache-activemq-4.1.1/bin/**/*.jnilib</include>        
       </includes>
-      <excludes>
-        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.*</exclude>
-      </excludes>
-      <fileMode>755</fileMode>
+      <fileMode>644</fileMode>
     </fileSet>
-    
+            
     <fileSet>
       <directory>src/main/readme</directory>
       <excludes>
