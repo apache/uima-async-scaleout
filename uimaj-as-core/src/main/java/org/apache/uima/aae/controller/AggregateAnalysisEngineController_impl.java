@@ -1193,7 +1193,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
                   "simpleStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_next_step__FINEST", new Object[] { analysisEngineKey, aCasReferenceId });
+                  "UIMAEE_next_step__FINEST", new Object[] { aCasReferenceId,analysisEngineKey  });
         }
 
         // Reset number of parallel delegates back to one. This is done only if the previous step
@@ -1210,14 +1210,14 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
                     "simpleStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_next_step_dispatch__FINEST",
-                    new Object[] { getComponentName(), aCasReferenceId, analysisEngineKey });
+                    new Object[] { getComponentName(), analysisEngineKey, aCasReferenceId  });
           }
           dispatchProcessRequest(aCasReferenceId, endpoint, true);
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
                     "simpleStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_next_step_dispatch_completed__FINEST",
-                    new Object[] { getComponentName(), aCasReferenceId, analysisEngineKey });
+                    new Object[] { getComponentName(), analysisEngineKey, aCasReferenceId  });
           }
         }
       }
