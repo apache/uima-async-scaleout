@@ -184,8 +184,8 @@ public class VmTransport implements UimaTransport {
         ThreadFactory tf = new UimaAsThreadFactory(threadGroup,
                 (PrimitiveAnalysisEngineController) controller);
         executor.setThreadFactory(tf);
-        executor.prestartAllCoreThreads();
       }
+      executor.prestartAllCoreThreads();
       controller.changeState(ServiceState.RUNNING);
     }
     return executor;
