@@ -334,5 +334,20 @@ under the License.
       <destName>.classpath</destName>
       <fileMode>644</fileMode> 
     </file>
+    
+    <!-- put license and notice at the top level -->
+    <file>
+      <source>src/main/readme/LICENSE</source>
+      <outputDirectory></outputDirectory>
+      <destName>LICENSE</destName>
+      <fileMode>644</fileMode>
+    </file>
+        <file>
+      <source>src/main/readme/NOTICE</source>
+      <outputDirectory></outputDirectory>
+      <destName>NOTICE</destName>
+      <fileMode>644</fileMode>
+    </file>
+    
   </files>
 </assembly>
