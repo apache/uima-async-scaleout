@@ -78,6 +78,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1138] - Deployment of an aggregate hangs if one of its co-located delegates has a missing import
     * [UIMA-1145] - UIMA-AS client occasionally hangs while processing CASes
     * [UIMA-1149] - [UIMA-AS] fix potential thread safety issue with flow controller code
+    * [UIMA-1154] - UIMA-AS extended tests hang when running with IBM JVM 1.6 service release 1
     * [UIMA-1158] - Some shell scripts don't work on Ubuntu Linux
     * [UIMA-1159] - UIMA-AS dd2Spring fix - generating wrong property for co-located component - treating it as a remote
     * [UIMA-1161] - UIMA-AS inputQueueScaleout should be settable on nested co-located aggregates
@@ -192,6 +193,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1593] - AEs that declare multipleDeploymentAllowed=false can't be deployed as services and called from multiple clients in the same JVM
     * [UIMA-1609] - binary assembly wrongly including FOP files
     * [UIMA-1615] - make build-from-sources work
+    * [UIMA-1623] - Error handling incorrect if multiple delegates have the same window values
     * [UIMA-1624] - Uima AS service should start listeners on its input queue on succesfull initialization only
     * [UIMA-1626] - JmsOutputChannel.sendReply(Throwable t, ...) fails if exception is not serializeable
     * [UIMA-1630] - Fix IndexOutOfBounds exception in BaseAnalysisEngineController
@@ -227,6 +229,10 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1683] - fix copyright notice in the NOTICE files
     * [UIMA-1687] - correct top-level svn license/notice files
     * [UIMA-1692] - add missing license headers to .project files etc. in uimaj-eclipse-... projects
+    * [UIMA-1696] - Fix log messages in UIMA AS aggregate
+    * [UIMA-1698] - Colocated service shows a wrong count for number of messages processed
+    * [UIMA-1699] - UIMA-AS start broker appears to hang - but maybe a logging issue (RC6)
+    * [UIMA-1701] - dd2spring script fails
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
@@ -282,6 +288,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1677] - UIMA-AS Doc updates from proofreading
     * [UIMA-1689] - fix some miscompares between svn export and source-distribution
     * [UIMA-1691] - change checkout to export in extract and build scripts
+    * [UIMA-1700] - copy LIC/NOT files to top level for UIMA-AS
 
 ** New Feature
     * [UIMA-1017] - Client API does not support the CAS multiplier interface
@@ -296,6 +303,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1314] - Add OSGI support to uima-as
     * [UIMA-1354] - Add camel based uima-as driver
     * [UIMA-1531] - Need a script to launch a UIMA-AS service via RunWithJarPath
+    * [UIMA-1604] - Add ShutdownHook to Uima As Service Wrapper
 
 
 
