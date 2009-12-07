@@ -1,5 +1,7 @@
      Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.3.0-incubating README
      ---------------------------------------------------------------------------
+     
+     See subdirectory uima-as/readme for release notes
 
 0. Changes in the 2.3.0 release
   - UIMA-AS "graduated" from Sandbox, now a top-level (within UIMA) add-on

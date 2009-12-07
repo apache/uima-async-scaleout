@@ -446,6 +446,7 @@
               <excludes>
                 <exclude>uima-as/docs/api/**</exclude> <!-- javadocs-->
                 <exclude>uima-as/docs/html/images/*.svg</exclude>  <!-- generated .svg image files -->
+                <exclude>README-uima-as</exclude> <!-- README file -->
               </excludes>
             </configuration>
           </execution>  
