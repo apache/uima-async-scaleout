@@ -19,15 +19,21 @@
 @setlocal
 
 if not defined UIMA_HOME goto USAGE_UIMA
+if "%1" == "" goto usage
 goto RUN
 
 :USAGE_UIMA
 echo UIMA_HOME environment variable is not set 
 goto EXIT
 
-:RUN
-@call "%UIMA_HOME%\bin\setUimaClassPath"
+:usage
+echo USAGE: dd2spring source-deployment-descriptor output-file-path
+echo   for instance:  %%UIMA_HOME%%\bin\dd2spring %%UIMA_HOME%%\examples\deploy\as\Deploy_MeetingDetectorTAE.xml c:\temp\dd2so.xml
+goto EXIT
 
-@if "%JAVA_HOME%"=="" (set UIMA_JAVA_CALL=java) else (set UIMA_JAVA_CALL=%JAVA_HOME%\bin\java)
-@"%UIMA_JAVA_CALL%" -cp "%UIMA_CLASSPATH%;%UIMA_HOME%\saxon\saxon8.jar" "-Duima.datapath=%UIMA_DATAPATH%" -Xmx256M net.sf.saxon.Transform -l -s %1 -o %2 "%UIMA_HOME%\bin\dd2spring.xsl" %3 %4 %5 %6 %7 %8 %9
+:RUN
+set UIMA_CLASSPATH=%UIMA_CLASSPATH%;%UIMA_HOME%\saxon\saxon8.jar
+set UIMA_JVM_OPTS=%UIMA_JVM_OPTS% -Xmx256M 
+@call "%UIMA_HOME%\bin\runUimaClass.bat" net.sf.saxon.Transform -l -s "%1" -o "%2" "%UIMA_HOME%\bin\dd2spring.xsl" %3 %4 %5 %6 %7 %8 %9
+
 :EXIT

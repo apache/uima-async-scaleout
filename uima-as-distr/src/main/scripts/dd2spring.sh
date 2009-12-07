@@ -23,11 +23,14 @@ then
   exit 1
 fi
 
-if [ "$JAVA_HOME" = "" ]
+if [ "$1" = "" ]
 then
-  UIMA_JAVA_CALL=java
-else
-  UIMA_JAVA_CALL="$JAVA_HOME/bin/java"
+  echo USAGE: dd2spring source-deployment-descriptor output-file-path
+  echo   for instance:  \$UIMA_HOME/bin/dd2spring \$UIMA_HOME/examples/deploy/as/Deploy_MeetingDetectorTAE.xml /tmp/dd2so.xml
+  exit 1
 fi
-"$UIMA_HOME/bin/setUimaClassPath.sh"
-"$UIMA_JAVA_CALL" -cp "$UIMA_CLASSPATH:$UIMA_HOME/saxon/saxon8.jar" "-Duima.datapath=$UIMA_DATAPATH" -Xmx256M net.sf.saxon.Transform -l -s $1 -o $2 $UIMA_HOME/bin/dd2spring.xsl $3
+
+export UIMA_CLASSPATH=$UIMA_CLASSPATH:$UIMA_HOME/saxon/saxon8.jar
+export "UIMA_JVM_OPTS=$UIMA_JVM_OPTS -Xmx256M"
+
+"$UIMA_HOME/bin/runUimaClass.sh" net.sf.saxon.Transform -l -s "$1" -o "$2" "$UIMA_HOME/bin/dd2spring.xsl" $3 $4 $5 $6 $7 $8 $9
