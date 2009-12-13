@@ -30,6 +30,8 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
+import org.apache.activemq.ActiveMQMessageProducer;
+import org.apache.activemq.ActiveMQSession;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
@@ -47,7 +49,7 @@ import org.apache.uima.util.Level;
 public class ActiveMQMessageSender extends BaseMessageSender {
   private static final Class CLASS_NAME = ActiveMQMessageSender.class;
 
-  private Connection connection = null;
+  private volatile Connection connection = null;
 
   private Session session = null;
 
@@ -102,7 +104,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
   private void createSession() throws Exception {
     String broker = getBrokerURL();
     try {
-      if (session == null) {
+      if (session == null || engine.producerInitialized == false) {
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
       }
     } catch (JMSException e) {
@@ -154,6 +156,20 @@ public class ActiveMQMessageSender extends BaseMessageSender {
    * Returns jsm MessageProducer
    */
   public MessageProducer getMessageProducer() {
+    if ( engine.producerInitialized == false ) {
+      try {
+        setConnection(engine.sharedConnection.getConnection());
+        initializeProducer();
+        engine.producerInitialized = true;
+      } catch( Exception e) {
+        e.printStackTrace();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "getMessageProducer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", new Object[] { e });
+        }
+      }
+    } 
     return producer;
   }
 
