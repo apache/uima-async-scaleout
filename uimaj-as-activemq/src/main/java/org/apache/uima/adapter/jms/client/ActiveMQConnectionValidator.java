@@ -31,7 +31,7 @@ import org.apache.uima.adapter.jms.ConnectionValidator;
  */
 public class ActiveMQConnectionValidator implements ConnectionValidator {
 
-  public boolean connectionClosedOrInvalid(Connection connection) {
+  public synchronized boolean connectionClosedOrInvalid(Connection connection) {
     if ( connection == null ||
          ((ActiveMQConnection)connection).isClosed() ||
          ((ActiveMQConnection)connection).isClosing() ||
