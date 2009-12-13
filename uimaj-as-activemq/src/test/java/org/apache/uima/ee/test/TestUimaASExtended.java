@@ -2355,7 +2355,80 @@ public class TestUimaASExtended extends BaseTestSupport {
     }
   }
 
- 
+  /**
+   * Tests shutdown due to delegate broker missing. The Aggregate is configured to retry getMeta 3
+   * times and continue. The client times out after 20 seconds and forces the shutdown. NOTE: The
+   * Spring listener tries to recover JMS connection on failure. In this test a Listener to remote
+   * delegate cannot be established due to a missing broker. The Listener is setup to retry every 60
+   * seconds. After failure, the listener goes to sleep for 60 seconds and tries again. This results
+   * in a 60 second delay at the end of this test.
+   * 
+   * @throws Exception
+   */
+  public void testTerminateOnInitializationFailureWithDelegateBrokerMissing() throws Exception {
+    System.out
+            .println("-------------- testTerminateOnInitializationFailureWithDelegateBrokerMissing -------------");
+    System.out
+            .println("---------------------- The Uima Client Times Out After 20 seconds --------------------------");
+    System.out
+            .println("-- The test requires 1 minute to complete due to 60 second delay in Spring Listener ----");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    try {
+      // Deploy remote service
+      deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+      // Deploy top level aggregate that communicates with the remote via Http Tunnelling
+      deployService(eeUimaEngine, relativePath
+              + "/Deploy_AggregateAnnotatorTerminateOnDelegateBadBrokerURL.xml");
+      // Initialize and run the Test. Wait for a completion and cleanup resources.
+      Map<String, Object> appCtx = new HashMap();
+      appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(broker.getMasterConnectorURI()));
+      appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
+      appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
+      runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
+              "TopLevelTaeQueue", 1, EXCEPTION_LATCH);
+      fail("Expected ResourceInitializationException. Instead, the Aggregate Reports Successfull Initialization");
+    } catch (ResourceInitializationException e) {
+      Exception cause = getCause(e);
+      System.out.println("Expected Initialization Exception was received:" + cause);
+    } catch (Exception e) {
+      fail("Expected ResourceInitializationException. Instead Got:" + e.getClass());
+    } finally {
+      eeUimaEngine.stop();
+    }
+  }
+
+  /**
+   * Tests shutdown due to delegate broker missing. The Aggregate is configured to terminate on
+   * getMeta timeout.
+   * 
+   * @throws Exception
+   */
+  public void testTerminateOnInitializationFailureWithAggregateForcedShutdown() throws Exception {
+    System.out
+            .println("-------------- testTerminateOnInitializationFailureWithAggregateForcedShutdown -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Initialize and run the Test. Wait for a completion and cleanup resources.
+    try {
+      // Deploy remote service
+      deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+      // Deploy top level aggregate that communicates with the remote via Http Tunnelling
+      deployService(eeUimaEngine, relativePath
+              + "/Deploy_AggregateAnnotatorWithHttpDelegateNoRetries.xml");
+      runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
+              "TopLevelTaeQueue", 10, EXCEPTION_LATCH);
+      fail("Expected ResourceInitializationException. Instead, the Aggregate Reports Successfull Initialization");
+    } catch (ResourceInitializationException e) {
+      Exception cause = getCause(e);
+      System.out.println("Expected Initialization Exception was received:" + cause);
+    } catch (Exception e) {
+      fail("Expected ResourceInitializationException. Instead Got:" + e.getClass());
+    } finally {
+      eeUimaEngine.stop();
+    }
+
+  }
+
+
   /**
    * Tests shutdown due to delegate broker missing. The Aggregate is configured to retry getMeta 3
    * times and continue. The client times out after 20 seconds and forces the shutdown. NOTE: The
