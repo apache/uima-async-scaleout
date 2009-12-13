@@ -2417,7 +2417,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     
     public enum ConnectionState { CLOSED, FAILED, WAITING_FOR_BROKER, OPEN };
     
-    private Connection connection;
+    private volatile Connection connection;
     private volatile boolean stop = false;
     
     private ConnectionState state = ConnectionState.CLOSED;
@@ -2508,6 +2508,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //  Change state of each client in this JVM that uses this shared connection.
       for(BaseUIMAAsynchronousEngineCommon_impl client: clientList) {
         client.state = ClientState.RECONNECTING;
+        client.producerInitialized = false;
       }
       System.out.println("Uima AS Client Has Lost Connection To Broker:"+brokerURL+" Retrying Connection every 5secs Until Successfull. Is Client Stopped="+(stop==true));
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
