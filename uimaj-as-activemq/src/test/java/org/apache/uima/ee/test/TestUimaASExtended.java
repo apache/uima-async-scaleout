@@ -37,6 +37,8 @@ import javax.jms.Session;
 
 import junit.framework.Assert;
 
+import mx4j.remote.rmi.ClientExceptionCatcher;
+
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.command.ActiveMQDestination;
@@ -574,6 +576,107 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       System.clearProperty("BrokerURL");
   }
+
+  /**
+   * Tests recovery from a broker restart when running multiple instances of 
+   * UIMA AS client in the same JVM. The scenario is:
+   * 1) start broker
+   * 2) start service
+   * 3) create 1st client and initialize it
+   * 4) create 2nd client and initialize it
+   * 5) send 1 CAS from client#1
+   * 6) when reply is received kill broker and restart it
+   * 7) send 2 CAS from client#1
+   * 8) CAS #2 fails, but forces SharedConnection to reconnect to broker
+   * 9) CAS#3 and #4 are sent from client#1
+   * 10) CASes 1-4 are sent from client#2 without error
+   * 
+   * @throws Exception
+   */
+
+  public void testMultipleClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
+    System.out.println("-------------- testMultipleClientsRecoveryFromBrokerStopAndRestart -------------");
+      
+      BrokerService broker = createBroker(8200, false);
+      broker.start();
+      System.setProperty("BrokerURL", "tcp://localhost:8200");
+
+      // Instantiate Uima AS Client
+      BaseUIMAAsynchronousEngine_impl uimaClient1 = new BaseUIMAAsynchronousEngine_impl();
+      // Deploy Uima AS Primitive Service
+      deployService(uimaClient1, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
+              "NoOpAnnotatorQueue");
+      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      initialize(uimaClient1, appCtx);
+      waitUntilInitialized();
+      
+      // Instantiate Uima AS Client
+      BaseUIMAAsynchronousEngine_impl uimaClient2 = new BaseUIMAAsynchronousEngine_impl();
+      Map<String, Object> appCtx2 = buildContext("tcp://localhost:8200",
+              "NoOpAnnotatorQueue");
+      appCtx2.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx2.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      initialize(uimaClient2, appCtx2);
+      waitUntilInitialized();
+      
+      
+      int errorCount=0;
+      for (int i = 0; i < 4; i++) {
+        //  Stop broker before second CAS is sent to the service
+        if ( i == 1 ) {
+          broker.stop();
+          synchronized(this) {
+            wait(3000);   // allow broker some time to stop 
+          }
+          //  restart broker before 3rd CAS is sent
+          //  restart the broker 
+          broker = createBroker(8200, false);
+          broker.start();
+          synchronized(this) {
+            wait(3000);   // allow broker some time to start  
+          }
+        } 
+        CAS cas = uimaClient1.getCAS();
+        cas.setDocumentText("Some Text");
+        System.out.println("UIMA AS Client#1 Sending CAS#" + (i + 1) + " Request to a Service");
+        try {
+          uimaClient1.sendAndReceiveCAS(cas);
+        } catch( Exception e) {
+          errorCount++;
+          System.out.println("UIMA AS Client#1 Received Expected Error on CAS:"+(i+1));
+        } finally {
+          cas.release();
+        }
+      }
+      for (int i = 0; i < 4; i++) {
+        CAS cas = uimaClient2.getCAS();
+        cas.setDocumentText("Some Text");
+        System.out.println("UIMA AS Client#2 Sending CAS#" + (i + 1) + " Request to a Service");
+        try {
+          uimaClient2.sendAndReceiveCAS(cas);
+        } catch( Exception e) {
+          errorCount++;
+          System.out.println("UIMA AS Client#2 Received Expected Error on CAS:"+(i+1));
+        } finally {
+          cas.release();
+        }
+      }
+      
+      uimaClient1.stop();
+      uimaClient2.stop();
+      broker.stop();
+
+      System.clearProperty("BrokerURL");
+      
+      synchronized(this) {
+        wait(3000);   // allow broker some time to stop  
+      }
+  }
+  
+  
+  
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
     
