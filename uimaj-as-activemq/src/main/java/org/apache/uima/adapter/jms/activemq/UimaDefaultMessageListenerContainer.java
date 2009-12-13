@@ -357,10 +357,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if ( controller != null ) {
       controller.changeState(ServiceState.FAILED);
     }
-    //	check if endpoint object has been fully initialized. If it is not 
+    //	check if endpoint object has been initialized. If it is not 
     //  initialized, most likely the broker is not available and we
     //	go into a silent re-connect retry. 
-    if (endpoint == null || endpoint.getDestination() == null ) {
+    if (endpoint == null ) {
       super.handleListenerSetupFailure(t, true);
       String controllerId = "";
       if (controller != null) {
