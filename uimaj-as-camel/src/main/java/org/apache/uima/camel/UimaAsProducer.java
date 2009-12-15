@@ -35,6 +35,7 @@ import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.EntityProcessStatus;
+import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.resource.ResourceInitializationException;
 
 /**
@@ -98,6 +99,28 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
 
         exchangeCallbackPair.callback.done(false);
       } else {
+    	  
+    	// If the connection to the broker is lost all outstanding CASes
+    	// will  not come back. All outstanding camel messages should
+    	// be reported as failed.
+    	if (aStatus.isException()) {
+    		for (Exception exception : aStatus.getExceptions()) {
+    			if (exception instanceof BrokerConnectionException) {
+    				
+    				LOG.warn("Connection to broker lost, report all oustanding messages" +
+    						"as failed!");
+    				
+    				for (ExchangeAsyncCallbackPair callback : 
+    					intermediateMap.values()) {
+    					callback.exchange.setException(exception);
+    					callback.callback.done(false);
+    				}
+    				
+    				return;
+    			}
+    		}
+    	}
+    	
         LOG.warn("Could not find callback for CAS id: " + referenceId);
       }
     }
@@ -180,6 +203,7 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
       }
 
     } catch (Exception e) {
+      LOG.warn("Failed to send CAS", e);
       // Processing of the exchange failed
 
       // The error message is set on the exchange
@@ -190,6 +214,7 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
       return true;
     }
     
+    // Processing will be completed asynchronously
     return false;
   }
 }
