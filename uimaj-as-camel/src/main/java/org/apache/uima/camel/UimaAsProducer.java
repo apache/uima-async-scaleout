@@ -107,7 +107,7 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
     		for (Exception exception : aStatus.getExceptions()) {
     			if (exception instanceof BrokerConnectionException) {
     				
-    				LOG.warn("Connection to broker lost, report all oustanding messages" +
+    				LOG.warn("Connection to broker lost, report all outstanding messages" +
     						"as failed!");
     				
     				for (ExchangeAsyncCallbackPair callback : 
