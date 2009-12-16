@@ -514,6 +514,12 @@ public class JmsOutputChannel implements OutputChannel {
         endpointConnection.open();
         brokerConnectionEntry.getConnectionTimer()
                 .setConnectionCreationTimestamp(System.nanoTime());
+        if ( getAnalysisEngineController() instanceof AggregateAnalysisEngineController ) {
+          Endpoint masterEndpoint = 
+            ((AggregateAnalysisEngineController) getAnalysisEngineController()).lookUpEndpoint(
+                  anEndpoint.getDelegateKey(), false);
+          masterEndpoint.setStatus(Endpoint.OK);
+        }
       }
     }
     return endpointConnection;
