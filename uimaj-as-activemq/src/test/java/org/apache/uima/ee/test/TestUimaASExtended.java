@@ -674,7 +674,76 @@ public class TestUimaASExtended extends BaseTestSupport {
         wait(3000);   // allow broker some time to stop  
       }
   }
-  
+  /**
+   * Tests ability of an aggregate to recover from Broker restart. The broker managing
+   * delegate's input queue is stopped after 1st CAS is received from a delegate. The 
+   * listener for the temp reply queue is stopped and a delegate marked as FAILED. When
+   * the broker is restarted, a 2nd CAS is sent from a client to the aggregate. This 
+   * forces instantiation and initialization of a new temp reply queue and a new listener
+   * Once this is done, 2nd CAS is sent to the delegate and processing continues.
+   * @throws Exception
+   */
+  public void testAggregateRecoveryFromBrokerStopAndRestart() throws Exception  {
+    System.out.println("-------------- testAggregateRecoveryFromBrokerStopAndRestart -------------");
+      
+      BrokerService broker = createBroker(8200, false);
+      broker.start();
+      System.setProperty("BrokerURL", "tcp://localhost:8200");
+
+      // Instantiate Uima AS Client
+      BaseUIMAAsynchronousEngine_impl uimaClient1 = new BaseUIMAAsynchronousEngine_impl();
+      // Deploy Uima AS Primitive Service
+      deployService(uimaClient1, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+      deployService(uimaClient1, relativePath + "/Deploy_AggregateWithRemoteNoOpOnBroker8200.xml");
+      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
+              "NoOpAnnotatorQueue");
+      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      initialize(uimaClient1, appCtx);
+      waitUntilInitialized();
+      
+      
+      int errorCount=0;
+      for (int i = 0; i < 10; i++) {
+        //  Stop broker before second CAS is sent to the service
+        if ( i == 1 ) {
+          System.out.println("Stopping Broker Running on Port 8200");
+          broker.stop();
+          synchronized(this) {
+            wait(3000);   // allow broker some time to stop 
+          }
+          //  restart broker before 3rd CAS is sent
+          //  restart the broker 
+          System.out.println("Starting Broker on Port 8200");
+          broker = createBroker(8200, false);
+          broker.start();
+          synchronized(this) {
+            wait(3000);   // allow broker some time to start  
+          }
+        } 
+        CAS cas = uimaClient1.getCAS();
+        cas.setDocumentText("Some Text");
+        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+        try {
+          uimaClient1.sendAndReceiveCAS(cas);
+        } catch( Exception e) {
+          errorCount++;
+          System.out.println("UIMA AS Client Received Expected Error on CAS:"+(i+1));
+        } finally {
+          cas.release();
+        }
+      }
+      uimaClient1.stop();
+      System.out.println("Stopping Broker - wait ...");
+      
+      broker.stop();
+
+      System.clearProperty("BrokerURL");
+      
+      synchronized(this) {
+        wait(3000);   // allow broker some time to stop  
+      }
+  }
   
   
   public void testClientProcess() throws Exception {
