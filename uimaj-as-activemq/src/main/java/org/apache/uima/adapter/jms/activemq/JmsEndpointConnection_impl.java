@@ -19,6 +19,7 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
@@ -44,10 +45,14 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
+import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
+import org.apache.uima.aae.error.DelegateConnectionLostException;
 import org.apache.uima.aae.error.InvalidMessageException;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.message.AsynchAEMessage;
@@ -176,10 +181,10 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
           connectionSemaphore.acquire();
           if (connectionClosedOrFailed(brokerDestinations)) {
             // Create one shared connection per unique brokerURL.
-            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
                       "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAJMS_activemq_open__INFO",
+                      "UIMAJMS_activemq_open__FINE",
                       new Object[] { aController.getComponentName(), anEndpointName, brokerUri });
             }
             if ( brokerDestinations.getConnection() != null ) {
@@ -344,6 +349,9 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   protected void setEndpoint(String endpoint) {
     this.endpoint = endpoint;
   }
+  protected void setDelegateEndpoint(Endpoint delegateEndpoint) {
+    this.delegateEndpoint = delegateEndpoint;
+  }
 
   protected synchronized String getServerUri() {
     return serverUri;
@@ -455,23 +463,6 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
               return true;
             }
           }
-          // The aggregate has a master list of endpoints which are typically cloned during
-          // processing
-          // This object uses a copy of the master. When a listener fails, the status of the master
-          // endpoint is changed. To check the status, fetch the master endpoint, check its status
-          // and if marked as FAILED, create a new listener, a new temp queue and override this
-          // object endpoint copy destination property. It *IS* a new replyTo temp queue.
-          Endpoint masterEndpoint = ((AggregateAnalysisEngineController) controller)
-                  .lookUpEndpoint(key, false);
-          if (masterEndpoint.getStatus() == Endpoint.FAILED) {
-            // Create a new Listener Object to receive replies
-            createListener(key);
-            destination = (Destination) masterEndpoint.getDestination();
-            delegateEndpoint.setDestination(destination);
-            // Override the reply destination. A new listener has been created along with a new temp
-            // queue for replies.
-            aMessage.setJMSReplyTo(destination);
-          }
         }
       }
     }
@@ -486,8 +477,38 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       int msgType = aMessage.getIntProperty(AsynchAEMessage.MessageType);
       int command = aMessage.getIntProperty(AsynchAEMessage.Command);
 
-      if (failed || brokerDestinations.getConnection() == null || producerSession == null
-              || !((ActiveMQSession) producerSession).isRunning()) {
+      Endpoint masterEndpoint = null;
+      if ( delegateEndpoint != null && delegateEndpoint.getDelegateKey() != null ) {
+        masterEndpoint = ((AggregateAnalysisEngineController) controller).lookUpEndpoint(
+                delegateEndpoint.getDelegateKey(), false);
+        // Endpoint is marked as FAILED by the aggregate when it detects broker connection
+        // failure. In such an event the aggregate stops the listener on the delegate
+        // reply queue.
+        if ( msgType == AsynchAEMessage.Request && command == AsynchAEMessage.Process &&
+             masterEndpoint != null && masterEndpoint.getStatus() == Endpoint.FAILED) {
+          HashMap<Object, Object> map = new HashMap<Object, Object>();
+          Delegate delegate = ((AggregateAnalysisEngineController) controller).lookupDelegate(delegateEndpoint.getDelegateKey());
+          //  Cancel Delegate timer before entering Error Handler
+          if ( delegate != null ) {
+            delegate.cancelDelegateTimer();
+          }
+          //  Handle the Connection error in the ProcessErrorHandler
+          map.put(AsynchAEMessage.Command, AsynchAEMessage.Process);
+          map.put(AsynchAEMessage.CasReference, aMessage.getStringProperty(AsynchAEMessage.CasReference));
+          map.put(AsynchAEMessage.Endpoint, masterEndpoint);
+          Exception e = new DelegateConnectionLostException("Controller:"+controller.getComponentName()+" Lost Connection to Delegate:"+masterEndpoint.getDelegateKey());
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", new Object[] { e });
+          }
+          //  Handle error in ProcessErrorHandler
+          ((BaseAnalysisEngineController)controller).handleError(map, e);
+          return true; // return true as if this was successful send 
+        }
+      }
+
+      if ( !isOpen() ) {
         if (delayCasDelivery(msgType, aMessage, command)) {
           // Return true as if the CAS was sent
           return true;
