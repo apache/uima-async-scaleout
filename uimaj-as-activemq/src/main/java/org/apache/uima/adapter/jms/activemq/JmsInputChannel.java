@@ -533,11 +533,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       } else {
         casRefId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
       }
+      String command = "";
+      String messageType ="";
       if (validMessage(aMessage)) {
-        String command = decodeIntToString(AsynchAEMessage.Command, aMessage
+        command = decodeIntToString(AsynchAEMessage.Command, aMessage
                 .getIntProperty(AsynchAEMessage.Command));
         // Request or Response
-        String messageType = decodeIntToString(AsynchAEMessage.MessageType, aMessage
+        messageType = decodeIntToString(AsynchAEMessage.MessageType, aMessage
                 .getIntProperty(AsynchAEMessage.MessageType));
         // Check if the request message contains a reply destination known to have
         // been deleted. This could be the case if the client has been shutdown after
@@ -581,7 +583,6 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         // "           \n******************************************************************************");
 
         String msgFrom = (String) aMessage.getStringProperty(AsynchAEMessage.MessageFrom);
-
         if (controller != null && msgFrom != null) {
           if (msgSentFromIP != null) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -875,8 +876,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         UimaDefaultMessageListenerContainer newListener = new UimaDefaultMessageListenerContainer();
 
         testIfBrokerRunning(delegate.getEndpoint().getServerURI());
-        ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(delegate.getEndpoint()
-                .getServerURI());
+        ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(delegate.getEndpoint().getServerURI());
         newListener.setConnectionFactory(f);
         newListener.setMessageListener(this);
         newListener.setController(getController());
@@ -1051,7 +1051,11 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   public boolean isFailed(String aDelegateKey) {
     return failedListenerMap.containsKey(aDelegateKey);
   }
-
+  public void removeDelegateFromFailedList( String aDelegateKey ) {
+    if ( failedListenerMap.containsKey(aDelegateKey ) ) {
+      failedListenerMap.remove(aDelegateKey);
+    }
+  }
   public boolean isListenerForDestination(String anEndpointName) {
     UimaDefaultMessageListenerContainer[] mListeners = getListenersForEndpoint(anEndpointName);
     if (mListeners == null) {
