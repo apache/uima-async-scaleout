@@ -47,5 +47,7 @@ public interface InputChannel extends Channel {
   public boolean isFailed(String aDelegateKey);
 
   public boolean isListenerForDestination(String anEndpointName);
+  
+  public void removeDelegateFromFailedList( String aDelegateKey );
 
 }
