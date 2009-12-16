@@ -233,6 +233,12 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1698] - Colocated service shows a wrong count for number of messages processed
     * [UIMA-1699] - UIMA-AS start broker appears to hang - but maybe a logging issue (RC6)
     * [UIMA-1701] - dd2spring script fails
+    * [UIMA-1702] - Service fails to start when the broker of one of its delegates is missing
+    * [UIMA-1703] - UIMA AS service uses the same log4j.properties file as the AMQ broker 
+    * [UIMA-1704] - UIMA AS aggregate doesnt handle service broker restart
+    * [UIMA-1705] - UIMA AS client fails when service broker is restarted
+    * [UIMA-1706] - UIMA AS Camel driver should handle broker connection lost correctly
+    * [UIMA-1709] - Modify log4j.properties file used by ActiveMQ broker to restore location of the log file 
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
