@@ -1223,7 +1223,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     return errorHandlerChain;
   }
 
-  protected void handleError(HashMap aMap, Throwable e) {
+  public void handleError(HashMap aMap, Throwable e) {
     ErrorContext errorContext = new ErrorContext();
     errorContext.add(aMap);
     getErrorHandlerChain().handle(e, errorContext, this);
