@@ -23,12 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
-import org.apache.uima.aae.error.handler.GetMetaErrorHandler;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
@@ -211,6 +211,19 @@ public abstract class ErrorHandlerBase {
               break;
 
             case AsynchAEMessage.Process:
+              if ( anErrorContext.containsKey(AsynchAEMessage.Endpoint)) {
+                Endpoint masterEndpoint = (Endpoint)anErrorContext.get(AsynchAEMessage.Endpoint);
+
+                if (aController instanceof AggregateAnalysisEngineController && (masterEndpoint != null && masterEndpoint.getStatus() == Endpoint.FAILED)) {
+                  // Fetch an InputChannel that handles messages for a given delegate
+                  InputChannel iC = aController.getReplyInputChannel(masterEndpoint.getDelegateKey());
+                  // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
+                  iC.createListener(masterEndpoint.getDelegateKey(), null);
+                  iC.removeDelegateFromFailedList(masterEndpoint.getDelegateKey());
+                  anEndpoint.setDestination(masterEndpoint.getDestination());
+                }
+                
+              }
               String casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
               System.out.println("Controller:" + aController.getComponentName()
                       + " >>>>>>>>>> Retrying Process For Cas Id:" + casReferenceId+" Delegate:"+anEndpoint.getDelegateKey());
