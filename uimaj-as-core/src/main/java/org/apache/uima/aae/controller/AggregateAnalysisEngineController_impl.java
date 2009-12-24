@@ -2495,7 +2495,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     // to initialize their internal Cas Pools. CM Cas Pool is lazily initialized on
     // the first process call. The JMX Monitor needs all the Cas Pools to initialize
     // before the process call.
-    onInitialize();
+    if (isTopLevelComponent()) {
+      onInitialize();
+    }
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
