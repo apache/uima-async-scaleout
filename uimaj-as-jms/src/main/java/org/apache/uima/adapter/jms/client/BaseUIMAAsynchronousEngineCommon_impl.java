@@ -22,6 +22,7 @@ package org.apache.uima.adapter.jms.client;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -2424,15 +2425,15 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     private Object stateMonitor = new Object();
     private Object mux = new Object();
     private String brokerURL;
-    private InitialContext jndiContext;
     private ConnectionValidator connectionValidator;
     private Object destroyMux = new Object();
+    private ConnectionFactory connectionFactory = null;
     
     private List<BaseUIMAAsynchronousEngineCommon_impl> clientList = 
       new ArrayList<BaseUIMAAsynchronousEngineCommon_impl>();
       
-    public SharedConnection( InitialContext jndiContext, String brokerURL ) {
-      this.jndiContext = jndiContext;
+    public SharedConnection( ConnectionFactory connectionFactory , String brokerURL ) {
+      this.connectionFactory = connectionFactory;
       this.brokerURL = brokerURL;
     }
     public String getBroker() {
@@ -2459,11 +2460,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
      * if not successfull. 
      */ 
     public void create() throws Exception {
-      ConnectionFactory connectionFactory = 
-        (ConnectionFactory)jndiContext.lookup("ConnectionFactory");
+      if ( connectionFactory == null ) {
+        throw new InstantiationException("UIMA AS Client Unable to Initialize SharedConnection Object. ConnectionFactory Has Not Been Provided");
+      }
+      //  Create shared jms connection to a broker
       connection = connectionFactory.createConnection();
       state = ConnectionState.OPEN;
-      
     }
     private void reinitializeClientListeners() {
       for( BaseUIMAAsynchronousEngineCommon_impl client : clientList ) {
