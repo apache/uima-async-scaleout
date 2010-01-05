@@ -330,7 +330,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
         ActiveMQConnectionValidator connectionValidator = 
           new ActiveMQConnectionValidator();
         // Create a singleton shared connection object
-        sharedConnection = new SharedConnection(jndiContext, aBrokerURI);
+        sharedConnection = new SharedConnection(new ActiveMQConnectionFactory(aBrokerURI), aBrokerURI);
         //  Add AMQ specific connection validator
         sharedConnection.setConnectionValidator(connectionValidator);
         //  Connect to broker. Throws exception if unable to connect
