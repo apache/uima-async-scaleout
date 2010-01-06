@@ -521,6 +521,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           }
         } else if (casStateEntry != null) { // input CAS
           casStateEntry.setFailed();
+          casStateEntry.addThrowable(t);
           aController.process(null, casStateEntry.getCasReferenceId());
         }
         return true;
