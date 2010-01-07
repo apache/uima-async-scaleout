@@ -239,6 +239,9 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1705] - UIMA AS client fails when service broker is restarted
     * [UIMA-1706] - UIMA AS Camel driver should handle broker connection lost correctly
     * [UIMA-1709] - Modify log4j.properties file used by ActiveMQ broker to restore location of the log file 
+    * [UIMA-1712] - Finalize typesystem only when top level aggregate is ready
+    * [UIMA-1713] - Java and UIMA things holding on to objects loaded via Resource Manager fail when switching to another Resource Manager class loader instance
+    * [UIMA-1721] - Missing link in UIMA AS Camel Component documentation
 
 ** Improvement
     * [UIMA-841] - move Eclipse feature maven builds into feature projects
@@ -295,6 +298,7 @@ Release Notes - UIMA - Version 2.3AS
     * [UIMA-1689] - fix some miscompares between svn export and source-distribution
     * [UIMA-1691] - change checkout to export in extract and build scripts
     * [UIMA-1700] - copy LIC/NOT files to top level for UIMA-AS
+    * [UIMA-1719] - update copyright and pub dates to 2010
 
 ** New Feature
     * [UIMA-1017] - Client API does not support the CAS multiplier interface
