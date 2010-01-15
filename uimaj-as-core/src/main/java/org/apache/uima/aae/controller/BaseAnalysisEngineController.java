@@ -1135,7 +1135,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
     } else if (ErrorHandler.CONTINUE.equalsIgnoreCase(anAction)) {
       if (anEndpoint != null) {
-        String key = ((AggregateAnalysisEngineController) this).lookUpDelegateKey(anEndpoint);
+        String key = anEndpoint;
+        //  check if we already have a valid key. If is not, the caller supplied the 
+        //  delegates queue name which we use to lookup the delegates key.
+        if ( ((AggregateAnalysisEngineController) this).lookupDelegate(key) == null) {
+          //  the key is the queue name. Use it to look up the delegate's key
+          key = ((AggregateAnalysisEngineController) this).lookUpDelegateKey(anEndpoint);
+        }
         Exception ex = (Exception) anErrorContext.get(ErrorContext.THROWABLE_ERROR);
         boolean continueOnError = ((AggregateAnalysisEngineController) this).continueOnError(
                 casReferenceId, key, ex);
@@ -1150,6 +1156,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           CAS cas = null;
           // Make sure that the ErrorHandler did not drop the cache entry and the CAS
           if (entry != null && ((cas = entry.getCas()) != null)) {
+            //  Add a flag to the ErrorContext to indicate that the CAS exception was handled
+            //  and the CAS was allowed to continue. The ErrorHandler who called this method
+            //  will simply return after the completion of this method.
+            anErrorContext.add(ErrorContext.ERROR_HANDLED, Boolean.valueOf(true));
+            //  Continue processing the CAS
             ((AggregateAnalysisEngineController) this).process(cas, casReferenceId);
           }
         }
