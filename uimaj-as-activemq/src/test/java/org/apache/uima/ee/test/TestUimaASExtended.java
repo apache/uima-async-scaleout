@@ -95,6 +95,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             + System.getProperty("file.separator") + "bin" + System.getProperty("file.separator")
             + "dd2spring.xsl");
   }
+  
   public void testAggregateHttpTunnelling() throws Exception {
     System.out.println("-------------- testAggregateHttpTunnelling -------------");
     // Create Uima EE Client
@@ -1115,6 +1116,19 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  public void testDeployAggregateServiceWithDelegateTimeoutAndContinueOnError() throws Exception {
+    System.out.println("-------------- testDeployAggregateServiceWithDelegateTimeoutAndContinueOnError -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithDelegateTimeoutAndContinueOnError.xml");
+
+    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue");
+    runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            1, PROCESS_LATCH);
+  }
+  
   public void testScaledSyncAggregateProcess() throws Exception {
     System.out.println("-------------- testScaledSyncAggregateProcess -------------");
     // Instantiate Uima EE Client
