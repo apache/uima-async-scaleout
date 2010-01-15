@@ -380,8 +380,17 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
               }
 
             }
-
             aController.takeAction(threshold.getAction(), key, anErrorContext);
+            if (ErrorHandler.CONTINUE.equalsIgnoreCase(threshold.getAction())) {
+              //  The following is only true if the Action=Continue and the FlowController is configured
+              //  to continue on Exception in a delegate with a given key. The exception is provided
+              //  in the anErrorContext. The controller, while handling exception in takeAction(), will set 
+              //  ErrorContext.ERROR_HANDLED property iff the FlowController says to continue.
+              if (anErrorContext.containsKey(ErrorContext.ERROR_HANDLED) && (Boolean)anErrorContext.get(ErrorContext.ERROR_HANDLED) == true )
+                //  The FlowController indicated to continue. The process() method was already called. No
+                //  need to do anything else. At this point the error has been handled.
+                return true;
+            }
           }
         } else {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
