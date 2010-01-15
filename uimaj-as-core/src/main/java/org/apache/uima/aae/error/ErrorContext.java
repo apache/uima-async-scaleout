@@ -24,7 +24,7 @@ import java.util.Iterator;
 
 public class ErrorContext {
   public static final String THROWABLE_ERROR = "ThrowableError";
-
+  public static final String ERROR_HANDLED = "ErrorHandled";
   private boolean handleSilently = false;
 
   private HashMap contextMap = new HashMap();
