@@ -584,7 +584,7 @@ public abstract class Delegate {
         delegate.setState(TIMEOUT_STATE);
         ErrorContext errorContext = new ErrorContext();
         errorContext.add(AsynchAEMessage.Command, aCommand);
-
+        Exception cause = new MessageTimeoutException();
         if (AsynchAEMessage.Process == aCommand) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
@@ -593,6 +593,7 @@ public abstract class Delegate {
                     new Object[] { delegate.getKey(), timeToWait, aCasReferenceId });
           }
           errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
+          errorContext.add(ErrorContext.THROWABLE_ERROR, cause);
           //  Check if this is a Ping timeout and associate this with
           //	the oldest CAS from the list of CASes pending reply.
           if (isAwaitingPingReply() && getCasPendingReplyListSize() > 0) {
@@ -621,7 +622,7 @@ public abstract class Delegate {
 
         }
         errorContext.add(AsynchAEMessage.Endpoint, getEndpoint());
-        handleError(new MessageTimeoutException(), errorContext);
+        handleError(cause, errorContext);
       }
     }, timeToRun);
   }
