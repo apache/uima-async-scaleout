@@ -412,25 +412,27 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
     JmsEndpointConnection_impl endpointConnection = null;
-
+    //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+    //  Otherwise this is a request so use a broker specified in the endpoint object.
+    String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
     // First get a Map containing destinations managed by a broker provided by the client
     BrokerConnectionEntry brokerConnectionEntry = null;
-    if (connectionMap.containsKey(anEndpoint.getServerURI())) {
-      brokerConnectionEntry = (BrokerConnectionEntry) connectionMap.get(anEndpoint.getServerURI());
+    if (connectionMap.containsKey(brokerConnectionURL)) {
+      brokerConnectionEntry = (BrokerConnectionEntry) connectionMap.get(brokerConnectionURL);
       // Findbugs thinks that the above may return null, perhaps due to a race condition. Add
       // the null check just in case
       if (brokerConnectionEntry == null) {
         throw new AsynchAEException("Controller:"
                 + getAnalysisEngineController().getComponentName()
-                + " Unable to Lookup Broker Connection For URL:" + anEndpoint.getServerURI());
+                + " Unable to Lookup Broker Connection For URL:" + brokerConnectionURL);
       } 
-      brokerConnectionEntry.setBrokerURL(anEndpoint.getServerURI());
+      brokerConnectionEntry.setBrokerURL(brokerConnectionURL);
       if ( JmsEndpointConnection_impl.connectionClosedOrFailed(brokerConnectionEntry) ) {
         invalidateConnectionAndEndpoints(brokerConnectionEntry);
-        brokerConnectionEntry = createConnectionEntry(anEndpoint.getServerURI());
+        brokerConnectionEntry = createConnectionEntry(brokerConnectionURL);
       }
     } else {
-      brokerConnectionEntry = createConnectionEntry(anEndpoint.getServerURI());
+      brokerConnectionEntry = createConnectionEntry(brokerConnectionURL);
     }
     String key = getLookupKey(anEndpoint);
     String destination = getDestinationName(anEndpoint);
@@ -442,7 +444,7 @@ public class JmsOutputChannel implements OutputChannel {
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAJMS_acquiring_connection_to_endpoint__FINE",
               new Object[] { getAnalysisEngineController().getComponentName(), destination,
-                  anEndpoint.getServerURI() });
+                brokerConnectionURL });
     }
 
     // check the cache first
@@ -455,13 +457,12 @@ public class JmsOutputChannel implements OutputChannel {
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_create_new_connection__FINE",
                 new Object[] { getAnalysisEngineController().getComponentName(), destination,
-                    anEndpoint.getServerURI() });
+                  brokerConnectionURL });
       }
       endpointConnection = new JmsEndpointConnection_impl(brokerConnectionEntry, anEndpoint,
               getAnalysisEngineController());
       brokerConnectionEntry.addEndpointConnection(key, endpointConnection);
-      long replyQueueInactivityTimeout = getInactivityTimeout(destination, anEndpoint
-              .getServerURI());
+      long replyQueueInactivityTimeout = getInactivityTimeout(destination, brokerConnectionURL);
       brokerConnectionEntry.getConnectionTimer().setInactivityTimeout(replyQueueInactivityTimeout);
 
       // Connection is not in the cache, create a new connection, initialize it and cache it
@@ -469,7 +470,7 @@ public class JmsOutputChannel implements OutputChannel {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
                 "getEndpointConnection", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_open_new_connection_to_endpoint__FINE",
-                new Object[] { getDestinationName(anEndpoint), anEndpoint.getServerURI() });
+                new Object[] { getDestinationName(anEndpoint), brokerConnectionURL });
       }
 
       /**
@@ -488,7 +489,7 @@ public class JmsOutputChannel implements OutputChannel {
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_connection_opened_to_endpoint__FINE",
                 new Object[] { getAnalysisEngineController().getComponentName(), destination,
-                    anEndpoint.getServerURI() });
+                  brokerConnectionURL });
       }
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -499,7 +500,7 @@ public class JmsOutputChannel implements OutputChannel {
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_reusing_existing_connection__FINE",
                 new Object[] { getAnalysisEngineController().getComponentName(), destination,
-                    anEndpoint.getServerURI() });
+                  brokerConnectionURL });
       }
       // Retrieve connection from the connection cache
       endpointConnection = brokerConnectionEntry.getEndpointConnection(key);
@@ -1561,6 +1562,10 @@ public class JmsOutputChannel implements OutputChannel {
     // Add stats
     populateStats(aMessage, anEndpoint, entry.getCasReferenceId(), AsynchAEMessage.Process,
             isRequest);
+    //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+    //  Otherwise this is a request so use a broker specified in the endpoint object.
+    String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(
               Level.FINE,
@@ -1569,7 +1574,7 @@ public class JmsOutputChannel implements OutputChannel {
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAJMS_sending_new_msg_to_remote_FINE",
               new Object[] { getAnalysisEngineController().getName(),
-                  endpointConnection.getServerUri(), endpointConnection.getEndpoint() });
+                brokerConnectionURL, endpointConnection.getEndpoint() });
     }
     // By default start a timer associated with a connection to the endpoint. Once a connection is
     // established with an
@@ -1619,7 +1624,7 @@ public class JmsOutputChannel implements OutputChannel {
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_send_reply_failed__INFO",
                   new Object[] { getAnalysisEngineController().getComponentName(),
-                      endpointConnection.getServerUri(), endpointConnection.getEndpoint() });
+                      brokerConnectionURL, endpointConnection.getEndpoint() });
         }
       }
     }
@@ -1633,6 +1638,10 @@ public class JmsOutputChannel implements OutputChannel {
       if (aborting) {
         return;
       }
+      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+      //  Otherwise this is a request so use a broker specified in the endpoint object.
+      String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+
       CacheEntry entry = this.getCacheEntry(aCasReferenceId);
       if (entry == null) {
         throw new AsynchAEException("Controller:"
@@ -1662,7 +1671,7 @@ public class JmsOutputChannel implements OutputChannel {
       } catch (AsynchAEException ex) {
         System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
                 + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + anEndpoint.getServerURI()
+                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
                 + " is Unavailable. InputCasReferenceId:" + anInputCasReferenceId
                 + " CasReferenceId:" + aCasReferenceId + " Sequece:" + sequence);
         UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -1757,6 +1766,10 @@ public class JmsOutputChannel implements OutputChannel {
       if (aborting) {
         return;
       }
+      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+      //  Otherwise this is a request so use a broker specified in the endpoint object.
+      String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+
       if (aSerializedCAS != null) {
         msgSize = aSerializedCAS.length;
       }
@@ -1789,7 +1802,7 @@ public class JmsOutputChannel implements OutputChannel {
       } catch (AsynchAEException ex) {
         System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
                 + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + anEndpoint.getServerURI()
+                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
                 + " is Unavailable. InputCasReferenceId:" + anInputCasReferenceId
                 + " CasReferenceId:" + aCasReferenceId + " Sequece:" + sequence);
         UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -1874,6 +1887,10 @@ public class JmsOutputChannel implements OutputChannel {
       if (aborting) {
         return;
       }
+      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+      //  Otherwise this is a request so use a broker specified in the endpoint object.
+      String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+
       casStateEntry = getAnalysisEngineController().getLocalCache().lookupEntry(
               entry.getCasReferenceId());
       // Get the connection object for a given endpoint
@@ -1891,7 +1908,7 @@ public class JmsOutputChannel implements OutputChannel {
       } catch (AsynchAEException ex) {
         System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
                 + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + anEndpoint.getServerURI()
+                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
                 + " is Unavailable. CasReferenceId:" + casStateEntry.getCasReferenceId());
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.INFO,
@@ -1991,6 +2008,10 @@ public class JmsOutputChannel implements OutputChannel {
       if (aborting) {
         return;
       }
+      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+      //  Otherwise this is a request so use a broker specified in the endpoint object.
+      String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+
       casStateEntry = getAnalysisEngineController().getLocalCache().lookupEntry(
               entry.getCasReferenceId());
       // Get the connection object for a given endpoint
@@ -2012,7 +2033,7 @@ public class JmsOutputChannel implements OutputChannel {
       } catch (AsynchAEException ex) {
         System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
                 + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + anEndpoint.getServerURI()
+                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
                 + " is Unavailable. CasReferenceId:" + casStateEntry.getCasReferenceId());
         return;
       }
@@ -2361,8 +2382,13 @@ public class JmsOutputChannel implements OutputChannel {
                           .entrySet()) {
                     endpoints.getValue().close(); // close session and producer
                   }
+                  //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+                  //  Otherwise this is a request so use a broker specified in the endpoint object.
+                  String brokerConnectionURL = (endpoint.isReplyEndpoint()) ? serverURI : endpoint.getServerURI();
+
                   brokerDestinations.endpointMap.clear();
-                  connectionMap.remove(endpoint.getServerURI());
+                  connectionMap.remove(brokerConnectionURL);
+                  
                 }
               }
               brokerDestinations.setConnection(null);
@@ -2378,7 +2404,11 @@ public class JmsOutputChannel implements OutputChannel {
 
     private void removeDestinationFromManagedList(BrokerConnectionEntry brokerDestinations,
             Endpoint endpoint) {
-      String key = endpoint.getEndpoint() + endpoint.getServerURI();
+      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+      //  Otherwise this is a request so use a broker specified in the endpoint object.
+      String brokerConnectionURL = (endpoint.isReplyEndpoint()) ? serverURI : endpoint.getServerURI();
+
+      String key = endpoint.getEndpoint() + brokerConnectionURL;
       String destination = endpoint.getEndpoint();
       if (endpoint.getDestination() != null
               && endpoint.getDestination() instanceof ActiveMQDestination) {

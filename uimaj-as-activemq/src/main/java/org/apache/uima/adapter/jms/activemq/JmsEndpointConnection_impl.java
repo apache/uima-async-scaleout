@@ -106,7 +106,10 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   public JmsEndpointConnection_impl(BrokerConnectionEntry aBrokerDestinationMap,
           Endpoint anEndpoint, AnalysisEngineController aController) {
     brokerDestinations = aBrokerDestinationMap;
-    serverUri = anEndpoint.getServerURI();
+    //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+    //  Otherwise this is a request so use a broker specified in the endpoint object.
+    serverUri = (anEndpoint.isReplyEndpoint()) ? 
+            ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() : anEndpoint.getServerURI();
     isReplyEndpoint = anEndpoint.isReplyEndpoint();
     controller = aController;
 
@@ -170,7 +173,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_override_connection_to_endpoint__FINE",
                   new Object[] { aComponentName, getEndpoint(),
-                      aController.getInputChannel().getServerUri() });
+                    ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() });
         }
       }
 
