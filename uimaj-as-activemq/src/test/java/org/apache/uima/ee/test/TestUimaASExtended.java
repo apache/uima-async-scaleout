@@ -1126,7 +1126,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue");
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            1, PROCESS_LATCH);
+            2, PROCESS_LATCH);
   }
   
   public void testScaledSyncAggregateProcess() throws Exception {
