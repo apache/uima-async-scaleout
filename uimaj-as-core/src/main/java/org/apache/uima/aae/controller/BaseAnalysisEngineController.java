@@ -102,7 +102,7 @@ import org.apache.uima.util.Level;
 public abstract class BaseAnalysisEngineController extends Resource_ImplBase implements
         AnalysisEngineController, EventSubscriber {
   private static final Class CLASS_NAME = BaseAnalysisEngineController.class;
-
+  private static final String JMS_PROVIDER_HOME = "ACTIVEMQ_HOME";
   public static enum ServiceState { INITIALIZING, RUNNING, DISABLED, STOPPING, FAILED };
   
   protected ServiceState currentState = ServiceState.INITIALIZING;
@@ -526,12 +526,18 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       platformInfo.append("\n+ Service Start Time:" + df.format(bean.getStartTime()));
       platformInfo.append("\n+ UIMA AS Version:" + uimaAsVersion.getVersionString());
       platformInfo.append("\n+ UIMA Core Version:" + UIMAFramework.getVersionString());
+      if ( System.getenv(JMS_PROVIDER_HOME) != null) {
+        platformInfo.append("\n+ JMS Provider Home:" + System.getenv(JMS_PROVIDER_HOME));
+      }
       platformInfo.append("\n+ OS Name:" + osBean.getName());
       platformInfo.append("\n+ OS Version:" + osBean.getVersion());
       platformInfo.append("\n+ OS Architecture:" + osBean.getArch());
       platformInfo.append("\n+ OS CPU Count:" + osBean.getAvailableProcessors());
       platformInfo.append("\n+ JVM Vendor:" + bean.getVmVendor());
       platformInfo.append("\n+ JVM Name:" + bean.getVmName());
+      if ( System.getenv(JMS_PROVIDER_HOME) != null) {
+        platformInfo.append("\n+ JMS Provider Home:" + System.getenv(JMS_PROVIDER_HOME));
+      }
       platformInfo.append("\n+ JVM Version:" + bean.getVmVersion());
       platformInfo.append("\n+ JVM Input Args:" + bean.getInputArguments());
       platformInfo.append("\n+ JVM Classpath:" + bean.getClassPath());
