@@ -425,9 +425,15 @@ public class ProcessResponseHandler extends HandlerBase {
           }
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            if ( getController() != null ) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "handleProcessResponseWithCASReference", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", getController().getComponentName());
+            }
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "handleProcessResponseWithCASReference", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", new Object[] { e });
+                    "UIMAEE_exception__WARNING", e);
           }
         }
       }
@@ -573,9 +579,15 @@ public class ProcessResponseHandler extends HandlerBase {
 
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        if ( getController() != null ) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "handlePingReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", getController().getComponentName());
+        }
+
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "handlePingReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
       }
     }
   }

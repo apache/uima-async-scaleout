@@ -152,6 +152,12 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
         }
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          if ( aController != null ) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "sendExceptionToParent", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", aController.getComponentName());
+          }
+
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "sendExceptionToParent", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_exception__WARNING", e);
@@ -234,6 +240,12 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
     // send are silent
     if (!anErrorContext.silentHandling()
             && UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      if ( aController != null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", aController.getComponentName());
+      }
+
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", t);
     }
@@ -455,6 +467,12 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
                   .continueOnError(casReferenceId, key, (Exception) t);
         } catch (Exception exc) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            if ( aController != null ) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", aController.getComponentName());
+            }
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_exception__WARNING", exc);
@@ -565,6 +583,12 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           }
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            if ( aController != null ) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", aController.getComponentName());
+            }
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_exception__WARNING", e);
@@ -607,6 +631,12 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
         }
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          if ( aController != null ) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", aController.getComponentName());
+          }
+
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_exception__WARNING", e);
@@ -620,6 +650,12 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
         }
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          if ( aController != null ) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", aController.getComponentName());
+          }
+
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_exception__WARNING", e);
@@ -655,6 +691,12 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
       aController.dropStats(casReferenceId, aController.getName());
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        if ( aController != null ) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", aController.getComponentName());
+        }
+
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_exception__WARNING", e);

@@ -197,9 +197,15 @@ public class VmTransport implements UimaTransport {
       aController.registerVmQueueWithJMX(workQueue, queueKind);
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        if ( controller != null ) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "registerWithJMX", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", controller.getComponentName());
+        }
+
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "registerWithJMX", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
       }
     }
 

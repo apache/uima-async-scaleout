@@ -235,9 +235,15 @@ public abstract class ErrorHandlerBase {
         } catch (Exception e) {
           anEndpoint.cancelTimer();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            if ( aController != null ) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "retryLastCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", aController.getComponentName());
+            }
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "retryLastCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", new Object[] { e });
+                    "UIMAEE_exception__WARNING", e);
           }
         }
       } else {
@@ -276,10 +282,16 @@ public abstract class ErrorHandlerBase {
         return true;
       }
     } catch (Exception e) {
+      if ( aController != null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "continueOnError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", aController.getComponentName());
+      }
+
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "continueOnError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", e); // new Object[] { e });
+                "UIMAEE_exception__WARNING", e); 
       }
 
     }

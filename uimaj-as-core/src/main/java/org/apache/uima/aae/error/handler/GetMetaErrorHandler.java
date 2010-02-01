@@ -72,6 +72,12 @@ public class GetMetaErrorHandler extends ErrorHandlerBase implements ErrorHandle
     }
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      if ( aController != null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", aController.getComponentName());
+      }
+
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", t);
     }

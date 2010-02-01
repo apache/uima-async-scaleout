@@ -489,9 +489,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
     } catch( Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "getLoadedJars", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", getComponentName());
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "getLoadedJars", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
       }
     }
     return loadedJars.toString();
@@ -779,8 +782,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       // Log and move on
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "setListenerContainer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "registerWithAgent", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", getComponentName());
+
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "registerWithAgent", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", e);
       }
     }
   }
@@ -1277,6 +1284,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         }
       } else {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "dropCAS",
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_unable_to_release_cas__WARNING",
@@ -1690,9 +1698,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                   + entry.getKey());
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "stopTransportLayer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", getComponentName());
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "stopTransportLayer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", new Object[] { e });
+                    "UIMAEE_exception__WARNING", e);
           }
           System.out.println("Exception:" + e.getClass() + " While Stopping Delegate Transport:"
                   + entry.getKey());
@@ -1769,9 +1781,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                   clientEndpoint.getCommand());
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", getComponentName());
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "stop",
                     UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
-                    new Object[] { e });
+                   e);
           }
         }
       }
@@ -2073,9 +2089,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         }
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "stopCasMultiplier", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", getComponentName());
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "stopCasMultiplier", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_exception__WARNING", new Object[] { e });
+                  "UIMAEE_exception__WARNING", e);
         }
       } finally {
         if (casMultiplier != null) {
@@ -2142,9 +2161,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           }
         } else {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "stopInputChannels", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", getComponentName());
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "stopInputChannels", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", new Object[] { e });
+                    "UIMAEE_exception__WARNING", e);
           }
         }
       }
@@ -2293,7 +2315,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "releaseNextCas", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_exception__WARNING", new Object[] { e });
+                  "UIMAEE_service_exception_WARNING", getComponentName());
+
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "releaseNextCas", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", e);
         }
       }
     }
@@ -2632,9 +2658,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             transport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
           } catch (Exception e) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "sendMetadata", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", getComponentName());
+
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                       "sendMetadata", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAEE_exception__WARNING", new Object[] { e });
+                      "UIMAEE_exception__WARNING", e);
             }
           } finally {
             try {

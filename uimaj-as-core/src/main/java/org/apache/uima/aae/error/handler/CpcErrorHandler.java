@@ -55,6 +55,12 @@ public class CpcErrorHandler extends ErrorHandlerBase implements ErrorHandler {
       return false;
     }
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      if ( aController != null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", aController.getComponentName());
+      }
+
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", t);
     }
@@ -74,6 +80,12 @@ public class CpcErrorHandler extends ErrorHandlerBase implements ErrorHandler {
                 AsynchAEMessage.CollectionProcessComplete);
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          if ( aController != null ) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", aController.getComponentName());
+          }
+
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_exception__WARNING", e);

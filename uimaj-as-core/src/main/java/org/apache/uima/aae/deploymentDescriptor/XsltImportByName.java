@@ -41,7 +41,7 @@ public class XsltImportByName {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, XsltImportByName.class.getName(),
                 "resolveByName", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
       }
       return "ERROR converting import by name to absolute path";
     }
