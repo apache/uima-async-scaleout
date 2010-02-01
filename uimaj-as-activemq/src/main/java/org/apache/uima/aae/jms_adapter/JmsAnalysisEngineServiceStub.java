@@ -224,7 +224,7 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                       "callCollectionProcessComplete", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
-                      new Object[] { Thread.currentThread().getName(), e });
+                      e);
             }
           }
         }

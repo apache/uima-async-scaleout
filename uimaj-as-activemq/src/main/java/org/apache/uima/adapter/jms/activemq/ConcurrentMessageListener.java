@@ -30,6 +30,7 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -172,9 +173,14 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
           parentEntry.incrementSubordinateCasInPlayCount();
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", controller.getComponentName());
+            
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                    "UIMAJMS_exception__WARNING", e);
           }
         }
       }
@@ -189,8 +195,12 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
           } catch (Exception e) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", controller.getComponentName());
+
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                       "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                      "UIMAJMS_exception__WARNING", e);
             }
           }
         }

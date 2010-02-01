@@ -398,16 +398,17 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       return initializeContainer(context);
     } catch (ResourceInitializationException e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "deploy",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
-                new Object[] { Thread.currentThread().getId(), e });
+                e);
       }
       throw e;
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "deploy",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
-                new Object[] { Thread.currentThread().getId(), e });
+                e);
       }
       throw new ResourceInitializationException(e);
     }
@@ -440,14 +441,14 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "deploy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                "UIMAJMS_exception__WARNING", e);
       }
       throw e;
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "deploy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                "UIMAJMS_exception__WARNING", e);
       }
       throw new ResourceInitializationException(e);
     }
@@ -497,7 +498,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
               "notifyOnInitializationFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAJMS_container_init_exception__WARNING", new Object[] { e });
+              "UIMAJMS_container_init_exception__WARNING", e);
     }
     serviceInitializationSemaphore.release();
   }

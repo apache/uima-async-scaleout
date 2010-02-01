@@ -88,7 +88,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "setConnection", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
       }
     }
     
@@ -166,7 +166,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "getMessageProducer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
         }
       }
     } 

@@ -282,7 +282,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                  "UIMAJMS_exception__WARNING",e);
         }
       }
     }
@@ -965,7 +965,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "main", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                "UIMAJMS_exception__WARNING", e);
       }
     }
   }
@@ -994,7 +994,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
               "notifyOnInitializationFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAJMS_container_init_exception__WARNING", new Object[] { e });
+              "UIMAJMS_container_init_exception__WARNING", e);
     }
     serviceSemaphore.release();
   }
@@ -1076,7 +1076,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "notifyOnInitializationFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAJMS_exception__WARNING",
-                    new Object[] { Thread.currentThread().getId(), ex });
+                    ex);
           }
         }
       }
@@ -1084,7 +1084,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "notifyOnInitializationFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { Thread.currentThread().getId(), e });
+                "UIMAJMS_exception__WARNING", e);
       }
     }
   }

@@ -162,9 +162,14 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        if ( controller != null ) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "handleListenerFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", controller.getComponentName());
+        }
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "handleListenerFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                "UIMAJMS_exception__WARNING", e);
       }
     }
   }
@@ -176,6 +181,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    */
   private void handleTempQueueFailure(Throwable t) {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      if ( controller != null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "handleTempQueueFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", controller.getComponentName());
+      }
+
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
               "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAJMS_jms_listener_failed_WARNING",
@@ -205,16 +216,24 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           // Stop current listener
           handleListenerFailure();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
-                    "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_stopped_listener_INFO",
-                    new Object[] { controller.getComponentName(), endpoint.getDestination() });
+            if ( controller != null ) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+                      "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_stopped_listener_INFO",
+                      new Object[] { controller.getComponentName(), endpoint.getDestination() });
+            }
           }
         } catch (Exception e) {
+          if ( controller != null ) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "handleTempQueueFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", controller.getComponentName());
+          }
+
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                    "UIMAJMS_exception__WARNING", e);
           }
         }
       }
@@ -301,9 +320,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               terminate = false; // just disable the delegate and continue
             } catch (Exception e) {
               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                if ( controller != null ) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                          "handleQueueFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAEE_service_exception_WARNING", controller.getComponentName());
+                }
+
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                         "handleQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                        "UIMAJMS_exception__WARNING", e);
               }
               terminate = true;
             }
@@ -321,16 +346,22 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         try {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-                    "handleQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "handleQueueFailure.run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAJMS_disable_listener__WARNING",
                     new Object[] { endpointName, getBrokerUrl() });
           }
           shutdown();
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            if ( controller != null ) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "handleQueueFailure.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", controller.getComponentName());
+            }
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                    "handleQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                    "handleQueueFailure.run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", e);
           }
         }
       }
@@ -392,9 +423,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     }
     // Connection failure that occurs AFTER the service initialized.
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      if ( controller != null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "handleListenerSetupFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", controller.getComponentName());
+      }
+
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
               "handleListenerSetupFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), t });
+              "UIMAJMS_exception__WARNING", t);
     }
     synchronized (mux) {
       if (!failed) {
@@ -483,9 +520,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       super.initialize();
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        if ( controller != null ) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "initializeContainer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", controller.getComponentName());
+        }
+
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "initializeContainer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                "UIMAJMS_exception__WARNING", e);
       }
     }
   }
@@ -538,9 +581,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           super.setMessageListener(concurrentListener);
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            if ( controller != null ) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "afterPropertiesSet", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_service_exception_WARNING", controller.getComponentName());
+            }
+
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "afterPropertiesSet", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                    "UIMAJMS_exception__WARNING", e);
           }
           return;
         }
@@ -692,9 +741,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       getSharedConnection().close();
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        if ( controller != null ) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "closeConnection", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", controller.getComponentName());
+        }
+
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                 "closeConnection", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { Thread.currentThread().getId(), e });
+                "UIMAJMS_exception__WARNING", e);
       }
     }
   }
@@ -736,6 +791,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
             : ((ActiveMQDestination) getDestination()).getPhysicalName();
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+      if ( controller != null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "onException", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", controller.getComponentName());
+      }
+
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
               "onException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAJMS_jms_listener_failed_WARNING",

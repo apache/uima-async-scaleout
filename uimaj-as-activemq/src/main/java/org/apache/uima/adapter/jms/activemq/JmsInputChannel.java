@@ -36,6 +36,7 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.command.ActiveMQMessage;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
@@ -653,9 +654,14 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 
     } catch (Throwable t) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", controller.getComponentName());
+
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), t });
+                "UIMAJMS_exception__WARNING", t);
       }
       controller.getErrorHandlerChain().handle(t, HandlerBase.populateErrorContext(messageContext),
               controller);
@@ -713,10 +719,15 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       try {
         ((Message) aMessageContext.getRawMessage()).acknowledge();
       } catch (Exception e) {
+        
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "ackMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_exception_WARNING", controller.getComponentName());
+
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "ackMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
-                  new Object[] { Thread.currentThread().getName(), e });
+                  e);
         }
       }
     }
@@ -1040,8 +1051,12 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "destroyListener", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_service_exception_WARNING", controller.getComponentName());
+
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "destroyListener", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                  "UIMAJMS_exception__WARNING", e);
         }
 
       }

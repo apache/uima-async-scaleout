@@ -262,7 +262,7 @@ public class BrokerDeployer implements ApplicationListener {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "generateInternalURI", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                  "UIMAJMS_exception__WARNING", e);
         }
         if (oneTry) {
           throw e;
@@ -323,7 +323,7 @@ public class BrokerDeployer implements ApplicationListener {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "stop", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                  "UIMAJMS_exception__WARNING", e);
         }
 
       }

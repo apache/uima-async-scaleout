@@ -57,7 +57,7 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "UimaEEAdminSpringContext", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", new Object[] { e });
+                  "UIMAJMS_exception__WARNING", e);
         }
       }
     }
@@ -137,7 +137,7 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                    "UIMAJMS_exception__WARNING", e);
           }
         }
       }
@@ -165,7 +165,7 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                       "shutdown", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAJMS_exception__WARNING", new Object[] { JmsConstants.threadName(), e });
+                      "UIMAJMS_exception__WARNING", e);
             }
           }
         }
