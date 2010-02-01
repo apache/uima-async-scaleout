@@ -2054,10 +2054,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
               getOutputChannel().sendRequest(AsynchAEMessage.Stop, aCasReferenceId,
                       freeCasNotificationEndpoint);
             }
-            System.out.println(">>> Instance Hashcode:" + hashCode() + " Controller:"
-                    + getComponentName() + " Stopping Remote Delegate Cas Multiplier:"
-                    + casMultiplier.getKey() + " Stopping CM From Generating More CASes from CAS: "
-                    + aCasReferenceId);
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(
                       Level.INFO,
@@ -2069,9 +2065,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                           aCasReferenceId });
             }
           } else {
-            System.out.println(">>> Instance Hashcode:" + hashCode() + " Controller:"
-                    + getComponentName() + " Stopping Collocated Delegate Cas Multiplier:"
-                    + casMultiplier.getKey());
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                 UIMAFramework.getLogger(CLASS_NAME).logrb(
                         Level.INFO,
