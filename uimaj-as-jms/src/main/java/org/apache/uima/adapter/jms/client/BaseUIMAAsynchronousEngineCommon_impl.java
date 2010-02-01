@@ -431,7 +431,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", new Object[] { ex });
+                    "UIMAEE_exception__WARNING", ex);
           }
         }
 
@@ -478,7 +478,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_exception__WARNING", new Object[] { e });
+                  "UIMAEE_exception__WARNING", e);
         }
       }
     }
@@ -540,7 +540,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                       "serveCASes.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAEE_exception__WARNING", new Object[] { e });
+                      "UIMAEE_exception__WARNING", e);
             }
           }
         }
@@ -1689,7 +1689,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
       }
 
     }
@@ -2245,7 +2245,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                         "startTimer.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAEE_exception__WARNING", new Object[] { e });
+                        "UIMAEE_exception__WARNING", e);
               }
             }
           }
@@ -2475,7 +2475,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "reinitializeClientListeners", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", new Object[] { e });
+                    "UIMAEE_exception__WARNING", e);
           }
         }
       }
@@ -2494,7 +2494,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                    "forceTimeout", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                   "UIMAEE_exception__WARNING", new Object[] { e });
+                   "UIMAEE_exception__WARNING", e);
          }
        }
      }

@@ -206,7 +206,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "reject", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_exception__WARNING", new Object[] { ex });
+                  "UIMAEE_exception__WARNING", ex);
         }
       }
     }
@@ -243,7 +243,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                 "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", new Object[] { e });
+                "UIMAEE_exception__WARNING", e);
       }
       return;
 
@@ -360,7 +360,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                        "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                       "UIMAEE_exception__WARNING", new Object[] { e });
+                       "UIMAEE_exception__WARNING", e);
              }
              reject(pm,e);
            }
@@ -411,7 +411,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
               "handleException", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAEE_exception__WARNING", new Object[] { e });
+              "UIMAEE_exception__WARNING", e);
     }
     engine.recoverSharedConnectionIfClosed();
     // Notify the engine that there was an exception.

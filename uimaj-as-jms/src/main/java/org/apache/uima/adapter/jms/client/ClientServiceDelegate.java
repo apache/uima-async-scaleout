@@ -171,7 +171,7 @@ public class ClientServiceDelegate extends Delegate {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_exception__WARNING", new Object[] { ex });
+                  "UIMAEE_exception__WARNING", ex);
         }
       }
       // Dont release the CAS if synchronous API was used

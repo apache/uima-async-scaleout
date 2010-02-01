@@ -62,7 +62,7 @@ public class JMSExceptionHandler extends ErrorHandlerBase implements ErrorHandle
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
-                  new Object[] { Thread.currentThread().getName(), t });
+                  t);
         }
 
       }
