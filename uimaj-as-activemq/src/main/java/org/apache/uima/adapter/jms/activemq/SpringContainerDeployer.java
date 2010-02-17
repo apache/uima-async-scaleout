@@ -244,6 +244,12 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
                   + endpoint.getDestination()
                   + " Reply Listener Configured With " + cc
                   + " Concurrent Consumer(s)");
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
+                    "initializeTopLevelController", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_replyq__CONFIG",
+                    new Object[] { endpoint.getDelegateKey(), endpoint.getDestination(), cc });
+          }          
         }
       }
       int concurrentConsumerCountOnReplies = getConcurrentConsumerCount(ctx);
