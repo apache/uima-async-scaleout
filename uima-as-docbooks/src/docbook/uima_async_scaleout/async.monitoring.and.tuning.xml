@@ -316,6 +316,12 @@ under the License.
                 <entry>count</entry>
                 <entry>const</entry>
               </row>
+              <row>
+                <entry>reply thread count</entry>
+                <entry>The number of threads available to process replies</entry>
+                <entry>count</entry>
+                <entry>const</entry>
+              </row>
             </tbody>
           </tgroup>
         </informaltable>        
