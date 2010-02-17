@@ -41,4 +41,8 @@ public interface ServicePerformanceMBean extends Serializable {
   public double getTimeSpentInCMGetNext();
 
   public int getProcessThreadCount();
+  
+  public int getReplyThreadCount();
+
+  public void setReplyThreadCount(int replyThreadCount);
 }
