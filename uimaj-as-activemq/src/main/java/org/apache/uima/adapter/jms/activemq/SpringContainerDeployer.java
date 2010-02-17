@@ -38,6 +38,8 @@ import org.apache.uima.aae.controller.ControllerLifecycle;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.UimacppServiceController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
+import org.apache.uima.aae.delegate.Delegate;
+import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
@@ -230,9 +232,18 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
               }
             }
           }
+          
+          Delegate delegate = ((AggregateAnalysisEngineController) cntlr)
+          .lookupDelegate(endpoint.getDelegateKey());
+          int cc = 1;
+          
+          if (delegate != null) {
+            cc = delegate.getEndpoint().getConcurrentReplyConsumers();
+          }          
           System.out.println("Remote Delegate " + endpoint.getDelegateKey() + " Reply Queue:"
-                  + endpoint.getDestination());
-
+                  + endpoint.getDestination()
+                  + " Reply Listener Configured With " + cc
+                  + " Concurrent Consumer(s)");
         }
       }
       int concurrentConsumerCountOnReplies = getConcurrentConsumerCount(ctx);
