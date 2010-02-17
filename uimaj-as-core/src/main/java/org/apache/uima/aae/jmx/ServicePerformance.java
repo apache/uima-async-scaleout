@@ -86,6 +86,9 @@ public class ServicePerformance implements ServicePerformanceMBean {
 
   private long totalGetNextWaitTime = 0;
 
+  private int replyThreadCount = 1;
+  
+
   public ServicePerformance() {
   }
 
@@ -369,6 +372,13 @@ public class ServicePerformance implements ServicePerformanceMBean {
 
   public void setProcessThreadCount(int processThreadCount) {
     this.processThreadCount = processThreadCount;
+  }
+  public int getReplyThreadCount() {
+    return replyThreadCount;
+  }
+
+  public void setReplyThreadCount(int replyThreadCount) {
+    this.replyThreadCount = replyThreadCount;
   }
 
 }
