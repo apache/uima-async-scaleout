@@ -535,9 +535,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       platformInfo.append("\n+ OS CPU Count:" + osBean.getAvailableProcessors());
       platformInfo.append("\n+ JVM Vendor:" + bean.getVmVendor());
       platformInfo.append("\n+ JVM Name:" + bean.getVmName());
-      if ( System.getenv(JMS_PROVIDER_HOME) != null) {
-        platformInfo.append("\n+ JMS Provider Home:" + System.getenv(JMS_PROVIDER_HOME));
-      }
       platformInfo.append("\n+ JVM Version:" + bean.getVmVersion());
       platformInfo.append("\n+ JVM Input Args:" + bean.getInputArguments());
       platformInfo.append("\n+ JVM Classpath:" + bean.getClassPath());
@@ -626,7 +623,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       System.out.println("Controller:" + getComponentName() + " Starting Request Listener With "
               + concurrentRequestConsumers
               + " Concurrent Consumers. Reply Listener Configured With " + concurrentReplyConsumers
-              + " Concurrent Consumers");
+              + " Concurrent Consumer(s)");
 
       uimaAsContext.setConcurrentConsumerCount(concurrentRequestConsumers);
       uimaAsContext.put("EndpointName", endpointName);
@@ -831,8 +828,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       //  if a colocated service, set its key as defined in the AE descriptor
       if ( !this.isTopLevelComponent() ) {
         serviceInfo.setServiceKey(delegateKey);
+        //  Modify service performance MBean to expose number
+        //	of threads processing replies
+        Delegate delegate = ((AggregateAnalysisEngineController) parentController)
+          .lookupDelegate(delegateKey);
+        if ( delegate != null ) {
+          servicePerformance.setReplyThreadCount(delegate.getEndpoint().getConcurrentReplyConsumers());
+        }
       }
-      //serviceInfo.setState(getState().name());
     }
     ServiceInfo pServiceInfo = null;
 
