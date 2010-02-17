@@ -828,7 +828,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       serviceInfo.setBrokerURL(super.getBrokerURL());
       serviceInfo.setDeploymentDescriptorPath(super.aeDescriptor);
     }
-
+    serviceInfo.setAnalysisEngineInstanceCount(analysisEnginePoolSize);
     return serviceInfo;
   }
 
