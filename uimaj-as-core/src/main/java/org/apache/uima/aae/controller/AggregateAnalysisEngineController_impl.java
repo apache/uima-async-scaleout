@@ -1408,7 +1408,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             ServicePerformance servicePerformance = new ServicePerformance();
             // servicePerformance.setIdleTime(System.nanoTime());
             servicePerformance.setRemoteDelegate();
-
+            servicePerformance.setReplyThreadCount(endpoint.getConcurrentReplyConsumers());
             registerWithAgent(servicePerformance, super.getManagementInterface().getJmxDomain()
                     + super.jmxContext + ",r" + remoteIndex + "=" + key
                     + " [Remote Uima EE Service],name=" + key + "_" + servicePerformance.getLabel());
