@@ -164,6 +164,13 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // Parse the descriptor in the calling thread.
       rSpecifier = UimaClassFactory.produceResourceSpecifier(super.aeDescriptor);
         AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
+        //  Call to produceAnalysisEngine() may take a long time to complete. While this
+        //  method was executing, the service may have been stopped. Before continuing 
+        //  check if the service has been stopped. If so, destroy AE instance and return.
+        if ( isStopped() ) {
+          ae.destroy();
+          return;
+        }
         if (aeInstancePool == null) {
           aeInstancePool = new AnalysisEngineInstancePoolWithThreadAffinity(analysisEnginePoolSize);
         }
@@ -301,8 +308,16 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                     "UIMAEE_cas_manager_wrapper_notdefined__CONFIG", new Object[] {});
           }
         }
+        if (!isStopped()){
+          ((BaseAnalysisEngineController) this).startServiceCleanupThread(30000); // sleep for 30 secs
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "postInitialize",
+                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_initialized_controller__INFO",
+                  new Object[] { getComponentName() });
+          }
+          super.serviceInitialized = true;
+        }
       }
-      ((BaseAnalysisEngineController) this).startServiceCleanupThread(30000); // sleep for 30 secs
     } catch (AsynchAEException e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -327,12 +342,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       throw new AsynchAEException(e);
     }
 
-    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "postInitialize",
-              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_initialized_controller__INFO",
-              new Object[] { getComponentName() });
-    }
-    super.serviceInitialized = true;
   }
 
   /**
