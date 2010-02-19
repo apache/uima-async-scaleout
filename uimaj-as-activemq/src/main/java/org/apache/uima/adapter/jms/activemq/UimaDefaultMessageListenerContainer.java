@@ -34,6 +34,7 @@ import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.TemporaryQueue;
 
+import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.command.ActiveMQDestination;
@@ -55,6 +56,7 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.jms.JmsException;
+import org.springframework.jms.listener.AbstractJmsListeningContainer;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.jms.support.destination.DestinationResolver;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -738,7 +740,17 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       setRecoveryInterval(0);
       setAcceptMessagesWhileStopping(false);
       setAutoStartup(false);
-      getSharedConnection().close();
+      if ( getSharedConnection() != null ) {
+        ActiveMQConnection amqc = (ActiveMQConnection)getSharedConnection();
+        if (amqc != null && amqc.isStarted()
+                && !amqc.isClosed()
+                && !amqc.isClosing()
+                && !amqc.isTransportFailed()) {
+          getSharedConnection().close();
+        }
+      }
+    } catch( AbstractJmsListeningContainer.SharedConnectionNotInitializedException e) {
+      //  Ignore this. This is thrown from Spring's getSharedConnection() 
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         if ( controller != null ) {
