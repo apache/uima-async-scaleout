@@ -19,7 +19,10 @@
 
 package org.apache.uima.aae.handler.input;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.SerializerCache;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
@@ -51,8 +54,6 @@ public class ProcessRequestHandler_impl extends HandlerBase {
   private static final Class CLASS_NAME = ProcessRequestHandler_impl.class;
 
   private Object mux = new Object();
-
-  private UimaSerializer uimaSerializer = new UimaSerializer();
 
   public ProcessRequestHandler_impl(String aName) {
     super(aName);
@@ -187,11 +188,12 @@ public class ProcessRequestHandler_impl extends HandlerBase {
     String serializationStrategy = endpoint.getSerializer();
     XmiSerializationSharedData deserSharedData = null;
     CacheEntry entry = null;
+    
+    UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
     if (serializationStrategy.equals("xmi")) {
       // Fetch serialized CAS from the message
       String xmi = aMessageContext.getStringMessage();
       deserSharedData = new XmiSerializationSharedData();
-      // UimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
       uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
     } else if (serializationStrategy.equals("binary")) {
       // *************************************************************************
@@ -200,7 +202,6 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // CacheEntry entry = getController().getInProcessCache().register(cas, aMessageContext,
       // deserSharedData, casReferenceId);
       byte[] binarySource = aMessageContext.getByteMessage();
-      // UimaSerializer.deserializeCasFromBinary(binarySource, cas);
       uimaSerializer.deserializeCasFromBinary(binarySource, cas);
     }
 
@@ -805,8 +806,10 @@ public class ProcessRequestHandler_impl extends HandlerBase {
                   "UIMAEE_request_cas_granted__FINE",
                   new Object[] { aMessageContext.getEndpoint().getEndpoint() });
         }
+        
+        UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
+
         XmiSerializationSharedData deserSharedData = new XmiSerializationSharedData();
-        // UimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
         uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
 
         if (casReferenceId == null) {
@@ -826,7 +829,6 @@ public class ProcessRequestHandler_impl extends HandlerBase {
                   new Object[] { aMessageContext.getEndpoint().getEndpoint() });
         }
         cacheProcessCommandInClientEndpoint();
-
         invokeProcess(cas, inputCasReferenceId, casReferenceId, aMessageContext, newCASProducedBy);
       } else {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
