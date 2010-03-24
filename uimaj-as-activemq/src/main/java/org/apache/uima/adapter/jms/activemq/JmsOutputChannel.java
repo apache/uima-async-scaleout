@@ -55,6 +55,7 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.Channel;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
+import org.apache.uima.aae.SerializerCache;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
@@ -118,8 +119,6 @@ public class JmsOutputChannel implements OutputChannel {
 
   private String hostIP = null;
 
-  private UimaSerializer uimaSerializer = new UimaSerializer();
-
   // By default every message will have expiration time added
   private volatile boolean addTimeToLive = true;
 
@@ -135,7 +134,6 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
   }
-
   /**
    * Sets the ActiveMQ Broker URI
    */
@@ -203,6 +201,8 @@ public class JmsOutputChannel implements OutputChannel {
     long start = getAnalysisEngineController().getCpuTime();
 
     String serializedCas = null;
+    //  Fetch dedicated Serializer associated with this thread
+    UimaSerializer serializer = SerializerCache.lookupSerializerByThreadId();
 
     if (isReply || "xmi".equalsIgnoreCase(aSerializerKey)) {
       CacheEntry cacheEntry = getAnalysisEngineController().getInProcessCache()
@@ -216,13 +216,14 @@ public class JmsOutputChannel implements OutputChannel {
       }
       if (isReply) {
         serSharedData = cacheEntry.getDeserSharedData();
+        
         if (cacheEntry.acceptsDeltaCas()
                 && (cacheEntry.getMarker() != null && cacheEntry.getMarker().isValid())) {
-          serializedCas = uimaSerializer.serializeCasToXmi(aCAS, serSharedData, cacheEntry
+          serializedCas = serializer.serializeCasToXmi(aCAS, serSharedData, cacheEntry
                   .getMarker());
           cacheEntry.setSentDeltaCas(true);
         } else {
-          serializedCas = uimaSerializer.serializeCasToXmi(aCAS, serSharedData);
+          serializedCas = serializer.serializeCasToXmi(aCAS, serSharedData);
           cacheEntry.setSentDeltaCas(false);
         }
         // if market is invalid, create a fresh marker.
@@ -235,7 +236,7 @@ public class JmsOutputChannel implements OutputChannel {
           serSharedData = new XmiSerializationSharedData();
           cacheEntry.setXmiSerializationData(serSharedData);
         }
-        serializedCas = uimaSerializer.serializeCasToXmi(aCAS, serSharedData);
+        serializedCas = serializer.serializeCasToXmi(aCAS, serSharedData);
         int maxOutgoingXmiId = serSharedData.getMaxXmiId();
         // Save High Water Mark in case a merge is needed
         getAnalysisEngineController().getInProcessCache().getCacheEntryForCAS(aCasReferenceId)
@@ -246,7 +247,7 @@ public class JmsOutputChannel implements OutputChannel {
       // Default is XCAS
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       try {
-        uimaSerializer.serializeToXCAS(bos, aCAS, null, null, null);
+        serializer.serializeToXCAS(bos, aCAS, null, null, null);
         serializedCas = bos.toString();
       } catch (Exception e) {
         throw e;
@@ -1306,27 +1307,32 @@ public class JmsOutputChannel implements OutputChannel {
               aCasReferenceId);
       long t1 = getAnalysisEngineController().getCpuTime();
       // Serialize CAS for remote Delegates
-      String serializer = anEndpoint.getSerializer();
+      String serializerType = anEndpoint.getSerializer();
       if (cas == null || entry == null) {
         return null;
       }
-      if (serializer.equals("binary")) {
+      //  Fetch dedicated Serializer associated with this thread
+      UimaSerializer serializer = SerializerCache.lookupSerializerByThreadId();
+
+      if (serializerType.equals("binary")) {
+        
         if (entry.acceptsDeltaCas() && isReply) {
           if (entry.getMarker() != null && entry.getMarker().isValid()) {
-            serializedCAS = uimaSerializer.serializeCasToBinary(cas, entry.getMarker());
+            serializedCAS = serializer.serializeCasToBinary(cas, entry.getMarker());
             entry.setSentDeltaCas(true);
           } else {
-            serializedCAS = uimaSerializer.serializeCasToBinary(cas);
+            serializedCAS = serializer.serializeCasToBinary(cas);
             entry.setSentDeltaCas(false);
           }
         } else {
-          serializedCAS = uimaSerializer.serializeCasToBinary(cas);
+          serializedCAS = serializer.serializeCasToBinary(cas);
           entry.setSentDeltaCas(false);
         }
         // create a fresh marker
         if (entry.getMarker() != null && !entry.getMarker().isValid()) {
           entry.setMarker(cas.createMarker());
         }
+
       } else {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -1335,10 +1341,10 @@ public class JmsOutputChannel implements OutputChannel {
                   "getBinaryCas",
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_invalid_serializer__WARNING",
-                  new Object[] { getAnalysisEngineController().getName(), serializer,
+                  new Object[] { getAnalysisEngineController().getName(), serializerType,
                       anEndpoint.getEndpoint() });
         }
-        throw new UimaEEServiceException("Invalid Serializer:" + serializer + " For Endpoint:"
+        throw new UimaEEServiceException("Invalid Serializer:" + serializerType + " For Endpoint:"
                 + anEndpoint.getEndpoint());
       }
       long timeToSerializeCas = getAnalysisEngineController().getCpuTime() - t1;
