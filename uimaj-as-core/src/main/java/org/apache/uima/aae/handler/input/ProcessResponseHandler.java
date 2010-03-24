@@ -23,6 +23,7 @@ import java.rmi.RemoteException;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.SerializerCache;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
@@ -52,8 +53,6 @@ import org.apache.uima.util.Level;
 
 public class ProcessResponseHandler extends HandlerBase {
   private static final Class CLASS_NAME = ProcessResponseHandler.class;
-
-  private UimaSerializer uimaSerializer = new UimaSerializer();
 
   public ProcessResponseHandler(String aName) {
     super(aName);
@@ -251,6 +250,7 @@ public class ProcessResponseHandler extends HandlerBase {
       } else { // Processing a reply from a non-parallel delegate (binary or delta xmi or xmi)
         String serializationStrategy = endpointWithTimer.getSerializer();
         if (serializationStrategy.equals("binary")) {
+          UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
           byte[] binaryData = aMessageContext.getByteMessage();
           uimaSerializer.deserializeCasFromBinary(binaryData, cas);
         } else {
@@ -341,6 +341,7 @@ public class ProcessResponseHandler extends HandlerBase {
     XmiSerializationSharedData deserSharedData;
     deserSharedData = getController().getInProcessCache().getCacheEntryForCAS(casReferenceId)
             .getDeserSharedData();
+    UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
     uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, highWaterMark, allow);
   }
 
@@ -353,6 +354,7 @@ public class ProcessResponseHandler extends HandlerBase {
       deserSharedData = new XmiSerializationSharedData();
       entry.setXmiSerializationData(deserSharedData);
     }
+    UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
     uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
   }
 
