@@ -309,7 +309,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
         }
         if (!isStopped()){
-          ((BaseAnalysisEngineController) this).startServiceCleanupThread(30000); // sleep for 30 secs
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "postInitialize",
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_initialized_controller__INFO",
