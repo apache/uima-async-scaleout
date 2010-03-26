@@ -220,12 +220,6 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public void forceTimeoutOnPendingCases(String key);
 
-  public void addEndpointToDoNotProcessList(String anEndpointName);
-
-  public boolean isEndpointOnDontProcessList(String anEndpointName);
-
-  public void evictExpiredEntries();
-  
   public void changeState(ServiceState state);
   
   public ServiceState getState();
