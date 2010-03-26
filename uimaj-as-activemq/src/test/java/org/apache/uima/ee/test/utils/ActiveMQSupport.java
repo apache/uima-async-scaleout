@@ -203,10 +203,10 @@ public class ActiveMQSupport extends TestCase {
   }
 
   public BrokerService createBroker() throws Exception {
-    return createBroker(8118, true);
+    return createBroker(8118, true, false);
   }
 
-  protected BrokerService createBroker(int port, boolean useJmx) throws Exception {
+  protected BrokerService createBroker(int port, boolean useJmx, boolean secondaryBroker) throws Exception {
     ServerSocket ssocket = null;
     System.out.println(">>>> Starting Broker On Port:" + port);
     try {
@@ -215,6 +215,9 @@ public class ActiveMQSupport extends TestCase {
       uri = "tcp://" + hostName + ":" + port;
       BrokerService broker = BrokerFactory.createBroker(new URI("broker:()/" + hostName
               + "?persistent=false"));
+      if ( secondaryBroker ) {
+        broker.getManagementContext().setJmxDomainName(broker.getManagementContext().getJmxDomainName()+".test");      
+      }
       broker.setUseJmx(useJmx);
       tcpConnector = broker.addConnector(uri);
 
@@ -250,6 +253,10 @@ public class ActiveMQSupport extends TestCase {
 
   protected synchronized void tearDown() throws Exception {
     super.tearDown();
+    System.clearProperty("activemq.broker.jmx.domain");
+    System.clearProperty("BrokerURL");
+
+
   }
 
 }
