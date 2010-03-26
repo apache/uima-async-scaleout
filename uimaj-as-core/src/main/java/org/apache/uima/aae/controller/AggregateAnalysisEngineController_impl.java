@@ -2563,8 +2563,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (disabledDelegateList.size() > 0) {
       flowControllerContainer.removeAnalysisEngines(disabledDelegateList);
     }
-    // start a cleanup thread
-    ((BaseAnalysisEngineController) this).startServiceCleanupThread(30000); // sleep for 30 secs
 
     // Before processing CASes, send notifications to all collocated delegates to
     // complete initialization. Currently this call forces all collocated Cas Multiplier delegates
