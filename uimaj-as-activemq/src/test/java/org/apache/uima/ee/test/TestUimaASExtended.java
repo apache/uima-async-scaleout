@@ -202,16 +202,17 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      BrokerService broker = createBroker(8200, false);
-      broker.start();
-      addHttpConnector(broker, 1088);
+      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+      BrokerService broker2 = createBroker(8200, true, true);
+      broker2.start();
+      addHttpConnector(broker2, 1088);
       
-      System.setProperty("BrokerURL", "tcp://localhost:8200");
+      System.setProperty("BrokerURL", "failover:(http://localhost:1088,http://localhost:8200)?randomize=false"); //tcp://localhost:8200");
       // Deploy Uima AS Primitive Service
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
       //  Client will use a failover protocol and use broker on port 8200
       //  as primary
-      Map<String, Object> appCtx = buildContext("failover:(http://localhost:1088,http://localhost:8888)?randomize=false","NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = buildContext("failover:(http://localhost:1088,http://localhost:8200)?randomize=false","NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
@@ -230,8 +231,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         }
       }
       uimaAsEngine.stop();
-      System.clearProperty("BrokerURL");
-      broker.stop();
+      broker2.stop();
       synchronized(this) {
         wait(3000);   // allow broker some time to stop  
       }
@@ -252,7 +252,8 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      BrokerService broker = createBroker(8200, false);
+      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+      BrokerService broker = createBroker(8200, true,true);
       broker.start();
       System.setProperty("BrokerURL", "tcp://localhost:8200");
       // Deploy Uima AS Primitive Service
@@ -278,8 +279,8 @@ public class TestUimaASExtended extends BaseTestSupport {
         }
       }
       uimaAsEngine.stop();
-      System.clearProperty("BrokerURL");
       broker.stop();
+     
       synchronized(this) {
         wait(3000);   // allow broker some time to stop  
       }
@@ -298,10 +299,10 @@ public class TestUimaASExtended extends BaseTestSupport {
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       
-      BrokerService broker = createBroker(8200, false);
+      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+      BrokerService broker = createBroker(8200, true,true);
       broker.start();
       System.setProperty("BrokerURL", "tcp://localhost:8200");
-      
       // Deploy Uima AS Primitive Service
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
       Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
@@ -338,8 +339,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       if ( errorCount != 5 ) {
         fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
       }
-      System.clearProperty("BrokerURL");
-      
   }
   /**
    * This test starts a broker on port 8200, starts NoOp Annotator, and
@@ -354,7 +353,8 @@ public class TestUimaASExtended extends BaseTestSupport {
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       
-      BrokerService broker = createBroker(8200, false);
+      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+      BrokerService broker = createBroker(8200, true, true);
       broker.start();
       System.setProperty("BrokerURL", "tcp://localhost:8200");
       // Deploy Uima AS Primitive Service
@@ -375,7 +375,9 @@ public class TestUimaASExtended extends BaseTestSupport {
           }
         } else if ( i == 10 ) {
           //  restart the broker 
-          broker = createBroker(8200, false);
+          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+          broker = createBroker(8200, true, true);
+
           broker.start();
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
@@ -401,8 +403,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       if ( errorCount != 5 ) {
         fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
       }
-      System.clearProperty("BrokerURL");
-      
       synchronized(this) {
         wait(3000);   // allow broker some time to stop  
       }
@@ -420,7 +420,8 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testMultipleSyncClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testMultipleSyncClientsRecoveryFromBrokerStopAndRestart -------------");
-    BrokerService broker = createBroker(8200, false);
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+    BrokerService broker = createBroker(8200, true, true);
     broker.start();
     System.setProperty("BrokerURL", "tcp://localhost:8200");
     final CountDownLatch latch = new CountDownLatch(4);
@@ -476,7 +477,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       System.out.println("Restarting Broker - wait ...");
       //  restart the broker 
-      broker = createBroker(8200, false);
+      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+      broker = createBroker(8200, true, true);
       broker.start();
       synchronized(this) {
         wait(3000);   // allow broker some time to start  
@@ -492,7 +494,6 @@ public class TestUimaASExtended extends BaseTestSupport {
     synchronized(this) {
        wait(3000);   // allow broker some time to stop  
     }
-    System.clearProperty("BrokerURL");
 }
   /**
    * This test starts a broker on port 8200, starts NoOp Annotator, and
@@ -504,7 +505,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testAsyncClientRecoveryFromBrokerStop() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStop -------------");
     System.setProperty("BrokerURL", "tcp://localhost:8200");
-    BrokerService broker = createBroker(8200, false);
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+    BrokerService broker = createBroker(8200, true, true);
+
     broker.start();
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -531,13 +534,13 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       
       uimaAsEngine.stop();
-      System.clearProperty("BrokerURL");
   }
   
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStopAndRestart -------------");
     System.setProperty("BrokerURL", "tcp://localhost:8200");
-    BrokerService broker = createBroker(8200, false);
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+    BrokerService broker = createBroker(8200, true, true);
     broker.start();
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -557,7 +560,8 @@ public class TestUimaASExtended extends BaseTestSupport {
             wait(3000);   // allow broker some time to stop  
           }
         } else if ( i == 20 ) {
-          broker = createBroker(8200, false);
+          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+          broker = createBroker(8200, true, true);
           broker.start();
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
@@ -575,7 +579,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       synchronized(this) {
         wait(2000);   // allow broker some time to stop  
       }
-      System.clearProperty("BrokerURL");
   }
 
   /**
@@ -598,7 +601,8 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testMultipleClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testMultipleClientsRecoveryFromBrokerStopAndRestart -------------");
       
-      BrokerService broker = createBroker(8200, false);
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+      BrokerService broker = createBroker(8200, true, true);
       broker.start();
       System.setProperty("BrokerURL", "tcp://localhost:8200");
 
@@ -633,7 +637,8 @@ public class TestUimaASExtended extends BaseTestSupport {
           }
           //  restart broker before 3rd CAS is sent
           //  restart the broker 
-          broker = createBroker(8200, false);
+          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+          broker = createBroker(8200, true, true);
           broker.start();
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
@@ -669,8 +674,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       uimaClient2.stop();
       broker.stop();
 
-      System.clearProperty("BrokerURL");
-      
       synchronized(this) {
         wait(3000);   // allow broker some time to stop  
       }
@@ -686,8 +689,8 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testAggregateRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAggregateRecoveryFromBrokerStopAndRestart -------------");
-      
-      BrokerService broker = createBroker(8200, false);
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+      BrokerService broker = createBroker(8200, true,true);
       broker.start();
       System.setProperty("BrokerURL", "tcp://localhost:8200");
 
@@ -716,7 +719,8 @@ public class TestUimaASExtended extends BaseTestSupport {
           //  restart broker before 3rd CAS is sent
           //  restart the broker 
           System.out.println("Starting Broker on Port 8200");
-          broker = createBroker(8200, false);
+          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+          broker = createBroker(8200, true, true);
           broker.start();
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
@@ -739,8 +743,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       
       broker.stop();
 
-      System.clearProperty("BrokerURL");
-      
       synchronized(this) {
         wait(3000);   // allow broker some time to stop  
       }
@@ -1271,7 +1273,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     };
     t.start();
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            2, PROCESS_LATCH);
+            1, PROCESS_LATCH);
   }
 
   public void testAggregateCMWithFailedRemoteDelegate() throws Exception {
@@ -1337,7 +1339,8 @@ public class TestUimaASExtended extends BaseTestSupport {
               this.wait(5000); // wait for 5 secs
             }
             // Create a new broker that runs a different port that the rest of testcases
-            bs = createBroker(8120, false);
+            System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+            bs = createBroker(8120, true, true);
             bs.start();
             deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorUsingPlaceholder.xml");
             deployService(eeUimaEngine, relativePath
@@ -1395,7 +1398,8 @@ public class TestUimaASExtended extends BaseTestSupport {
               this.wait(5000); // wait for 5 secs
             }
             // Create a new broker on port 8119
-            bs = createBroker(8119, false);
+            System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+            bs = createBroker(8119, true, true);
             bs.start();
             // Start the uima AS client. It connects to the top level service and sends
             // 10 messages
