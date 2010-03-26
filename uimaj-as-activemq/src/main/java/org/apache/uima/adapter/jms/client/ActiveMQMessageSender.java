@@ -156,7 +156,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
    * Returns jsm MessageProducer
    */
   public MessageProducer getMessageProducer() {
-    if ( engine.producerInitialized == false ) {
+    if ( engine.running && engine.producerInitialized == false  ) {
       try {
         setConnection(engine.sharedConnection.getConnection());
         initializeProducer();
