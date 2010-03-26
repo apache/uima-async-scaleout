@@ -245,8 +245,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   // Set to true when stopping the service
   private volatile boolean releasedAllCASes;
 
-  protected List<DoNotProcessEntry> doNotProcessList = new ArrayList<DoNotProcessEntry>();
-
   private ScheduledExecutorService daemonServiceExecutor = null;
 
   private static final UimaAsVersion uimaAsVersion = new UimaAsVersion();
@@ -2716,103 +2714,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public boolean isAwaitingCacheCallbackNotification() {
     return awaitingCacheCallbackNotification;
   }
-
-  public void addEndpointToDoNotProcessList(String anEndpointName) {
-    if (!isEndpointOnDontProcessList(anEndpointName)) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                "addEndpointToDoNotProcessList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_add_endpoint_to_do_not_process_list__INFO",
-                new Object[] { getComponentName(), anEndpointName });
-      }
-      // Given endpoint will be removed from DoNotProcess list in 30 minutes.
-      doNotProcessList.add(new DoNotProcessEntry(DoNotProcessTTL, anEndpointName));
-    }
-  }
-
-  public boolean isEndpointOnDontProcessList(String anEndpointName) {
-    for (Iterator<DoNotProcessEntry> it = doNotProcessList.iterator(); it.hasNext();) {
-      DoNotProcessEntry entry = it.next();
-      if (entry.getEndpointName().equals(anEndpointName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Invoked by a cleaner thread this method removed entries from a DoNotProcess list that are older
-   * than 30 minutes.
-   */
-  public void evictExpiredEntries() {
-    try {
-      for (Iterator<DoNotProcessEntry> it = doNotProcessList.iterator(); it.hasNext();) {
-        DoNotProcessEntry entry = it.next();
-        if (entry.hasExpired()) {
-          doNotProcessList.remove(entry);
-        }
-      }
-    } catch (Exception e) {
-
-    }
-  }
-
-  // An entry for the DoNotProcess list. Holds endpoints that are no longer
-  // reachable. Each entry expires in 30 minutes of its creation and is
-  // subsequently removed from the list.
-  private static class DoNotProcessEntry {
-    private long timeToLive;
-
-    private String endpointName;
-
-    private long entryTime;
-
-    public DoNotProcessEntry(long aTimeToLive, String anEndpointName) {
-      timeToLive = aTimeToLive;
-      endpointName = anEndpointName;
-      entryTime = System.currentTimeMillis();
-    }
-
-    public boolean hasExpired() {
-      long now = System.currentTimeMillis();
-      if (now > (entryTime + timeToLive)) {
-        return true;
-      }
-      return false;
-    }
-
-    public String getEndpointName() {
-      return endpointName;
-    }
-  }
-
-  // Cleanup thread
-  protected static class UimaAsServiceCleanupThread implements Runnable {
-
-    private AnalysisEngineController controller;
-
-    public UimaAsServiceCleanupThread(AnalysisEngineController aController) {
-      controller = aController;
-    }
-
-    public void run() {
-      controller.evictExpiredEntries();
-    }
-  }
-
-  /**
-   * Registers runnable cleanup thread. It will run at a given intervals until the service is
-   * stopped.
-   * 
-   * @param sleepInterval
-   *          - how often to run in millis
-   */
-  protected void startServiceCleanupThread(long sleepInterval) {
-    daemonServiceExecutor = Executors.newScheduledThreadPool(1);
-    daemonServiceExecutor.scheduleWithFixedDelay(new UimaAsServiceCleanupThread(this), 0,
-            sleepInterval, TimeUnit.MILLISECONDS);
-  }
-  
   public void changeState(ServiceState state) {
     currentState = state;
   }
