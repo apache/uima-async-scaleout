@@ -678,7 +678,6 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
                   "UIMAJMS_send_failed_deleted_queue_INFO",
                   new Object[] { componentName, destName, serverUri });
         }
-        controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
         return false;
 
       }
@@ -687,7 +686,6 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
                 "handleJmsException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_connection_failure__INFO",
                 new Object[] { componentName, serverUri, delegateEndpoint.getDestination() });
-        controller.addEndpointToDoNotProcessList(delegateEndpoint.getDestination().toString());
         return false;
 
       } else {
