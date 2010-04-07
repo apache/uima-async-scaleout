@@ -390,9 +390,9 @@ public class JmxMonitor implements Runnable {
 
   protected ServiceMetrics[] collectStats(boolean initial, long uptime) {
     int cmFreeCasInstanceCount = 0;
-    ServiceMetrics[] metrics = new ServiceMetrics[servicePerformanceNames.size()];
+    ServiceMetrics[] metrics = null;
     int index = 0;
-
+    List<ServiceMetrics> metricsList = new ArrayList<ServiceMetrics>();
     // iterate over all Performance MBeans to retrieve current metrics
     for (ObjectName name : servicePerformanceNames) {
       try {
@@ -494,7 +494,8 @@ public class JmxMonitor implements Runnable {
         // Add metrics collected from the service to the array of metrics
         // in the current sampling (interval). The metrics array will
         // be provided to all listeners plugged into this monitor.
-        metrics[index++] = serviceMetrics;
+//        metrics[index++] = serviceMetrics;
+        metricsList.add(serviceMetrics);
         // Save current metrics for the next delta
         entry.setIdleTime(idleTime);
         entry.incrementCASCount(processCount);
@@ -507,8 +508,11 @@ public class JmxMonitor implements Runnable {
                   "UIMAJMS_exception__WARNING", e);
         }
       }
-
     } // for
+    if ( metricsList.size() > 0 ) {
+      metrics = new ServiceMetrics[metricsList.size()];
+      metricsList.toArray(metrics);
+    }
     return metrics;
   }
 
@@ -534,9 +538,11 @@ public class JmxMonitor implements Runnable {
         }
       }
       ServiceMetrics[] metrics = collectStats(initial, uptime);
-      initial = false;
-      // Notify listeners with current metrics collected from MBeans
-      notifyListeners(uptime, metrics);
+      if ( metrics != null ) {
+        initial = false;
+        // Notify listeners with current metrics collected from MBeans
+        notifyListeners(uptime, metrics);
+      }
 
       // compute wait time till next sample
       long sampleEnd = System.nanoTime();
