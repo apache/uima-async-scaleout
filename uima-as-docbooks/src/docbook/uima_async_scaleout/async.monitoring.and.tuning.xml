@@ -729,7 +729,7 @@ under the License.
         <para>Specify the following JVM System Variable parameters to configure a UIMA AS Client or Service to enable 
           sampling and logging of JMX measures:
           <itemizedlist>
-            <listitem><para><code>-Duima.jmx.monitor.interval=1000</code> - (optional; default is 1000) specifies the 
+            <listitem><para><code>-Duima.jmx.monitor.interval=1000</code> - (default is 1000) specifies the 
               sampling interval in milliseconds</para></listitem>
             <listitem><para><code>-Duima.jmx.monitor.formatter=&lt;CustomFormatterClassName></code></para></listitem>
             <listitem><para><code>-Dcom.sun.management.jmxremote</code> - enable JMX (only needed for local monitoring, not needed if port is specified)</para></listitem>            
