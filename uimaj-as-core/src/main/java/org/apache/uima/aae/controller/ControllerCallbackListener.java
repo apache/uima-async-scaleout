@@ -29,5 +29,9 @@ public interface ControllerCallbackListener {
   public void notifyOnInitializationFailure(Exception e);
 
   public void notifyOnInitializationSuccess();
+  
+  public void notifyOnReconnecting(String aMessage);
+  
+  public void notifyOnReconnectionSuccess();
 
 }
