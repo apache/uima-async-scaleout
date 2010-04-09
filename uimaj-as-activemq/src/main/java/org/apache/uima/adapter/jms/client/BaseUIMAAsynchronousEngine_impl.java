@@ -47,6 +47,7 @@ import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.RedeliveryPolicy;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 import org.apache.activemq.command.ActiveMQDestination;
+import org.apache.activemq.command.ActiveMQTempDestination;
 import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalArgumentException;
@@ -1004,8 +1005,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     serviceSemaphore.release();
   }
 
-  public void notifyOnTermination(String message) {
-
+  public void notifyOnTermination(String aServiceName) {
+    notifyOnTermination(aServiceName, null, null);
+  }
+  public void notifyOnTermination(String aServiceName, String aCasReferenceId, Exception cause) {
+//    super.n
   }
 
   protected MessageProducer getMessageProducer(Destination destination) throws Exception {
@@ -1090,5 +1094,12 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
   protected MessageSender getDispatcher() {
     return sender;
+  }
+  public void notifyOnReconnecting(String aMessage) {
+  
+  }
+  
+  public void notifyOnReconnectionSuccess() {
+    
   }
 }
