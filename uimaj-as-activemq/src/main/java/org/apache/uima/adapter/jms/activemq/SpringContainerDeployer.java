@@ -548,4 +548,16 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
   public boolean initializationFailed() {
     return serviceInitializationException;
   }
+
+  public void notifyOnTermination(String aServiceName, String aCasReferenceId, Exception cause) {
+    // TODO Auto-generated method stub
+    
+  }
+  public void notifyOnReconnecting(String aMessage) {
+  
+  }
+  
+  public void notifyOnReconnectionSuccess() {
+    
+  }
 }
