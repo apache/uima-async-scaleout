@@ -2282,7 +2282,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
 
   protected void dropCasStatistics(String aCasReferenceId) {
-    if (isTopLevelComponent() && perCasStatistics.containsKey(aCasReferenceId)) {
+    if ( perCasStatistics.containsKey(aCasReferenceId)) {
       perCasStatistics.remove(aCasReferenceId);
     }
   }
