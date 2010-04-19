@@ -111,7 +111,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   protected volatile ControllerLatch latch = new ControllerLatch(this);
 
-  protected ConcurrentHashMap statsMap = new ConcurrentHashMap();
+  protected ConcurrentHashMap<String,Long> statsMap = new ConcurrentHashMap<String,Long>();
 
   protected Monitor monitor = new MonitorBaseImpl();
 
@@ -143,8 +143,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   protected ConcurrentHashMap inputChannelMap = new ConcurrentHashMap();
 
-  protected ConcurrentHashMap idleTimeMap = new ConcurrentHashMap();
-
   private UimaEEAdminContext adminContext;
 
   protected int componentCasPoolSize = 0;
@@ -159,13 +157,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   protected String jmxContext = "";
 
-  protected ConcurrentHashMap mBeanMap = new ConcurrentHashMap();
-
   protected ServicePerformance servicePerformance = null;
 
   protected ServiceErrors serviceErrors = null;
-
-  protected ConcurrentHashMap timeSnapshotMap = new ConcurrentHashMap();
 
   private String deploymentDescriptor = "";
 
@@ -925,14 +919,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     return getComponentName();
   }
 
-  public void addTimeSnapshot(long snapshot, String aKey) {
-    if (timeSnapshotMap.containsKey(aKey)) {
-      timeSnapshotMap.remove(aKey);
-    }
-    timeSnapshotMap.put(aKey, snapshot);
-
-  }
-
   public void addServiceInfo(ServiceInfo aServiceInfo) {
     ServiceInfo sInfo = null;
 
@@ -952,17 +938,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     } else {
       System.out.println("!!!!!!!!!!!!!!! ServiceInfo instance is NULL");
     }
-
-  }
-
-  public long getTimeSnapshot(String aKey) {
-    if (timeSnapshotMap.containsKey(aKey)) {
-      Object value = timeSnapshotMap.get(aKey);
-      if (value != null) {
-        return ((Long) value).longValue();
-      }
-    }
-    return 0;
 
   }
 
@@ -1305,7 +1280,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       perCasStatistics.remove(aCasReferenceId);
     }
   }
-
   public synchronized void saveTime(long aTime, String aCasReferenceId, String anEndpointName) {
     String key = aCasReferenceId + anEndpointName;
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -1419,12 +1393,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   public UimaEEAdminContext getUimaEEAdminContext() {
     return adminContext;
-  }
-
-  protected void dropIdleTime(String aKey) {
-    if (idleTimeMap.containsKey(aKey)) {
-      idleTimeMap.remove(aKey);
-    }
   }
 
   private void dropStats(String aKey) {
@@ -1831,17 +1799,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       inputChannelList.clear();
     }
     inputChannel = null;
-    if (idleTimeMap != null) {
-      idleTimeMap.clear();
-    }
+
     if (serviceErrorMap != null) {
       serviceErrorMap.clear();
-    }
-    if (mBeanMap != null) {
-      mBeanMap.clear();
-    }
-    if (timeSnapshotMap != null) {
-      timeSnapshotMap.clear();
     }
     // TODO any reason this list needs to be cleared on Stop???
     if (unregisteredDelegateList != null) {
