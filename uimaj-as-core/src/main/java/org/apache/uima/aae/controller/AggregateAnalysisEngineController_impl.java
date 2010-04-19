@@ -1876,6 +1876,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         message.addObjectProperty(AsynchAEMessage.Cargo, wrapper);
       }
       vmTransport.getUimaMessageDispatcher(replyEndpoint.getEndpoint()).dispatch(message);
+      dropStats(casStateEntry.getCasReferenceId(),getName());
     }
   }
 
@@ -2075,6 +2076,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     message.addLongProperty(AsynchAEMessage.IdleTime, iT);
     // Send reply back to the client. Use internal (non-jms) transport
     transport.getUimaMessageDispatcher(endpoint.getEndpoint()).dispatch(message);
+    dropStats(cacheEntry.getCasReferenceId(), getName());
+
   }
 
   private Endpoint getReplyEndpoint(CacheEntry cacheEntry, CasStateEntry casStateEntry)
