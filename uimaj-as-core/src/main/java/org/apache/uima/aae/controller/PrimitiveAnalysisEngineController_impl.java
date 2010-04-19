@@ -623,6 +623,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           message.addLongProperty(AsynchAEMessage.IdleTime, iT);
           if (!stopped) {
             transport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
+            dropStats(newEntry.getCasReferenceId(), getName());
           }
         } else {
           // Send generated CAS to the client
@@ -680,6 +681,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // Send reply back to the client. Use internal (non-jms) transport
         if (!stopped) {
           transport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
+          dropStats(aCasReferenceId, getName());
         }
       } else {
         if (!stopped) {
