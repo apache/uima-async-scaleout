@@ -40,7 +40,7 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
 
   private boolean isShutdown;
 
-  private ConcurrentHashMap listenerMap = new ConcurrentHashMap();
+  private ConcurrentHashMap<String, ListenerEntry> listenerMap = new ConcurrentHashMap<String, ListenerEntry>();
 
   public UimaEEAdminSpringContext(FileSystemXmlApplicationContext aSpringContainer) {
     springContainer = aSpringContainer;
