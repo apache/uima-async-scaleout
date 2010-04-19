@@ -144,13 +144,9 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public String getJmxContext();
 
-  public void addTimeSnapshot(long snapshot, String aKey);
-
   public ServicePerformance getServicePerformance();
 
   public ServiceInfo getServiceInfo();
-
-  public long getTimeSnapshot(String aKey);
 
   public void addServiceInfo(ServiceInfo aServiceInfo);
 
@@ -223,4 +219,5 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public void changeState(ServiceState state);
   
   public ServiceState getState();
+
 }
