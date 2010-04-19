@@ -131,6 +131,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           }
           if (!aController.isStopped()) {
             vmTransport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
+            aController.dropStats(aCasReferenceId, aController.getName());
           }
         } else {
           CasStateEntry stateEntry = null;
