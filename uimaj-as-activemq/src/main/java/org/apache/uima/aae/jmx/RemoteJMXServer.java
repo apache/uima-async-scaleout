@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jms.JMSException;
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
@@ -36,6 +37,7 @@ import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.util.Level;
+import org.springframework.jmx.JmxException;
 
 public class RemoteJMXServer {
   private static final Class CLASS_NAME = RemoteJMXServer.class;
@@ -75,6 +77,21 @@ public class RemoteJMXServer {
     JMXServiceURL url = new JMXServiceURL(remoteJmxUrl);
     jmxc = JMXConnectorFactory.connect(url, null);
     brokerMBeanServer = jmxc.getMBeanServerConnection();
+    // Its possible that the above code succeeds even though the broker runs
+    // with no JMX Connector. At least on windows the above does not throw an
+    // exception as expected. It appears that the broker registers self JVMs MBeanServer
+    // but it does *not* register any Connections, nor Queues. The code below 
+    // checks if the MBean server we are connected to has any QueueMBeans registered.
+    // A broker with jmx connector should have queue mbeans registered and thus
+    //  the code below should always succeed. Conversely, a broker with no jmx connector
+    // reports no queue mbeans.
+    
+    //  Query broker MBeanServer for QueueMBeans
+    Set queueSet = brokerMBeanServer.queryNames(new ObjectName(jmxDomain
+            + ":*,Type=Queue"), (QueryExp) null);
+    if ( queueSet.isEmpty() ) {  //  No QueueMBeans, meaning no JMX support
+      throw new JmxException("ActiveMQ Broker Not Configured With JMX Support");
+    }
     // Query JMX Server for Broker MBean. We need the broker's name from an MBean to construct
     // queue query string.
 
