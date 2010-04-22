@@ -110,6 +110,10 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   
   private ConcurrentHashMap<String, UimaDefaultMessageListenerContainer> failedListenerMap = new ConcurrentHashMap<String, UimaDefaultMessageListenerContainer>();
 
+  //  A global flag that determines if we should create a connection to broker's MBeanServer to be
+  //  able to determine if client's reply queue exists before processing a CAS. 
+  public static transient boolean attachToBrokerMBeanServer=true;
+  
   public AnalysisEngineController getController() {
     return controller;
   }
@@ -588,7 +592,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     //  queue is not done and every message is processed.
     boolean jmxServerAvailable = false;
     //  relevant to top level service
-    if ( controller.isTopLevelComponent() && getBrokerURL() != null ) {
+    if ( controller.isTopLevelComponent() && getBrokerURL() != null && attachToBrokerMBeanServer ) {
       synchronized(brokerMux) {
         //  check if the connection is valid. If not, create a new connection to
         //  MBeanServer and cache it.
@@ -837,10 +841,15 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         remoteJMXServer.initialize(jmxAMQDomain, brokerHostname,jmxPort);
       }
     } catch( Exception e) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "ackMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
-                e);
+      //  Unable to connect to the Broker's MBean Server. Most likely the broker
+      //  is running with no jmx support. Dont attempt the connection again. This is not
+      //  an error. We continue processing with no optimization to check for existance of
+      //  client's reply queue
+      attachToBrokerMBeanServer = false;
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                "attachToRemoteBrokerJMXServer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_broker_no_jmx__INFO",
+                getController().getComponentName());
       }
       remoteJMXServer = null;
     }
