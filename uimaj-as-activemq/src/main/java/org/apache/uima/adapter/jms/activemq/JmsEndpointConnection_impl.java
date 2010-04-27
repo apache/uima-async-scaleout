@@ -28,6 +28,7 @@ import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
+import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
@@ -37,6 +38,7 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.ActiveMQSession;
 import org.apache.activemq.ConnectionFailedException;
 import org.apache.activemq.advisory.ConsumerEvent;
@@ -106,10 +108,14 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   public JmsEndpointConnection_impl(BrokerConnectionEntry aBrokerDestinationMap,
           Endpoint anEndpoint, AnalysisEngineController aController) {
     brokerDestinations = aBrokerDestinationMap;
-    //  If this is a reply to a client, use the same broker URL that manages this service input queue.
-    //  Otherwise this is a request so use a broker specified in the endpoint object.
-    serverUri = (anEndpoint.isReplyEndpoint()) ? 
-            ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() : anEndpoint.getServerURI();
+    if ( anEndpoint.isFreeCasEndpoint() && anEndpoint.isCasMultiplier() && anEndpoint.isReplyEndpoint()) {
+      serverUri = anEndpoint.getServerURI();
+    } else {
+      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+      //  Otherwise this is a request so use a broker specified in the endpoint object.
+      serverUri = (anEndpoint.isReplyEndpoint()) ? 
+              ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() : anEndpoint.getServerURI();
+    }
     isReplyEndpoint = anEndpoint.isReplyEndpoint();
     controller = aController;
 
