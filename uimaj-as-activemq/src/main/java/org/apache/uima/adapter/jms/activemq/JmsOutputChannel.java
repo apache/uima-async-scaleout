@@ -413,9 +413,17 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
     JmsEndpointConnection_impl endpointConnection = null;
-    //  If this is a reply to a client, use the same broker URL that manages this service input queue.
-    //  Otherwise this is a request so use a broker specified in the endpoint object.
-    String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+    String brokerConnectionURL = null;
+    //  If sending a Free Cas Request to a remote Cas Multiplier always use the CM's
+    //  broker
+    if ( anEndpoint.isFreeCasEndpoint() && anEndpoint.isCasMultiplier() && anEndpoint.isReplyEndpoint()) {
+      brokerConnectionURL = anEndpoint.getServerURI();
+    } else {
+      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
+      //  Otherwise this is a request so use a broker specified in the endpoint object.
+      brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+      
+    }
     // First get a Map containing destinations managed by a broker provided by the client
     BrokerConnectionEntry brokerConnectionEntry = null;
     if (connectionMap.containsKey(brokerConnectionURL)) {
@@ -541,6 +549,11 @@ public class JmsOutputChannel implements OutputChannel {
           throws AsynchAEException {
     try {
 
+      if ( aCommand == AsynchAEMessage.ReleaseCAS ) {
+        anEndpoint.setReplyEndpoint(true);
+        anEndpoint.setIsCasMultiplier(true);
+        anEndpoint.setFreeCasEndpoint(true);
+      }
       JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
 
       TextMessage tm = endpointConnection.produceTextMessage("");
