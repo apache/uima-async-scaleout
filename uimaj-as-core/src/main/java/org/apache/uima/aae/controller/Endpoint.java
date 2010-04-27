@@ -174,4 +174,8 @@ public interface Endpoint {
   public void setProcessParentLast(boolean parentLast);
 
   public boolean processParentLast();
+  
+  public void setFreeCasEndpoint(boolean trueOrFalse);
+  
+  public boolean isFreeCasEndpoint();
 }
