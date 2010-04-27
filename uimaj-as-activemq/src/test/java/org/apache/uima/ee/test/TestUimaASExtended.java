@@ -2058,6 +2058,8 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testProcessWithAggregateUsingRemoteMultiplier() throws Exception {
     System.out
             .println("-------------- testProcessWithAggregateUsingRemoteMultiplier -------------");
+    System.setProperty("BrokerURL", broker.getMasterConnectorURI());
+
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -2065,7 +2067,40 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
   }
+  /**
+   * Starts two remote delegates on one broker and a top level client aggregate on 
+   * another. Tests sending Free Cas requests to the appropriate broker. 
+   * 
+   * @throws Exception
+   */
+  public void testProcessWithAggregateUsingRemoteMultiplierOnSeparateBroker() throws Exception {
+    System.out
+            .println("-------------- testProcessWithAggregateUsingRemoteMultiplierOnSeparateBroker -------------");
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+    BrokerService broker = createBroker(8200, true,true);
+    //  start a broker that manages top level aggregate service input queue
+    broker.start();
+    System.setProperty("BrokerURL", "tcp://0.0.0.0:8200");
 
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml");
+    
+    Map<String, Object> appCtx = new HashMap();
+    appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://0.0.0.0:8200");
+    appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
+    runTest(appCtx, eeUimaEngine, "tcp://0.0.0.0:8200",
+            "TopLevelTaeQueue", 1, PROCESS_LATCH);    
+    
+    broker.stop();
+    synchronized(this) {
+      wait(3000);   // allow broker some time to stop  
+    }
+  }
+  
+  
   /**
    * First CM feeds 100 CASes to a "merger" CM that generates one output CAS for every 5 input.
    * Second CM creates unique document text that is checked by the last component. The default FC
@@ -2192,6 +2227,8 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public void testStopAggregateWithRemoteMultiplier() throws Exception {
     System.out.println("-------------- testStopAggregateWithRemoteMultiplier -------------");
+    
+    System.setProperty("BrokerURL", broker.getMasterConnectorURI());
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithExceptionOn5thCAS.xml");
@@ -2214,6 +2251,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public void testCancelProcessAggregateWithRemoteMultiplier() throws Exception {
     System.out.println("-------------- testStopAggregateWithRemoteMultiplier -------------");
+    System.setProperty("BrokerURL", broker.getMasterConnectorURI());
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplierWith1MillionDocs.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
