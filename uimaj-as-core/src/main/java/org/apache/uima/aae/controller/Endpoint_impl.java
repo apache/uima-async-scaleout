@@ -119,10 +119,18 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   private volatile boolean processParentLast = false;
 
+  private volatile boolean freeCasEndpoint = false;
+  
+  
   public Endpoint_impl() {
     status = Endpoint.OK;
   }
-
+  public void setFreeCasEndpoint(boolean trueOrFalse) {
+    freeCasEndpoint = trueOrFalse;
+  }
+  public boolean isFreeCasEndpoint() {
+    return freeCasEndpoint;
+  }
   public void setProcessParentLast(boolean parentLast) {
     processParentLast = parentLast;
   }
