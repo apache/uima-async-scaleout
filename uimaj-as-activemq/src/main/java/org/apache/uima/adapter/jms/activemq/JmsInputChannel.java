@@ -592,7 +592,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     //  queue is not done and every message is processed.
     boolean jmxServerAvailable = false;
     //  relevant to top level service
-    if ( controller.isTopLevelComponent() && getBrokerURL() != null && attachToBrokerMBeanServer ) {
+    if ( controller.isTopLevelComponent() && getBrokerURL() != null && isReplyRequired(aMessage) && attachToBrokerMBeanServer ) {
       synchronized(brokerMux) {
         //  check if the connection is valid. If not, create a new connection to
         //  MBeanServer and cache it.
