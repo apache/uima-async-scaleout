@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.UIMARuntimeException;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InputChannel;
@@ -2154,7 +2155,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_step__FINEST",
               new Object[] { getComponentName(), aCasReferenceId });
     }
-
     try {
       if (step instanceof SimpleStep) {
         simpleStep((SimpleStep) step, aCasReferenceId);
@@ -2173,19 +2173,37 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
         }
         finalStep((FinalStep) step, aCasReferenceId);
+      } else {
+        //  catch all case. If we are here, there is a fatal configuration problem of the 
+        //  flow controller 
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.SEVERE, CLASS_NAME.getName(),
+                  "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_invalid_step__SEVERE",
+                  new Object[] { getComponentName(), step, aCasReferenceId });
+        throw new UIMARuntimeException(new Exception("Invalid Flow Step:"+step+" Object. Check Descriptor For Invalid AE Key" )); 
       }
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
-                "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_completed_step__FINEST",
-                new Object[] { getComponentName(), aCasReferenceId });
+      if ( UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
+                  "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_completed_step__FINEST",
+                  new Object[] { getComponentName(), aCasReferenceId });
       }
 
     } catch (Exception e) {
-      HashMap map = new HashMap();
-      map.put(AsynchAEMessage.Command, AsynchAEMessage.Process);
-      map.put(AsynchAEMessage.CasReference, aCasReferenceId);
-      handleError(map, e);
+//      HashMap map = new HashMap();
+//      map.put(AsynchAEMessage.Command, AsynchAEMessage.Process);
+//      map.put(AsynchAEMessage.CasReference, aCasReferenceId);
+      ErrorContext ec = new ErrorContext();
+      ec.add(ErrorContext.THROWABLE_ERROR, e);
+      ec.add(AsynchAEMessage.CasReference, aCasReferenceId);
+      try {
+        handleAction(ErrorHandler.TERMINATE, null, ec);
+      } catch( Exception ex) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "executeFlowStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", ex);
+      }
+//      handleError(map, e);
     }
   }
 
