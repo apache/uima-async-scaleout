@@ -32,7 +32,7 @@
   <artifactId>aggregate-uima-as</artifactId>
   <packaging>pom</packaging>
   <version>2.3.1-SNAPSHOT</version>
-  <name>UIMA Aggregate: ${project.artifactId}</name>
+  <name>UIMA-AS Aggregate: ${project.artifactId}</name>
   <description>The aggregate for building the uima-as functionality,
     the eclipse plugins, and the docbooks 
   </description>

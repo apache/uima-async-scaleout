@@ -31,7 +31,7 @@
 	<artifactId>uimaj-as-camel</artifactId>
 	<packaging>jar</packaging>
 	<version>2.3.1-SNAPSHOT</version>
-	<name>Apache UIMA-AS Camel Driver: ${project.artifactId}</name>
+	<name>UIMA-AS: ${project.artifactId}</name>
   <description>Apache UIMA-AS Camel Driver</description>
 	<url>http://incubator.apache.org/uima</url>
 

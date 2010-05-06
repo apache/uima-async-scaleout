@@ -32,7 +32,7 @@
   <artifactId>aggregate-uima-as-eclipse-plugins</artifactId>
   <packaging>pom</packaging>
   <version>2.3.1-SNAPSHOT</version>
-  <name>UIMA Aggregate: ${project.artifactId}</name>
+  <name>UIMA-AS Aggregate: ${project.artifactId}</name>
   <description>The aggregate for building the Eclipse plugins 
     that are part of the UIMA-AS framework</description>
   <url>${uimaWebsiteUrl}</url>
@@ -67,5 +67,6 @@
     <module>../uimaj-ep-deployeditor</module>
     <module>../uimaj-ep-runtime-deployeditor</module>
     <module>../uimaj-as-osgi-runtime</module>    
+    <module>../uimaj-as-camel</module>
   </modules>
 </project>

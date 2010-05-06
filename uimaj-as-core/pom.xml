@@ -34,7 +34,7 @@
 	<groupId>org.apache.uima</groupId>
 	<artifactId>uimaj-as-core</artifactId>
 	<version>2.3.1-SNAPSHOT</version>
-	<name>Apache UIMA Async Scaleout core</name>
+	<name>UIMA-AS: ${project.artifactId}</name>
 	<url>http://incubator.apache.org/uima</url>
 
   <!-- Special inheritance note
