@@ -32,7 +32,7 @@
 	<artifactId>uima-as-docbooks</artifactId>
 	<packaging>pom</packaging>
 	<version>2.3.1-SNAPSHOT</version>
-	<name>Apache UIMA-AS Documentation</name>	
+  <name>UIMA-AS: ${project.artifactId}</name>
   <url>${uimaWebsiteUrl}</url>
  
    <!-- Special inheritance note
