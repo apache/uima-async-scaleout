@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-       "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"[
-<!ENTITY % uimaents SYSTEM "../entities.ent">  
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+       "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"[
+<!ENTITY % uimaents SYSTEM "../../target/docbook-shared/entities.ent">  
 ]>
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
@@ -499,11 +499,11 @@ under the License.
         <mediaobject>
           <imageobject role="html">
             <imagedata width="279px" format="PNG"
-              fileref="../images/uima_async_scaleout/async.overview/wrapAE.png"></imagedata>
+              fileref="images/uima_async_scaleout/async.overview/wrapAE.png"></imagedata>
           </imageobject>
           <imageobject role="fo">
             <imagedata width="2.7in" format="PNG"
-              fileref="../images/uima_async_scaleout/async.overview/wrapAE.png"></imagedata>
+              fileref="images/uima_async_scaleout/async.overview/wrapAE.png"></imagedata>
           </imageobject>
           <textobject> <phrase>AS Primitive Wrapper</phrase></textobject></mediaobject></figure>
       <para>As shown in the next figure, when the component being wrapped is an AS Aggregate, the container will use
@@ -515,11 +515,11 @@ under the License.
         <mediaobject>
           <imageobject role="html">
             <imagedata width="590px" format="PNG"
-              fileref="../images/uima_async_scaleout/async.overview/wrapAAE.png"></imagedata>
+              fileref="images/uima_async_scaleout/async.overview/wrapAAE.png"></imagedata>
           </imageobject>
           <imageobject role="fo">
             <imagedata width="5.5in" format="PNG"
-              fileref="../images/uima_async_scaleout/async.overview/wrapAAE.png"></imagedata>
+              fileref="images/uima_async_scaleout/async.overview/wrapAAE.png"></imagedata>
           </imageobject>
           <textobject> <phrase>AS Aggregate Container wrapping an Aggregate Analysis Engine</phrase>
           </textobject></mediaobject></figure>
