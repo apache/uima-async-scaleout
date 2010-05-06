@@ -16,120 +16,151 @@
    specific language governing permissions and limitations
    under the License.    
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.apache.uima</groupId>
+  
+  <parent>
+    <groupId>org.apache.uima</groupId>
+    <artifactId>parent-pom-ibm-notice</artifactId>
+    <version>1-SNAPSHOT</version>
+    <relativePath/>
+  </parent>
+
 	<artifactId>uima-as-distr</artifactId>
-	<packaging>jar</packaging>
-	<version>2.3.0-incubating</version> <!-- this comment is a flag for changeVersion -->
-	<name>Apache UIMA Asynchronous Scaleout - Resources and Assembly Descriptor for building the distribution</name>
-	<parent>
-		<groupId>org.apache.uima</groupId>
-		<artifactId>uima-common-distribution</artifactId>
-		<version>2.3.0-incubating</version> <!-- this comment is a flag for changeVersion -->
-      <relativePath>../uimaj/distr-superPom</relativePath>
-	</parent>
+	<packaging>pom</packaging>
+	<version>2.3.1-SNAPSHOT</version>
+  <name>UIMA-AS: ${project.artifactId}</name>
+  <description>Build and release UIMA-AS</description>
+  <url>${uimaWebsiteUrl}</url>
+  
+  <!-- Special inheritance note
+       even though the <scm> element that follows is exactly the 
+       same as those in super poms, it cannot be inherited because 
+       there is some special code that computes the connection elements
+       from the chain of parent poms, if this is omitted. 
+       
+       Keeping this a bit factored allows cutting/pasting the <scm>
+       element, and just changing the following two properties -->  
+  <scm>
+    <connection>
+      scm:svn:http://svn.apache.org/repos/asf/uima/${uimaScmRoot}/trunk/${uimaScmProject}
+    </connection>
+    <developerConnection>
+      scm:svn:https://svn.apache.org/repos/asf/uima/${uimaScmRoot}/trunk/${uimaScmProject}
+    </developerConnection>
+    <url>
+      http://svn.apache.org/viewvc/uima/${uimaScmRoot}/trunk/${uimaScmProject}
+    </url>
+  </scm>
   
   <properties>
-    <uimaj-as-release-version>2.3.0-incubating</uimaj-as-release-version> <!-- this comment is a flag for changeVersion -->
-    <uimaj-as-release-eclipse-version>2.3.0.incubating</uimaj-as-release-eclipse-version> <!-- this comment is a flag for changeVersion -->
-
-    <!-- property used in multiple places in distr-superPom -->
-    <assemblyFinalName>uima-as-${uimaj-release-version}</assemblyFinalName>
-  </properties>
-  
+    <uimaScmRoot>uima-as</uimaScmRoot>
+    <uimaScmProject>${project.artifactId}</uimaScmProject>
+    <assemblyFinalName>uima-as-${project.version}</assemblyFinalName>  
+  </properties> 
+    
   <!-- dependencies used during assembly -->
 	<dependencies>
     <!-- uima base -->
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-adapter-vinci</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-adapter-soap</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-core</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-cpe</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-examples</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-tools</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-configurator</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-debug</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-jcasgen</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-pear-packager</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-runtime</artifactId>
+      <version>${project.version}</version>
     </dependency>
     
     <!-- uima-as -->
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-core</artifactId>
-      <version>${uimaj-as-release-version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-activemq</artifactId>
-      <version>${uimaj-as-release-version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-jms</artifactId>
-      <version>${uimaj-as-release-version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-camel</artifactId>
-      <version>${uimaj-as-release-version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-deployeditor</artifactId>
-      <version>${uimaj-as-release-eclipse-version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
-      <version>${uimaj-as-release-eclipse-version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-as-osgi-runtime</artifactId>
-      <version>${uimaj-as-release-eclipse-version}</version>
+      <version>${project.version}</version>
     </dependency>
     
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-test-util</artifactId>
-      <version>${uimaj-release-version}</version>
+      <version>${project.version}</version>
     </dependency>
     
     <dependency>
@@ -324,12 +355,6 @@
       <version>2.8</version>
     </dependency>
     
-    <!--dependency>
-      <groupId>net.sf.saxon</groupId>
-      <artifactId>saxon</artifactId>
-      <version>8.7</version>
-    </dependency-->
-    
 	</dependencies>
     
 	<build>
@@ -338,9 +363,7 @@
       
       <!-- This java doc config is for building the ones distributed with the bin packaging, and also 
            posted on our website.
-        
-           There is another javadoc config in the parent POM that builds all the java docs - intended
-           for use by developers (currently not used) -->
+       -->
       
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -353,8 +376,7 @@
 							<goal>javadoc</goal>
 						</goals>
 						<configuration>
-              <!--quiet>true</quiet-->
-              <!-- needs to be 5 to process enums -->
+              <quiet>true</quiet>
 							<groups>
 								<group>
 									<title>Packages</title>
@@ -400,24 +422,6 @@
 			</plugin>
 
       <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        
-        <executions>
-          <execution>
-            <id>build uima-as docbooks</id>
-            <phase>package</phase>
-            <goals><goal>run</goal></goals>
-            <configuration>
-              <tasks>
-                <!-- Build documentation -->
-                <ant dir="../uima-as-docbooks" inheritAll="false"/>
-              </tasks>
-            </configuration>            
-          </execution>          
-        </executions>
-      </plugin>
-
-      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
       </plugin>
       
@@ -427,32 +431,27 @@
         <artifactId>apache-rat-plugin</artifactId>
         <executions>
           <execution>
-            <id>rat-check-src</id>
+            <id>rat-check</id>
             <configuration>
-              <basedir>target/rat-src-dir/apache-uima-as</basedir>              
               <excludes>
-                <exclude>uima-as-distr/src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
-                <exclude>uima-as-distr/src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
-                <exclude>uima-as-docbooks/src/olink/**</exclude> <!-- generated cross ref database for Apache FOP -->
-                <exclude>uima-docbooks/src/olink/**</exclude> <!-- generated cross ref database for Apache FOP -->
-                <exclude>uima-as-docbooks/src/styles/titlepage/titlepage-*.xsl</exclude> <!-- generated files by docbook -->
-                <exclude>uimaj-as-activemq/src/test/resources/data/DoubleByteText.txt</exclude> <!-- test data -->
+                <exclude>src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
+                <exclude>src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
               </excludes>
             </configuration>
           </execution>
-          <execution>
-            <id>rat-check-bin</id>
-            <configuration>
-              <excludes>
-                <exclude>uima-as/docs/api/**</exclude> <!-- javadocs-->
-                <exclude>uima-as/docs/html/images/*.svg</exclude>  <!-- generated .svg image files -->
-                <exclude>README-uima-as</exclude> <!-- README file -->
-              </excludes>
-            </configuration>
-          </execution>  
         </executions>
       </plugin>
-
 		</plugins>
-	</build>	
+	</build>
+  
+  <profiles>
+    <!-- if apache release, call the aggregate to clean and build the sub-modules -->
+    <profile>
+        <id>apache-release</id>
+        <modules>
+          <module>../aggregate-pom-uima-as</module>
+        </modules>      
+    </profile>
+  </profiles>  
+  	
 </project>
