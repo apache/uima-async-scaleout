@@ -323,7 +323,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       // The semaphore is initially acquired in the initialize(Map) method and typically
       // released when the number of CASes sent equals the number of CASes received. Since
       // no CASes were sent we must do the release here to be able to continue.
-      if (totalCasRequestsSentBetweenCpCs.get() == 0) {
+      if (totalCasRequestsSentBetweenCpCs.get() == 0 && !serviceDelegate.isAwaitingPingReply()) {
         cpcReadySemaphore.release();
       }
       // The cpcReadySemaphore was initially acquired in the initialize() method
@@ -752,6 +752,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           return null;
         }
 
+        clientCache.put(casReferenceId, requestToCache);
         PendingMessage msg = new PendingMessage(AsynchAEMessage.Process);
         long t1 = System.nanoTime();
         if (serializationStrategy.equals("xmi")) {
@@ -780,12 +781,17 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         requestToCache.setProcessTimeout(processTimeout);
         requestToCache.clearTimeoutException();
 
-        clientCache.put(casReferenceId, requestToCache);
         // The sendCAS() method is synchronized no need to synchronize the code below
         if (serviceDelegate.getState() == Delegate.TIMEOUT_STATE ) {
           //  Send Ping to service as getMeta request
           if ( !serviceDelegate.isAwaitingPingReply() && sharedConnection.isOpen() ) {
             serviceDelegate.setAwaitingPingReply();
+            // Add the cas to a list of CASes pending reply. Also start the timer if necessary
+            serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
+            if ( cpcReadySemaphore.availablePermits() > 0 ) {
+              acquireCpcReadySemaphore();
+            }
+
             // Send PING Request to check delegate's availability
             sendMetaRequest();
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -793,8 +799,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                       JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_sending_ping__FINE",
                       new Object[] { serviceDelegate.getKey() });
             }
-            // Add the cas to a list of CASes pending reply. Also start the timer if necessary
-            serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
             return casReferenceId;
           } else {
             if ( !requestToCache.isSynchronousInvocation() ) {
@@ -824,8 +828,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         // Add message to the pending queue
         addMessage(msg);
       } catch (ResourceProcessException e) {
+        clientCache.remove(casReferenceId);
         throw e;
       } catch (Exception e) {
+        clientCache.remove(casReferenceId);
         throw new ResourceProcessException(e);
       }
       return casReferenceId;
