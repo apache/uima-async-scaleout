@@ -23,14 +23,14 @@
       version="2.3.0.incubating"
       provider-name="Apache Software Foundation">
 
-   <description url="http://incubator.apache.org/uima">
+   <description url="http://uima.apache.org">
       This feature adds to the UIMA Component Descriptor
       Editor (CDE) the ability to edit the Deployment
       Descriptor used by UIMA-AS to deploy
       UIMA components using Asynchronous Scaleout
    </description>
 
-   <copyright url="http://incubator.apache.org/uima">
+   <copyright url="http://uima.apache.org">
       Copyright the Apache Software Foundation and others; see License
 and NOTICE files
    </copyright>
@@ -53,7 +53,7 @@ under the License.
    </license>
 
    <url>
-      <discovery label="UIMA Eclipse Plugins update site" url="http://www.apache.org/dist/incubator/uima/eclipse-update-site/"/>
+      <discovery label="UIMA Eclipse Plugins update site" url="http://www.apache.org/dist/uima/eclipse-update-site/"/>
    </url>
 
    <requires>
