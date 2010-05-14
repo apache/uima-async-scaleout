@@ -86,6 +86,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public BaseTestSupport superRef = null;
 
+  
   /**
    * Tests Broker startup and shutdown
    */
@@ -747,7 +748,35 @@ public class TestUimaASExtended extends BaseTestSupport {
         wait(3000);   // allow broker some time to stop  
       }
   }
-  
+  /**
+   * Tests sending CPC after CAS timeout. The service is a Primitive taking 
+   * 6 seconds to process a CAS. The client waits for 5 secs to force
+   * a timeout. This test forces the client to send GetMeta Ping and to
+   * 'hold' the subsequent CPC request.
+   *   
+   * @throws Exception
+   */
+  public void testCpcAfterCasTimeout() throws Exception  {
+    System.out.println("-------------- testCpcAfterCasTimeout -------------");
+     // Instantiate Uima AS Client
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorAWithLongDelay.xml");
+      Map<String, Object> appCtx = buildContext("tcp://localhost:8118",
+      "NoOpAnnotatorAQueue");
+      appCtx.put(UimaAsynchronousEngine.Timeout, 5000);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      initialize(uimaAsEngine, appCtx);
+      waitUntilInitialized();
+      
+      for( int i=0; i < 3; i++ ) {
+        CAS cas = uimaAsEngine.getCAS();
+        cas.setDocumentText("Some Text");
+        uimaAsEngine.sendCAS(cas);  // will timeout after 5 secs
+        uimaAsEngine.collectionProcessingComplete();  // the CPC should not
+        // be sent to a service until the timeout occurs.
+      }
+      uimaAsEngine.stop();
+  }
   
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
@@ -1128,7 +1157,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue");
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            2, PROCESS_LATCH);
+            1, PROCESS_LATCH);
   }
   
   public void testScaledSyncAggregateProcess() throws Exception {
