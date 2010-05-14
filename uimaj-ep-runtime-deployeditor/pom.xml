@@ -16,28 +16,55 @@
    specific language governing permissions and limitations
    under the License.
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.apache.uima</groupId>
-  <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
-  <packaging>bundle</packaging>
-  <version>${uimaj-as-release-eclipse-version}</version>
-  <name>Apache UIMA Runtime Fragment for the Deployment Descriptor Editor Eclipse Plugin</name>
-  <url>http://incubator.apache.org/uima</url>
+  
   <parent>
     <groupId>org.apache.uima</groupId>
-    <artifactId>uimaj-as-eclipse-plugins</artifactId>
-    <version>2.3.0.incubating</version> <!-- this comment is a flag for changeVersion -->
-    <relativePath>../uimaj-as/eclipse-plugin-superPom</relativePath>
+    <artifactId>parent-pom-eclipse-plugins-ibm-notice</artifactId>
+    <version>1-SNAPSHOT</version>
+    <relativePath/>
   </parent>
+
+  <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
+  <packaging>jar</packaging>
+  <version>2.3.1-SNAPSHOT</version>
+  <name>UIMA-AS Eclipse Plugin: ${project.artifactId}</name>
+  <description>Bundles the uima-as runtime parts needed for the deploy editor extension to the CDE, as a fragment on top of the main uima runtime</description>
+  <url>${uimaWebsiteUrl}</url>
+
+  <!-- Special inheritance note
+       even though the <scm> element that follows is exactly the 
+       same as those in super poms, it cannot be inherited because 
+       there is some special code that computes the connection elements
+       from the chain of parent poms, if this is omitted. 
+       
+       Keeping this a bit factored allows cutting/pasting the <scm>
+       element, and just changing the following two properties -->  
+  <scm>
+    <connection>
+      scm:svn:http://svn.apache.org/repos/asf/uima/${uimaScmRoot}/trunk/${uimaScmProject}
+    </connection>
+    <developerConnection>
+      scm:svn:https://svn.apache.org/repos/asf/uima/${uimaScmRoot}/trunk/${uimaScmProject}
+    </developerConnection>
+    <url>
+      http://svn.apache.org/viewvc/uima/${uimaScmRoot}/trunk/${uimaScmProject}
+    </url>
+  </scm>
+  
+  <properties>
+    <uimaScmRoot>uima-as</uimaScmRoot>
+    <uimaScmProject>${project.artifactId}</uimaScmProject>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-runtime</artifactId>
-      <version>${uimaj-release-eclipse-version}</version>
+      <version>${project.version}</version>
       <!-- don't use provided scope here, because then
            eclipse:eclipse is set up to ref the uimaj-ep-runtime
            project directly, and it has no content
@@ -57,45 +84,35 @@
 
   <build>
 
-    <finalName>org.apache.uima.runtime.fragments.deployeditor_${uimaj-as-release-eclipse-version}</finalName>
-
+    <finalName>org.apache.uima.runtime.fragments.deployeditor_${parsedVersion.osgiVersion}</finalName>
     <plugins>
-
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <!-- version 1.4.0 to support _nouses instruction -->
-        <version>1.4.0</version>
-        <extensions>true</extensions>
-        <configuration>
-          <manifestLocation>META-INF</manifestLocation>
-          <instructions>
-            <!-- turn off "uses" generation because Eclipse 3.2.x doesn't work with them -->
-            <_nouses>true</_nouses>
-            <Export-Package>
-              org.apache.uima.aae.deployment,
-              org.apache.uima.aae.deployment.impl,
-              org.apache.uima.application.metadata,
-              org.apache.uima.application.metadata.impl,
-              org.apache.uima.application.util,
-              org.apache.uima.cpe.model,
-              org.apache.uima.tools.debug.util
-            </Export-Package>
-
-            <Bundle-SymbolicName>org.apache.uima.runtime.fragments.deployeditor;singleton:=true</Bundle-SymbolicName>
-
-            <Fragment-Host>org.apache.uima.runtime;bundle-version="2.3.0"</Fragment-Host>
-          </instructions>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <manifest>.ignore</manifest>
-          <pde>true</pde>
-        </configuration>
+        <executions>
+          <execution>
+            <id>uima-bundle</id>
+            <configuration>
+              <instructions>
+                <!-- turn off "uses" generation because Eclipse 3.2.x doesn't work with them -->
+                <_nouses>true</_nouses>
+                <Export-Package>
+                  org.apache.uima.aae.deployment,
+                  org.apache.uima.aae.deployment.impl,
+                  org.apache.uima.application.metadata,
+                  org.apache.uima.application.metadata.impl,
+                  org.apache.uima.application.util,
+                  org.apache.uima.cpe.model,
+                  org.apache.uima.tools.debug.util
+                </Export-Package>
+    
+                <Bundle-SymbolicName>org.apache.uima.runtime.fragments.deployeditor;singleton:=true</Bundle-SymbolicName>
+    
+                <Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host>
+              </instructions>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
     </plugins>
