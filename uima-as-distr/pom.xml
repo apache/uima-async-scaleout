@@ -192,11 +192,6 @@
     </dependency> 
     <dependency>
       <groupId>org.apache.activemq</groupId>
-      <artifactId>apache-activemq</artifactId>
-      <version>4.1.1</version>
-    </dependency> 
-    <dependency>
-      <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-optional</artifactId>
       <version>4.1.1</version>
     </dependency>
@@ -289,25 +284,13 @@
       <artifactId>commons-beanutils</artifactId>
       <version>1.6.1</version>
     </dependency>
-    
-    <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>2.1</version>
-    </dependency>
-  
+      
     <dependency>
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
       <version>1.2</version>
     </dependency>
-  
-    <dependency>
-      <groupId>commons-pool</groupId>
-      <artifactId>commons-pool</artifactId>
-      <version>1.2</version>
-    </dependency>
-  
+    
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-j2ee-connector_1.5_spec</artifactId>
@@ -415,8 +398,8 @@
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultComponentPath.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultTDs.java
               </additionalparam>
-							<doctitle>Apache UIMA Async Scaleout Java SDK ${pom.version} User-Level API Documentation</doctitle>
-							<windowtitle>Apache UIMA-AS Java SDK ${pom.version} User-Level API Documentation</windowtitle>
+							<doctitle>Apache UIMA Async Scaleout Java SDK ${project.version} User-Level API Documentation</doctitle>
+							<windowtitle>Apache UIMA-AS Java SDK ${project.version} User-Level API Documentation</windowtitle>
 						</configuration>
 					</execution>
 				</executions>
@@ -437,6 +420,7 @@
               <excludes>
                 <exclude>src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
                 <exclude>src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
+                <exclude>src/main/examples/run_configuration/*.launch</exclude> <!-- eclipse launch configurations -->
               </excludes>
             </configuration>
           </execution>
