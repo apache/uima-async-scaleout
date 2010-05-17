@@ -1214,27 +1214,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     // exists in the client's cache.
     // Fetch the input CAS Reference Id from which the CAS being processed was generated from
     String inputCasReferenceId = message.getStringProperty(AsynchAEMessage.InputCasReference);
-    // Fetch an entry from the client cache for a given input CAS id. This would be an id
-    // of the CAS that the client sent out to the service.
-    ClientRequest inputCasCachedRequest = (ClientRequest) clientCache.get(inputCasReferenceId);
-    if (inputCasCachedRequest == null) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        // Most likely expired message. Already handled as timeout. Discard the message and move on
-        // to the next
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.INFO,
-                CLASS_NAME.getName(),
-                "handleProcessReplyFromCasMultiplier",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_received_expired_msg_INFO",
-                new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom),
-                    message.getStringProperty(AsynchAEMessage.CasReference) });
-      }
-      return;
-    }
-    if (inputCasCachedRequest.isSynchronousInvocation()) {
-      handleProcessReplyFromSynchronousCall(inputCasCachedRequest, message);
-    }
     // Fetch the destination for Free CAS notification
     Destination freeCASNotificationDestination = message.getJMSReplyTo();
     if (freeCASNotificationDestination != null) {
@@ -1266,6 +1245,28 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           }
         }
       }
+    }
+    
+    // Fetch an entry from the client cache for a given input CAS id. This would be an id
+    // of the CAS that the client sent out to the service.
+    ClientRequest inputCasCachedRequest = (ClientRequest) clientCache.get(inputCasReferenceId);
+    if (inputCasCachedRequest == null) {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        // Most likely expired message. Already handled as timeout. Discard the message and move on
+        // to the next
+        UIMAFramework.getLogger(CLASS_NAME).logrb(
+                Level.INFO,
+                CLASS_NAME.getName(),
+                "handleProcessReplyFromCasMultiplier",
+                JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_received_expired_msg_INFO",
+                new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom),
+                    message.getStringProperty(AsynchAEMessage.CasReference) });
+      }
+      return;
+    }
+    if (inputCasCachedRequest.isSynchronousInvocation()) {
+      handleProcessReplyFromSynchronousCall(inputCasCachedRequest, message);
     }
     CAS cas = null;
     if (message instanceof TextMessage) {
