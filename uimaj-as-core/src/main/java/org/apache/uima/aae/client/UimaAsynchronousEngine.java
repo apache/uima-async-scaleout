@@ -33,11 +33,11 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
  * UIMA AS service. It provides a high level API and hides the detail of the transport
  * implementation. The UIMA AS Client implementation uses JMS as its transport mechanism. Both
  * synchronous and asynchronous processing is supported. For synchronous processing an application
- * should call {@link #sendAndReceive(CAS)} method. For asynchronous processing the application
+ * should call {@link #sendAndReceiveCAS(CAS)} method. For asynchronous processing the application
  * should call {@link #sendCAS(CAS)} method. Additionally, processing with a client side
  * <code>CollectionReader</code> is supported as well. The application first instantiates and
  * initializes the <code>CollectionReader</code> and registers it via
- * {@link #setCollectionReader(CollectionReads)} method. Once the <code>CollectionReader</code> is
+ * {@link #setCollectionReader(CollectionReader)} method. Once the <code>CollectionReader</code> is
  * registered, and {@link #initialize(Map)} method is called, the application may call
  * {@link #process()} method.
  * 
@@ -56,13 +56,13 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
  * 
  * <p>
  * Listeners can register with the <code>UimaAsynchronousEngine</code> by calling the
- * {@link #addStatusCallbackListener(UimaASStatusCallbackListener)} method. These listeners receive
+ * {@link #addStatusCallbackListener(UimaAsBaseCallbackListener)} method. These listeners receive
  * status callbacks during the processing. An exception to that is the synchronous processing via
- * {@link #sendAndReceive(CAS)} method. This method returns either a CAS containing results of
+ * {@link #sendAndReceiveCAS(CAS)} method. This method returns either a CAS containing results of
  * analysis or an exception. No callbacks are made while processing CASes synchronously.
  * <p>
  * An application may choose to implement parallelization of the processing, calling either
- * {@link #sendAndReceive(CAS)} or {@link #sendCASCAS)} methods from multiple threads.
+ * {@link #sendAndReceiveCAS(CAS)} or {@link #sendCAS(CAS)} methods from multiple threads.
  * <p>
  * 
  * 
@@ -104,7 +104,8 @@ public interface UimaAsynchronousEngine {
    * A temporary reply queue is also created with a JMS listener attached to it. Once the
    * connections are made and the listener is started the method sends getMeta request to the UIMA
    * AS service and waits for a response. When the reply to getMeta is received the UIMA AS client
-   * is fully initialized and notifies an application by calling {@link #initializationComplete()}
+   * is fully initialized and notifies an application by calling 
+   * {@link org.apache.uima.aae.client.UimaASStatusCallbackListener#initializationComplete(EntityProcessStatus)}
    * on the application listener.
    * 
    * @param anApplicationContext
@@ -163,15 +164,15 @@ public interface UimaAsynchronousEngine {
   /**
    * Initiates processing of a collection. This method should be only called after initialize() has
    * been called and an instance of a <code>CollectionReader</code> is provided via
-   * {@link #setCollectionReader()}. This method blocks until the <code>CollectionReader</code>
+   * {@link #setCollectionReader(CollectionReader)}. This method blocks until the <code>CollectionReader</code>
    * finishes processing the entire collection. Status of the processing can be obtained by
    * registering a listener with the
-   * {@link #addStatusCallbackListener(UimaASStatusCallbackListener)} method.
+   * {@link #addStatusCallbackListener(UimaAsBaseCallbackListener)} method.
    * <p>
    * The method is synchronized to allow processing of only one collection at a time. The
    * application must wait with processing another collection until it receives notification via a
    * listener
-   * {@link #org.apache.uima.aae.clientcollectionProcessComplete(EntityProcessStatus aStatus)}
+   * {@link UimaASStatusCallbackListener#collectionProcessComplete(EntityProcessStatus aStatus)}
    * 
    * @throws ResourceProcessException
    *           - if there is a problem processing the Collection
@@ -261,8 +262,8 @@ public interface UimaAsynchronousEngine {
    * If there is a problem deploying any of the UIMA AS services the container is destroyed and
    * exception thrown.
    * 
-   * @param aDeploymentDescriptor
-   *          - a deployment descriptor to deploy in a container.
+   * @param aDeploymentDescriptorList
+   *          - a list of deployment descriptors to deploy in a container.
    * @param anApplicationContext
    *          - initialization parameters needed to configure the client and services
    * 

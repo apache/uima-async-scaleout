@@ -44,28 +44,28 @@ public interface ErrorResult extends Serializable {
   /**
    * Returns a path consisting of a list of component key names
    * 
-   * @return
+   * @return a path consisting of a list of component key names
    */
   public ErrorResultComponentPath getComponentKeyPath();
 
   /**
    * Returns true is any termination occurred with this error
    * 
-   * @return
+   * @return true is any termination occurred with this error
    */
   public boolean wasTerminated();
 
   /**
    * Returns true if any disabling occured with this error
    * 
-   * @return
+   * @return true if any disabling occured with this error
    */
   public boolean wasDisabled();
 
   /**
    * Returns a collection of paths to the components that were terminated or disabled
    * 
-   * @return
+   * @return a collection of paths to the components that were terminated or disabled
    */
   public ErrorResultTDs getTDs();
 

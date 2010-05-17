@@ -45,12 +45,7 @@ public class SingleLineUimaJmxMonitorListener implements JmxMonitorListener {
   private double period;
 
   /**
-   * Constructor
-   * 
-   * @param aMaxNameLength
-   *          - the longest name of the UIMA-AS service. This is use to pad other names so that the
-   *          output is easier to read.
-   * 
+   * Constructor 
    */
   public SingleLineUimaJmxMonitorListener() {
   }
