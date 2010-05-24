@@ -1102,9 +1102,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           // The Cas is still being processed
           ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
           if (casCachedRequest != null) {
-            System.out
-                    .println("Client Received ServiceInfo Notification from CAS Multiplier For CAS: "
-                            + casReferenceId);
             casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
           }
           return;
