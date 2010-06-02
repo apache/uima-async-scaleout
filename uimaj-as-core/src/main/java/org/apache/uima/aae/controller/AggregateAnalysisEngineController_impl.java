@@ -1705,7 +1705,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // should follow only when the last of its children leaves this aggregate, call the
           // process method.
           // Otherwise, the CAS is in a final state and simply needs to resume there.
-          Endpoint lastDelegateEndpoint = casStateEntry.getLastDelegate().getEndpoint();
+          Endpoint lastDelegateEndpoint = parentCasStateEntry.getLastDelegate().getEndpoint();
           if (lastDelegateEndpoint.processParentLast()) {
             // The parent was suspended in the process call. Resume processing the CAS
             process(parentCASCacheEntry.getCas(), parentCasStateEntry.getCasReferenceId());
