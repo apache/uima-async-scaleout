@@ -586,10 +586,10 @@ public abstract class Delegate {
         errorContext.add(AsynchAEMessage.Command, aCommand);
         Exception cause = new MessageTimeoutException();
         if (AsynchAEMessage.Process == aCommand) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                     "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_cas_timeout_no_reply__INFO",
+                    "UIMAEE_cas_timeout_no_reply__WARNING",
                     new Object[] { delegate.getKey(), timeToWait, aCasReferenceId });
           }
           errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -606,17 +606,17 @@ public abstract class Delegate {
           }
         } else if (AsynchAEMessage.GetMeta == aCommand) {
           System.out.println("getMeta Timeout on delegate:"+delegate.getKey());
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                     "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_meta_timeout_no_reply__INFO",
+                    "UIMAEE_meta_timeout_no_reply__WARNING",
                     new Object[] { delegate.getKey(), timeToWait });
           }
         } else if (AsynchAEMessage.CollectionProcessComplete == aCommand) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                     "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_cpc_timeout_no_reply__INFO",
+                    "UIMAEE_cpc_timeout_no_reply__WARNING",
                     new Object[] { delegate.getKey(), timeToWait });
           }
 
