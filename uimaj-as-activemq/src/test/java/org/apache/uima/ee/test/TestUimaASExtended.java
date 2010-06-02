@@ -1136,6 +1136,35 @@ public class TestUimaASExtended extends BaseTestSupport {
       fail("Expected ResourceInitializationException Instead Caught:" + e.getClass().getName());
     }
   }
+  public void testClientProcessTimeoutWithAggregateMultiplier() throws Exception {
+    System.out.println("-------------- testClientProcessTimeoutWithAggregateMultiplier -------------");
+    addExceptionToignore(org.apache.uima.aae.error.UimaASProcessCasTimeout.class);
+
+    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(uimaAsEngine, relativePath + "/Deploy_AggregateMultiplierWithDelay.xml");
+
+    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+            "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.Timeout, 3000);
+    appCtx.put(UimaAsynchronousEngine.CasPoolSize, 1);
+
+    // reduce the cas pool size and reply window
+    appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
+    appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(1));
+    
+    
+    initialize(uimaAsEngine, appCtx);
+    waitUntilInitialized();
+    
+    for( int i=0; i < 2; i++ ) {
+      CAS cas = uimaAsEngine.getCAS();
+      cas.setDocumentText("Some Text");
+      uimaAsEngine.sendCAS(cas);  // will timeout after 5 secs
+      uimaAsEngine.collectionProcessingComplete();  // the CPC should not
+      // be sent to a service until the timeout occurs.
+    }
+    uimaAsEngine.stop();
+  }
 
   public void testDeployAggregateService() throws Exception {
     System.out.println("-------------- testDeployAggregateService -------------");
