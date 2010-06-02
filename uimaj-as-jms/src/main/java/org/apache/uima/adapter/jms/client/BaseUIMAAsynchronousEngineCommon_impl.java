@@ -1869,10 +1869,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
     switch (aTimeoutKind) {
       case (MetadataTimeout):
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_meta_timeout_INFO", new Object[] { anEndpoint });
+                  "UIMAJMS_meta_timeout_WARNING", new Object[] { anEndpoint });
         }
         status.addEventStatus("GetMeta", "Failed", new UimaASMetaRequestTimeout());
         notifyListeners(null, status, AsynchAEMessage.GetMeta);
@@ -1880,10 +1880,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         getMetaSemaphore.release();
         break;
       case (PingTimeout):
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_meta_timeout_INFO", new Object[] { anEndpoint });
+                  "UIMAJMS_meta_timeout_WARNING", new Object[] { anEndpoint });
         }
         status.addEventStatus("Ping", "Failed", new UimaASPingTimeout());
         notifyListeners(null, status, AsynchAEMessage.Ping);
@@ -1910,10 +1910,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         break;
 
       case (ProcessTimeout):
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_process_timeout_INFO", new Object[] { anEndpoint });
+                  "UIMAJMS_process_timeout_WARNING", new Object[] { anEndpoint });
         }
         ClientRequest cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
         if (cachedRequest == null) {
