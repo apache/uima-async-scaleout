@@ -2096,6 +2096,19 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
   }
+
+  public void testParentProcessLast() throws Exception {
+    System.out
+            .println("-------------- testParentProcessLast -------------");
+    System.setProperty("BrokerURL", broker.getMasterConnectorURI());
+
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_1.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithProcessParentLastCMs.xml");
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            1, PROCESS_LATCH);
+  }
+
   /**
    * Starts two remote delegates on one broker and a top level client aggregate on 
    * another. Tests sending Free Cas requests to the appropriate broker. 
@@ -2154,6 +2167,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  
   public void testClientWithAggregateMultiplier() throws Exception {
     System.out.println("-------------- testClientWithAggregateMultiplier -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2163,13 +2177,13 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue");
+
     // reduce the cas pool size and reply window
     appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
     appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(2));
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue", 1, PROCESS_LATCH);
   }
-
   public void testClientProcessWithRemoteMultiplier() throws Exception {
     System.out.println("-------------- testClientProcessWithRemoteMultiplier -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2177,6 +2191,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "TestMultiplierQueue");
+    
     appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
     appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(1));
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
