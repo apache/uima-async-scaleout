@@ -78,9 +78,13 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
 
   public static final String PARAM_BIN_SERIALIZTION = "binary_serialization";
 
+  public static final String PARAM_IGNORE_PROCESS_ERRORS = "ignore_process_errors";
+
   private Object mux = new Object();
 
   private boolean cpcReceived;
+
+  private boolean ignoreErrors = false;
 
   private UimaAsynchronousEngine uimaEEEngine;
 
@@ -107,6 +111,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
         getMetaTimeout = Integer.parseInt(parameters[i].getValue());
       } else if (PARAM_CPC_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
         cpcTimeout = Integer.parseInt(parameters[i].getValue());
+      } else if (PARAM_IGNORE_PROCESS_ERRORS.equalsIgnoreCase(parameters[i].getName())) {
+        ignoreErrors = parameters[i].getValue().equalsIgnoreCase("true");
       }
     }
 
@@ -172,7 +178,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     try {
       uimaEEEngine.sendAndReceiveCAS(aCAS);
     } catch (ResourceProcessException e) {
-      throw new ResourceServiceException(e);
+      if (!ignoreErrors)
+        throw new ResourceServiceException(e);
     }
   }
 
