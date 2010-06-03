@@ -285,6 +285,13 @@
 
     <!-- testing dependencies -->
     <dependency>
+      <exclusions>
+	      <exclusion>
+    		<groupId>org.apache.uima</groupId>
+    		<artifactId>uimaj-cpe</artifactId>
+    	  </exclusion>
+      </exclusions>
+      
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-examples</artifactId>
       <version>${project.version}</version>
