@@ -31,6 +31,7 @@ import javax.jms.Session;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.UimaBlockingExecutor;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -76,9 +77,15 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
 
   private ThreadPoolExecutor executor = null;
 
+  private UimaBlockingExecutor blockingExecutor;
+  
   private LinkedBlockingQueue<Runnable> workQueue;
 
   private CountDownLatch controllerLatch = new CountDownLatch(1);
+  public ConcurrentMessageListener(int concurrentThreads, Object delegateListener )
+  throws InvalidClassException {
+   this(concurrentThreads, delegateListener, null); 
+  }
 
   /**
    * Creates a listener with a given number of process threads. This listener is injected between
@@ -95,7 +102,7 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
    *          - JmsInputChannel instance to delegate CAS to
    * @throws InvalidClassException
    */
-  public ConcurrentMessageListener(int concurrentThreads, Object delegateListener)
+  public ConcurrentMessageListener(int concurrentThreads, Object delegateListener, String destination)
           throws InvalidClassException {
     if (!(delegateListener instanceof SessionAwareMessageListener)) {
       throw new InvalidClassException("Invalid Delegate Listener. Expected Object of Type:"
@@ -104,17 +111,24 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
     concurrentThreadCount = concurrentThreads;
     this.delegateListener = (SessionAwareMessageListener) delegateListener;
     if (concurrentThreads > 1) {
-      workQueue = new LinkedBlockingQueue<Runnable>(concurrentThreadCount);
+      //  created an unbounded queue. The throttling is controlled by the
+      //  semaphore in the UimaBlockingExecutor initialized below
+      workQueue = new LinkedBlockingQueue<Runnable>();
       executor = new ThreadPoolExecutor(concurrentThreads, concurrentThreads, Long.MAX_VALUE,
               TimeUnit.NANOSECONDS, workQueue);
-      executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
       executor.prestartAllCoreThreads();
+      if ( destination != null ) {
+        blockingExecutor = new UimaBlockingExecutor(executor, concurrentThreads, destination);
+      } else {
+        blockingExecutor = new UimaBlockingExecutor(executor, concurrentThreads);
+      }
     }
   }
 
   public void stop() {
     if (executor != null) {
       executor.shutdownNow();
+      blockingExecutor.stop();
       while (!executor.isTerminated()) {
         try {
           executor.awaitTermination(200, TimeUnit.MILLISECONDS);
@@ -188,23 +202,29 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
     }
     if (concurrentThreadCount > 1) {
       // Delegate meesage to the JmsInputChannel
-      executor.execute(new Runnable() {
-        public void run() {
-          try {
-            delegateListener.onMessage(message, session);
-          } catch (Exception e) {
-            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                      "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAEE_service_exception_WARNING", controller.getComponentName());
+      try {
+        blockingExecutor.submitTask(new Runnable() {
+          public void run() {
+            try {
+              delegateListener.onMessage(message, session);
+            } catch (Exception e) {
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                        "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_service_exception_WARNING", controller.getComponentName());
 
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                      "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAJMS_exception__WARNING", e);
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                        "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_exception__WARNING", e);
+              }
             }
           }
-        }
-      });
+        });
+      } catch( InterruptedException e) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_exception__WARNING", e);
+      }
     } else {
       // Just handoff the message to the InputChannel object
       delegateListener.onMessage(message, session);
