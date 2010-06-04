@@ -1664,10 +1664,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       for (Entry<String, UimaTransport> entry : set) {
         UimaTransport transport = entry.getValue();
         try {
-
-          UimaMessage message = transport.produceMessage(AsynchAEMessage.Stop,
-                  AsynchAEMessage.Request, getName());
-          transport.getUimaMessageDispatcher(entry.getKey()).dispatch(message);
           transport.stopIt();
           System.out.println("Service:" + getComponentName() + " Stopped Delegate Transport:"
                   + entry.getKey());
