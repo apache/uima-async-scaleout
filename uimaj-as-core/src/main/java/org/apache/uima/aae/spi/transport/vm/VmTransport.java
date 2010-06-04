@@ -36,6 +36,7 @@ import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsThreadFactory;
+import org.apache.uima.aae.UimaBlockingExecutor;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController;
@@ -66,6 +67,8 @@ public class VmTransport implements UimaTransport {
 
   private ThreadPoolExecutor executor = null;
 
+  private UimaBlockingExecutor blockingExecutor;
+  
   private ThreadGroup threadGroup = null;
 
   // Create a queue for work items. The queue has a JMX wrapper to expose the
@@ -120,7 +123,7 @@ public class VmTransport implements UimaTransport {
   }
 
   public void startIt() throws UimaSpiException {
-    dispatcher = new UimaVmMessageDispatcher(executor, null, (String) context.get("EndpointName"));
+    dispatcher = new UimaVmMessageDispatcher(blockingExecutor, null, (String) context.get("EndpointName"));
   }
 
   public synchronized void stopIt() throws UimaSpiException {
@@ -130,7 +133,9 @@ public class VmTransport implements UimaTransport {
     stopping.set(true);
     executor.purge();
     executor.shutdownNow();
+    
     workQueue.clear();
+    blockingExecutor.stop();
     Set<Entry<String, UimaVmMessageDispatcher>> set = dispatchers.entrySet();
     for (Entry<String, UimaVmMessageDispatcher> entry : set) {
       UimaVmMessageDispatcher dispatcher = entry.getValue();
@@ -172,10 +177,13 @@ public class VmTransport implements UimaTransport {
     }
   }
 
-  protected ThreadPoolExecutor getExecutorInstance() {
+  protected UimaBlockingExecutor getExecutorInstance() {
     if (executor == null) {
       int concurrentConsumerCount = context.getConcurrentConsumerCount();
-      workQueue = new UimaVmQueue(concurrentConsumerCount);
+
+      //  Create an unbounded queue. 
+      workQueue = new UimaVmQueue();  
+      
       // Create a ThreadPoolExecutor with as many threads as needed. The pool has
       // a fixed number of threads that never expire and are never passivated.
       executor = new ThreadPoolExecutor(concurrentConsumerCount, concurrentConsumerCount,
@@ -185,10 +193,16 @@ public class VmTransport implements UimaTransport {
                 (PrimitiveAnalysisEngineController) controller);
         executor.setThreadFactory(tf);
       }
+      
       executor.prestartAllCoreThreads();
+      //  instantiate a blocking executor with a maximum number of concurrent threads.
+      //  Internally the executor uses a Semaphore bounded by a max number of permits to
+      //  throttle requests. If number of requests exceeds number of available permits,
+      //  the submitting thread hangs until a permit becomes available.
+      blockingExecutor = new UimaBlockingExecutor(executor, concurrentConsumerCount);
       controller.changeState(ServiceState.RUNNING);
     }
-    return executor;
+    return blockingExecutor;
   }
 
   public void registerWithJMX(AnalysisEngineController aController, String queueKind ) {
