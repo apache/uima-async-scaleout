@@ -38,8 +38,8 @@ public class UimaVmQueue extends LinkedBlockingQueue<Runnable> implements UimaVm
 
   private long dequeueCount = 0;
 
-  public UimaVmQueue(int size) {
-    // super(size);
+  //  This is an unbounded queue
+  public UimaVmQueue() {
   }
 
   /**
