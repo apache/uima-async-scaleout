@@ -204,7 +204,7 @@ public class ProcessResponseHandler extends HandlerBase {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
                 "handleProcessResponseFromRemote", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_number_parallel_delegates_FINE",
-                new Object[] { totalNumberOfParallelDelegatesProcessingCas });
+                new Object[] { totalNumberOfParallelDelegatesProcessingCas, Thread.currentThread().getId(), Thread.currentThread().getName() });
       }
       if (cas == null) {
         throw new AsynchAEException(Thread.currentThread().getName()
