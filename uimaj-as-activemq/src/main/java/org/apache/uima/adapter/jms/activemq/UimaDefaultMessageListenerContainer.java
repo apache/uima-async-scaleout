@@ -565,6 +565,14 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    */
   public void afterPropertiesSet() {
     if (endpoint != null) {
+
+			// Override the prefetch size. The dd2spring always sets this to 1 which 
+			// may effect the throughput of a service. Change the prefetch size to
+			// number of consumer threads defined in DD.
+      if ( cc > 1 && endpoint.isTempReplyDestination() && connectionFactory instanceof ActiveMQConnectionFactory ) {
+        ((ActiveMQConnectionFactory)connectionFactory).getPrefetchPolicy().setQueuePrefetch(cc);
+      }
+      
       // Endpoint has been plugged in from spring xml. This means this is a listener
       // for a reply queue. We need to rewire things a bit. First make Spring use
       // one thread to make sure we receive messages in order. To fix a race condition
@@ -579,7 +587,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       super.setConcurrentConsumers(1);
       if (cc > 1) {
         try {
-          concurrentListener = new ConcurrentMessageListener(cc, ml);
+          concurrentListener = new ConcurrentMessageListener(cc, ml, getDestinationName());
           super.setMessageListener(concurrentListener);
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -770,7 +778,17 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     super.setDestination(aDestination);
     if (endpoint != null) {
       endpoint.setDestination(aDestination);
-      if (aDestination instanceof TemporaryQueue) {
+      //  Get the prefetch size. If > 1, it has been previously overriden. The override is done in
+      // the code since dd2spring alwys sets the prefetch on a reply queue to 1. This may slow down
+      // a throughput of a service.
+      int prefetchSize = ((ActiveMQConnectionFactory)connectionFactory).getPrefetchPolicy().getQueuePrefetch();
+      if (aDestination instanceof TemporaryQueue && prefetchSize > 1) {
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                    "setDestination", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_replyq_prefetch_override__INFO", new Object[] {aDestination,prefetchSize
+           });
+        }
         endpoint.setTempReplyDestination(true);
         Object pojoListener = getPojoListener();
         if (pojoListener != null && pojoListener instanceof InputChannel) {
