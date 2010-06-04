@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.UimaBlockingExecutor;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
 import org.apache.uima.aae.spi.transport.UimaMessage;
 import org.apache.uima.aae.spi.transport.UimaMessageDispatcher;
@@ -39,16 +40,15 @@ import org.apache.uima.util.Level;
 public class UimaVmMessageDispatcher implements UimaMessageDispatcher {
   private static final Class<?> CLASS_NAME = UimaVmMessageDispatcher.class;
 
-  private ThreadPoolExecutor executor = null;
-
+  private UimaBlockingExecutor blockingExecutor;
   // Message listener which will receive a new message
   private final UimaMessageListener targetListener;
 
   private String delegateKey;
 
-  public UimaVmMessageDispatcher(ThreadPoolExecutor anExecutor, UimaMessageListener aListener,
+  public UimaVmMessageDispatcher(UimaBlockingExecutor anExecutor, UimaMessageListener aListener,
           String aKey) {
-    executor = anExecutor;
+    blockingExecutor = anExecutor;
     delegateKey = aKey;
     targetListener = aListener;
   }
@@ -59,33 +59,37 @@ public class UimaVmMessageDispatcher implements UimaMessageDispatcher {
    * the Executor.
    */
   public void dispatch(final UimaMessage message) {
-    if (executor.isShutdown() || executor.isTerminating() || executor.isShutdown()) {
+    if ( !blockingExecutor.isReady() ) {
       return;
     }
-    executor.execute(new Runnable() {
-      public void run() {
-
-        try {
-          if (targetListener instanceof UimaVmMessageListener) {
-            ((UimaVmMessageListener) targetListener).onMessage(message);
-          } else {
-            System.out.println("!!!!!!!!!!!!!!! Wrong Type of UimaListener");
-          }
-        } catch (Exception e) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                    "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", e);
+    try {
+      blockingExecutor.submitTask(new Runnable() {
+        public void run() {
+          try {
+            if (targetListener instanceof UimaVmMessageListener) {
+              ((UimaVmMessageListener) targetListener).onMessage(message);
+            } else {
+              System.out.println("!!!!!!!!!!!!!!! Wrong Type of UimaListener");
+            }
+          } catch (Exception e) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                      "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_exception__WARNING", e);
+            }
           }
         }
-      }
-    });
+      });
+    } catch( Exception e) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+              "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_exception__WARNING", e);
+    }
   }
 
   public void stop() {
-    if (executor != null) {
-      executor.purge();
-      executor.shutdownNow();
+    if (blockingExecutor != null) {
+      blockingExecutor.stop();
     }
   }
 }
