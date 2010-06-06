@@ -839,13 +839,16 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       pServiceInfo = ((AggregateAnalysisEngineController) this).getServiceInfo();
       pServiceInfo.setAggregate(true);
     }
-    // If this is a Cas Multiplier, add the key to the JMX MBean.
-    // This will help the JMX Monitor to fetch the CM Cas Pool MBean
-    if (isCasMultiplier()) {
-      pServiceInfo.setServiceKey(getUimaContextAdmin().getQualifiedContextName());
-    }
 
     if (pServiceInfo != null) {
+      // If this is a Cas Multiplier, add the key to the JMX MBean.
+      // This will help the JMX Monitor to fetch the CM Cas Pool MBean
+      if (isCasMultiplier()) {
+        pServiceInfo.setServiceKey(getUimaContextAdmin().getQualifiedContextName());
+        pServiceInfo.setCmRegisteredName(getUimaContextAdmin().getUniqueName());
+      }
+
+      
       name = jmxManagement.getJmxDomain() + key_value_list + ",name=" + thisComponentName + "_"
               + serviceInfo.getLabel();
       if (!isTopLevelComponent()) {
@@ -855,6 +858,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
       if (isCasMultiplier()) {
         pServiceInfo.setCASMultiplier();
+
       }
       registerWithAgent(pServiceInfo, name);
     }
@@ -882,6 +886,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   private void initializeComponentCasPool(int aComponentCasPoolSize, long anInitialCasHeapSize) {
     if (aComponentCasPoolSize > 0) {
       EECasManager_impl cm = (EECasManager_impl) getResourceManager().getCasManager();
+      
       cm.setInitialCasHeapSize(anInitialCasHeapSize);
       cm.setPoolSize(getUimaContextAdmin().getUniqueName(), aComponentCasPoolSize);
       System.out.println("Component:" + getComponentName() + " Cas Pool:"
