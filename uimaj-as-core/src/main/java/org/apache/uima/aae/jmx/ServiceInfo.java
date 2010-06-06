@@ -47,13 +47,22 @@ public class ServiceInfo implements ServiceInfoMBean {
 
   private boolean aggregate;
 
+  private String cmUniqueName;
+  
   private AnalysisEngineController controller;
   
   public ServiceInfo(boolean isaCasMultiplier, AnalysisEngineController controller) {
     casMultiplier = isaCasMultiplier;
     this.controller = controller;
   }
-
+  
+  public void setCmRegisteredName(String uniqueName ) {
+    cmUniqueName = uniqueName;
+  }
+  
+  public String getCmRegisteredName() {
+    return cmUniqueName;
+  }
   public String getLabel() {
     return label;
   }
