@@ -39,4 +39,6 @@ public interface ServiceInfoMBean extends Serializable {
   public String getServiceKey();
 
   public boolean isAggregate();
+  
+  public String getCmRegisteredName();
 }
