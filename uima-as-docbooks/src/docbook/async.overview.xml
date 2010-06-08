@@ -1049,6 +1049,28 @@ under the License.
       which processes one CAS at a time, so it will not take advantage of the scalability that UIMA AS provides. To
       process more than one CAS at a time, you must use the Asynchronous UIMA AS Client API 
       <xref linkend="ugr.ref.async.api"/>.</para>
+      
+    <para>Other parameters may be specified:
+      <variablelist>
+        <varlistentry>
+          <term>binary_serialization</term>
+          <listitem>
+            <para>Set to true to specify binary serialization (faster, but requires that the service
+              have exactly the same type system as the client).
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>ignore_process_errors</term>
+          <listitem>
+            <para>Set to true to specify that any processing errors should be ignored.  In order for this
+              to be reasonable, your calling environment must be able to continue somehow,
+              if the service fails.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      </para>
     <para>For more information on the customResourceSpecifier see <olink targetdoc="references"
         targetptr="ugr.ref.xml.component_descriptor.custom_resource_specifiers"></olink>. </para>
   </section>
