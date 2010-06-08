@@ -782,8 +782,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       // the code since dd2spring alwys sets the prefetch on a reply queue to 1. This may slow down
       // a throughput of a service.
       int prefetchSize = ((ActiveMQConnectionFactory)connectionFactory).getPrefetchPolicy().getQueuePrefetch();
-      if (aDestination instanceof TemporaryQueue && prefetchSize > 1) {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+      if (aDestination instanceof TemporaryQueue ) {
+        //	Only log if prefetch on temp queue has been earlier overriden. The dd2spring
+        //  always sets prefetch on a temp queue to 1. The fact that the prefetch > 1 means
+        //	that an override must have taken place. Just log the value of a prefetch.
+        if ( prefetchSize > 1 && UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                     "setDestination", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAJMS_replyq_prefetch_override__INFO", new Object[] {aDestination,prefetchSize
