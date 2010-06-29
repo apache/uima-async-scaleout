@@ -996,7 +996,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   "UIMAJMS_handling_meta_reply_FINEST",
                   new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom), meta });
         }
-        asynchManager.addMetadata(resourceMetadata);
+        //  check the state of the client 
+        if ( running && asynchManager != null ) {
+          //  Merge the metadata only if the client is still running
+          asynchManager.addMetadata(resourceMetadata);
+        }
       }
 
     } catch (Exception e) {
