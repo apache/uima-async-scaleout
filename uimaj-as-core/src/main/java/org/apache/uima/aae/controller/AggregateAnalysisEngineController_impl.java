@@ -1594,7 +1594,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                     UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_cas_has_children__FINE",
                     new Object[] { getComponentName(), casStateEntry.getCasReferenceId(),
-                        casStateEntry.getCasReferenceId(),
                         casStateEntry.getSubordinateCasInPlayCount() });
           }
 
@@ -1972,9 +1971,16 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // Find the top ancestor of this CAS. It is the input CAS sent by the client
         String inputCasId = getLocalCache().lookupInputCasReferenceId(casStateEntry);
         // Modify the parent of this CAS.
-        if (inputCasId != null && !inputCasId.equals(casStateEntry.getInputCasReferenceId())) {
-          casStateEntry.setInputCasReferenceId(inputCasId);
-          cacheEntry.setInputCasReferenceId(inputCasId);
+        if (inputCasId != null ) {
+          if ( !inputCasId.equals(casStateEntry.getInputCasReferenceId())) {
+            casStateEntry.setInputCasReferenceId(inputCasId);
+            cacheEntry.setInputCasReferenceId(inputCasId);
+          }
+          CasStateEntry parentCasStateEntry = 
+            parentController.getLocalCache().lookupEntry(inputCasId);
+          if ( parentCasStateEntry != null ) {
+            parentCasStateEntry.incrementSubordinateCasInPlayCount();
+          }
         }
       }
       // Send CAS to a given reply endpoint
