@@ -84,8 +84,10 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     }
     return parentCasReferenceId;
   }
-
-  public synchronized void dumpContents() {
+  public void dumpContents() {
+    dumpContents(false);
+  }
+  public synchronized void dumpContents(boolean dump2Stdout) {
     int count = 0;
     if (UIMAFramework.getLogger().isLoggable(Level.FINEST)) {
       StringBuffer sb = new StringBuffer("\n");
@@ -113,6 +115,9 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "dumpContents",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_show_cache_entry_key__FINEST",
               new Object[] { controller.getComponentName(), count, sb.toString() });
+      if ( dump2Stdout ) {
+        System.out.println(sb.toString());
+      }
       sb.setLength(0);
     } else if (UIMAFramework.getLogger().isLoggable(Level.FINE)) {
       int inFinalState = 0;
