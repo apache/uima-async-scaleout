@@ -20,6 +20,8 @@
 package org.apache.uima.aae.controller;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -65,6 +67,9 @@ import org.apache.uima.analysis_engine.asb.impl.FlowContainer;
 import org.apache.uima.analysis_engine.asb.impl.FlowControllerContainer;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.Feature;
+import org.apache.uima.cas.FeatureStructure;
+import org.apache.uima.cas.Type;
 import org.apache.uima.flow.FinalStep;
 import org.apache.uima.flow.ParallelStep;
 import org.apache.uima.flow.SimpleStep;
@@ -72,8 +77,11 @@ import org.apache.uima.flow.Step;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resource.metadata.ResourceMetaData;
+import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.apache.uima.util.Level;
+import org.apache.uima.util.TypeSystemUtil;
 import org.apache.uima.util.XMLInputSource;
+import org.apache.uima.cas.impl.XmiCasSerializer;
 
 public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineController implements
         AggregateAnalysisEngineController, AggregateAnalysisEngineController_implMBean {
@@ -139,6 +147,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   private volatile boolean doSendCpcReply = false;
   //	Guards FC's next() method. Single thread access is allowed at any given time
   private Semaphore flowSemaphore = new Semaphore(1);
+
+  // Map of components registered for Cas logging. Value indicates that typesystem.xml has been created.
+  private HashMap<String, Boolean> enableCasLogMap; // = new HashMap<String, Boolean>();
+  // Map of log directory names per component
+  private HashMap<String, String> casLogDirMap; // = new HashMap<String, String>();
+  // Base time used for default XmiCas file names.
+  private Long initializationTime = System.nanoTime();
 
   /**
    * 
@@ -1229,6 +1244,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       if (endpoint != null) {
         endpoint.setController(this);
         CasStateEntry casStateEntry = getLocalCache().lookupEntry(aCasReferenceId);
+        if (enableCasLogMap!=null && enableCasLogMap.containsKey(analysisEngineKey)) {
+          //  Get a CAS
+          CacheEntry cacheEntry = getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+          CAS cas = cacheEntry.getCas();
+          logCasForEndpoint(analysisEngineKey, cas);
+        }
 
         if (endpoint.isCasMultiplier()) {
           Delegate delegateCM = lookupDelegate(analysisEngineKey);
@@ -1281,6 +1302,61 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       handleError(map, e);
     }
 
+  }
+
+  /*
+   * Cas logging controlled by the following Java properties:
+   *
+   * UIMA_CASLOG_BASE_DIRECTORY - optional; this is the directory under which other
+   *   directories with XmiCas files will be created. If not specified, the processes current
+   *   directory will be the base.
+   * UIMA_CASLOG_COMPONENT_ARRAY - This is a space separated list of delegates keys. If a
+   *   delegate is nested inside a co-located async aggregate, the name would include the key
+   *   name of the aggregate, e.g. "someAggName/someDelName". The XmiCas files will then be
+   *   written into $UIMA_CASLOG_BASE_DIRECTORY/someAggName/someDelName/
+   * UIMA_CASLOG_TYPE_NAME - optional; this is the name of a FeatureStructure in the CAS
+   *   containing a unique string to use the name each XmiCas file. If not specified, XmiCas
+   *   file name will be NNN.xmi, where NNN is the time in microseconds since the component was
+   *   initialized.
+   * UIMA_CASLOG_FEATURE_NAME - optional unless if the TYPE_NAME is specified; this parameter
+   *   gives the string feature to use. An example of type and feature names to use would be
+   *   "org.apache.uima.examples.SourceDocumentInformation" and "uri".
+   *   
+   */
+  private void logCasForEndpoint(String analysisEngineKey, CAS cas) throws Exception {
+    if (!((Boolean)enableCasLogMap.get(analysisEngineKey))) {
+      // create dir and serialize typesystem
+      boolean status = new File((String)casLogDirMap.get(analysisEngineKey)).mkdir();
+      TypeSystemDescription tsd = TypeSystemUtil.typeSystem2TypeSystemDescription(cas.getTypeSystem());
+      File tsd2xml = new File(((String)casLogDirMap.get(analysisEngineKey))+"/typesystem.xml");
+      FileOutputStream os = new FileOutputStream(tsd2xml);
+      tsd.toXML(os);
+      os.close();
+      enableCasLogMap.put(analysisEngineKey, true);
+    }
+    // create XmiCas file name
+    Long now = new Long((System.nanoTime()-initializationTime)/1000);
+    String casName = (String)casLogDirMap.get(analysisEngineKey)+"/"+now.toString()+".xmi";
+    if (null != System.getProperty("UIMA_CASLOG_TYPE_NAME") && null != System.getProperty("UIMA_CASLOG_FEATURE_NAME")) {
+      String typeName = System.getProperty("UIMA_CASLOG_TYPE_NAME");
+      String featureName = System.getProperty("UIMA_CASLOG_FEATURE_NAME");
+      Type logType = cas.getTypeSystem().getType(typeName);
+      Feature logFeature = logType.getFeatureByBaseName(featureName);
+      Iterator<FeatureStructure> iter = cas.getIndexRepository().getAllIndexedFS(logType);
+      FeatureStructure fs = iter.next();
+      if (!iter.hasNext() && null != fs.getStringValue(logFeature)) {
+        String[] uri = fs.getStringValue(logFeature).split("/");
+        if (null != uri[uri.length-1].trim()) {
+          casName = (String)casLogDirMap.get(analysisEngineKey)+"/"+uri[uri.length-1].trim()+".xmi";
+        }
+      }
+    }
+
+    // serialize the Cas
+    File xmiCas = new File(casName);
+    FileOutputStream os = new FileOutputStream(xmiCas);
+    XmiCasSerializer.serialize(cas, os);
+    os.close();
   }
 
   private void parallelStep(ParallelStep aStep, String aCasReferenceId) throws AsynchAEException {
@@ -2938,4 +3014,20 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     return null;
   }
   
+  public void setCasLoggingDirectory(String key, String directory) {
+    String baseDir = System.getProperty("user.dir");
+    if (null != System.getProperty("UIMA_CASLOG_BASE_DIRECTORY")) {
+      baseDir = System.getProperty("UIMA_CASLOG_BASE_DIRECTORY");
+      //TODO how to fail this next line?
+      boolean status = new File(baseDir).mkdir();
+    }
+    directory = directory.replace('/', '-');
+    if (casLogDirMap == null)
+      casLogDirMap = new HashMap<String, String>();
+    casLogDirMap.put(key, baseDir+"/"+directory);
+    if (enableCasLogMap == null)
+      enableCasLogMap = new HashMap<String, Boolean>();
+    enableCasLogMap.put(key, false);
+    initializationTime = System.nanoTime();
+  }
 }

@@ -125,4 +125,5 @@ public interface AggregateAnalysisEngineController extends AnalysisEngineControl
 
   public void stopCasMultiplier(Delegate casMultiplier, String aCasReferenceId);
 
+  public void setCasLoggingDirectory(String key, String directoryName);
 }

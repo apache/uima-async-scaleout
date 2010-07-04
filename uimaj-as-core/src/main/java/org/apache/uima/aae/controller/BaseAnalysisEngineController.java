@@ -92,6 +92,7 @@ import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.analysis_engine.metadata.SofaMapping;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReaderDescription;
+import org.apache.uima.jcas.cas.StringArray;
 import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceCreationSpecifier;
 import org.apache.uima.resource.ResourceInitializationException;
@@ -371,6 +372,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
 
     // Top level component?
+    String casLogComponents = System.getProperty("UIMA_CASLOG_COMPONENT_ARRAY");
     if (parentController == null) {
       paramsMap.put(Resource.PARAM_RESOURCE_MANAGER, casManager.getResourceManager());
       initialize(resourceSpecifier, paramsMap);
@@ -378,6 +380,18 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
               .getManagementInterface();
       // Override uima core jmx domain setting
       mbean.setName(getComponentName(), getUimaContextAdmin(), jmxManagement.getJmxDomain());
+
+      // check requested Cas logging
+      if (casLogComponents!= null && (this instanceof AggregateAnalysisEngineController)) {
+        String[] comps = casLogComponents.split(" ");
+        for (String comp : comps) {
+          String[] subcomps = comp.split("/");
+          if (1 == subcomps.length) {
+            System.out.println("Component "+comp+" registered for Cas logging");
+            ((AggregateAnalysisEngineController)this).setCasLoggingDirectory(comp, comp);
+          }
+        }
+      }
       if (resourceSpecifier instanceof AnalysisEngineDescription) {
         // Is this service a CAS Multiplier?
         if (((AnalysisEngineDescription) resourceSpecifier).getAnalysisEngineMetaData()
@@ -402,6 +416,23 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
     } else {
       UimaContext childContext = parentController.getChildUimaContext(endpointName);
+      if ( childContext != null && childContext instanceof UimaContextAdmin ) {
+        // check requested Cas logging
+        String qualifiedContextName = ((UimaContextAdmin)childContext).getQualifiedContextName();
+//        System.out.println("--------- Component Context Name:"+qualifiedContextName);
+        if (casLogComponents!= null && (this instanceof AggregateAnalysisEngineController) && 
+                casLogComponents.contains(anEndpointName)) {
+          String[] comps = casLogComponents.split(" ");
+          for (String comp : comps) {
+            String[] subcomps = comp.split("/");
+            if (1 < subcomps.length && subcomps[subcomps.length-2].equals(anEndpointName)) {
+              System.out.println("Component "+comp+" registered for Cas logging");
+              ((AggregateAnalysisEngineController)this).setCasLoggingDirectory(subcomps[subcomps.length-1],
+                      comp);
+            }
+          }
+        }
+      }
       paramsMap.put(Resource.PARAM_UIMA_CONTEXT, childContext);
       initialize(resourceSpecifier, paramsMap);
       initializeComponentCasPool(aComponentCasPoolSize, anInitialCasHeapSize);
