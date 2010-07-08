@@ -22,7 +22,7 @@ specific language governing permissions and limitations
 under the License.
 -->
 <chapter id="ugr.async.mt">
-  <title>Monitoring and Tuning</title>
+  <title>Monitoring, Tuning and Debugging</title>
   <para>
     UIMA AS deployments can involve many separate parts running on many
     different machines.  Monitoring facilities and tools built into UIMA AS help
@@ -68,6 +68,25 @@ under the License.
   <para>
     In addition, tuning can involve changing the actual analytic algorithms
     to tune them - but that is beyond the scope of this chapter.
+  </para>
+
+  <para>
+	UIMA AS scale out configurations add multithreaded and out-of-order execution complexities to 
+	core UIMA applications. Debugging a UIMA AS application is aided by UIMA's modular architecture 
+	and an approach that exercises the code gradually from simpler to more complex configurations.
+	Two useful built-in debug features are:
+    <itemizedlist>
+      <listitem>
+        <para>Java errors at any component level are propagated back to the component originating 
+      	the request, with a full call chain of UIMA AS components, within
+		colocated aggregate components and across remote services which are 
+		shared by multiple clients.</para>
+      </listitem>
+      <listitem>
+        <para>CASes can be saved before sending to any local or remote 
+        	delegate and later used to reproduce problems in a simple unit testing environment.</para>
+      </listitem>
+    </itemizedlist>
   </para>
     
   
@@ -966,6 +985,153 @@ under the License.
       
     </section>
     
+    </section>
+
+
+    <section id="ugr.async.mt.debugging">
+	    <title>Debugging</title>
+
+		<para>One of the strongest UIMA features is the ability to develop and
+			debug components in isolation from each other, and then to incrementally
+			combine components and scaleout complexity. All that is needed to exercise
+			each configuration are one or more appropriate input CASes.
+		</para>
+	
+		<para>It is strongly advised to first test UIMA components in the core UIMA 
+			environment with a variety of input CASes. If the entire 
+			application will not fit in a single process, deploy remote delegates as
+			UIMA AS primitives with only a single instance
+			(see <xref linkend="ugr.async.ov.concepts.deploying.multiples"></xref>),
+			and access them via JMS service descriptors 
+			(see <xref linkend="ugr.async.ov.concepts.jms_descriptor"/>). 
+			Run as much input data thru this "single-threaded" configuration as needed 
+			to eliminate most "algorithmic" errors and to measure performance against 
+			analysis time objectives. Thread safety and analysis
+			ordering issues can then be addressed separately.</para> 
+	
+		<para><emphasis role="bold">Thread safety bugs.</emphasis> Components intended to be run 
+			multi-threaded should first be deployed as a multiple instance UIMA AS service 
+			(again see <xref linkend="ugr.async.ov.concepts.deploying.multiples"></xref>),
+			and fed their input CASes with a driver
+			capable of keeping all instances busy at the same time. A good application
+			is the sample driver $UIMA_HOME/bin/runRemoteAsyncAE; use the -p argument 
+			to increase the number of outstanding CAS requests sent to the target service.
+			When looking for threading problems try using http://findbugs.sourceforge.net/. 
+			In addition to looking for exceptions caused by thread unsafe code, check that
+			the single and multi-threaded analysis results are the same.
+		</para>
+
+		<para><emphasis role="bold">Analysis ordering bugs.</emphasis>
+			In a core UIMA aggregate CASes are processed by each delegate in input order.
+			This relationship changes for the same aggregate deployed asynchronously if one of the delegates
+			is replicated, as CASes are progressed in parallel and then progress thru the subsequent aggregate
+			flow in a different order then they are received.
+			Similarly with a delegate CasMultiplier in a core UIMA aggregate each child CAS is processed 
+			to completion before the next child CAS is started and the parent CAS is processed last.
+			When running asynchronously the parent CAS 
+			can arrive at downstream components ahead of its children because the parent
+			is released from a CasMultiplier immediately after the last child is created.
+			For applications which require all children to be processed before their parent,
+			use	the processParentLast flag (see	<xref linkend="ugr.ref.async.deploy.descriptor.ae"></xref>).
+		</para>
+
+		<para><emphasis role="bold">Timing issues.</emphasis>
+			Invariably with complex analytics, some components will be slower and some artifacts 
+			will take longer to process than desired. Making performance improvements relies on
+			identifying components running slower than expected and capturing the slow-running artifacts  
+			to study in detail. 
+		</para>
+
+	    <section id="ugr.async.mt.debugging.tracing">
+	      <title>Error Reporting and Tracing</title>
+	      <para>After the system is scaled out and substantially more data is being processed
+	      	it is likely that additional errors will occur.
+	      </para>
+
+	      <para>Java errors at any component level
+			are propagated back to the component originating the request
+		    (unless suppressed by UIMA AS error handling options, 
+		    see <xref linkend="ugr.async.eh.error_handling_overview"></xref>).
+		    The error stack traces the call chain of UIMA AS components, within
+		    colocated aggregate components and across remote services which are 
+		    shared by multiple clients. Some errors can be resolved with this
+		    information alone.
+			</para>
+
+	      <para>If process timeouts are not used 
+		    (see <xref linkend="ugr.ref.async.deploy.descriptor.errorconfig"></xref>)
+		    an asynchronous system can hang if one analysis step somewhere in
+		    the system has hung. Given many CASes in process at the same time it can
+		    be useful to create a custom trace of CAS activity by appropriate logging
+		    in <emphasis role="bold">a custom flow controller</emphasis>. 
+		    Such logging would have a unique identifier in every CAS,
+			usually a singleton FeatureStructure with a unique String feature. Identifiers
+			for child CASes should include some reference to the CasMultiplier they were
+			created from as well as their parent CAS.
+		  </para>
+
+		  <para>The flow controller is also the ideal place to measure timing statistics
+		  	for components of interest. Global stats can easily be measured using the 
+		  	time between flow steps, and time
+		  	thresholds used to flag specific CASes causing problems. Again the unique
+		  	CAS identifier can be quite useful here.
+		  </para>
+
+	    </section>
+	
+	    <section id="ugr.async.mt.debugging.caslogging">
+	      <title>CAS Logging</title>
+	      <para>Within a UIMA AS asynchronous aggregate, CASes can be saved before sending to any local or remote 
+	        	delegate and later used to reproduce a problem in a simple unit testing environment.
+	        	Control of CAS logging is done via Java properties:
+	      </para>
+	        <informaltable frame="all">
+	          <tgroup cols="2" colsep="1" rowsep="1">
+	            <colspec colname="c1" colwidth="2*"/>
+	            <colspec colname="c2" colwidth="5*"/>
+	            <thead>
+	              <row>
+	                <entry align="center">Property</entry>
+	                <entry align="center">Description</entry>
+	              </row>
+	            </thead>
+	            <tbody>
+	        
+	              <row>
+	                <entry>UIMA_CASLOG_BASE_DIRECTORY</entry>
+	                <entry>optional; this is the directory under which sub-directories with
+	                	XmiCas files will be created. If not specified, the process's current directory 
+	                	will be the base.</entry>
+	              </row>
+
+	              <row>
+	                <entry>UIMA_CASLOG_COMPONENT_ARRAY</entry>
+	                <entry>This is a space separated list of delegates keys. If a
+						delegate is nested inside a co-located async aggregate, the name would include the key
+						name of the aggregate, e.g. "someAggName/someDelName". The XmiCas files will then be
+						written into $UIMA_CASLOG_BASE_DIRECTORY/someAggName-someDelName/</entry>
+	              </row>
+
+	              <row>
+	                <entry>UIMA_CASLOG_TYPE_NAME</entry>
+	                <entry>optional; this is the name of a FeatureStructure in the CAS
+	                	containing a unique string to use to name each XmiCas file. If not specified, XmiCas
+	                	file name will be N.xmi, where N is the time in microseconds since the component was
+	                	initialized.</entry>
+	              </row>
+
+	              <row>
+	                <entry>UIMA_CASLOG_FEATURE_NAME</entry>
+	                <entry>optional unless the TYPE_NAME is specified; this parameter
+	                	gives the string feature to use. If the string value contains one or more
+	                	"/" characters only the text after the last "/" will be used.</entry>
+	              </row>
+
+	            </tbody>
+	          </tgroup>
+	        </informaltable>
+	    </section>
+
   </section>
   
   <!--section id="ugr.async.mt.limits">

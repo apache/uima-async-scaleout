@@ -403,10 +403,13 @@ under the License.
           <para>deserializing an input CAS (only on the input Queue),
           or serializing the resulting CAS back to a remote requester (only if the
           requester is remote).</para>
+        </listitem>
+        <listitem>
           <para>running the flow controller</para>
+        </listitem>
+        <listitem>
           <para>serializing CASes being sent to remote delegates (only useful if one or more
           of the delegates is remote).  
-            
           </para>
         </listitem>
       </itemizedlist>
