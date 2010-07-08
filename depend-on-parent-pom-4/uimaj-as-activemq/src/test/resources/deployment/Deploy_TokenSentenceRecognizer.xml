@@ -32,11 +32,10 @@
     <service>
       <inputQueue endpoint="TokenSentenceRecognizerQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
       <topDescriptor>
-       <import location="C:/uima/releases/2.3.3-04/apache-uima/examples/descriptors/analysis_engine/SimpleTokenAndSentenceAnnotator.xml"/> 
+       <import location="../descriptors/analysis_engine/SimpleTokenAndSentenceAnnotator.xml"/> 
       </topDescriptor>
       <analysisEngine>
       <asyncPrimitiveErrorConfiguration>
-           <!-- <processCasErrors thresholdCount="4" thresholdWindow="10" thresholdAction="terminate" /> -->
            <collectionProcessCompleteErrors additionalErrorAction="terminate" />
       </asyncPrimitiveErrorConfiguration>
       </analysisEngine>
