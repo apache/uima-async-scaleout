@@ -418,6 +418,7 @@
             <id>default-cli</id>
             <configuration>
               <excludes>
+                <exclude>release.properties</exclude> <!-- release generated artifact -->
                 <exclude>src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
                 <exclude>src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
                 <exclude>src/main/examples/run_configuration/*.launch</exclude> <!-- eclipse launch configurations -->
