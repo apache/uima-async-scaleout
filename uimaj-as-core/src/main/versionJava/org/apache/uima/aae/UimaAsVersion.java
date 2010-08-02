@@ -31,7 +31,7 @@ public class UimaAsVersion {
    * @return the major version number
    */
   public short getMajorVersion() {
-    return 2; // major version
+    return ${parsedVersion.majorVersion}; // major version
   }
 
   /**
@@ -40,7 +40,7 @@ public class UimaAsVersion {
    * @return the minor version number
    */
   public short getMinorVersion() {
-    return 3; // minor version
+    return ${parsedVersion.minorVersion}; // minor version
   }
 
   /**
@@ -49,7 +49,7 @@ public class UimaAsVersion {
    * @return the build revision number
    */
   public short getBuildRevision() {
-    return 0; // build revision
+    return ${parsedVersion.incrementalVersion}; // build revision
   }
 
   public String getVersionString() {
