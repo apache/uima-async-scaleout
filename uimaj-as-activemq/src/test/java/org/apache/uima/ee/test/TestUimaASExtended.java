@@ -2779,7 +2779,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testContinueOnRetryFailure() throws Exception {
     System.out.println("-------------- testContinueOnRetryFailure -------------");
-    File tempDir = new File("temp");
+    File tempDir = new File("target/temp");
     deleteAllFiles(tempDir);
     tempDir.mkdir();
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
