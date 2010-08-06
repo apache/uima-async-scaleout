@@ -51,7 +51,7 @@ public class WriterAnnotator extends CasAnnotator_ImplBase {
 
   public void process(CAS aCAS) throws AnalysisEngineProcessException {
     ++counter;
-    File out = new File("temp", name + "." + counter);
+    File out = new File("target/temp", name + "." + counter);
     FileWriter os;
     try {
       os = new FileWriter(out);
