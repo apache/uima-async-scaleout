@@ -32,7 +32,7 @@
     <service>
       <inputQueue endpoint="NamesAndPersonTitlesQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
       <topDescriptor>
-       <import location="C:/uima/releases/2.3.3-04/apache-uima/examples/descriptors/analysis_engine/NamesAndPersonTitles_TAE.xml"/> 
+       <import location="../descriptors/analysis_engine/NamesAndPersonTitles_TAE.xml"/> 
       </topDescriptor>
       <analysisEngine>
       <asyncPrimitiveErrorConfiguration>
