@@ -367,12 +367,12 @@ public class OverviewPage extends AbstractHeaderPage {
     FormToolkit toolkit = managedForm.getToolkit();
     form.setText(Messages.DDE_OverviewPage_Title);
 
-    ScrolledForm form = managedForm.getForm();
-    FormColors colors = toolkit.getColors();
-    colors.initializeSectionToolBarColors();
-    Color gbg = colors.getColor(FormColors.TB_GBG);
-    Color bg = colors.getBackground();
-    form.getForm().setTextBackground(new Color[] { bg, gbg }, new int[] { 100 }, true);
+//    ScrolledForm form = managedForm.getForm();
+//    FormColors colors = toolkit.getColors();
+//    colors.initializeSectionToolBarColors();
+//    Color gbg = colors.getColor(FormColors.TB_GBG);
+//    Color bg = colors.getBackground();
+//    form.getForm().setTextBackground(new Color[] { bg, gbg }, new int[] { 100 }, true);
 
     fillBody(managedForm, toolkit);
   }
