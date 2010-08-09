@@ -20,7 +20,7 @@
 <feature
       id="org.apache.uima.as.deployeditor"
       label="UIMA-AS Deployment Descriptor Editor"
-      version="2.3.0.incubating"
+      version="2.3.1.SNAPSHOT"
       provider-name="Apache Software Foundation">
 
    <description url="http://incubator.apache.org/uima">
@@ -30,7 +30,7 @@
       UIMA components using Asynchronous Scaleout
    </description>
 
-   <copyright url="http://incubator.apache.org/uima">
+   <copyright url="http://www.apache.org/licenses/LICENSE-2.0">
       Copyright the Apache Software Foundation and others; see License
 and NOTICE files
    </copyright>
@@ -53,7 +53,7 @@ under the License.
    </license>
 
    <url>
-      <discovery label="UIMA Eclipse Plugins update site" url="http://www.apache.org/dist/incubator/uima/eclipse-update-site/"/>
+      <discovery label="UIMA Eclipse Plugins update site" url="http://www.apache.org/dist/uima/eclipse-update-site/"/>
    </url>
 
    <requires>
@@ -65,14 +65,14 @@ under the License.
          id="org.apache.uima.deployeditor"
          download-size="0"
          install-size="0"
-         version="2.3.0.incubating"
+         version="2.3.1.SNAPSHOT"
          unpack="false"/>
 
    <plugin
          id="org.apache.uima.runtime.fragments.deployeditor"
          download-size="0"
          install-size="0"
-         version="2.3.0.incubating"
+         version="2.3.1.SNAPSHOT"
          fragment="true"
          unpack="false"/>
 
