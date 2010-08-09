@@ -246,17 +246,9 @@ public class RunRemoteAsyncAE {
     if (collectionReaderDescriptor != null) {
       uimaEEEngine.process();
     } else {
-      long howMany = 100000;
-      while(howMany > 0) {
-        // send an empty CAS
-        CAS cas = uimaEEEngine.getCAS();
-        System.out.println("Client Sending CAS:"+howMany);
-        uimaEEEngine.sendCAS(cas);
-        synchronized(this) {
-          wait(500);
-        }
-        howMany--;
-      }
+      // send an empty CAS
+      CAS cas = uimaEEEngine.getCAS();
+      uimaEEEngine.sendCAS(cas);
       uimaEEEngine.collectionProcessingComplete();
     }
 
