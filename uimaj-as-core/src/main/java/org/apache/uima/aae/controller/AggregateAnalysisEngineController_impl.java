@@ -1335,7 +1335,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       enableCasLogMap.put(analysisEngineKey, true);
     }
     // create XmiCas file name
-    Long now = new Long((System.nanoTime()-initializationTime)/1000);
+    Long now = Long.valueOf((System.nanoTime()-initializationTime)/1000);
     String casName = (String)casLogDirMap.get(analysisEngineKey)+"/"+now.toString()+".xmi";
     if (null != System.getProperty("UIMA_CASLOG_TYPE_NAME") && null != System.getProperty("UIMA_CASLOG_FEATURE_NAME")) {
       String typeName = System.getProperty("UIMA_CASLOG_TYPE_NAME");
