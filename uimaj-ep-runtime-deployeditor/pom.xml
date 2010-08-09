@@ -90,30 +90,25 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>uima-bundle</id>
-            <configuration>
-              <instructions>
-                <!-- turn off "uses" generation because Eclipse 3.2.x doesn't work with them -->
-                <_nouses>true</_nouses>
-                <Export-Package>
-                  org.apache.uima.aae.deployment,
-                  org.apache.uima.aae.deployment.impl,
-                  org.apache.uima.application.metadata,
-                  org.apache.uima.application.metadata.impl,
-                  org.apache.uima.application.util,
-                  org.apache.uima.cpe.model,
-                  org.apache.uima.tools.debug.util
-                </Export-Package>
-    
-                <Bundle-SymbolicName>org.apache.uima.runtime.fragments.deployeditor;singleton:=true</Bundle-SymbolicName>
-    
-                <Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host>
-              </instructions>
-            </configuration>
-          </execution>
-        </executions>
+        <configuration>
+          <instructions>
+            <!-- turn off "uses" generation because Eclipse 3.2.x doesn't work with them -->
+            <_nouses>true</_nouses>
+            <Export-Package>
+              org.apache.uima.aae.deployment,
+              org.apache.uima.aae.deployment.impl,
+              org.apache.uima.application.metadata,
+              org.apache.uima.application.metadata.impl,
+              org.apache.uima.application.util,
+              org.apache.uima.cpe.model,
+              org.apache.uima.tools.debug.util
+            </Export-Package>
+
+            <Bundle-SymbolicName>org.apache.uima.runtime.fragments.deployeditor;singleton:=true</Bundle-SymbolicName>
+
+            <Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host>
+          </instructions>
+        </configuration>
       </plugin>
 
     </plugins>
