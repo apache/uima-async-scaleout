@@ -189,6 +189,10 @@ public abstract class ErrorHandlerBase {
           AnalysisEngineController aController, String aKey, Threshold aThreshold,
           ErrorContext anErrorContext) {
     boolean done = false;
+
+    if ( aController == null ) {
+    	return false;
+    }
     String errorCounterKind = (aRetryCommand == AsynchAEMessage.GetMeta) ? Monitor.GetMetaErrorRetryCount
             : Monitor.ProcessErrorRetryCount;
     // Handle errors in a loop. Retry until retry threshold is reached
@@ -235,11 +239,9 @@ public abstract class ErrorHandlerBase {
         } catch (Exception e) {
           anEndpoint.cancelTimer();
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            if ( aController != null ) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                       "retryLastCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                       "UIMAEE_service_exception_WARNING", aController.getComponentName());
-            }
 
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "retryLastCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
