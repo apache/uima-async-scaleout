@@ -872,9 +872,6 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
   public class SimpleCallbackListener extends UimaAsTestCallbackListener {
 
-    private String casSent = null;
-
-
     /**
      * Callback method which is called by Uima EE client when a reply to process CAS is received.
      * The reply contains either the CAS or an exception that occurred while processing the CAS.
