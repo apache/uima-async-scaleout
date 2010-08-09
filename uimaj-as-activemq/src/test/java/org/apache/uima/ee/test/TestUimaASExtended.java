@@ -2781,7 +2781,12 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testContinueOnRetryFailure -------------");
     File tempDir = new File("target/temp");
     deleteAllFiles(tempDir);
-    tempDir.mkdir();
+    try {
+        tempDir.mkdir();
+    } catch( Exception e) {
+    	e.printStackTrace();
+    	throw e;
+    }
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_WriterAnnotatorA.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_WriterAnnotatorB.xml");
