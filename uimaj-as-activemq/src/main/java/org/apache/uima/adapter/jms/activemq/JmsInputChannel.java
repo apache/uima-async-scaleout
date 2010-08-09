@@ -104,7 +104,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 
   private Object mux = new Object();
 
-  private RemoteJMXServer remoteJMXServer = null;
+  private transient RemoteJMXServer remoteJMXServer = null;
   //  synchronizes initialization of RemotBroker
   private Object brokerMux = new Object();
   
