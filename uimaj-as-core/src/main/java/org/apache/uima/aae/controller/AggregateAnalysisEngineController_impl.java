@@ -1342,7 +1342,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       String featureName = System.getProperty("UIMA_CASLOG_FEATURE_NAME");
       Type logType = cas.getTypeSystem().getType(typeName);
       Feature logFeature = logType.getFeatureByBaseName(featureName);
-      Iterator<FeatureStructure> iter = cas.getIndexRepository().getAllIndexedFS(logType);
+      CAS view = cas;
+      if (null != System.getProperty("UIMA_CASLOG_VIEW_NAME")) {
+        view = cas.getView(System.getProperty("UIMA_CASLOG_VIEW_NAME"));
+      }
+      Iterator<FeatureStructure> iter = view.getIndexRepository().getAllIndexedFS(logType);
       FeatureStructure fs = iter.next();
       if (!iter.hasNext() && null != fs.getStringValue(logFeature)) {
         String[] uri = fs.getStringValue(logFeature).split("/");

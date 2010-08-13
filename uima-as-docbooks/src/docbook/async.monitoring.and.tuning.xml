@@ -1127,6 +1127,13 @@ under the License.
 	                	"/" characters only the text after the last "/" will be used.</entry>
 	              </row>
 
+	              <row>
+	                <entry>UIMA_CASLOG_VIEW_NAME</entry>
+	                <entry>optional; if the TYPE_NAME and FEATURE_NAME parameters are specified 
+	                    this string selects the CAS view used to access the FeatureStructure with 
+	                    unique string feature.</entry>
+	              </row>
+
 	            </tbody>
 	          </tgroup>
 	        </informaltable>
