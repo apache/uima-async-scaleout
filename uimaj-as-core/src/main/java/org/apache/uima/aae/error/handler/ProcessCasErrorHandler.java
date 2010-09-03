@@ -218,19 +218,24 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
                 new Object[] { aController.getComponentName(), t.getClass().getName() });
       }
       if (casReferenceId != null) {
-        // Cleanup resources associated with a CAS and then release the CAS
-        try {
-          if (aController instanceof AggregateAnalysisEngineController) {
-            ((AggregateAnalysisEngineController) aController).dropFlow(casReferenceId, true);
-            ((AggregateAnalysisEngineController) aController).removeMessageOrigin(casReferenceId);
-          }
-          aController.dropStats(casReferenceId, aController.getName());
-        } catch (Exception e) {
-          // Throwing this CAS away, ignore exception
-        } finally {
-          if (aController.isTopLevelComponent()) {
-            aController.dropCAS(casReferenceId, true);
-          }
+          CasStateEntry casStateEntry = aController.getLocalCache().lookupEntry(casReferenceId);
+          //	Cleanup if the CAS has no children. If it does, the cleanup will be done when all
+          //	child CASes are processed.
+          if ( casStateEntry != null && casStateEntry.getSubordinateCasInPlayCount() == 0) {
+      	  // Cleanup resources associated with a CAS and then release the CAS
+            try {
+              if (aController instanceof AggregateAnalysisEngineController) {
+                ((AggregateAnalysisEngineController) aController).dropFlow(casReferenceId, true);
+                ((AggregateAnalysisEngineController) aController).removeMessageOrigin(casReferenceId);
+              }
+              aController.dropStats(casReferenceId, aController.getName());
+            } catch (Exception e) {
+              // Throwing this CAS away, ignore exception
+            } finally {
+              if (aController.isTopLevelComponent()) {
+                aController.dropCAS(casReferenceId, true);
+              }
+            }
         }
       }
 
