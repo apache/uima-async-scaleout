@@ -126,6 +126,9 @@ public abstract class AnalysisEngineControllerAdapter implements AnalysisEngineC
 
     return null;
   }
+  public Map<String,String> getDeadClientMap() {
+	  return null;
+  }
 
   public ControllerLatch getControllerLatch() {
 
