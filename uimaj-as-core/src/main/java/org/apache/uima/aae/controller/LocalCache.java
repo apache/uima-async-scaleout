@@ -214,7 +214,17 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 
     private Endpoint freeCasNotificationEndpoint;
 
-    public boolean isDropped() {
+    private volatile boolean deliveryToClientFailed;
+    
+    public boolean deliveryToClientFailed() {
+		return deliveryToClientFailed;
+	}
+
+	public void setDeliveryToClientFailed() {
+		this.deliveryToClientFailed = true;
+	}
+
+	public boolean isDropped() {
       return dropped;
     }
 
