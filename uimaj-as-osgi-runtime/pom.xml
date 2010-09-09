@@ -25,14 +25,14 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>parent-pom-eclipse-plugins-ibm-notice</artifactId>
-    <version>2</version>
+    <version>3</version>
     <relativePath/>
   </parent>
   
   <artifactId>uimaj-as-osgi-runtime</artifactId>
   <packaging>jar</packaging>
   <version>2.3.1-SNAPSHOT</version>
-  <name>UIMA AS: ${project.artifact}</name>
+  <name>UIMA AS: ${project.artifactId}</name>
   <description>Apache UIMA AS runtime code packaged for osgi use</description>
   <url>${uimaWebsiteUrl}</url>
 
