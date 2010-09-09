@@ -243,11 +243,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   private ScheduledExecutorService daemonServiceExecutor = null;
 
   private static final UimaAsVersion uimaAsVersion = new UimaAsVersion();
+  // Holds destination names of clients known to be dead
+  protected ConcurrentHashMap<String,String> deadClientDestinationMap = new ConcurrentHashMap<String, String>();
 
+  
   public BaseAnalysisEngineController() {
 
   }
-
+ 
   public BaseAnalysisEngineController(AnalysisEngineController aParentController,
           int aComponentCasPoolSize, String anEndpointName, String aDescriptor,
           AsynchAECasManager aCasManager, InProcessCache anInProcessCache) throws Exception {
@@ -2714,5 +2717,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     synchronized(currentState) {
       return currentState;
     }
+  }
+  
+  public Map<String,String> getDeadClientMap() {
+	  return deadClientDestinationMap;
   }
 }
