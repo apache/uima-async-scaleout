@@ -220,4 +220,6 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   
   public ServiceState getState();
 
+  public Map<String,String> getDeadClientMap();
+
 }
