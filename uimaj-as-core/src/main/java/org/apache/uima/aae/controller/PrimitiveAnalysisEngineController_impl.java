@@ -629,9 +629,16 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // Send generated CAS to the client
           if (!stopped) {
             getOutputChannel().sendReply(newEntry, anEndpoint);
+            //	Check for delivery failure. The client may have terminated while an input CAS was being processed
+            if ( childCasStateEntry.deliveryToClientFailed() ) {
+          	  if ( cmOutstandingCASes.containsKey(childCasStateEntry.getCasReferenceId())) {
+              	  cmOutstandingCASes.remove(childCasStateEntry.getCasReferenceId());
+          	  }
+          	  dropCAS(childCasStateEntry.getCasReferenceId(), true);
+            }
           }
         }
-        // Remove the new CAS state entry from the local cache if this a top level primitive.
+        // Remove new CAS state entry from the local cache if this is a top level primitive.
         // If not top level, the client (an Aggregate) will remove this entry when this new
         // generated CAS reaches Final State.
         if (isTopLevelComponent()) {
