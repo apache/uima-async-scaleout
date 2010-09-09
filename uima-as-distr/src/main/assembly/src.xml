@@ -105,7 +105,8 @@ under the License.
       <directory>../uima-as-docbooks</directory>
       <outputDirectory>uima-as-docbooks</outputDirectory>
       <excludes>
-        <exclude>target/**</exclude>   
+        <exclude>target/**</exclude>
+        <exclude>.*/**</exclude>   
       </excludes>
       <fileMode>644</fileMode>
     </fileSet>   
@@ -152,6 +153,7 @@ under the License.
       <outputDirectory>/uimaj-eclipse-feature-deployeditor</outputDirectory>
       <excludes>
         <exclude>target/**</exclude>
+        <exclude>.*/**</exclude>   
       </excludes>
       <fileMode>644</fileMode>
     </fileSet>            
