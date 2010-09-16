@@ -925,6 +925,20 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
   }
+  public void testDeployPrimitiveServiceWithInitFailure() throws Exception {
+	    System.out.println("-------------- testDeployPrimitiveServiceWithInitFailure -------------");
+	    // Instantiate Uima EE Client
+	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    // Deploy Uima EE Primitive Service
+	    try {
+		    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithInitException.xml");
+	    } catch( ResourceInitializationException e) {
+	    	System.out.println("Received Expected ResourceInitializationException On Service Deploy");
+		    return;
+	    }
+	    fail("Expected ResourceInitializationException Not Thrown from deployed Service.");
+  }
+  
   public void testTypeSystemMerge() throws Exception {
     System.out.println("-------------- testTypeSystemMerge -------------");
     // Instantiate Uima EE Client
@@ -1282,7 +1296,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           // at this point the top level service should show a connection error
           synchronized (this) {
             // wait for 3 seconds before stopping
-            this.wait(3000);
+            this.wait(5000);
           }
           eeUimaEngine.stopProducingCases();
         } catch (Exception e) {
@@ -1602,7 +1616,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath
             + "/Deploy_AggregateWithFlowControllerExceptionOnDisable.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            1, EXCEPTION_LATCH); // PC_LATCH);
+            1, PROCESS_LATCH); // PC_LATCH);
   }
 
   /**
@@ -2100,7 +2114,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
   public void testExistanceOfParentCasReferenceIdOnChildFailure() throws Exception {
-    System.out
+	  System.out
             .println("-------------- testExistanceOfParentCasReferenceIdOnChildFailure -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
