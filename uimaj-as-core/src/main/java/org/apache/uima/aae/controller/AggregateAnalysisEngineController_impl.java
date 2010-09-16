@@ -2021,15 +2021,16 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     } else {
       // Send response to a given endpoint
       getOutputChannel().sendReply(cacheEntry, replyEndpoint);
-      // Drop the CAS only if the client is remote and the CAS is an input CAS OR
-      // the CAS is a child but there was a failure delivering it to a client. The client
-      // may have terminated while its input CAS was being processed, for example. 
-      // If this CAS has a parent the client will send Release CAS notification to release the CAS.
-      if (!casStateEntry.isSubordinate() || (casStateEntry.isSubordinate() && isCasMultiplier() && casStateEntry.deliveryToClientFailed() )) {
-    	  if ( cmOutstandingCASes.containsKey(casStateEntry.getCasReferenceId())) {
+    }
+    // Drop the CAS only if the client is remote and the CAS is an input CAS OR
+    // the CAS is a child but there was a failure delivering it to a client. The client
+    // may have terminated while its input CAS was being processed, for example. 
+    // If this CAS has a parent the client will send Release CAS notification to release the CAS.
+    if (!casStateEntry.isSubordinate() || (casStateEntry.isSubordinate() && isCasMultiplier() && casStateEntry.deliveryToClientFailed() )) {
+    	if ( cmOutstandingCASes.containsKey(casStateEntry.getCasReferenceId())) {
         	  cmOutstandingCASes.remove(casStateEntry.getCasReferenceId());
-    	  }
-    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+    	}
+    	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
            UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.FINE,
                 CLASS_NAME.getName(),
@@ -2037,14 +2038,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_client_dead__FINE",
                 new Object[] { getComponentName(), replyEndpoint.getDestination().toString(), casStateEntry.getCasReferenceId()});
-          }
-    	  dropCAS(casStateEntry.getCasReferenceId(), true);
-    	  // If the cache is empty change the state of the Aggregate to idle
-    	  if (getInProcessCache().isEmpty()) {
-    		  endProcess(AsynchAEMessage.Process);
-    	  }
-      }
-    }
+        }
+    	dropCAS(casStateEntry.getCasReferenceId(), true);
+    	// If the cache is empty change the state of the Aggregate to idle
+    	if (getInProcessCache().isEmpty()) {
+    	  endProcess(AsynchAEMessage.Process);
+    	}
+     }
   }
 
   private void sendReplyToCollocatedClient(CacheEntry cacheEntry, CasStateEntry casStateEntry,
