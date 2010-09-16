@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadFactory;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.util.Level;
-import org.springframework.core.task.TaskRejectedException;
 
 /**
  * Custom ThreadFactory for use in the TaskExecutor. The TaskExecutor is plugged in by Spring from
@@ -79,7 +78,19 @@ public class UimaAsThreadFactory implements ThreadFactory {
             // Call given Worker (Runnable) run() method and block. This call block until the
             // TaskExecutor is terminated.
             r.run();
-          } catch (Exception e) {
+          } catch (Throwable e) {
+        	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                      "UimaAsThreadFactory", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_exception__WARNING", e);
+        	  if ( controller != null ) {
+              	  Exception ex;
+              	  if ( e instanceof Exception ) {
+              		  ex = (Exception)e;
+              	  } else {
+              		  ex = new Exception(e);
+              	  }
+            	  controller.notifyListenersWithInitializationStatus(ex);
+        	  } 
             return;
           }
         }
@@ -88,12 +99,12 @@ public class UimaAsThreadFactory implements ThreadFactory {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         if ( controller != null ) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                  "CacheEntry", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UimaAsThreadFactory", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_service_exception_WARNING", controller.getComponentName());
         }
 
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                "CacheEntry", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UimaAsThreadFactory", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_exception__WARNING", e);
       }
     }
