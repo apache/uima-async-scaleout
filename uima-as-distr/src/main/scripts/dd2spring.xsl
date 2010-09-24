@@ -2569,7 +2569,7 @@
     <xsl:message select="'end of nearest key'"/> -->
     <xsl:choose>
       <xsl:when test="$nearestKey">
-        <xsl:sequence select="string($nearestKey/@key)"/>
+        <xsl:sequence select="f:createValidName(string($nearestKey/@key))"/>
       </xsl:when>
       <xsl:otherwise>      
         <!--xsl:message select="'nearest key was false, using topkey'"/-->
@@ -2583,9 +2583,41 @@
     </xsl:choose>
   </xsl:function>
  
+  <xsl:function name="f:createValidName">
+    <xsl:param name="inputName"/>
+    <xsl:variable name="u">
+      <xsl:choose>
+        <xsl:when test="starts-with($inputName, '${')">
+          <xsl:sequence select=
+            "replace(replace($inputName, '\$\{', ''), '\}', '')"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:sequence select=
+            "replace(
+              replace(
+               replace(
+                replace(
+                 replace(
+                  replace(
+                   replace( $inputName,'\?.*', '')
+                           ,',','_cm_')
+                          ,':','_c_')
+                         ,'//','_ss_')
+                       ,'/', '_s_')
+                      ,'\(','_op_')
+                     ,'\)','_cp_')
+                     "/>     
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+             
+    <xsl:sequence select="$u"/>
+  </xsl:function>         
+ 
+ 
   <xsl:function name="f:getQbrokerID">
     <xsl:param name="inputQueue"/>
-    <xsl:variable name="u">
+    <!-- xsl:variable name="u">
       <xsl:choose>
         <xsl:when test="starts-with($inputQueue/@brokerURL, '${')">
           <xsl:sequence select=
@@ -2609,9 +2641,9 @@
                      "/>     
         </xsl:otherwise>
       </xsl:choose>
-    </xsl:variable>
+    </xsl:variable-->
              
-    <xsl:sequence select="concat('qBroker_',$u)"/>
+    <xsl:sequence select="concat('qBroker_',f:createValidName($inputQueue/@brokerURL))"/>
   </xsl:function>         
   
   <xsl:function name="f:getEndpointName">
