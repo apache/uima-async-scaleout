@@ -25,12 +25,12 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>parent-pom-distr</artifactId>
-    <version>2</version>
+    <version>3</version>
     <relativePath/>
   </parent>
 
 	<artifactId>uima-as-distr</artifactId>
-	<packaging>pom</packaging>
+	<packaging>jar</packaging>
 	<version>2.3.1-SNAPSHOT</version>
   <name>UIMA-AS: ${project.artifactId}</name>
   <description>Build and release UIMA-AS</description>
