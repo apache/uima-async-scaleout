@@ -903,73 +903,81 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
   }
+  public void sendReply(int aCommand, Endpoint anEndpoint, String aCasReferenceId, boolean notifyOnJmsException)
+  throws AsynchAEException {
+	    try {
+	        if (aborting) {
+	          return;
+	        }
+	        anEndpoint.setReplyEndpoint(true);
+	        JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
 
+	        TextMessage tm = endpointConnection.produceTextMessage("");
+	        tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
+	        populateHeaderWithResponseContext(tm, anEndpoint, aCommand);
+	        if ( aCasReferenceId != null ) {
+		        tm.setStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
+	        }
+
+	        // If this service is a Cas Multiplier add to the message a FreeCasQueue.
+	        // The client may need send Stop request to that queue.
+	        if (aCommand == AsynchAEMessage.ServiceInfo
+	                && getAnalysisEngineController().isCasMultiplier() && freeCASTempQueue != null) {
+	          // Attach a temp queue to the outgoing message. This a queue where
+	          // Free CAS notifications need to be sent from the client
+	          tm.setJMSReplyTo(freeCASTempQueue);
+	        }
+	        endpointConnection.send(tm, 0, false);
+	        addIdleTime(tm);
+	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(
+	                  Level.FINE,
+	                  CLASS_NAME.getName(),
+	                  "sendReply",
+	                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAJMS_cpc_reply_sent__FINE",
+	                  new Object[] { getAnalysisEngineController().getComponentName(),
+	                      anEndpoint.getEndpoint() });
+	        }
+	      } catch (JMSException e) {
+	        // Unable to establish connection to the endpoint. Log it and continue
+	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                  "sendReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAEE_service_exception_WARNING", getAnalysisEngineController().getComponentName());
+
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "sendReply",
+	                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
+	                 e);
+	        }
+	        if ( notifyOnJmsException ) {
+	        	throw new AsynchAEException(e);
+	        }
+	      }
+
+	      catch (ServiceShutdownException e) {
+	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	          
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                  "sendReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAEE_service_exception_WARNING", getAnalysisEngineController().getComponentName());
+
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                  "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAJMS_exception__WARNING", e);
+	        }
+	      }
+
+	      catch (AsynchAEException e) {
+	        throw e;
+	      } catch (Exception e) {
+	        throw new AsynchAEException(e);
+	      }
+
+  }
   public void sendReply(int aCommand, Endpoint anEndpoint, String aCasReferenceId)
           throws AsynchAEException {
-    try {
-      if (aborting) {
-        return;
-      }
-      anEndpoint.setReplyEndpoint(true);
-      JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
-
-      TextMessage tm = endpointConnection.produceTextMessage("");
-      tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
-      populateHeaderWithResponseContext(tm, anEndpoint, aCommand);
-      tm.setStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
-
-      // If this service is a Cas Multiplier add to the message a FreeCasQueue.
-      // The client may need send Stop request to that queue.
-      if (aCommand == AsynchAEMessage.ServiceInfo
-              && getAnalysisEngineController().isCasMultiplier() && freeCASTempQueue != null) {
-        // Attach a temp queue to the outgoing message. This a queue where
-        // Free CAS notifications need to be sent from the client
-        tm.setJMSReplyTo(freeCASTempQueue);
-      }
-      endpointConnection.send(tm, 0, false);
-      addIdleTime(tm);
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.FINE,
-                CLASS_NAME.getName(),
-                "sendReply",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_cpc_reply_sent__FINE",
-                new Object[] { getAnalysisEngineController().getComponentName(),
-                    anEndpoint.getEndpoint() });
-      }
-    } catch (JMSException e) {
-      // Unable to establish connection to the endpoint. Logit and continue
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "sendReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_service_exception_WARNING", getAnalysisEngineController().getComponentName());
-
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "sendReply",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
-               e);
-      }
-    }
-
-    catch (ServiceShutdownException e) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "sendReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_service_exception_WARNING", getAnalysisEngineController().getComponentName());
-
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "sendReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", e);
-      }
-    }
-
-    catch (AsynchAEException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new AsynchAEException(e);
-    }
-
+	  sendReply(aCommand, anEndpoint, aCasReferenceId, false);
   }
 
   public void sendReply(int aCommand, Endpoint anEndpoint) throws AsynchAEException {
