@@ -545,6 +545,12 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
     return true; // Default, PROCESS THE MESSAGE
   }
+  private boolean ackClient( JmsMessageContext messageContext ) throws Exception {
+	  return ( !messageContext.propertyExists(AsynchAEMessage.CasSequence) &&
+			   messageContext.getMessageStringProperty(UIMAMessage.ServerURI).startsWith("vm") == false &&
+			   validEndpoint(messageContext) &&  
+			   isReplyRequired((Message)messageContext.getRawMessage()) );
+  }
   /**
    * Receives Messages from the JMS Provider. It checks the message header to determine the type of
    * message received. Based on the type, a MessageContext is created to facilitate access to the
@@ -584,42 +590,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         eN = "";
       }
     }
+    String command = "N/A";
+    String messageType ="N/A";
     
-    // The following creates remote connection to a JMX Server running in AMQ broker
-    // that manages this service input queue. The connection is done once and cached
-    //  for subsequent use. The default is to assume that the JMX Server is *not* 
-    //  available. In such case, the optimization to check for existence of reply
-    //  queue is not done and every message is processed.
-    boolean jmxServerAvailable = false;
-    //  relevant to top level service
-    if ( controller.isTopLevelComponent() && getBrokerURL() != null && isReplyRequired(aMessage) && attachToBrokerMBeanServer ) {
-      synchronized(brokerMux) {
-        //  check if the connection is valid. If not, create a new connection to
-        //  MBeanServer and cache it.
-        if (remoteJMXServer == null || !remoteJMXServer.isServerAvailable() ) {
-          //  create connection to this service Broker's JMX Server to enable queue lookups.
-          //  The lookup allows the service to determine if it should process a message. It
-          //  checks the server for existence of a reply queue provided in request msg. If 
-          //  the lookup fails, it means that the client sending a request msg has terminated
-          //  and a temp reply queue associated with the client has been deleted. There is 
-          //  no reason to process a msg if we know that the client is dead.
-          //  NOTE: the call to attachToRemotBrokerJMXServer() handles exceptions and does
-          //        not rethrow them. In case there was a problem connecting to the server
-          //        its internal status will say NotInitialized.
-          attachToRemoteBrokerJMXServer();
-          //  check if we failed in the above method.
-          if (remoteJMXServer != null && remoteJMXServer.isInitialized()) {
-            jmxServerAvailable = true; 
-          }
-        } else {
-          jmxServerAvailable = true;
-        }
-      }
-    }
-    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "onMessage",
-              JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_recvd_msg__FINE", new Object[] { eN });
-    }
     JmsMessageContext messageContext = null;
 
     int requestType = 0;
@@ -631,43 +604,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       } else {
         casRefId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
       }
-      String command = "";
-      String messageType ="";
       if (validMessage(aMessage)) {
         command = decodeIntToString(AsynchAEMessage.Command, aMessage
                 .getIntProperty(AsynchAEMessage.Command));
         // Request or Response
         messageType = decodeIntToString(AsynchAEMessage.MessageType, aMessage
                 .getIntProperty(AsynchAEMessage.MessageType));
-        //  check if we should process this message. If there is a connection
-        //  to a remote MBeanServer we check for existence of a temp reply queue.
-        //  If the queue exists, the message is allowed to be processed. Otherwise,
-        //  the client has terminated taking down its temp reply queue. There is
-        //  no reason to process the message.
-        try {
-          if ( jmxServerAvailable && // check if we have valid connection to MBeanServer
-                  //  The following returns false if a reply queue does not exist
-                  //  in MBeanServer registry
-                  !processRequestMessage(aMessage, messageContext) ) {
-            //  Reply queue has been deleted
-            if ( validEndpoint(messageContext) &&
-                 UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-                    UIMAFramework.getLogger(CLASS_NAME).logrb(
-                            Level.INFO,
-                            CLASS_NAME.getName(),
-                            "onMessage",
-                            JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                            "UIMAJMS_dropping_msg_client_is_dead__INFO",
-                            new Object[] { controller.getComponentName(),
-                              messageContext.getEndpoint().getDestination(), casRefId });
-            }
-            return;   // DROP the message because the client has terminated
-          }
-        } catch( Exception e) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                  "getLoadedJars", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_exception__WARNING", e);
-        }
+      
         String msgSentFromIP = null;
 
         if (aMessage.getIntProperty(AsynchAEMessage.MessageType) == AsynchAEMessage.Response
@@ -684,7 +627,21 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 
         String msgFrom = (String) aMessage.getStringProperty(AsynchAEMessage.MessageFrom);
         if (controller != null && msgFrom != null) {
-          if (msgSentFromIP != null) {
+        	//	Send an ACK to a client. This serves dual purpose:
+        	//  1 - tests for existence of temp reply queue
+        	//  2 - notifies client that a CAS it sent is about to be processed by a service
+        	//	ACK is sent for every request message
+        	if ( ackClient(messageContext)  ) {
+        		try {
+        			//	Any exception while sending an ACK results in a dropped request
+        			getController().getOutputChannel().sendReply(AsynchAEMessage.ServiceInfo,
+                            messageContext.getEndpoint(), aMessage.getStringProperty(AsynchAEMessage.CasReference), true);
+        		} catch( Exception ex) {
+       		        //	The exception has already been logged in sendReply() method
+       		        return;  // DONT PROCESS
+        		}
+        	}
+        	if (msgSentFromIP != null) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(
                       Level.FINE,
@@ -777,84 +734,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       }
     }
   }
-  /**
-   * Connects to this service Broker's JMX Server. If unable to connect, this method
-   * fails silently. The method uses default JMX Port number 1099 to create a connection
-   * to the Broker's JMX MBean server. The default can be overridden via System 
-   * property 'activemq.broker.jmx.port'. If connection cannot be established the 
-   * method silently fails.
-   * 
-   */
-  private void attachToRemoteBrokerJMXServer() {
-    remoteJMXServer = new RemoteJMXServer();
-    //  Check if JMX server port number was explicitly defined on the command line
-    //  If not, use 1099 as a default.
-    String jmxPort = System.getProperty("activemq.broker.jmx.port");
-    if ( jmxPort == null || jmxPort.trim().length() == 0 ) {
-      jmxPort = "1099";  // default
-    }
-    //  Now check if the provided port is actually a number
-    try {
-      //  This is here to test provided port number. The converted value is ignored
-      Integer.parseInt(jmxPort);
-    } catch( NumberFormatException e ) {
-      jmxPort = "1099";   // default
-    }
-    //  Fetch AMQ jmx domain from system properties. This property is not required
-    //  and the default AMQ jmx is used. The only exception is when the service is
-    //  deployed in a jvm with multiple brokers deployed as it is the case with jUnit 
-    //  tests. In such a case, each broker will register self with JMX using a different
-    //  domain.
-    String jmxAMQDomain = System.getProperty("activemq.broker.jmx.domain");
-    if ( jmxAMQDomain == null ) {
-      jmxAMQDomain = "org.apache.activemq";    // default
-    }
-    String brokerHostname="";
-    try {
-      //  Using this service Broker URL, extract a hostname to enable JMX queries
-      if ( getBrokerURL().startsWith("failover")) {
-        //  extract list of URLs that are provided as "failover:(url,url,...,url)"
-        String brokerUrlList = getBrokerURL().
-                                substring(getBrokerURL().indexOf("(")+1, getBrokerURL().indexOf(")"));
-        if ( brokerUrlList != null ) {
-          //  Tokenize list using "," as delimiter
-          StringTokenizer tokenizer = new StringTokenizer(brokerUrlList, ",");
-          while(tokenizer.hasMoreTokens()) {
-            try {
-              //  parse the url to extract just the node name
-              brokerHostname = extractNodeName(tokenizer.nextToken().trim());
-              //  Connect to a remote JMX Server. This fails if connection attempt fails
-              //  In such case, we try another url from the list
-              remoteJMXServer.initialize(jmxAMQDomain, brokerHostname,jmxPort);
-              break;  // got the connection to a JMX server
-            } catch ( Exception e) {
-              //  silently fail, try another broker from the failover list
-            }
-          }
-        }
-        if ( remoteJMXServer != null && !remoteJMXServer.isInitialized()) {
-          remoteJMXServer = null;   // Not supported
-        }
-      } else if ( getBrokerURL().startsWith("tcp") || getBrokerURL().startsWith("http")) {
-        brokerHostname = extractNodeName(getBrokerURL());
-        //  Connect to a remote JMX Server
-        remoteJMXServer.initialize(jmxAMQDomain, brokerHostname,jmxPort);
-      }
-    } catch( Exception e) {
-      //  Unable to connect to the Broker's MBean Server. Most likely the broker
-      //  is running with no jmx support. Dont attempt the connection again. This is not
-      //  an error. We continue processing with no optimization to check for existance of
-      //  client's reply queue
-      attachToBrokerMBeanServer = false;
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                "attachToRemoteBrokerJMXServer", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_broker_no_jmx__INFO",
-                getController().getComponentName());
-      }
-      remoteJMXServer = null;
-    }
-  }
-
+ 
   private String extractNodeName(String url) {
     int startPos = url.indexOf("//");
     //  Strip the protocol
