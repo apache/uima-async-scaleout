@@ -495,8 +495,11 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     return false;
 
   }
-
   public boolean send(final Message aMessage, long msgSize, boolean startTimer) {
+	 return send( aMessage, msgSize, startTimer, false);
+  }
+
+  public boolean send(final Message aMessage, long msgSize, boolean startTimer, boolean failOnJMSException) {
     String destinationName = "";
 
     try {
@@ -601,6 +604,10 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       } else {
         if (e instanceof JMSException) {
           handleJmsException((JMSException) e);
+          //	whoever called this method is interested in knowing that there was JMS Exception
+          if ( failOnJMSException ) {
+        	  return false;
+          }
         } else {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
