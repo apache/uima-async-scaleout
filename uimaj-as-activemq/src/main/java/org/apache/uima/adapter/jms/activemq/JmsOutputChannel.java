@@ -927,7 +927,10 @@ public class JmsOutputChannel implements OutputChannel {
 	          // Free CAS notifications need to be sent from the client
 	          tm.setJMSReplyTo(freeCASTempQueue);
 	        }
-	        endpointConnection.send(tm, 0, false);
+	        //	Check if there was a failure while sending a message
+	        if ( !endpointConnection.send(tm, 0, false, notifyOnJmsException) && notifyOnJmsException ) {
+	        	throw new JMSException("JMS Send Failed. Check UIMA Log For Details.");
+	        }
 	        addIdleTime(tm);
 	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
 	          UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -940,6 +943,9 @@ public class JmsOutputChannel implements OutputChannel {
 	                      anEndpoint.getEndpoint() });
 	        }
 	      } catch (JMSException e) {
+	        if ( notifyOnJmsException ) {
+	        	throw new AsynchAEException(e);
+	        }
 	        // Unable to establish connection to the endpoint. Log it and continue
 	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
 	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -949,9 +955,6 @@ public class JmsOutputChannel implements OutputChannel {
 	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "sendReply",
 	                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
 	                 e);
-	        }
-	        if ( notifyOnJmsException ) {
-	        	throw new AsynchAEException(e);
 	        }
 	      }
 
