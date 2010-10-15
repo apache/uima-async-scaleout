@@ -408,26 +408,7 @@ public class ProcessRequestHandler_impl extends HandlerBase {
           ((AggregateAnalysisEngineController) getController()).addMessageOrigin(casReferenceId,
                   aMessageContext.getEndpoint());
         }
-        if (getController().isCasMultiplier()) {
-          // Send an ack to the client. The ack message will include a FreeCasQueue
-          // to enable the client to send messages to the service processing a CAS.
-          try {
-            getController().getOutputChannel().sendReply(AsynchAEMessage.ServiceInfo,
-                    aMessageContext.getEndpoint(), casReferenceId);
-          } catch (Exception e) {
-            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-              if ( getController() != null ) {
-                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                        "handleProcessRequestFromRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAEE_service_exception_WARNING", getController().getComponentName());
-              }
 
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                      "handleProcessRequestFromRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAEE_exception__WARNING", e);
-            }
-          }
-        }
       }
       // To prevent processing multiple messages with the same CasReferenceId, check the CAS cache
       // to see if the message with a given CasReferenceId is already being processed. It is, the
