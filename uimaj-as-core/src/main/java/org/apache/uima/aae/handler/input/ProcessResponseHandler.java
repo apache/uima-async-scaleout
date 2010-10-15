@@ -599,6 +599,9 @@ public class ProcessResponseHandler extends HandlerBase {
     String casReferenceId = null;
     try {
       casReferenceId = messageContext.getMessageStringProperty(AsynchAEMessage.CasReference);
+      if ( casReferenceId == null ) {
+    	  return;  // nothing to do
+      }
       Endpoint freeCasEndpoint = messageContext.getEndpoint();
       CasStateEntry casStateEntry = ((AggregateAnalysisEngineController) getController())
               .getLocalCache().lookupEntry(casReferenceId);
@@ -606,8 +609,7 @@ public class ProcessResponseHandler extends HandlerBase {
         casStateEntry.setFreeCasNotificationEndpoint(freeCasEndpoint);
       }
     } catch (Exception e) {
-      System.out.println("Controller:" + getController().getComponentName() + " CAS:"
-              + casReferenceId + " Not Found In Cache");
+    	return;
     }
 
   }
@@ -665,7 +667,7 @@ public class ProcessResponseHandler extends HandlerBase {
         }
         handleCollectionProcessCompleteReply(messageContext, key);
       } else if (AsynchAEMessage.None == payload && AsynchAEMessage.ACK == command) {
-        handleACK(messageContext);
+        handleACK(messageContext, key);
       } else if (AsynchAEMessage.None == payload && AsynchAEMessage.Ping == command) {
         handlePingReply(messageContext);
       } else if (AsynchAEMessage.None == payload && AsynchAEMessage.ServiceInfo == command) {
@@ -683,10 +685,8 @@ public class ProcessResponseHandler extends HandlerBase {
 
   }
 
-  private void handleACK(MessageContext aMessageContext) throws AsynchAEException {
-    if (getController() instanceof PrimitiveAnalysisEngineController) {
-      // ((PrimitiveAnalysisEngineController) getController()).throttleNext();
-    }
+  private void handleACK(MessageContext aMessageContext, String key) throws AsynchAEException {
+//    System.out.println("+++++++++++++++ Controller:"+getController().getComponentName()+" Received Reply ACK from Service:"+key);
   }
 
 }
