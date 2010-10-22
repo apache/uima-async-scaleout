@@ -122,25 +122,20 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     appCtxt.put(UimaAsynchronousEngine.Endpoint, endpoint);
     appCtxt.put(UimaAsynchronousEngine.CasPoolSize, 0);
     if (timeout > 0) {
-      System.out.println("Setting Process Timeout: " + timeout);
       appCtxt.put(UimaAsynchronousEngine.Timeout, timeout);
     }
     if (getMetaTimeout > 0) {
-      System.out.println("Setting GetMeta Timeout: " + getMetaTimeout);
       appCtxt.put(UimaAsynchronousEngine.GetMetaTimeout, getMetaTimeout);
     }
     if (cpcTimeout > 0) {
-      System.out.println("Setting CPC Timeout: " + cpcTimeout);
       appCtxt.put(UimaAsynchronousEngine.CpcTimeout, cpcTimeout);
     }
     if (binary_serialization != null && binary_serialization.equalsIgnoreCase("true")) {
-      System.out.println("Using binary serialization");
       appCtxt.put(UimaAsynchronousEngine.SerializationStrategy, "binary");
     }
     uimaEEEngine = new BaseUIMAAsynchronousEngine_impl();
     uimaEEEngine.addStatusCallbackListener(this);
     uimaEEEngine.initialize(appCtxt);
-    System.out.println("adapter init complete");
   }
 
   /**
