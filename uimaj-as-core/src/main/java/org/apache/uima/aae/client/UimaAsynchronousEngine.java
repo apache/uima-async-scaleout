@@ -68,34 +68,111 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
  * 
  */
 public interface UimaAsynchronousEngine {
+  /**
+   * @deprecated
+   */
   public final String ApplicationContext = "ApplicationContext";
-
+  
+  /**
+   * Name of an application that uses Uima AS client. The application provides it to the Uima AS client
+   * in a Map which is an argument in {@link initialize(Map)} .This name is used to register Uima AS 
+   * client MBean with JMX. To make the name unique, provided string is prepended to a UUID to form 
+   * <ApplicationName>_www_xxxx_yyyy_zzzz
+   */
   public final String ApplicationName = "ApplicationName";
 
+  /**
+   * Broker URL the Uima AS client will use to communicate with Uima AS service. The application provides it 
+   * to the Uima AS client in a Map which is an argument in {@link initialize(Map)}. Required. If omitted, the
+   * Uima AS client throws {@link ResourceInitializationException}
+   */
   public final String ServerUri = "ServerURI";
 
+  /**
+   * Name of a queue where the Uima AS client sends JMS requests. The application provides it 
+   * to the Uima AS client in a Map which is an argument in {@link initialize(Map)}. Required. If omitted, the
+   * Uima AS client throws {@link ResourceInitializationException}
+   */
   public final String Endpoint = "Endpoint";
 
+  /**
+   * Size of Cas pool to create. This parameter determines how many CASes can be processed concurrently.
+   * The application provides it to the Uima AS client in a Map which is an argument in {@link initialize(Map)}. Optional. 
+   * If omitted, the Uima AS client will use 1 as a default. 
+   */
   public final String CasPoolSize = "CasPoolSize";
 
+  /**
+   * @deprecated 
+   */
   public final String ShadowCasPoolSize = "ShadowCasPoolSize";
 
+  /**
+   * @deprecated
+   */
   public static final String ReplyWindow = "ReplyWindow";
 
+  /**
+   * CAS process timeout. The max amount of time allowed to process a CAS. The application provides it 
+   * to the Uima AS client in a Map which is an argument in {@link initialize(Map)}. Optional. If omitted, the
+   * Uima AS client defaults to no timeout.
+   */
   public static final String Timeout = "Timeout";
 
+  /**
+   * Collection Processing Complete timeout. The max amount of time allowed to process CPC request.The application 
+   * provides it to the Uima AS client in a Map which is an argument in {@link initialize(Map)}. Optional. If omitted, 
+   * the Uima AS client defaults to no timeout.
+   */
   public static final String CpcTimeout = "CpcTimeout";
 
+  /**
+   * GetMeta timeout. The max amount of time allowed to process GetMeta request.The application 
+   * provides it to the Uima AS client in a Map which is an argument in {@link initialize(Map)}. Optional. If omitted, 
+   * the Uima AS client defaults to 60 seconds.
+   */
   public static final String GetMetaTimeout = "GetMetaTimeout";
 
+  /**
+   * Path to the XSLT processor to use when processing a deployment descriptor. The application provides it to the Uima AS 
+   * client via System property, either on a command line using -D, or explicitly by using java's 
+   * System.setProperty(DD2SpringXsltFilePath,<value>). This path is required only if the Uima AS Client is used to deploy 
+   * Uima AS service.
+   */
   public static final String DD2SpringXsltFilePath = "DD2SpringXsltFilePath";
 
+  /**
+   * Saxon classpath to use when processing a deployment descriptor. The application provides it to the Uima AS client 
+   * in a Map which is an argument in {@link initialize(Map)}. This classpath is required only if the Uima AS Client is 
+   * used to deploy Uima AS service.
+   */
+  /**
+   * Saxon classpath to use when processing a deployment descriptor. The application provides it to the Uima AS 
+   * client via System property, either on a command line using -D, or explicitly by using java's 
+   * System.setProperty(SaxonClasspath,<value>). This path is required only if the Uima AS Client is used to deploy 
+   * Uima AS service.
+   */
   public static final String SaxonClasspath = "SaxonClasspath";
 
+  /**
+   * Debug flag to use when processing a deployment descriptor. If set, the dd2spring processor will not remove generated
+   * spring configuration file on client exit. The application provides it to the Uima AS 
+   * client via System property, either on a command line using -D, or explicitly by using java's 
+   * System.setProperty(UimaEeDebug,<value>). This setting is only relevant if the Uima AS Client is used to deploy 
+   * Uima AS service.
+   */
   public static final String UimaEeDebug = "-uimaEeDebug";
 
+  /**
+   * Type of serialization to use when serializing CASes to remote Uima AS service. Valid serialization types are: xmi or
+   * binary. If this setting is omitted, the Uima AS client uses xmi as a default. The application provides it to the Uima AS client 
+   * in a Map which is an argument in {@link initialize(Map)}
+   */
   public static final String SerializationStrategy = "SerializationStrategy";
 
+  /**
+   * @deprecated 
+   */
   public static final String SharedConnection = "SharedConnection";
 
   /**
