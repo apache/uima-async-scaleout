@@ -1,9 +1,18 @@
-     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.3.0-incubating README
-     ---------------------------------------------------------------------------
+     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.3.1 README
+     ----------------------------------------------------------------
      
-     See subdirectory uima-as/readme for release notes
+Building from the Source Distribution
+-------------------------------------
 
-0. Changes in the 2.3.0 release
+We use Maven 3.0 for building; download this if needed, and set MAVEN_OPTS to -Xmx800m -XX:MaxPerSize-256m.
+
+Then build all the parts by going into the .../aggregate-uima-as directory, and issuing the command
+   mvn clean install.
+     
+     
+Changes in the 2.3.1 release
+----------------------------
+tbd - these are the 2.3.0 changes:
   - UIMA-AS "graduated" from Sandbox, now a top-level (within UIMA) add-on
   - UIMA-AS repackaged - no longer includes the base UIMA. You must download a comparable version of base UIMA, separately
   - Many improvements in error handling and recovery
@@ -20,7 +29,8 @@
   - New launcher allows specifying directories containing Jars; all Jars found will be added to the classpath
 
 
-1. Contents of Apache UIMA-AS binary distribution
+Contents of Apache UIMA-AS binary distribution
+----------------------------------------------
 
 The Apache UIMA-AS binary distribution includes 
   - Apache UIMA Asynchronous Scaleout extensions
@@ -384,14 +394,3 @@ Crypto Notice
    
    This distribution includes portions of Apache ActiveMQ, which, in
    turn, is classified as being controlled under ECCN 5D002.
-
-Disclaimer
------------
-
-Apache UIMA is an effort undergoing incubation at The Apache Software
-Foundation (ASF). Incubation is required of all newly accepted projects
-until a further review indicates that the infrastructure, communications,
-and decision making process have stabilized in a manner consistent with
-other successful ASF projects. While incubation status is not necessarily
-a reflection of the completeness or stability of the code, it does
-indicate that the project has yet to be fully endorsed by the ASF.
