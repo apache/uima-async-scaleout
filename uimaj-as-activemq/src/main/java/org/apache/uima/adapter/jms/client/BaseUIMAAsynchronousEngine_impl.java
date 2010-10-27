@@ -238,37 +238,30 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 			}
 			try {
 				// SharedConnection object manages a single JMS connection to
-				// the
-				// broker. If the client is scaled out in the same JVM, the
-				// connection
-				// is shared by all instances of the client to reduce number of
-				// threads
-				// in the broker. The SharedConnection object also maintains the
-				// number
-				// of client instances to determine when it is ok to close the
-				// connection.
-				// The connection is closed when the last client calls stop().
-				synchronized (connectionMux) {
-					try {
-						sharedConnectionSemaphore.acquire();
-						if (sharedConnection != null) {
-							// Remove a client from registry
-							sharedConnection.unregisterClient(this);
-							// The destroy method closes the JMS connection when
-							// the number of
-							// clients becomes 0, otherwise it is a no-op
-							if (sharedConnection.destroy()) {
-								// This needs to be done to invalidate the
-								// object for JUnit tests
-								sharedConnection = null;
-							}
+				// the broker. If the client is scaled out in the same JVM, the
+				// connection is shared by all instances of the client to reduce number of
+				// threads in the broker. The SharedConnection object also maintains the
+				// number of client instances to determine when it is ok to close the
+				// connection. The connection is closed when the last client calls stop().
+				try {
+					sharedConnectionSemaphore.acquire();
+					if (sharedConnection != null) {
+						// Remove a client from registry
+						sharedConnection.unregisterClient(this);
+						// The destroy method closes the JMS connection when
+						// the number of
+						// clients becomes 0, otherwise it is a no-op
+						if (sharedConnection.destroy()) {
+							// This needs to be done to invalidate the
+							// object for JUnit tests
+							sharedConnection = null;
 						}
-					} catch (InterruptedException ex) {
-						System.out
-								.println("UIMA AS Client Interrupted While Acquiring sharedConnectioSemaphore to Close Shared Connection");
-					} finally {
-						sharedConnectionSemaphore.release();
 					}
+				} catch (InterruptedException ex) {
+					System.out
+							.println("UIMA AS Client Interrupted While Acquiring sharedConnectioSemaphore to Close Shared Connection");
+				} finally {
+					sharedConnectionSemaphore.release();
 				}
 				if (sender != null) {
 					sender.doStop();
