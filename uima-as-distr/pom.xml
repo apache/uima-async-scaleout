@@ -24,13 +24,13 @@
   
   <parent>
     <groupId>org.apache.uima</groupId>
-    <artifactId>parent-pom-distr</artifactId>
-    <version>5-SNAPSHOT</version>
+    <artifactId>parent-pom</artifactId>
+    <version>1-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
 	<artifactId>uima-as-distr</artifactId>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 	<version>2.3.1-SNAPSHOT</version>
   <name>UIMA-AS: ${project.artifactId}</name>
   <description>Build and release UIMA-AS</description>
@@ -44,6 +44,7 @@
        
        Keeping this a bit factored allows cutting/pasting the <scm>
        element, and just changing the following two properties -->  
+
   <scm>
     <connection>
       scm:svn:http://svn.apache.org/repos/asf/uima/${uimaScmRoot}/trunk/${uimaScmProject}
