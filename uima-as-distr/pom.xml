@@ -355,7 +355,7 @@
 				<executions>
 					<execution>
 						<id>javadocs-distr</id>
-						<phase>package</phase>
+						<phase>prepare-package</phase> <!-- must be before assembly -->
             <!--phase>deploy</phase-->   <!-- comment above and uncomment to disable javadocs, for testing/experimentation, with assembly:assembly-->
 						<goals>
 							<goal>javadoc</goal>
