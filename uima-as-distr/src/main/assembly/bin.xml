@@ -204,7 +204,7 @@ under the License.
     
     <fileSet>
       <directory>target/site/apidocs</directory>
-      <outputDirectory>uima-as/docs/api</outputDirectory>
+      <outputDirectory>uima-as/docs/d/api</outputDirectory>
       <excludes>
         <exclude>options</exclude>
         <exclude>packages</exclude>
@@ -214,28 +214,16 @@ under the License.
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>
+    
     <fileSet>
-      <directory>../uima-as-docbooks/target</directory>
-      <outputDirectory>uima-as/docs/html</outputDirectory>
-      <includes>
-        <include>images/**</include>
-        <!--include>index.html</include-->
-        <include>uima_async_scaleout/uima_async_scaleout.html</include>
-        <include>uima_async_scaleout/css/**</include>
-      </includes>
+      <directory>../uima-as-docbooks/target/site</directory>
+      <outputDirectory>docs</outputDirectory>
+      <excludes><exclude>pdf/*.fo</exclude></excludes>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>
-    <fileSet>
-      <directory>../uima-as-docbooks/target/uima_async_scaleout</directory>
-      <outputDirectory>uima-as/docs/pdf</outputDirectory>
-      <includes>
-        <include>uima_async_scaleout.pdf</include>
-      </includes>
-      <fileMode>644</fileMode>
-      <directoryMode>755</directoryMode>        
-    </fileSet>
-    <fileSet>
+        
+    <!--fileSet>
       <directory>../uima-as-docbooks/src</directory>
       <outputDirectory>uima-as/docs</outputDirectory>
       <includes>
@@ -243,7 +231,8 @@ under the License.
       </includes>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
-    </fileSet>    
+    </fileSet--> 
+       
     <!--fileSet>
       <directory>../uimaj-examples/src/main/java</directory>
       <outputDirectory>examples/src</outputDirectory>
