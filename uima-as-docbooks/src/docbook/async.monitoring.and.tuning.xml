@@ -93,7 +93,7 @@ under the License.
   <section id="ugr.async.mt.monitoring">
     <title>Monitoring</title>
       
-    
+    <section id="ugr.async.mt.jmx">
       <title>JMX</title>
       <para>JMX (Java Management Extensions) is a standard Java mechanism that
         is used to monitor and control Java applications.  A standard Java tool
@@ -109,7 +109,7 @@ under the License.
         later describe a UIMA AS monitor tool that can sample the values of these beans at
         a specified interval and write the results to the UIMA log in various
         formats.</para-->
-    
+    </section>
     <section id="ugr.async.mt.jmx_monitoring">
       <title>JMX Information from UIMA AS</title>
       
@@ -177,7 +177,7 @@ under the License.
               <colspec colname="c1" colwidth="2*"/>
               <colspec colname="c2" colwidth="5*"/>
               <colspec colname="c3" colwidth="1*"/>
-              <colspec colname="c4" colwidth="1*"/>
+              <colspec colname="c4" colwidth="1.5*"/>
               <thead>
                 <row>
                   <entry align="center">Name</entry>
@@ -436,7 +436,7 @@ under the License.
           <title>Application Client information</title>
           <para>This section describes monitoring
             information provided by the UIMA AS Client APIs. 
-            Any code that uses the <xref linkend="ugr.ref.async.api.organization">UIMA AS Client APIs</xref>, 
+            Any code that uses the <xref linkend="ugr.ref.async.api.organization"></xref>, 
             such as the example application
             client <code>RunRemoteAsyncAE</code>, will have a set of these
             JMX measures.  Currently no additional
@@ -445,6 +445,7 @@ under the License.
           </para>
           
           <section id="ugr.async.mt.jmx_monitoring.client.measures">
+            <title>Client Measures</title>
           <informaltable frame="all">
             <tgroup cols="4" colsep="1" rowsep="1">
               <colspec colname="c1" colwidth="2*"/>
@@ -708,9 +709,10 @@ under the License.
         </informaltable>
       </section>      
     </section>  
-    </section>  
+    </section> 
+    </section> 
     
-    <!--section id="ugr.async.mt.jmx_sampling">
+    <section id="ugr.async.mt.jmx_sampling">
       <title>Logging Sampled JMX information at intervals</title>
       
       <para>
@@ -891,8 +893,7 @@ under the License.
           </itemizedlist> 
         </para>
       </section>
-    </section-->
-  </section>
+    </section>
   
   <section id="ugr.async.mt.tuning">
     <title>Tuning</title>
@@ -1087,8 +1088,8 @@ under the License.
 	      </para>
 	        <informaltable frame="all">
 	          <tgroup cols="2" colsep="1" rowsep="1">
-	            <colspec colname="c1" colwidth="2*"/>
-	            <colspec colname="c2" colwidth="5*"/>
+	            <colspec colname="c1" colwidth="1*"/>
+	            <colspec colname="c2" colwidth="1*"/>
 	            <thead>
 	              <row>
 	                <entry align="center">Property</entry>
@@ -1163,5 +1164,5 @@ under the License.
       </itemizedlist>
     </para>
   </section-->
-   
+
 </chapter>

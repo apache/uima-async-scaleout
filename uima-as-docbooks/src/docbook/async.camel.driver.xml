@@ -151,7 +151,8 @@ under the License.
   <section id="ugr.async.camel.driver.implementation">
   <title>Implementation</title>
   <para>The Asynchronous Scaleout Camel Driver is a typical camel component. The camel
-  documentation <ulink url="">Writing Components</ulink> describes how camel components are
+  documentation <ulink url="http://camel.apache.org/writing-components.html">
+  Writing Components</ulink> describes how camel components are
   written. The source code can be found in the uimaj-as-camel project. The implementation
   defines an asynchronous producer endpoint, which is implemented in the
   <code>org.apache.uima.camel.UimaAsProducer</code> class. The <code>UimaAsProducer.process</code> method gets

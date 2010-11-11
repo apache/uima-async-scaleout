@@ -477,9 +477,10 @@ under the License.
       remote component is a CAS Multiplier, and it specifies the size of a pool of CASes kept to receive the new CASes
       from the remote component, and the initial size of those CASes. Its poolSize must be equal to or larger than the
       casMultiplier poolSize specified for that remote component.</para>
-    <note><para>Only one remote can be a remote CAS Multiplier, in the current design, and that remote can only have
-    one instance. Scale out in any manner is not supported in the current release</para></note>
-    
+
+    <note><para>As of release 2.3.1, the previous restrictions limiting remote CAS Multiplier to 
+    just one have been lifted; you can have any number, and they can be scaled out as well.</para></note>
+     
     
     
     <note><para>The brokerURL value used for this remote delegate must be valid for

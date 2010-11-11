@@ -527,6 +527,18 @@ under the License.
         by the deployer. This specification is a collection of one or more deployment descriptors.</para>
     </section>
     <!-- end of wrapping -->
+    
+    <section id="ugr.async.ov.concepts.parallelFlows">
+      <title>Parallel Flows</title>
+      <para>A Flow Controller Parallel Step will actually run in parallel, when using remote
+      delegates with xmi serialization (the default) sepecified.  
+      For colocated delegates, or for remote delegates running with binary serialization, 
+      the parallel steps will be run serially in some arbitrary unspecified order.
+      For the parts running in parallel on remotes, 
+      existing Feature Structures may not be modified - only new ones can be added.  
+      This is checked for, when the 
+      results from the remote parallel steps are merged.</para>
+    </section>
     <!-- ======================================================= -->
     <!-- |                deployment alternatives              | -->
     <!-- ======================================================= -->
@@ -976,13 +988,13 @@ under the License.
     <titleabbrev>Monitoring &amp; Controlling</titleabbrev>
     <para>JMX (Java Management Extensions) are used for monitoring and controlling an AS application.
       As of release 2.3.0, extensive monitoring facilities have been implemented; these are described
-      in a separate chapter on <xref linkend="ugr.async.mt">Monitoring and Tuning</xref>.
+      in a separate chapter on <xref linkend="ugr.async.mt"/>.
       The only controlling facility provided is to stop a service.</para>
     
            <para>In addition, a configurable Monitoring program is provided which works with the JMX provided measurements
             and aggregates and samples these over specified intervals, and creates monitoring entries in the
             UIMA log, for tuning purposes.  You can use this to detect overloaded and/or idle services;
-            see the <xref linkend="ugr.async.mt">Monitoring and Tuning</xref> chapter for details.</para>
+            see the <xref linkend="ugr.async.mt"/> chapter for details.</para>
          
 
       <!--
@@ -1080,7 +1092,7 @@ under the License.
     
     <para>Running UIMA AS applications involves deploying (starting) UIMA AS services, perhaps over a wide area
       network, perhaps on many machines.  UIMA AS as a few preliminary tools to help.  These include the ability
-      of the <xref linkend="ugr.ref.async.api">Client API</xref> to deploy UIMA AS services (limited to deployment within the same 
+      of the <xref linkend="ugr.ref.async.api"/> to deploy UIMA AS services (limited to deployment within the same 
       JVM), and scripts such as <code>deployAsyncService</code> that start up a UIMA AS Service.</para>
         
     <para><code>deployAsyncService</code> has a facility that launches a keyboard listener after starting, which 
