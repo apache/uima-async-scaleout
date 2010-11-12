@@ -150,7 +150,7 @@ public class JmxMonitor implements Runnable {
           Set<ObjectName> names) {
     for (ObjectName name : names) {
       // Check if the current name is the Service Performance MBean
-      if (name.toString().endsWith(labelToMatch)) {
+      if (name.toString().endsWith(labelToMatch.trim())) {
         return (CasPoolManagementImplMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc,
                 name, CasPoolManagementImplMBean.class, true);
       }
@@ -241,7 +241,8 @@ public class JmxMonitor implements Runnable {
         key = key.substring(key.indexOf(",name=") + ",name=".length());
         // Create a proxy to the service CasPool object.
         CasPoolManagementImplMBean casPoolMBeanProxy = null;
-
+        //	Get Service CAS Pool MBean Proxy. This only make sense for top level service.
+        //	This is a Cas Pool for deserializing CASes from remote clients
         if (infoMBeanProxy.isTopLevel()) {
           if (infoMBeanProxy.isAggregate()) {
             casPoolMBeanProxy = getServiceCasPoolMBean("AggregateContext", names);
@@ -249,7 +250,6 @@ public class JmxMonitor implements Runnable {
             casPoolMBeanProxy = getServiceCasPoolMBean("PrimitiveAEService", names);
           }
         }
-        // Create a Map entry containing MBeans
         StatEntry entry = null;
         if (casPoolMBeanProxy != null) {
           entry = new StatEntry(perfMBeanProxy, infoMBeanProxy, casPoolMBeanProxy);
@@ -260,11 +260,11 @@ public class JmxMonitor implements Runnable {
         String location = "Collocated";
         // If a service is co-located in the same JVM fetch the service queue proxy
         if (infoMBeanProxy.getBrokerURL().startsWith("Embedded Broker")) {
-
+          // Get Co-located CM Cas Pool
           if (infoMBeanProxy.isCASMultiplier()) {
             // Create a proxy to the Cas Multiplier CasPool object.
-            CasPoolManagementImplMBean casPoolMBean = getCasPoolMBean(names, infoMBeanProxy
-                    .getServiceKey());
+            CasPoolManagementImplMBean casPoolMBean = 
+            	getServiceCasPoolMBean(infoMBeanProxy.getCmRegisteredName(), names);
             if (casPoolMBean != null) {
               entry.setCasPoolMBean(casPoolMBean);
             }
@@ -328,7 +328,6 @@ public class JmxMonitor implements Runnable {
       }
 
     }
-
   }
 
   protected int getServiceCount() {
@@ -417,8 +416,13 @@ public class JmxMonitor implements Runnable {
         QueueViewMBean inputQueueInfo = entry.getInputQueueInfo();
         QueueViewMBean replyQueueInfo = entry.getReplyQueueInfo();
 
+		cmFreeCasInstanceCount = -1;
         if (serviceInfo.isCASMultiplier() && !isRemote && entry.getCasPoolMBean() != null) {
-          cmFreeCasInstanceCount = entry.getCasPoolMBean().getAvailableInstances();
+        	try {
+        		cmFreeCasInstanceCount = entry.getCasPoolMBean().getAvailableInstances();
+        	} catch( Exception e) {
+        		//swallow this for now. 
+        	}
         }
         long inputQueueDepth = -1;
         UimaVmQueueMBean vmInputQueueInfo = null;
@@ -476,9 +480,13 @@ public class JmxMonitor implements Runnable {
         serviceMetrics.setAnalysisTime(deltaAnalysisTime);
         serviceMetrics.setCmFreeCasInstanceCount(cmFreeCasInstanceCount);
         // The service cas pool proxy is only valid for aggregates and top level primitives
+		serviceMetrics.setSvcFreeCasInstanceCount(-1);
         if (getServiceCasPoolMBeanProxy != null) {
-          serviceMetrics.setSvcFreeCasInstanceCount(getServiceCasPoolMBeanProxy
-                  .getAvailableInstances());
+        	try {
+                serviceMetrics.setSvcFreeCasInstanceCount(getServiceCasPoolMBeanProxy
+                        .getAvailableInstances());
+        	} catch( Exception e) {
+        	}
         }
         // populate shadow CAS pool metric for remote CAS multiplier. Filter out the top level
         // service
