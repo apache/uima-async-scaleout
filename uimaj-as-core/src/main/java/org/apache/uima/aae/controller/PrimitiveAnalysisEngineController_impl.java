@@ -19,9 +19,12 @@
 
 package org.apache.uima.aae.controller;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
@@ -63,7 +66,8 @@ import org.apache.uima.util.Level;
 public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineController implements
         PrimitiveAnalysisEngineController {
   private static final Class CLASS_NAME = PrimitiveAnalysisEngineController_impl.class;
-
+  private static final String DUMP_HEAP_THRESHOLD = "dumpHeapThreshold";
+  
   // Stores AE metadata
   private AnalysisEngineMetaData analysisEngineMetadata;
 
@@ -88,6 +92,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   // There is a single instance of this semaphore per JVM and it
   // guards uima core code that is not thread safe.
   private static Semaphore sharedInitSemaphore = new Semaphore(1);
+
+  static private Long lastDump = new Long(0);
 
   public PrimitiveAnalysisEngineController_impl(String anEndpointName,
           String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
@@ -155,6 +161,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public void initializeAnalysisEngine() throws ResourceInitializationException {
     ResourceSpecifier rSpecifier = null;
+    
     try {
       //  Acquire single-permit semaphore to serialize instantiation of AEs.
       //  This is done to control access to non-thread safe structures in the
@@ -419,7 +426,28 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
     }
   }
-
+  /**
+   * Conditionally creates and starts a timer thread that will time a task/method.
+   * The timer is only created if the System property -DheapDumpThreshold=<x> is set.
+   * The x is the max number of seconds the task/method is allowed before the timer pops.
+   * 
+   * @return instance of HeapDumpTimer or null
+   */
+  private StackDumpTimer ifEnabledStartHeapDumpTimer() {
+	  try {
+		  if ( System.getProperty(DUMP_HEAP_THRESHOLD) != null) {
+			  int thresholdInSeconds = Integer.parseInt(System.getProperty(DUMP_HEAP_THRESHOLD));
+			  //	Creates and returns an instance of a timer. The timer is auto started in a 
+			  //	constructor and will expire in a given number of seconds
+			  return new StackDumpTimer(thresholdInSeconds);
+		  }
+	  } catch( NumberFormatException e) {
+		  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+	                "ifEnabledStartHeapDumpTimer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                "UIMAEE_exception__WARNING", e);
+	  }
+	  return null;
+  }
   /**
    * This is called when a Stop request is received from a client. Add the provided Cas id to the
    * list of aborted CASes. The process() method checks this list to determine if it should continue
@@ -438,6 +466,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       return;
     }
     CasStateEntry parentCasStateEntry = null;
+    //	If enabled, keep a reference to a timer which
+    //  when it expires, will cause a JVM to dump a stack
+    StackDumpTimer stackDumpTimer = null;
     try {
       parentCasStateEntry = getLocalCache().lookupEntry(aCasReferenceId);
     } catch (Exception e) {
@@ -466,7 +497,18 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       ae = aeInstancePool.checkout();
       // Get input CAS entry from the InProcess cache
       long time = super.getCpuTime();
+      //	Start the heap dump timer. This timer is only started if explicitly enabled
+      //	via System property: -DheapDumpThreshold=<x> where is number of seconds the 
+      //	method is allowed to complete. If the method is not complete in allowed window
+      //	the heap and stack trace dump of all threads will be produced.
+      stackDumpTimer = ifEnabledStartHeapDumpTimer();
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
+      if ( stackDumpTimer != null ) {
+    	  stackDumpTimer.cancel();
+    	  stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
+          // it in case an exception happens below
+      }
+
       // Store how long it took to call processAndOutputNewCASes()
       totalProcessTime = (super.getCpuTime() - time);
       long sequence = 1;
@@ -477,17 +519,42 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       while (moreCASesToProcess) {
         long timeToProcessCAS = 0; // stores time in hasNext() and next() for each CAS
         hasNextTime = super.getCpuTime();
+        //	Start the heap dump timer. This timer is only started if explicitly enabled
+        //	via System property: -DheapDumpThreshold=<x> where x is a number of seconds the 
+        //	method is allowed to complete. If the method is not complete in allowed window
+        //	the heap and stack trace dump of all threads will be produced.
+        stackDumpTimer = ifEnabledStartHeapDumpTimer();
         if (!casIterator.hasNext()) {
           moreCASesToProcess = false;
           // Measure how long it took to call hasNext()
           timeToProcessCAS = (super.getCpuTime() - hasNextTime);
           totalProcessTime += timeToProcessCAS;
+          if ( stackDumpTimer != null ) {
+        	  stackDumpTimer.cancel();
+        	  stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
+              // it in case an exception happens below
+          }
           break; // from while
+        }
+        if ( stackDumpTimer != null ) {
+        	stackDumpTimer.cancel();
+        	stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
+                                    // it in case an exception happens below
         }
         // Measure how long it took to call hasNext()
         timeToProcessCAS = (super.getCpuTime() - hasNextTime);
         getNextTime = super.getCpuTime();
+        //	Start the heap dump timer. This timer is only started if explicitly enabled
+        //	via System property: -DheapDumpThreshold=<x> where is number of seconds the 
+        //	method is allowed to complete. If the method is not complete in allowed window
+        //	the heap and stack trace dump of all threads will be produced.
+        stackDumpTimer = ifEnabledStartHeapDumpTimer();
         CAS casProduced = casIterator.next();
+        if ( stackDumpTimer != null ) {
+        	stackDumpTimer.cancel();
+        	stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
+            // it in case an exception happens below
+        }
         // Add how long it took to call next()
         timeToProcessCAS += (super.getCpuTime() - getNextTime);
         // Add time to call hasNext() and next() to the running total
@@ -628,8 +695,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         } else {
           // Send generated CAS to the client
           if (!stopped) {
-            getOutputChannel().sendReply(newEntry, anEndpoint);
-            //	Check for delivery failure. The client may have terminated while an input CAS was being processed
+              getOutputChannel().sendReply(newEntry, anEndpoint);
+            
+              //	Check for delivery failure. The client may have terminated while an input CAS was being processed
             if ( childCasStateEntry.deliveryToClientFailed() ) {
           	  if ( cmOutstandingCASes.containsKey(childCasStateEntry.getCasReferenceId())) {
               	  cmOutstandingCASes.remove(childCasStateEntry.getCasReferenceId());
@@ -669,6 +737,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // Set total number of children generated from this CAS
       // Store total time spent processing this input CAS
       getCasStatistics(aCasReferenceId).incrementAnalysisTime(totalProcessTime);
+      
       if (!anEndpoint.isRemote()) {
         inputCASReturned = true;
         UimaTransport transport = getTransport(anEndpoint.getEndpoint());
@@ -692,17 +761,21 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       } else {
         if (!stopped) {
-          getOutputChannel().sendReply(aCasReferenceId, anEndpoint);
+            getOutputChannel().sendReply(aCasReferenceId, anEndpoint);
         }
 
         inputCASReturned = true;
       }
+      
       // Remove input CAS state entry from the local cache
       if (!isTopLevelComponent()) {
         localCache.lookupEntry(aCasReferenceId).setDropped(true);
         localCache.remove(aCasReferenceId);
       }
     } catch (Throwable e) {
+    	if ( stackDumpTimer != null ) {
+    		stackDumpTimer.cancel();
+    	}
       processingFailed = true;
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -914,5 +987,59 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
     System.out.println("Service:" + getComponentName() + " Stopped");
   }
+  /**
+   This method forces a heap and java dump. It only works with IBM jvm. 
+   **/
+  protected final synchronized void forceStackDump() {
+	  try {
+		  Class<?> params[] = {};
+	      Object paramsObj[] = {};
+	      
+		  Class<?> dumpClass = Class.forName("com.ibm.jvm.Dump");
+	      //	Get a handle to the static method
+          Method javaDumpMethod = dumpClass.getDeclaredMethod("JavaDump", params);
+          //	dump the stack of all threads
+          javaDumpMethod.invoke(null, paramsObj);
+		  
+	  } catch( Exception e) {
+		  //	ignore ClassNotFoundException in case of sun jvm
+	  }
+  }
+  
+  /**
+   * The HeapDumpTimer is optionally used to dump the heap if a task takes too much time to finish.
+   * It is enabled from the System property -DheapDumpThreshold=<x> where x is a number of seconds 
+   * the task is allowed to complete. If the task is not completed, the heap dump will be created. 
+   * 
+   *
+   */
+  public class StackDumpTimer  {
+	  Timer timer;
+	  volatile boolean timerCancelled;
+	  
+	  public StackDumpTimer ( int seconds )   {
+	    timer = new Timer (  ) ;
+	    timer.schedule ( new dumpTheStackTask (  ) , seconds*1000 ) ;
+	  }
+	  public void cancel() {
+		  timer.cancel();
+		  timer.purge();
+	  }
+	  class dumpTheStackTask extends TimerTask  {
+	    public void run (  )   {
+	    	timerCancelled = true;
+	    	timer.cancel (  ) ; //Terminate the thread
+	    	// create a heap dump. NOTE: this only works with IBM jvm
+	    	synchronized (lastDump) {
+	            long now = System.currentTimeMillis();
+	            if (30000 < (now-lastDump)) {
+	              // create a stack dump. NOTE: this only works with IBM jvm
+	              forceStackDump();
+	              lastDump = now;
+	            }
+          }
+	    }
+	  }
 
+  }
 }
