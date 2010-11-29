@@ -27,7 +27,7 @@ under the License.
   <section id="ugr.async.camel.driver.component.overview">
     <title>Overview</title>
     <para>
-    <ulink url="http://camel.apache.org">Apache Camel</ulink>is an integration framework based on 
+    <ulink url="http://camel.apache.org">Apache Camel</ulink> is an integration framework based on 
     <ulink url="http://camel.apache.org/enterprise-integration-patterns.html">Enterprise Integration Patterns</ulink>
     which uses routes for rule-based message routing and mediation. The camel project
     has a large number of components which provide access to a wide variety of
