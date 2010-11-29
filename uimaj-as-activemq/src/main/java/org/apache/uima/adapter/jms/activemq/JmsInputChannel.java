@@ -60,7 +60,7 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
 
 /**
  * Thin adapter for receiving JMS messages from Spring. It delegates processing of all messages to
- * the {@link MessageHandler}. Each JMS Message is wrapped in transport neutral MessageContext
+ * the {@link Handler}. Each JMS Message is wrapped in transport neutral MessageContext
  * wrapper.
  * 
  */
@@ -559,7 +559,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
    * 
    * @param aMessage
    *          - JMS Message containing header and payload
-   * @param aSession
+   * @param aJmsSession
    *          - JMSSession object
    */
   public void onMessage(Message aMessage, Session aJmsSession) {

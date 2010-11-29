@@ -774,7 +774,7 @@ public class JmsOutputChannel implements OutputChannel {
    * of the same CAS in multiple Analysis Engines at the same time.
    * 
    * @param aCasReferenceId
-   * @param anEndpoint
+   * @param endpoints
    * @throws AsynchAEException
    */
   public void sendRequest(String aCasReferenceId, Endpoint[] endpoints) throws AsynchAEException {
@@ -1043,12 +1043,10 @@ public class JmsOutputChannel implements OutputChannel {
    * Sends JMS Reply Message to a given endpoint. The reply message contains given Throwable (with
    * full stack)
    * 
-   * @param t
-   *          - Throwable to include in the reply message
-   * @param anEndpoint
-   *          - an endpoint to receive the reply message
    * @param aCasReferenceId
    *          - a unique CAS reference id
+   * @param anEndpoint
+   *          - an endpoint to receive the reply message
    * 
    * @throws AsynchAEException
    */
@@ -1220,8 +1218,9 @@ public class JmsOutputChannel implements OutputChannel {
 
   /**
    * 
-   * @param aMetadata
+   * @param aProcessingResourceMetadata
    * @param anEndpoint
+   * @param serialize
    * @throws AsynchAEException
    */
   public void sendReply(ProcessingResourceMetaData aProcessingResourceMetadata,
