@@ -23,7 +23,7 @@
       version="2.3.1.SNAPSHOT"
       provider-name="Apache Software Foundation">
 
-   <description url="http://incubator.apache.org/uima">
+   <description url="http://uima.apache.org">
       This feature adds to the UIMA Component Descriptor
       Editor (CDE) the ability to edit the Deployment
       Descriptor used by UIMA-AS to deploy
@@ -65,14 +65,14 @@ under the License.
          id="org.apache.uima.deployeditor"
          download-size="0"
          install-size="0"
-         version="2.3.1.SNAPSHOT"
+         version="2.3.1"
          unpack="false"/>
 
    <plugin
          id="org.apache.uima.runtime.fragments.deployeditor"
          download-size="0"
          install-size="0"
-         version="2.3.1.SNAPSHOT"
+         version="2.3.1"
          fragment="true"
          unpack="false"/>
 
