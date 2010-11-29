@@ -20,14 +20,20 @@ under the License.
 <assembly>
   <id>bin</id>
   <formats>
-    <format>tar.gz</format>  
+    <!-- format>tar.gz</format-->  
     <format>zip</format>
   </formats>
   
-  <baseDirectory>apache-uima</baseDirectory> <!-- so it is unzippable over base - needs same name -->
+  <baseDirectory>apache-uima-as</baseDirectory> 
   <includeBaseDirectory>true</includeBaseDirectory>
   
-  <dependencySets>
+  <!-- UIMA-AS is built on top of base UIMA -->
+  <!-- The Base UIMA is from a particular version 
+       That version is unzipped into a temporary 
+       build spot, which is then copyied to this 
+       distr using a fileSet (see below)-->
+   
+  <dependencySets>  
             
     <!-- UIMA-AS -->
     <dependencySet>
@@ -92,22 +98,10 @@ under the License.
       <fileMode>644</fileMode> 
       <directoryMode>755</directoryMode>        
     </dependencySet>
-
-    <!--dependencySet>
-      <includes>
-        <include>net.sf.saxon:saxon</include>
-      </includes>
-      <useTransitiveDependencies>false</useTransitiveDependencies>
-      <outputDirectory>lib</outputDirectory>
-      <useProjectArtifact>false</useProjectArtifact-->
-      <!-- we name this version of the saxon jar to indicate it 
-           supports xslt 2.0 -->
-      <!--outputFileNameMapping>saxon_xslt_2.0.jar</outputFileNameMapping>
-    </dependencySet-->
    
     <!-- Copy each eclipse plugin into the /eclipsePlugins dir of the distribution -->
     <dependencySet>
-      <includes>        
+      <includes>
         <include>org.apache.uima:uimaj-ep-deployeditor</include>
         <include>org.apache.uima:uimaj-ep-runtime-deployeditor</include>
         <include>org.apache.uima:uimaj-as-osgi-runtime</include>
@@ -118,36 +112,118 @@ under the License.
       <fileMode>644</fileMode> 
       <directoryMode>755</directoryMode>        
     </dependencySet>
+    
+    <!-- Add selected files from base UIMA Java SDK -->
+    <!-- Adding the entire base UIMA doesn't do the right
+         directory and file permissions setting -->    
+    
+    <dependencySet>
+      <includes>
+        <include>org.apache.uima:uimaj-distr:zip:bin</include>
+      </includes>
+      <outputDirectory>bin</outputDirectory>
+      <unpack>true</unpack>
+      <unpackOptions>
+        <includes>
+          <include>apache-uima/bin/*.sh</include>
+        </includes>
+      </unpackOptions>
+      <useProjectArtifact>false</useProjectArtifact>
+      <fileMode>755</fileMode> 
+      <directoryMode>755</directoryMode>        
+    </dependencySet>
+    
+    <!-- dependencySet>
+      <includes>
+        <include>org.apache.uima:uimaj-distr:zip:${uimajDependencyVersion}:bin</include>
+      </includes>
+      <outputDirectory>bin</outputDirectory>
+      <unpack>true</unpack>
+      <unpackOptions>
+        <includes>
+          <include>apache-uima/bin/*</include>
+        </includes>
+        <excludes>
+          <exclude>apache-uima/bin/*.sh</exclude>
+        </excludes>
+      </unpackOptions>
+      <useProjectArtifact>false</useProjectArtifact>
+      <fileMode>644</fileMode> 
+      <directoryMode>755</directoryMode>        
+    </dependencySet-->
   </dependencySets>
   
   <!-- Add other files - scripts, documentation, examples -->
   <fileSets>
-    <!-- UIMA-AS no longer includes base UIMA as of 2.3.0 -->
     <!-- base UIMA -->
-    <!--fileSet>
-      <directory>../uimaj-distr/src/main/scripts</directory>
+
+    <fileSet>
+      <directory>target/uimaj/apache-uima/lib</directory>
+      <outputDirectory>lib</outputDirectory>
+      <fileMode>644</fileMode>
+      <directoryMode>755</directoryMode>
       <excludes>
+        <exclude>uimaj-examples.jar</exclude>
+      </excludes> 
+    </fileSet>
+    
+    <fileSet>
+      <directory>target/uimaj/apache-uima/examples</directory>
+      <outputDirectory>examples</outputDirectory>
+      <fileMode>644</fileMode>
+      <directoryMode>755</directoryMode>
+    </fileSet>
+
+    <fileSet>
+      <directory>target/uimaj/apache-uima/eclipsePlugins</directory>
+      <outputDirectory>eclipsePlugins</outputDirectory>
+      <fileMode>644</fileMode>
+      <directoryMode>755</directoryMode>
+    </fileSet>
+   
+    <fileSet>
+      <directory>target/uimaj/apache-uima/bin</directory>
+      <includes><include>*.sh</include></includes>
+      <excludes><exclude>setUimaClassPath.*</exclude></excludes>
+      <outputDirectory>bin</outputDirectory>
+      <fileMode>755</fileMode>
+      <directoryMode>755</directoryMode>
+    </fileSet>
+    <fileSet>
+      <directory>target/uimaj/apache-uima/bin</directory>
+      <excludes>
+        <exclude>*.sh</exclude>
         <exclude>setUimaClassPath.*</exclude>
       </excludes>
       <outputDirectory>bin</outputDirectory>
-      <fileMode>755</fileMode>
+      <fileMode>644</fileMode>
+      <directoryMode>755</directoryMode>
     </fileSet>
+        
     <fileSet>
-      <directory>../uimaj-distr/src/main/properties</directory>
-      <outputDirectory>config</outputDirectory>
+      <directory>target/uimaj/apache-uima/config</directory>
+      <outputDirectory>config</outputDirectory>      
     </fileSet>
+    
     <fileSet>
-      <directory>../uima-docbooks/target</directory>
-      <outputDirectory>docs/html</outputDirectory>
-      <includes>
-        <include>tools/tools.html</include>
-        <include>tools/css/**</include>
-        <include>images/tools/**</include>
-      </includes>
-    </fileSet-->
+      <directory>target/uimaj/apache-uima/issuedFixed</directory>
+      <outputDirectory>issuesFixed.uimaj</outputDirectory>
+      <fileMode>644</fileMode>
+      <directoryMode>755</directoryMode>
+    </fileSet>
     
-    <!-- uima-as -->
+    <fileSet>
+      <directory>target/uimaj/apache-uima/docs</directory>
+      <outputDirectory>docs</outputDirectory>
+      <fileMode>644</fileMode>
+      <directoryMode>755</directoryMode>        
+    </fileSet>
+     
+     
+    <!-- End of UIMA base files -->
     
+     
+    <!-- Copy binary license / notice to top level --> 
     <fileSet>
       <directory>src/main/readme</directory>
       <!-- to get things into the base dir, use this form
@@ -163,7 +239,7 @@ under the License.
     <!-- files that should be copied from the top level project to the top of the archive -->
     <fileSet>
       <directory>.</directory>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory/>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>
       <includes>
@@ -195,16 +271,10 @@ under the License.
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>
-    <fileSet>
-      <directory>src/main/readme</directory>
-      <outputDirectory>uima-as/readme</outputDirectory>
-      <fileMode>644</fileMode>
-      <directoryMode>755</directoryMode>        
-    </fileSet>
     
     <fileSet>
       <directory>target/site/apidocs</directory>
-      <outputDirectory>uima-as/docs/d/api</outputDirectory>
+      <outputDirectory>docs/d/api-uima-as</outputDirectory>
       <excludes>
         <exclude>options</exclude>
         <exclude>packages</exclude>
@@ -305,7 +375,7 @@ under the License.
       <directoryMode>755</directoryMode>        
     </fileSet>  
         
-    <!-- saxon -->    
+    <!-- saxon 8.9 -->    
     <fileSet>
       <directory>src/main/saxon</directory>
       <outputDirectory>saxon</outputDirectory>
@@ -316,6 +386,37 @@ under the License.
   </fileSets>
   
   <files>
+  
+    <!-- Main uima files -->
+    
+    <file>
+      <source>target/uimaj/apache-uima/README</source>
+      <outputDirectory/>
+      <destName>README.uimaj.txt</destName>
+      <fileMode>644</fileMode>
+    </file>
+    
+    <file>
+      <source>target/uimaj/apache-uima/RELEASE_NOTES.html</source>
+      <outputDirectory/>
+      <destName>RELEASE_NOTES.uimaj.html</destName>
+      <fileMode>644</fileMode>
+    </file>
+    
+    <file>
+      <source>target/uimaj/apache-uima/LICENSE</source>
+      <outputDirectory/>
+      <destName>LICENSE.uimaj.txt</destName>
+      <fileMode>644</fileMode>
+    </file>
+
+    <file>
+      <source>target/uimaj/apache-uima/NOTICE</source>
+      <outputDirectory/>
+      <destName>NOTICE.uimaj.txt</destName>
+      <fileMode>644</fileMode>
+    </file>
+    
     <!--  skip the main uima project files 
     <file>
       <source>../uimaj-examples/src/main/eclipseProject/project</source>
@@ -354,12 +455,12 @@ under the License.
     </file>
     
     <!-- put readme file with altered name at the top level -->
-    <file>
+    <!-- file>
       <source>src/main/readme/README</source>
       <outputDirectory></outputDirectory>
       <destName>README-uima-as</destName>
       <fileMode>644</fileMode>
-    </file>
+    </file-->
     
   </files>
 </assembly>

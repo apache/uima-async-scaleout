@@ -1,17 +1,24 @@
      Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.3.1 README
      ----------------------------------------------------------------
      
-Building from the Source Distribution
--------------------------------------
+0. Building from the Source Distribution
+========================================
+     
+We use Maven 3.0 for building; download this if needed, 
+and set the environment variable MAVEN_OPTS to -Xmx800m -XX:MaxPerSize-256m.
 
-We use Maven 3.0 for building; download this if needed, and set MAVEN_OPTS to -Xmx800m -XX:MaxPerSize-256m.
-
-Then build all the parts by going into the .../aggregate-uima-as directory, and issuing the command
+Then build everything by going into the .../uima-as directory, and issuing the command
    mvn clean install.
-     
-     
-Changes in the 2.3.1 release
-----------------------------
+   
+Look for the result in the two artifacts: 
+   ../uima-as/target/uima-as-[version]-source-release.zip and
+   ../uima-as-distr/target/uima-as-[version]-bin.zip (or  ...tar.gz) 
+
+For more details, please see http://uima.apache.org/building-uima.html   
+
+1. What's New in 2.3.1
+====================== 
+
 tbd - these are the 2.3.0 changes:
   - UIMA-AS "graduated" from Sandbox, now a top-level (within UIMA) add-on
   - UIMA-AS repackaged - no longer includes the base UIMA. You must download a comparable version of base UIMA, separately
@@ -29,20 +36,22 @@ tbd - these are the 2.3.0 changes:
   - New launcher allows specifying directories containing Jars; all Jars found will be added to the classpath
 
 
-Contents of Apache UIMA-AS binary distribution
-----------------------------------------------
+1.1 Contents of Apache UIMA-AS binary distribution
+--------------------------------------------------
 
-The Apache UIMA-AS binary distribution includes 
+The Apache UIMA-AS binary distribution includes
+  - Apache UIMA Java SDK 
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
   - Apache ActiveMQ
   - Spring Framework
 
-It does not include the base UIMA binary distribution, which it depends on.
-You should download and unzip that distribution, and then download and unzip the 
-UIMA-AS distribtuion over the base distribution.
+It includes the base UIMA binary distribution which it depends on.
 
-UIMA-AS components include:
+UIMA-AS components, in addition to those that come with base UIMA include:
+
+  shell scripts:
+  --------------
 
   bin/startBroker.sh/bat: starts the ActiveMQ broker, which must be running before
       UIMA AS services can be deployed.
@@ -52,9 +61,15 @@ UIMA-AS components include:
       location of the service, and an optional CollectionReader descriptor file used to
       obtain the CASes to be processed by the service.
 
+  documentation:
+  --------------
+ 
   docs/pdf/uima_async_scaleout.pdf: UIMA-AS documentation, including the specification
       for the deployment descriptor file syntax.
 
+  examples:
+  ---------
+ 
   examples/deploy/as/...  (Sample Deployment Descriptors)
     Deploy_RoomNumberAnnotator.xml: Deploys Room Number Annotator Primitive AE
     Deploy_MeetingDetectorTAE.xml: Deploys Meeting Detector Aggregate AE with all
@@ -76,21 +91,28 @@ UIMA-AS components include:
     Deploy_MeetingFinder.xml: Deploys MeetingFinderAggregate illustrating scalability and
         error handling similar to the CPM examples; see Section 4 on migration below.
 
+  descriptors:
+  ------------
+ 
   descriptors/as/...  (Other Sample Descriptors for use with UIMA AS)
     MeetingDetectorAsyncAE.xml:  Specifier that can be used to call a UIMA AS
         Service from an existing UIMA application; see Section 2.5 below.
 
 
 2. Installation and Setup
+=========================
 
 2.1 Supported Platforms
+-----------------------
 
-UIMA AS Requires Java 5 or later.  It has been tested with Sun Java 5 on Windows XP and Linux.
-Other platforms and Java (5+) implementations should work, but have not been significantly tested.
+UIMA AS Requires Java 5 or later.  It has been tested with Sun Java 5 on Windows XP and Linux,
+and with IBM Java 6 on Linux.  Other platforms and Java (5+) implementations should work, 
+but have not been significantly tested.
 
 2.2. Environment Variables
+--------------------------
 
-After you have unpacked the UIMA AS UIMA distribution, you must perform the following
+After you have unpacked the UIMA AS distribution, you must perform the following
 environment variable settings (the same as for normal Apache UIMA setup):
 
     * Set JAVA_HOME to the directory of your JRE installation you would like to use for UIMA.
@@ -101,26 +123,30 @@ environment variable settings (the same as for normal Apache UIMA setup):
     variables; see http://developer.apple.com/qa/qa2001/qa1067.html for how to do this.
 
 2.3 Running the Setup Script
+----------------------------
 
 You must run the script UIMA_HOME/bin/adjustExamplePaths.bat (or .sh).  This updates
 paths in the examples based on the actual UIMA_HOME directory path.
 
 2.4 Setting up Eclipse
+----------------------
 
 Eclipse users should install the UIMA Eclipse Plugins and UIMA Examples Project using the 
 procedure described in Chapter 3 of the Apache UIMA Overview and Setup guide,
-which you can find online at http://incubator.apache.org/uima; click on Documentation ->
+which you can find online at http://uima.apache.org; click on Documentation ->
 HTML Online Version -> Overview and Setup -> 3. Eclipse IDE setup for UIMA. 
 
-However, since UIMA AS requires Java 5, you must be sure to set up your uimaj-examples Eclipse
+Since UIMA AS requires Java 5, you must be sure to set up your uimaj-examples Eclipse
 project to use a version 5 (or later) JRE, and you must set your compiler compliance level to 5.0.  To do
 this go to Window->Preferences and navigate to the Java->Compiler page.  Remember to 
 run the base Eclipse using Java 5 (or later), as well.
 
 
 3. Getting Started
+==================
 
 3.1 Starting the ActiveMQ Broker
+--------------------------------
 
 UIMA AS services require an ActiveMQ broker to be available with which to create/register 
 the service request queue. If no broker is available, start a new broker on the same machine 
@@ -147,6 +173,7 @@ The tcp listening port must be exposed to any clients or services using the brok
 To connect to a broker running behind a firewall using HTTP tunneling, see section 3.6 below.
 
 3.2 Deploying an Analysis Engine as a UIMA AS Asynchronous Service
+------------------------------------------------------------------
 
 a. Create a Deployment Descriptor.
   Examples can be found in the examples/deploy/as directory,
@@ -193,6 +220,7 @@ b. Run the command:
   
 
 3.3 Calling a UIMA AS Asynchronous Service
+------------------------------------------
 
 To test a remote UIMA service you can use the script:
   runRemoteAsyncAE.sh/cmd brokerUrl endpoint
@@ -217,6 +245,7 @@ To test a remote UIMA service you can use the script:
   The full set of arguments are documented if you type the command with no arguments.
 
 3.4 Quick Test of an async service
+----------------------------------
 
 Start two terminal windows, each with an environments setup as described in section 2.2.
 
@@ -254,6 +283,7 @@ For more information on the customResourceSpecifier see the "Custom Resource Spe
 section in the Apache UIMA Reference manual.
 
 3.6 Firewalls between clients and services
+------------------------------------------
 
 A service running behind a firewall can be accessed as long as its input queue
 is on a broker that is accessable. For example, the service can register with a
@@ -266,6 +296,7 @@ Note: There are bugs in the standard ActiveMQ HTTP connector core librarys (whic
       http://issues.apache.org/activemq/browse/AMQ-1308
       
 3.7 Monitoring a broker and its queues
+--------------------------------------
 
 When the broker starts it will print a message such as:
   INFO  ManagementContext  - JMX consoles can connect to service:jmx:rmi:///jndi/rmi://localhost:1099/jmxrmi
@@ -281,6 +312,7 @@ created when the broker is first started. For more details see
 http://activemq.apache.org/jmx.html
 
 3.8 Monitoring UIMA AS service
+------------------------------
 
 UIMA AS service monitoring is available via JMX and jConsole. To enable this, please set the following 
 before starting a service:
@@ -295,6 +327,7 @@ Connect a jConsole to this JMX service as described in 3.7 above using the appro
 Under the MBeans tab, expand org.apache.uima in the left panel to view UIMA components enabled for JMX monitoring.
 
 3.9 Stopping UIMA AS service
+----------------------------
 
 A service can be stopped from a command line or remotely using jConsole and JMX. When the service is
 launched it displays a prompt on stdout:
@@ -322,7 +355,7 @@ Here you will find two buttons labeled:
 CompleteProcessingAndStop will initiate quiesce while StopNow will initiate a hard stop.
 
 4. Migration from CPM to UIMA-AS
-
+================================
 
 Migrating a collection processing engine from the CPM to UIMA-AS is straightforward.
 
@@ -349,7 +382,8 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.3.0
+5. Known problems/limitations with Release 2.3.1
+================================================
 
   1. No automatic refresh for broken connections with temp reply queues.
   
@@ -364,7 +398,7 @@ An example of this kind of migration is embodied by the sample descriptors:
   4. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
      JMX port (see section 3.8).
 
-For up-to-date information on UIMA-AS issues, see 
+For up-to-date information on UIMA-AS issues, see our issue tracker:
 http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12310570
 
 Crypto Notice

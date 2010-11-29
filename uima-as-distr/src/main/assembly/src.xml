@@ -17,6 +17,9 @@ specific language governing permissions and limitations
 under the License.    
 -->
 
+<!-- no longer used - instead, we use 
+     apache release standard source-release.zip -->
+
 <assembly>
   <id>src</id>
   <formats>

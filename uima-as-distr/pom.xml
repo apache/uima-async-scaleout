@@ -24,9 +24,9 @@
   
   <parent>
     <groupId>org.apache.uima</groupId>
-    <artifactId>parent-pom</artifactId>
-    <version>1-SNAPSHOT</version>
-    <relativePath/>
+    <artifactId>uima-as-parent</artifactId>
+    <version>2.3.1-SNAPSHOT</version>
+    <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
 	<artifactId>uima-as-distr</artifactId>
@@ -58,68 +58,20 @@
   </scm>
   
   <properties>
-    <uimaScmRoot>uima-as</uimaScmRoot>
+    <jiraVersion>12315335</jiraVersion> <!-- for 2.3.1AS -->  
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <assemblyFinalName>uima-as-${project.version}</assemblyFinalName>  
   </properties> 
-    
+  
   <!-- dependencies used during assembly -->
 	<dependencies>
     <!-- uima base -->
     <dependency>
       <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-adapter-vinci</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-adapter-soap</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-cpe</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-examples</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-tools</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-ep-configurator</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-ep-debug</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-ep-jcasgen</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-ep-pear-packager</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.uima</groupId>
-      <artifactId>uimaj-ep-runtime</artifactId>
-      <version>${project.version}</version>
+      <artifactId>uimaj-distr</artifactId>
+      <type>zip</type>
+      <classifier>bin</classifier>
+      <version>${uimajDependencyVersion}</version>
     </dependency>
     
     <!-- uima-as -->
@@ -162,7 +114,7 @@
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-test-util</artifactId>
-      <version>${project.version}</version>
+      <version>${uimajDependencyVersion}</version>
     </dependency>
     
     <dependency>
@@ -345,11 +297,41 @@
 	<build>
     <resources/>
 		<plugins>
+    
+      <!-- UIMA-AS includes the base UIMA binary distribution
+           We get an unzipped version of that and unpack it into
+           target/uimaj -->
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <!-- use the dependency:unpack goal to unpack the 
+                 base binary uimaj sdk distribution -->
+            <id>unpackUimajBin</id>
+            <phase>prepare-package</phase>
+            <goals><goal>unpack</goal></goals>
+            <configuration>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.apache.uima</groupId>
+                  <artifactId>uimaj-distr</artifactId>
+                  <version>${uimajDependencyVersion}</version>
+                  <type>zip</type>
+                  <classifier>bin</classifier>
+                  <outputDirectory>${project.build.directory}/uimaj</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>        
+      </plugin>
       
       <!-- This java doc config is for building the ones distributed with the bin packaging, and also 
            posted on our website.
-       -->
-      
+       -->     
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<executions>
@@ -404,6 +386,7 @@
 						</configuration>
 					</execution>
 				</executions>
+
 			</plugin>
 
       <plugin>
@@ -419,10 +402,16 @@
             <id>default-cli</id>
             <configuration>
               <excludes>
-                <exclude>release.properties</exclude> <!-- release generated artifact -->
                 <exclude>src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
                 <exclude>src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
                 <exclude>src/main/examples/run_configuration/*.launch</exclude> <!-- eclipse launch configurations -->
+                <exclude>release.properties</exclude>
+                <exclude>README*</exclude>
+                <exclude>RELEASE_NOTES*</exclude>
+                <exclude>issuesFixed/**</exclude>
+                <exclude>src/main/resources/docbook-shared/titlepage/*.xsl</exclude>
+                <exclude>marker-file-identifying-*</exclude>
+                <exclude>DEPENDENCIES</exclude>              
               </excludes>
             </configuration>
           </execution>
@@ -431,14 +420,33 @@
 		</plugins>
 	</build>
   
+  <!-- Use -N option to skip building submodule, for testing uimaj-distr -->
+  <modules>
+    <module>../aggregate-uima-as</module>
+  </modules>      
+
   <profiles>
-    <!-- if apache release, call the aggregate to clean and build the sub-modules -->
     <profile>
-        <id>apache-release</id>
-        <modules>
-          <module>../aggregate-pom-uima-as</module>
-        </modules>      
+      <id>apache-release</id>
+      
+      <build>
+        <!-- Run jira report -->
+        <!-- depends on having -DjiraVersion set -->
+        <plugins>
+          <plugin>
+            <artifactId>maven-changes-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-cli</id>
+                <configuration>
+                  <fixVersionIds>${jiraVersion}</fixVersionIds>
+                </configuration>
+              </execution>
+            </executions>  
+          </plugin>
+        </plugins>     
+      </build>
     </profile>
-  </profiles>  
-  	
+  </profiles>    
+ 
 </project>
