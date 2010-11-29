@@ -24,9 +24,9 @@
 
   <parent>
     <groupId>org.apache.uima</groupId>
-    <artifactId>parent-pom</artifactId>
-    <version>1-SNAPSHOT</version>
-    <relativePath/>
+    <artifactId>uima-as-parent</artifactId>
+    <version>2.3.1-SNAPSHOT</version>
+    <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
 	<groupId>org.apache.uima</groupId>
@@ -56,7 +56,6 @@
   </scm>
   
   <properties>
-    <uimaScmRoot>uima-as</uimaScmRoot>
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <postNoticeText>${ibmNoticeText}</postNoticeText>
   </properties>
@@ -72,7 +71,7 @@
 		<dependency>
 			<groupId>org.apache.uima</groupId>
 			<artifactId>uimaj-core</artifactId>
-			<version>${project.version}</version>
+			<version>${uimajDependencyVersion}</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -92,7 +91,6 @@
            to insert the version from properties -->
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>2.4.3</version>  <!-- 2.4.0 fails -->
         <executions>
           <execution>
             <id>setVersions</id>

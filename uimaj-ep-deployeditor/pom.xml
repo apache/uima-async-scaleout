@@ -24,9 +24,9 @@
   
   <parent>
     <groupId>org.apache.uima</groupId>
-    <artifactId>parent-pom</artifactId>
-    <version>1-SNAPSHOT</version>
-    <relativePath/>
+    <artifactId>uima-as-parent</artifactId>
+    <version>2.3.1-SNAPSHOT</version>
+    <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>uimaj-ep-deployeditor</artifactId>
@@ -57,7 +57,6 @@
   </scm>
   
   <properties>
-    <uimaScmRoot>uima-as</uimaScmRoot>
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <postNoticeText>${ibmNoticeText}</postNoticeText>
   </properties>
@@ -67,21 +66,21 @@
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-configurator</artifactId>
-      <version>${project.version}</version>
+      <version>${uimajDependencyVersion}</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-core</artifactId>
-      <version>${project.version}</version>
+      <version>${uimajDependencyVersion}</version>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-tools</artifactId>
-      <version>${project.version}</version>
+      <version>${uimajDependencyVersion}</version>
       <scope>compile</scope>
     </dependency>
 

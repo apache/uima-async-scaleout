@@ -25,9 +25,9 @@
   
   <parent>
     <groupId>org.apache.uima</groupId>
-    <artifactId>parent-pom</artifactId>
-    <version>1-SNAPSHOT</version>
-    <relativePath/>
+    <artifactId>uima-as-parent</artifactId>
+    <version>2.3.1-SNAPSHOT</version>
+    <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
   
 	<artifactId>uima-as-docbooks</artifactId>
@@ -57,7 +57,6 @@
   </scm>
   
   <properties>
-    <uimaScmRoot>uima-as</uimaScmRoot>
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <!-- next property is the name of the top file under src/docbook without trailing .xml -->
     <bookNameRoot>uima_async_scaleout</bookNameRoot>

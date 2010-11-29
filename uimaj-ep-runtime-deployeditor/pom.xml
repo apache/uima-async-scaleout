@@ -24,9 +24,9 @@
   
   <parent>
     <groupId>org.apache.uima</groupId>
-    <artifactId>parent-pom</artifactId>
-    <version>1-SNAPSHOT</version>
-    <relativePath/>
+    <artifactId>uima-as-parent</artifactId>
+    <version>2.3.1-SNAPSHOT</version>
+    <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
@@ -57,7 +57,6 @@
   </scm>
   
   <properties>
-    <uimaScmRoot>uima-as</uimaScmRoot>
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <postNoticeText>${ibmNoticeText}</postNoticeText>
   </properties>
@@ -66,7 +65,7 @@
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-runtime</artifactId>
-      <version>${project.version}</version>
+      <version>${uimajDependencyVersion}</version>
       <!-- don't use provided scope here, because then
            eclipse:eclipse is set up to ref the uimaj-ep-runtime
            project directly, and it has no content
