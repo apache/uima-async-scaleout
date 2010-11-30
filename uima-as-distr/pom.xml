@@ -200,11 +200,13 @@
       <version>4.1.1</version>
     </dependency>
   
-    <dependency>
+    <!-- next dependency has gone missing as of Nov 2010 (maybe earlier)
+         remove - it's not used - to allow building -->
+    <!--dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activeio-core</artifactId>
       <version>3.0.0-incubator</version>
-    </dependency>
+    </dependency-->
   
     <dependency>
       <groupId>backport-util-concurrent</groupId>
