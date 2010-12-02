@@ -334,7 +334,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                 "BaseAnalysisEngineController",
                 UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_incompatible_version_WARNING",
-                new Object[] { "UIMA AS Client", UimaAsVersion.getUimajFullVersionString(),
+                new Object[] { getComponentName(), UimaAsVersion.getUimajFullVersionString(),
                   UimaVersion.getFullVersionString() });
         throw new ResourceInitializationException(new AsynchAEException(
                 "Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version is built to depend on Core UIMA version:"
