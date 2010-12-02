@@ -30,7 +30,7 @@ public class UimaAsVersion {
    * 
    * @return the major version number
    */
-  public short getMajorVersion() {
+  public static short getMajorVersion() {
     return ${parsedVersion.majorVersion}; // major version
   }
 
@@ -39,7 +39,7 @@ public class UimaAsVersion {
    * 
    * @return the minor version number
    */
-  public short getMinorVersion() {
+  public static short getMinorVersion() {
     return ${parsedVersion.minorVersion}; // minor version
   }
 
@@ -48,11 +48,25 @@ public class UimaAsVersion {
    * 
    * @return the build revision number
    */
-  public short getBuildRevision() {
+  public static short getBuildRevision() {
     return ${parsedVersion.incrementalVersion}; // build revision
   }
 
-  public String getVersionString() {
+  public static String getVersionString() {
     return "" + getMajorVersion() + "." + getMinorVersion() + "." + getBuildRevision();
+  }
+  
+  /**
+   * @return the build version, including any suffixes, as a String
+   */
+  public static String getFullVersionString() {
+    return "${project.version}";
+  }
+  
+  /**
+   * @return the build version of uimaj that this build depends on, as a String
+   */
+  public static String getUimajFullVersionString() {
+    return "${uimajDependencyVersion}"; // e.g. 2.3.1-SNAPSHOT
   }
 }

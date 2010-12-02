@@ -77,6 +77,7 @@ import org.apache.uima.adapter.jms.service.Dd2spring;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.impl.UimaVersion;
 import org.apache.uima.internal.util.UUIDGenerator;
 import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceConfigurationException;
@@ -119,8 +120,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected static Semaphore sharedConnectionSemaphore = new Semaphore(1);
 
   private Object connectionMux = new Object();
-
-  private static final UimaAsVersion uimaAsVersion = new UimaAsVersion();
 
   protected InitialContext jndiContext;
   
@@ -538,20 +537,20 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    */
   public synchronized void initialize(Map anApplicationContext)
           throws ResourceInitializationException {
-    // Check UIMA AS version againg the UIMA Core version. If not the same throw Exception
-    if (!uimaAsVersion.getVersionString().equals(UIMAFramework.getVersionString())) {
+    // Check the version of uimaj that UIMA AS was built with, against the UIMA Core version. If not the same throw Exception
+    if (!UimaAsVersion.getUimajFullVersionString().equals(UimaVersion.getFullVersionString())) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(
               Level.WARNING,
-              CLASS_NAME.getName(),
-              "BaseAnalysisEngineController",
+              CLASS_NAME.getName(), 
+              "initialize",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAEE_incompatible_version_WARNING",
-              new Object[] { "UIM AS Client", uimaAsVersion.getVersionString(),
-                  UIMAFramework.getVersionString() });
+              new Object[] { "UIMA AS Client", UimaAsVersion.getUimajFullVersionString(),
+                UimaVersion.getFullVersionString() });
       throw new ResourceInitializationException(new AsynchAEException(
-              "Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version:"
-                      + uimaAsVersion.getVersionString() + " Core UIMA Version:"
-                      + UIMAFramework.getVersionString()));
+              "Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version is built to depend on Core UIMA version:"
+                      + UimaAsVersion.getUimajFullVersionString() + " but is running with version:"
+                      + UimaVersion.getFullVersionString()));
     }
 
     if (running) {

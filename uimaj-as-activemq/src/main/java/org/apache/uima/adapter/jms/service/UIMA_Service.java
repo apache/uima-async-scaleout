@@ -28,6 +28,7 @@ import java.net.Socket;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UimaContext;
 import org.apache.uima.UimaContextAdmin;
+import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.jmx.monitor.BasicUimaJmxMonitorListener;
 import org.apache.uima.aae.jmx.monitor.JmxMonitor;
@@ -65,7 +66,7 @@ public class UIMA_Service implements ApplicationListener {
    */
   public String[] initialize(String[] args) throws Exception {
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
-            "UIMA-AS version " + UIMAFramework.getVersionString());
+            "UIMA-AS version " + UimaAsVersion.getFullVersionString());
 
     String[] springConfigFileArray = {};
     String[] deploymentDescriptors = {};
