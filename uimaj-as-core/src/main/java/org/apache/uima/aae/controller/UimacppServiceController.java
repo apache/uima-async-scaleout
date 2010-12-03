@@ -71,7 +71,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
 
   private Socket commandConnection;
 
-  private Process uimacppProcess;
+  protected Process uimacppProcess;
 
   private LoggerHandler loggerHandler;
 
@@ -97,7 +97,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
 
   private org.apache.uima.util.Logger uimaLogger;
 
-  private UimacppServiceManagement mbean;
+  protected UimacppServiceManagement mbean;
 
   private JmxManagement jmxMgmt;
 
@@ -558,8 +558,13 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
         }
         builder.directory(startingDir);
       }
-
+      /* add the shutdown hook */
+      shutdownHook = new UimacppShutdownHook(this, commandConnection, uimaLogger);
+      Runtime.getRuntime().addShutdownHook(shutdownHook);
+      
+      /* fork the C++ process */
       uimacppProcess = builder.start();
+      
       if (uimacppProcess == null) {
         throw new UIMAException(new Throwable("Could not fork process."));
       }
@@ -582,10 +587,6 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
                   "Could not establish socket connection with C++ service."));
         }
       }
-
-      /* add the shutdown hook */
-      shutdownHook = new UimacppShutdownHook(uimacppProcess, commandConnection, uimaLogger);
-      Runtime.getRuntime().addShutdownHook(shutdownHook);
 
       if (uimacppProcess != null) {
         // wait for C++ process to report initialization status.
@@ -1060,18 +1061,31 @@ class WaitThread implements Runnable {
  */
 class UimacppShutdownHook extends Thread {
 
-  public Process uimacppProcess;
-
+  public UimacppServiceController controller;
+  
   private org.apache.uima.util.Logger uimaLogger;
+  
 
-  public UimacppShutdownHook(Process aprocess, Socket socket, org.apache.uima.util.Logger logger)
+  public UimacppShutdownHook(UimacppServiceController controller, Socket socket, org.apache.uima.util.Logger logger)
           throws IOException {
-    this.uimacppProcess = aprocess;
+    this.controller = controller;
     this.uimaLogger = logger;
   }
 
   public void run() {
     uimaLogger.log(Level.INFO, "UimacppShutdownHook sending shutdown message.");
-    uimacppProcess.destroy();
+    if (controller.mbean != null)
+		try {
+			System.out.println("UimacppShutdownHook sending quiesce message");
+			controller.mbean.quiesceAndShutdown();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+    if (controller.uimacppProcess != null) {
+      System.out.println("UimacppShutdownHook destroy C++ process");
+      controller.uimacppProcess.destroy();
+    }
   }
 } // shutdownhook
