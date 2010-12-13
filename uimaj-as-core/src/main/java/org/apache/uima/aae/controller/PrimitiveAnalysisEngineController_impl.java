@@ -492,6 +492,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     // destination as final and return CAS in reply.
     anEndpoint.setFinal(true);
     AnalysisEngine ae = null;
+    boolean clientUnreachable = false;
     try {
       // Checkout an instance of AE from the pool
       ae = aeInstancePool.checkout();
@@ -693,15 +694,20 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             dropStats(newEntry.getCasReferenceId(), getName());
           }
         } else {
-          // Send generated CAS to the client
+          // Send generated CAS to the remote client
           if (!stopped) {
               getOutputChannel().sendReply(newEntry, anEndpoint);
             
               //	Check for delivery failure. The client may have terminated while an input CAS was being processed
             if ( childCasStateEntry.deliveryToClientFailed() ) {
-          	  if ( cmOutstandingCASes.containsKey(childCasStateEntry.getCasReferenceId())) {
+              clientUnreachable = true;
+              if ( cmOutstandingCASes.containsKey(childCasStateEntry.getCasReferenceId())) {
               	  cmOutstandingCASes.remove(childCasStateEntry.getCasReferenceId());
           	  }
+              //	Stop generating new CASes. We failed to send a CAS to a client. Most likely
+              //	the client has terminated. 
+          	  moreCASesToProcess = false; // exit the while loop
+          	  
           	  dropCAS(childCasStateEntry.getCasReferenceId(), true);
             }
           }
@@ -760,7 +766,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           dropStats(aCasReferenceId, getName());
         }
       } else {
-        if (!stopped) {
+        if (!stopped && !clientUnreachable ) {
             getOutputChannel().sendReply(aCasReferenceId, anEndpoint);
         }
 
@@ -807,7 +813,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // will drop the CAS
       if (isTopLevelComponent() && !processingFailed) {
         // Release CASes produced from the input CAS if the input CAS has been aborted
-        if (abortGeneratingCASes(aCasReferenceId)) {
+        if (abortGeneratingCASes(aCasReferenceId) || clientUnreachable ) {
 
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "process",
@@ -816,6 +822,10 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
           getInProcessCache().releaseCASesProducedFromInputCAS(aCasReferenceId);
         } else if (inputCASReturned && isTopLevelComponent()) {
+        	
+        	if ( clientUnreachable ) {
+        		((CASImpl) aCAS).enableReset(true);
+        	}
           // Remove input CAS cache entry if the CAS has been sent to the client
           dropCAS(aCasReferenceId, true);
           localCache.dumpContents();
