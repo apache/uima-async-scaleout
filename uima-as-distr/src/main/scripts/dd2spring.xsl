@@ -1484,7 +1484,11 @@
   <!-- allow old services for now -->
   <xsl:template mode="addDefaults" match="u:services">
     <!--xsl:sequence select="f:validate(.)"/-->
-    <xsl:apply-templates mode="addDefaults"/>
+    <xsl:apply-templates mode="addDefaults">
+      <!-- keyPath is the list of keys with / inbetween, from the associated AE descriptor expansion, 
+           for delegates, used to identify a particular one in case of errors -->
+      <xsl:with-param name="keyPath"  tunnel="yes" select="''"/>
+    </xsl:apply-templates>
   </xsl:template>          
 
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1687,6 +1691,7 @@
     <xsl:param tunnel="yes" name="local_ae_descriptor"/> 
     <xsl:param tunnel="yes" name="defaultErrorConfig"/>
     <xsl:param tunnel="yes" name="local_ae_descriptor_file_path"/>
+    <xsl:param tunnel="yes" name="keyPath"/> 
    
     <!--xsl:message select="'******************start local ae descriptor'"/>
     <xsl:message select="$local_ae_descriptor"/>
@@ -1716,7 +1721,7 @@
     
     <xsl:if test="@async = ('yes', 'no')">
       <xsl:sequence select="f:msgWithLineNumber('WARNING',
-             ('deployment descriptor for analysisEngine:', $key,
+             ('deployment descriptor for analysisEngine:', $keyPath,
              'specifies', @async, ' but the async value should be true or false'),
              .)"/>
     </xsl:if>
@@ -1726,7 +1731,7 @@
         <xsl:when test="(string(@async) = ('yes','true')) and 
                         not(f:isAggr($local_ae_descriptor))">
           <xsl:sequence select="f:msgWithLineNumber('ERROR',
-             ('deployment descriptor for analysisEngine:', $key,
+             ('deployment descriptor for analysisEngine:', $keyPath,
              'specifies async=&quot;true&quot; but the analysis engine is a primitive'),
              .)"/>
           <xsl:value-of select="'false'"/>
@@ -1734,14 +1739,14 @@
         <xsl:when test="(string(@async) = ('yes','true')) and 
                         f:isCPP($local_ae_descriptor)">
           <xsl:sequence select="f:msgWithLineNumber('ERROR',
-             ('deployment descriptor for analysisEngine:', $key,
+             ('deployment descriptor for analysisEngine:', $keyPath,
              'specifies async=''true''; but this isn''t supported for CPP components'),
              .)"/>
           <xsl:value-of select="'false'"/>
         </xsl:when>
         <xsl:when test="not(string(@async) = ('yes', 'no', 'true', 'false', ''))">
           <xsl:sequence select="f:msgWithLineNumber('ERROR',
-             ('deployment descriptor for analysisEngine:', $key,
+             ('deployment descriptor for analysisEngine:', $keyPath,
              'specifies', concat('async=&quot;', string(@async),
                    '&quot;, but only true or false are allowed as values.')),
              .)"/>
@@ -1757,7 +1762,7 @@
     
     <xsl:if test="(string($async) = ('false', 'no')) and u:delegates">
       <xsl:sequence select="f:msgWithLineNumber('ERROR',
-        ('deployment descriptor for analysisEngine:', $key,
+        ('deployment descriptor for analysisEngine:', $keyPath,
          'specifies false for the async attribute, but contains a delegates element, which is not allowed in this case.'), .)"/>
     </xsl:if>
      
@@ -1790,7 +1795,7 @@
       <xsl:choose>
         <xsl:when test="(string($async) = 'false') and @inputQueueScaleout">
           <xsl:sequence select="f:msgWithLineNumber('WARN',
-              ('deployment descriptor for analysisEngine:', $key,
+              ('deployment descriptor for analysisEngine:', $keyPath,
                'specifies', concat('inputQueueScaleout=&quot;', string(@inputQueueScaleout),
                '&quot;, this is ignored for async=&quot;false&quot; analysisEngine specifications.'),
                'Use the scaleout numberOfInstances=xx element instead for this, for primitives.'),
@@ -1829,7 +1834,7 @@
                    ('casMultiplier settings for poolSize (', u:casMultiplier/@poolSize, 
                     ') and initialFsHeapSize (', u:casMultiplier/@initialFsHeapSize, ')',
                     $nl, 'will be ignored',
-                    'for the analysisEngine with key=', $key, $nl,
+                    'for the analysisEngine with key=', $keyPath, $nl,
                     'because the pool specs are set using the contained delegate cas multiplier specification.'
                    ),
                    .)"/>       
@@ -1887,7 +1892,7 @@
             <xsl:when test="(string($async) eq 'true') and
                             (not(parent::u:service))">
              <xsl:sequence select="f:msgWithLineNumber('WARN',
-               ('Deployment descriptor for analysisEngine:', $key,
+               ('Deployment descriptor for analysisEngine:', $keyPath,
                'is for a non-top-level CAS Multiplier (or Collection Reader wrapped as a CAS Multiplier).', $nl,
                'However, the &lt;casMultiplier> element is missing.', $nl,
                'The &lt;casMultiplier> element is only used here for specifying the processParentLast attribute.', $nl,
@@ -1910,11 +1915,11 @@
               <u:casMultiplier/>             
             </xsl:when>
             
-            <!-- async = false, not top level -->
+            <!-- async = false, and not top level -->
             <xsl:when test="not(parent::u:service)">
               <xsl:sequence select="f:msgWithLineNumber('WARN',
-             ('deployment descriptor for analysisEngine:', $key,
-             'is for a synchronous CAS Multiplier (not top level) (or Collection Reader wrapped as a CAS Multiplier).', $nl,
+             ('Deployment descriptor for analysisEngine:', $key, $keyPath,
+             ' is for a synchronous CAS Multiplier (not top level) (or Collection Reader wrapped as a CAS Multiplier).', $nl,
              'However, the &lt;casMultiplier> element is missing.', $nl,
                 'Defaulting to a poolSize of 1, initialFsHeapSize of 2,000,000.', $nl,
                 'Defaulting to a processParentLast to false for this case, to',
@@ -1938,7 +1943,7 @@
         <xsl:otherwise>  <!-- is not a cas multiplier -->
           <xsl:if test="u:casMultiplier">
             <xsl:sequence select="f:msgWithLineNumber('ERROR',
-             ('deployment descriptor for analysisEngine:', $key,
+             ('deployment descriptor for analysisEngine:', $keyPath,
              'specifies a casMultiplier element, but the analysisEngine is not a CAS multiplier'),
              .)"/>
           </xsl:if>
@@ -2014,7 +2019,8 @@
     <xsl:param name="ddDelegates"/>  <!-- analysisEngine(s) or remoteAnalysisEngine(s) -->
     <xsl:param tunnel="yes" name="defaultErrorConfig"/>
     <xsl:param tunnel="yes" name="local_ae_descriptor"/>
-    <xsl:param tunnel="yes" name="local_ae_descriptor_file_path"/>                 
+    <xsl:param tunnel="yes" name="local_ae_descriptor_file_path"/>
+    <xsl:param tunnel="yes" name="keyPath"/>              
 
     <xsl:variable name="nextLevelDefaultErrorConfig" select=
           "if ($defaultErrorConfig eq 'topAe') then 'topDelegate' else 'none'"/>        
@@ -2041,9 +2047,10 @@
     
     <u:delegates>
       <xsl:for-each select="$delegatesFromLocalAeDescriptor">
+        
         <xsl:variable name="delegateAE" select="f:getDelegatePart($local_ae_descriptor, @key)"/>
-        <!--xsl:message select="('*** Remote test default', @key)"/>
-        <xsl:message select="$ddDelegates"/-->
+        <!--sl:message select="('*** debug delegate from localAE:', @key)"/-->
+        <!--xsl:message select="$ddDelegates"/-->
         <xsl:variable name="aeOrRemote" as="node()">
           <xsl:choose>
             <xsl:when test="$ddDelegates[string(@key) = string(current()/@key)]">             
@@ -2066,11 +2073,12 @@
         <!--xsl:message select="$aeOrRemote"/-->
         
         <xsl:variable name="aePath" select="f:fixupPath(u:import, $local_ae_descriptor_file_path[2])"/>
-          
+        
         <xsl:apply-templates mode="addDefaults" select="$aeOrRemote">
           <xsl:with-param tunnel="yes" name="defaultErrorConfig" select="$nextLevelDefaultErrorConfig"/>
           <xsl:with-param tunnel="yes" name="local_ae_descriptor" select="$delegateAE"/>
           <xsl:with-param tunnel="yes" name="local_ae_descriptor_file_path" select="$aePath"/>
+          <xsl:with-param tunnel="yes" name="keyPath" select="if ($keyPath eq '') then @key else concat($keyPath, '/', @key)"/>
         </xsl:apply-templates>
       </xsl:for-each>
     </u:delegates>
@@ -2362,7 +2370,7 @@
   <!--============================================================-->       
   <!--|            Functions                                     |-->       
   <!--============================================================-->
-  
+ 
   <xsl:function name="f:getImport">
     <xsl:param name="importNode"/>
     <xsl:choose>
@@ -2842,7 +2850,7 @@
       <u:version i:maxone=""/>
       <u:vendor i:maxone=""/>
       <u:deployment i:maxone="" i:required="" protocol="" provider="">
-        <u:casPool i:maxone="" numberOfCASes=""  initialFsHeapSize=""/>
+          <u:casPool i:maxone="" numberOfCASes=""  initialFsHeapSize=""/>
         
           <u:service i:required="">
             <u:custom name="" value=""/>
