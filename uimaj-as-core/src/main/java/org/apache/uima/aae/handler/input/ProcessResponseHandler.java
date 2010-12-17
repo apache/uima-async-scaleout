@@ -220,7 +220,11 @@ public class ProcessResponseHandler extends HandlerBase {
       /* --------------------- */
       /** DESERIALIZE THE CAS. */
       /* --------------------- */
-
+      //all subsequent serialization must be complete CAS.
+      if ( !aMessageContext.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas))  {
+    	cacheEntry.setAcceptsDeltaCas(false);
+      }
+     
       // check if the CAS is part of the Parallel Step
       if (totalNumberOfParallelDelegatesProcessingCas > 1) {
         // Synchronized because replies are merged into the same CAS.

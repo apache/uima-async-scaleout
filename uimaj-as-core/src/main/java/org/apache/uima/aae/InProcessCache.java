@@ -820,6 +820,10 @@ public class InProcessCache implements InProcessCacheMBean {
     public boolean acceptsDeltaCas() {
       return this.acceptsDeltaCas;
     }
+    
+    public void setAcceptsDeltaCas(boolean accepts) {
+      this.acceptsDeltaCas = accepts;
+    }
 
     public void setSentDeltaCas(boolean sendingDeltaCas) {
       this.sentDeltaCas = sendingDeltaCas;

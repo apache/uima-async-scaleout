@@ -231,6 +231,13 @@ public class JmsOutputChannel implements OutputChannel {
         if (cacheEntry.getMarker() != null && !cacheEntry.getMarker().isValid()) {
           cacheEntry.setMarker(aCAS.createMarker());
         }
+        if ( !cacheEntry.sentDeltaCas() ) {
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "serializeCAS",
+                      JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_serialize_cas__FINEST",
+                      new Object[] { aCasReferenceId, "FULL Cas serialized and sent." });
+          }
+        }
       } else {
         serSharedData = cacheEntry.getDeserSharedData();
         if (serSharedData == null) {
@@ -1354,6 +1361,13 @@ public class JmsOutputChannel implements OutputChannel {
         } else {
           serializedCAS = serializer.serializeCasToBinary(cas);
           entry.setSentDeltaCas(false);
+          if (isReply) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "getBinaryCas",
+                        JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_serialize_cas__FINEST",
+                        new Object[] { aCasReferenceId, "FULL Cas serialized and sent." });
+            }
+          }
         }
         // create a fresh marker
         if (entry.getMarker() != null && !entry.getMarker().isValid()) {
@@ -2151,7 +2165,8 @@ public class JmsOutputChannel implements OutputChannel {
       if (isRequest == true) {
         populateHeaderWithRequestContext(tm, anEndpoint, AsynchAEMessage.Process);
       } else {
-        populateHeaderWithResponseContext(tm, anEndpoint, AsynchAEMessage.Process);
+        populateHeaderWithResponseContext(tm, anEndpoint, AsynchAEMessage.Process);   
+        tm.setBooleanProperty(AsynchAEMessage.SentDeltaCas, entry.sentDeltaCas());
       }
       if (casStateEntry == null) {
         return;
