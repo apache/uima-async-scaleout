@@ -391,7 +391,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         for (String comp : comps) {
           String[] subcomps = comp.split("/");
           if (1 == subcomps.length) {
-            System.out.println("Component "+comp+" registered for Cas logging");
             ((AggregateAnalysisEngineController)this).setCasLoggingDirectory(comp, comp);
           }
         }
@@ -400,10 +399,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         // Is this service a CAS Multiplier?
         if (((AnalysisEngineDescription) resourceSpecifier).getAnalysisEngineMetaData()
                 .getOperationalProperties().getOutputsNewCASes()) {
-          System.out.println(getName() + "-Initializing CAS Pool for Context:"
-                  + getUimaContextAdmin().getQualifiedContextName());
-          System.out.println(getComponentName() + "-CasMultiplier Cas Pool Size="
-                  + aComponentCasPoolSize + " Cas Initialial Heap Size:" + anInitialCasHeapSize);
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME)
                     .logrb(
@@ -413,7 +408,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                             UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                             "UIMAEE_multiplier_cas_pool_config_INFO",
                             new Object[] { getComponentName(), aComponentCasPoolSize,
-                                anInitialCasHeapSize });
+                                anInitialCasHeapSize,getUimaContextAdmin().getQualifiedContextName() });
           }
           initializeComponentCasPool(aComponentCasPoolSize, anInitialCasHeapSize);
         }
@@ -423,14 +418,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       if ( childContext != null && childContext instanceof UimaContextAdmin ) {
         // check requested Cas logging
         String qualifiedContextName = ((UimaContextAdmin)childContext).getQualifiedContextName();
-//        System.out.println("--------- Component Context Name:"+qualifiedContextName);
         if (casLogComponents!= null && (this instanceof AggregateAnalysisEngineController) && 
                 casLogComponents.contains(anEndpointName)) {
           String[] comps = casLogComponents.split(" ");
           for (String comp : comps) {
             String[] subcomps = comp.split("/");
             if (1 < subcomps.length && subcomps[subcomps.length-2].equals(anEndpointName)) {
-              System.out.println("Component "+comp+" registered for Cas logging");
               ((AggregateAnalysisEngineController)this).setCasLoggingDirectory(subcomps[subcomps.length-1],
                       comp);
             }
@@ -478,9 +471,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         if (endpoint != null && endpoint.isRemote()) {
           String key = ((AggregateAnalysisEngineController) this).lookUpDelegateKey(endpoint
                   .getEndpoint());
-          System.out.println("Service:" + getComponentName()
-                  + " Configured To Serialize CASes To Remote Delegate:" + key + " Using "
-                  + endpoint.getSerializer() + " Serialization");
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "C'tor",
                     UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -570,7 +560,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
       platformInfo.append("\n+ JVM LIB_PATH:" + bean.getLibraryPath());
       platformInfo.append("\n+------------------------------------------------------------------");
-      System.out.println(platformInfo.toString());
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
               "logPlatformInfo", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAEE_show_platform_info__INFO", new Object[] { platformInfo.toString() });
@@ -646,12 +635,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         concurrentRequestConsumers = e.getConcurrentRequestConsumers();
         concurrentReplyConsumers = e.getConcurrentReplyConsumers();
       }
-
-      System.out.println("Controller:" + getComponentName() + " Starting Request Listener With "
-              + concurrentRequestConsumers
-              + " Concurrent Consumers. Reply Listener Configured With " + concurrentReplyConsumers
-              + " Concurrent Consumer(s)");
-
+      
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "initializeVMTransport", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_starting_colocated_listener__INFO", new Object[] {getComponentName(),concurrentRequestConsumers,concurrentReplyConsumers });
+      }
       uimaAsContext.setConcurrentConsumerCount(concurrentRequestConsumers);
       uimaAsContext.put("EndpointName", endpointName);
 
@@ -924,9 +913,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       
       cm.setInitialCasHeapSize(anInitialCasHeapSize);
       cm.setPoolSize(getUimaContextAdmin().getUniqueName(), aComponentCasPoolSize);
-      System.out.println("Component:" + getComponentName() + " Cas Pool:"
-              + getUimaContextAdmin().getQualifiedContextName() + " Size:" + aComponentCasPoolSize
-              + " Cas Heap Size:" + anInitialCasHeapSize / 4 + " cells");
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.INFO,
@@ -975,9 +961,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       if (isCasMultiplier()) {
         sInfo.setCASMultiplier();
       }
-    } else {
-      System.out.println("!!!!!!!!!!!!!!! ServiceInfo instance is NULL");
-    }
+    } 
 
   }
 
@@ -1179,8 +1163,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           try {
             entry = getInProcessCache().getCacheEntryForCAS(casReferenceId);
           } catch (AsynchAEException e) {
-            System.out.println("Controller:" + getComponentName() + " CAS:" + casReferenceId
-                    + " Not Found In Cache");
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                        "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_parent_cas_notin_cache__INFO", new Object[] { getComponentName(), casReferenceId});
+              }
+            
+            
           }
           CAS cas = null;
           // Make sure that the ErrorHandler did not drop the cache entry and the CAS
@@ -1284,8 +1273,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           try {
             localCache.lookupEntry(aCasReferenceId).setDropped(true);
           } catch (Exception e) {
-            System.out.println("Controller:" + getComponentName() + " CAS:" + aCasReferenceId
-                    + " Not Found In Cache");
+        	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "dropCAS",
+        	                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_parent_cas_notin_cache__INFO",
+        	                new Object[] {getComponentName(), aCasReferenceId  });
+        	      }
           }
           localCache.remove(aCasReferenceId);
         }
@@ -1705,8 +1697,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         UimaTransport transport = entry.getValue();
         try {
           transport.stopIt();
-          System.out.println("Service:" + getComponentName() + " Stopped Delegate Transport:"
-                  + entry.getKey());
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -1717,8 +1707,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                     "stopTransportLayer", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_exception__WARNING", e);
           }
-          System.out.println("Exception:" + e.getClass() + " While Stopping Delegate Transport:"
-                  + entry.getKey());
         }
       }
     }
@@ -1912,9 +1900,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             // or not to call stop() on the controller in the event there is an exception.
             awaitingCacheCallbackNotification = true;
             try {
-              System.out.println("Controller:" + getComponentName()
-                      + " Waiting For InProcessCache Callback. Cache Size:"
-                      + getInProcessCache().getSize());
               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
                         "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1926,8 +1911,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             }
           }
         }
-        System.out.println("Controller:" + getComponentName()
-                + " Received Callback From the InProcessCache. The Cache Is Empty.");
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
                   "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
