@@ -36,6 +36,8 @@ under the License.
   <dependencySets>  
             
     <!-- UIMA-AS -->
+    
+    
     <dependencySet>
       <includes>
         <include>org.apache.uima:uimaj-as-activemq</include>
@@ -51,49 +53,69 @@ under the License.
     </dependencySet>
 
     <!-- UIMA-AS included other projects -->
+
     <dependencySet>
       <includes>
-        <include>commons-logging:commons-logging</include>
-        <include>org.apache.activemq:activemq-console</include>
-        <include>org.apache.activemq:activeio-core</include>
-        <include>backport-util-concurrent:backport-util-concurrent</include>
-        <include>org.apache.activemq:activemq-jaas</include>
-        <include>org.apache.activemq:activemq-web</include>
-        <include>mx4j:mx4j</include>
-        <include>org.apache.geronimo.specs:geronimo-jms_1.1_spec</include>
-        <include>org.apache.geronimo.specs:geronimo-j2ee-management_1.0_spec</include>
+        <include>org.apache.activemq:activemq-all</include>
       </includes>
       <useTransitiveDependencies>false</useTransitiveDependencies>
-      <outputDirectory>apache-activemq-4.1.1/lib</outputDirectory>
+      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <fileMode>644</fileMode> 
       <directoryMode>755</directoryMode>        
     </dependencySet>
+
+
+    <dependencySet>
+      <includes>
+        <include>commons-logging:commons-logging</include>
+        <include>org.springframework:spring-core</include>  
+        <include>org.apache.activemq:activemq-camel</include>
+        <include>org.apache.activemq:kahadb</include>
+        <include>org.apache.activemq:activemq-console</include>
+        <include>org.apache.activemq:activemq-core</include>
+        <include>org.apache.activemq:activemq-spring</include>
+        <include>org.apache.geronimo.specs:geronimo-jms_1.1_spec</include>
+        <include>org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec</include>
+        <include>org.springframework:spring-asm</include>  
+        <include>org.springframework:spring-context</include>  
+        <include>org.springframework:spring-tx</include>  
+        <include>org.springframework:spring-beans</include>  
+        <include>org.springframework:spring-expression</include>  
+        <include>org.springframework:spring-jms</include>  
+        <include>org.springframework:xbean-spring</include>  
+        <include>org.apache.xbean:xbean-spring</include>
+      </includes>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+      <outputDirectory>apache-activemq-5.4.1/lib</outputDirectory>
+      <useProjectArtifact>false</useProjectArtifact>
+      <fileMode>644</fileMode> 
+      <directoryMode>755</directoryMode>        
+    </dependencySet>
+
     
     <dependencySet>
       <includes>
-        <include>org.springframework:spring</include>  
+        <include>commons-codec:commons-codec</include>
         <include>commons-httpclient:commons-httpclient</include>
-        <include>org.mortbay.jetty:jetty</include> 
-        <include>org.mortbay.jetty:jetty-util</include> 
-        <include>org.mortbay.jetty:servlet-api-2.5</include>
-        <include>xmlpull:xmlpull</include> <!-- need for uima-as -->
-        <include>com.thoughtworks.xstream:xstream</include> <!-- need for uima-as -->
+        <include>org.eclipse.jetty.aggregate:jetty-all-server</include> 
+        <include>com.thoughtworks.xstream:xstream</include> 
+        <include>xmlpull:xmlpull</include> 
+        <include>org.apache.geronimo.specs:geronimo-servlet_2.5_spec</include>
+<!--  
+        <include>xmlpull:xmlpull</include> 
         <include>org.apache.derby:derby</include>
-        <include>org.apache.xbean:xbean-spring</include>
         <include>commons-beanutils:commons-beanutils</include>
 		    <include>commons-collections:commons-collections</include>
         <include>commons-dbcp:commons-dbcp</include>
         <include>commons-pool:commons-pool</include>
         <include>org.apache.geronimo.specs:geronimo-j2ee-connector_1.5_spec</include>
-        <include>org.apache.geronimo.specs:geronimo-j2ee-jacc_1.0_spec</include>
-        <include>activemq:jmdns</include>
+        <include>org.apache.geronimo.specs:geronimo-j2ee-jacc_1.1_spec</include>
+        <include>activemq:jmdns</include>  -->
         <include>log4j:log4j</include>
-        <include>mx4j:mx4j-remote</include>
-        <include>mx4j:mx4j-tools</include>
       </includes>
       <useTransitiveDependencies>false</useTransitiveDependencies>
-      <outputDirectory>apache-activemq-4.1.1/lib/optional</outputDirectory>
+      <outputDirectory>apache-activemq-5.4.1/lib/optional</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <fileMode>644</fileMode> 
       <directoryMode>755</directoryMode>        
@@ -352,24 +374,36 @@ under the License.
     </fileSet>
     
     <!-- activemq -->
+
+
     <fileSet>
-      <directory>src/main/apache-activemq-4.1.1</directory>
-      <outputDirectory>apache-activemq-4.1.1</outputDirectory>
+      <directory>src/main/apache-activemq-5.4.1</directory>
+      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
       <includes><include>bin/**</include></includes>
       <excludes><exclude>bin/**/*.*</exclude></excludes>
       <fileMode>755</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>  
+
     <fileSet>
-      <directory>src/main/apache-activemq-4.1.1</directory>
-      <outputDirectory>apache-activemq-4.1.1</outputDirectory>
+      <directory>src/main/apache-activemq-5.4.1</directory>
+      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
+      <includes><include>conf/**</include></includes>
+      <excludes><exclude>conf/**/*.*</exclude></excludes>
+      <fileMode>755</fileMode>
+      <directoryMode>755</directoryMode>        
+    </fileSet>  
+
+    <fileSet>
+      <directory>src/main/apache-activemq-5.4.1</directory>
+      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
       <includes><include>bin/**/*.*</include></includes>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>  
     <fileSet>
-      <directory>src/main/apache-activemq-4.1.1</directory>
-      <outputDirectory>apache-activemq-4.1.1</outputDirectory>
+      <directory>src/main/apache-activemq-5.4.1</directory>
+      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
       <excludes><exclude>bin/**</exclude></excludes>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        

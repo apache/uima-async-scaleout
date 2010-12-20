@@ -44,7 +44,7 @@ under the License.
       <excludes>
         <!--exclude>src/main/readme/**</exclude-->
         <exclude>src/**/*.sh</exclude>
-        <exclude>src/main/apache-activemq-4.1.1/bin/**</exclude>
+        <exclude>src/main/apache-activemq-5.4.1/bin/**</exclude>
       </excludes>
       <fileMode>644</fileMode>
     </fileSet>
@@ -56,13 +56,13 @@ under the License.
         <include>src/**/*.sh</include>
     <!-- marks scripts, .so files as executable 
          skip .bat .jar .conf and .jnilib -->
-        <include>src/main/apache-activemq-4.1.1/bin/**</include>
+        <include>src/main/apache-activemq-5.4.1/bin/**</include>
       </includes>
       <excludes>
-        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.bat</exclude>
-        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.jar</exclude>
-        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.conf</exclude>
-        <exclude>src/main/apache-activemq-4.1.1/bin/**/*.jnilib</exclude>        
+        <exclude>src/main/apache-activemq-5.4.1/bin/**/*.bat</exclude>
+        <exclude>src/main/apache-activemq-5.4.1/bin/**/*.jar</exclude>
+        <exclude>src/main/apache-activemq-5.4.1/bin/**/*.conf</exclude>
+        <exclude>src/main/apache-activemq-5.4.1/bin/**/*.jnilib</exclude>        
       </excludes>
       <fileMode>755</fileMode>
     </fileSet>
@@ -71,10 +71,10 @@ under the License.
       <directory>.</directory>
       <outputDirectory>uima-as-distr</outputDirectory>
       <includes>
-        <include>src/main/apache-activemq-4.1.1/bin/**/*.bat</include>
-        <include>src/main/apache-activemq-4.1.1/bin/**/*.jar</include>
-        <include>src/main/apache-activemq-4.1.1/bin/**/*.conf</include>
-        <include>src/main/apache-activemq-4.1.1/bin/**/*.jnilib</include>        
+        <include>src/main/apache-activemq-5.4.1/bin/**/*.bat</include>
+        <include>src/main/apache-activemq-5.4.1/bin/**/*.jar</include>
+        <include>src/main/apache-activemq-5.4.1/bin/**/*.conf</include>
+        <include>src/main/apache-activemq-5.4.1/bin/**/*.jnilib</include>        
       </includes>
       <fileMode>644</fileMode>
     </fileSet>
