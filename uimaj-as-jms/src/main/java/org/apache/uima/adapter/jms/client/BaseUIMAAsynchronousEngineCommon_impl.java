@@ -22,13 +22,11 @@ package org.apache.uima.adapter.jms.client;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -45,20 +43,20 @@ import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
-import javax.naming.InitialContext;
 
 import org.apache.activemq.ActiveMQConnection;
-import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.derby.catalog.GetProcedureColumns;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
+import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaASStatusCallbackListener;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.delegate.Delegate;
+import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.InvalidMessageException;
 import org.apache.uima.aae.error.MessageTimeoutException;
@@ -88,9 +86,6 @@ import org.apache.uima.util.Level;
 import org.apache.uima.util.ProcessTrace;
 import org.apache.uima.util.XMLInputSource;
 import org.apache.uima.util.impl.ProcessTrace_impl;
-import org.apache.uima.aae.client.UimaASProcessStatus;
-import org.apache.uima.aae.delegate.Delegate;
-import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
 
 public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsynchronousEngine,
         MessageListener {
@@ -295,8 +290,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       // ALL outstanding CASes are received.
       cpcReadySemaphore.acquire();
     } catch (InterruptedException e) {
-      System.out
-              .println("UIMA AS Client Interrupted While Attempting To Acquire cpcReadySemaphore in initialize()");
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "collectionProcessingComplete", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_client_interrupted_while_acquiring_cpcReadySemaphore__WARNING", new Object[] {});
+          }
     }
   }
 
@@ -365,7 +363,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       try {
         cpcReplySemaphore.acquire();
       } catch (InterruptedException ex) {
-        System.out.println("UIMA AS Cllient Interrupted While Acquiring cpcReplySemaphore");
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "collectionProcessingComplete", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_client_interrupted_while_acquiring_cpcReplySemaphore__WARNING", new Object[] {});
+          }
       }
       // Wait for CPC Reply. This blocks on the cpcReplySemaphore
       waitForCpcReply();
@@ -975,8 +977,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           // client configuration. If the client is configured with binary serialization
           // override this and change serialization to "xmi".
           if (getSerializationStrategy().equalsIgnoreCase("binary")) {
-            System.out
-                    .println("\n\t***** WARNING: Service Doesn't Support Binary Serialization. Client Defaulting to XMI Serialization\n");
             // Override configured serialization
             setSerializationStrategy("xmi");
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -1753,8 +1753,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       try {
         threadMonitor.getMonitor().acquire();
       } catch (InterruptedException e) {
-        System.out
-                .println("UIMA AS Client Received Interrrupt While Acquiring Monitor Semaphore in sendAndReceive()");
       }
     }
     try {
@@ -2268,9 +2266,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             getMetaSemaphore.release();
           } else if (isCPCRequest()) {
             try {
-              System.out
-                      .println("Uima AS Client Timed Out While Waiting for CPC Reply From a Service. CPC Request Sent To: "
-                              + getEndPointName());
+                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                            "startTimer.run()", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                            "UIMAJMS_client_timedout_waiting_for_CPC__WARNING", getEndPointName());
+                  }
             } catch (Exception e) {
 
             }
@@ -2520,7 +2520,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         client.state = ClientState.RECONNECTING;
         client.producerInitialized = false;
       }
-      System.out.println("Uima AS Client Has Lost Connection To Broker:"+brokerURL+" Retrying Connection every 5secs Until Successfull. Is Client Stopped="+(stop==true));
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "retryConnectionUntilSuccessfull",
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_lost_connection_to_broker__WARNING",
@@ -2552,7 +2551,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       
       
       if ( !stop ) {
-        System.out.println("Connection to Broker:" +brokerURL+ " Created Successfully");
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "retryConnectionUntilSuccessfull",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_recovered_connection__INFO",
@@ -2618,7 +2616,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           } catch (Exception e) {
             /* ignore */
           }
-          System.out.println("UIMA AS Client - Shared JMS Connection Closed");
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "destroy",
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_connection_closed__INFO",
@@ -2627,9 +2624,6 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           return true;
 
         } else {
-          System.out
-                  .println("UIMA AS Client - Shared JMS Connection Not Closed. Current Client Instance Count"
-                          + getClientCount());
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "destroy",
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_shared_connection_not_closed__INFO",
