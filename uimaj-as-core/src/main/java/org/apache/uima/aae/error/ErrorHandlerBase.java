@@ -208,8 +208,13 @@ public abstract class ErrorHandlerBase {
         try {
           switch (aRetryCommand) {
             case AsynchAEMessage.GetMeta:
-              System.out.println("Controller:" + aController.getComponentName()
-                      + " >>>>>>>>>> Retrying GetMeta");
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                          "retryLastCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAEE_retrying_getmeta__INFO", new Object[] { aController.getComponentName(), anEndpoint.getDelegateKey() });
+              }
+
+              
               // Retry GetMeta
               ((AggregateAnalysisEngineController) aController).retryMetadataRequest(anEndpoint);
               break;
@@ -229,8 +234,11 @@ public abstract class ErrorHandlerBase {
                 
               }
               String casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
-              System.out.println("Controller:" + aController.getComponentName()
-                      + " >>>>>>>>>> Retrying Process For Cas Id:" + casReferenceId+" Delegate:"+anEndpoint.getDelegateKey());
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                          "retryLastCommand", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAEE_retrying_process_cas__INFO", new Object[] { aController.getComponentName(), casReferenceId, anEndpoint.getDelegateKey() });
+              }
               ((AggregateAnalysisEngineController) aController).retryProcessCASRequest(
                       casReferenceId, anEndpoint, true);
               break;
