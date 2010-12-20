@@ -158,7 +158,6 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
       new Thread("Spring Container Shutdown Thread") {
         public void run() {
           try {
-            System.out.println("Destroying Spring Container");
             springContainer.destroy();
             springContainer = null;
           } catch (Exception e) {
