@@ -105,7 +105,6 @@ public class JmxManager implements JmxManagement {
     if (!jmxAvailable || platformMBeanServer == null) // means we couldn't find the required classes
                                                       // and methods
     {
-      System.out.println("No JMX Server");
       UIMAFramework.getLogger().logrb(Level.CONFIG, JmxManager.class.getName(), "isInitialized",
               LOG_RESOURCE_BUNDLE, "UIMA_JMX_platform_mbean_server_not_available__CONFIG");
       return false;
