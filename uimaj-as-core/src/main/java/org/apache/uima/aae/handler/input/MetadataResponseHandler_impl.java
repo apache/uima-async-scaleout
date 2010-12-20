@@ -73,10 +73,6 @@ public class MetadataResponseHandler_impl extends HandlerBase {
               Endpoint masterEndpoint = ((AggregateAnalysisEngineController) getController())
                       .lookUpEndpoint(delegateKey, false);
               if (masterEndpoint.getSerializer().equals("binary")) {
-                System.out.println("\n\t***** WARNING: Delegate:" + delegateKey
-                        + " Doesn't Support Binary Serialization. Aggregate:"
-                        + getController().getComponentName()
-                        + " Defaulting to XMI Serialization For This Delegate\n");
                 // Override configured serialization
                 masterEndpoint.setSerializer("xmi");
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
