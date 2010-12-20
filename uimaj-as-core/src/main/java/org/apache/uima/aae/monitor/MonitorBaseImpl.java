@@ -82,7 +82,6 @@ public class MonitorBaseImpl implements Monitor {
     LongNumericStatistic countStat = getLongNumericStatistic(aComponent, aStatisticName);
     if (countStat != null) {
       synchronized (countStat) {
-        // System.out.println("Resetting Statistic:"+aStatisticName+" For Component:"+aComponent);
         countStat.reset();
       }
     }
