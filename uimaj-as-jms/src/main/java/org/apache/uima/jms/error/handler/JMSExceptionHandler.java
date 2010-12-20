@@ -54,11 +54,6 @@ public class JMSExceptionHandler extends ErrorHandlerBase implements ErrorHandle
         }
       }
       if (!handled) {
-        if (cause == null) {
-          System.out.println("No Handler for JMS Exception Cause ::" + t.getLocalizedMessage());
-        } else {
-          System.out.println("No Handler for JMS Exception Cause ::" + cause.getLocalizedMessage());
-        }
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
@@ -69,8 +64,6 @@ public class JMSExceptionHandler extends ErrorHandlerBase implements ErrorHandle
       return true;
     } else if (t instanceof java.lang.IllegalArgumentException && t.getCause() != null
             && t.getCause() instanceof java.net.URISyntaxException) {
-      // Handled invalid syntax in the URI
-      System.out.println("Invalid JMS Destination::" + t.getMessage());
       return true;
     }
     return false;
@@ -78,9 +71,6 @@ public class JMSExceptionHandler extends ErrorHandlerBase implements ErrorHandle
 
   private void handleConnectError(ConnectException exception, ErrorContext anErrorContext,
           AnalysisEngineController aController) {
-    System.out.println("Handling JMS Connect Exception Due To::" + exception.getLocalizedMessage());
-    System.out.println("Exception Cause::" + exception.getClass().getName() + ":::Message::"
-            + exception.getLocalizedMessage());
 
     String casReferenceId = (String) anErrorContext.get(AsynchAEMessage.CasReference);
     Endpoint endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
@@ -96,7 +86,6 @@ public class JMSExceptionHandler extends ErrorHandlerBase implements ErrorHandle
           aController.dropCAS(casReferenceId, true);
         }
       } catch (AsynchAEException e) {
-        System.out.println("Cas:" + casReferenceId + " Not Found In the Cache.");
       }
     }
   }
