@@ -589,8 +589,16 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   casProduced.release();
                 }
               } catch (Exception e) {
-                System.out.println("Controller:" + getComponentName()
-                        + " Attempt to release CAS Failed");
+            	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                      UIMAFramework.getLogger(CLASS_NAME).logrb(
+                              Level.INFO,
+                              getClass().getName(),
+                              "process",
+                              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                              "UIMAEE_cas_release_failed__INFO",
+                              new Object[] { getComponentName(),
+                                  aCasReferenceId });
+                    }
               }
               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                 UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -602,8 +610,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                         new Object[] { Thread.currentThread().getId(), getComponentName(),
                             aCasReferenceId });
               }
-              System.out.println(">>>> Cas Multiplier:" + getComponentName()
-                      + " Stopped Generating CASes from Input CAS:" + aCasReferenceId);
             }
           }
           if (casAbortedDueToExternalRequest) {
@@ -976,15 +982,20 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           try {
             CacheEntry entry = getInProcessCache().getCacheEntryForCAS(casId);
             if (entry != null && entry.getCas() != null) {
-              System.out.println("Primitive:" + getComponentName() + " Forcing Release of CAS:"
-                      + casId + " in stop()");
+        	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop",
+                          UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_force_cas_release___INFO",
+                          new Object[] { getComponentName(), casId });
+              }
               // Force CAS release to unblock CM thread
               entry.getCas().release();
             }
           } catch (Exception e) {
-            System.out.println("Controller:" + getComponentName() + " CAS:" + casId
-                    + " Not Found In Cache");
-
+        	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop",
+                          UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_parent_cas_notin_cache__INFO",
+                          new Object[] { getComponentName(), casId });
+              }
           }
         }
 
@@ -995,7 +1006,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       aeList.clear();
       aeList = null;
     }
-    System.out.println("Service:" + getComponentName() + " Stopped");
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop",
+                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_stopped__INFO",
+                  new Object[] { getComponentName()});
+    }
   }
   /**
    This method forces a heap and java dump. It only works with IBM jvm. 
