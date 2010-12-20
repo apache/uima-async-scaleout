@@ -457,8 +457,11 @@ public class ProcessResponseHandler extends HandlerBase {
                 delegateKey, Monitor.ProcessCount);
         stat.increment();
       } catch (Exception e) {
-        System.out.println("Controller:" + getController().getComponentName()
-                + " Unable To Find DelegateKey For Endpoint:" + endpoint.getEndpoint());
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                    "incrementDelegateProcessCount", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_delegate_key_for_endpoint_not_found__INFO", new Object[] { getController().getComponentName(), endpoint.getEndpoint() });
+        }
       }
     }
 
@@ -690,7 +693,6 @@ public class ProcessResponseHandler extends HandlerBase {
   }
 
   private void handleACK(MessageContext aMessageContext, String key) throws AsynchAEException {
-//    System.out.println("+++++++++++++++ Controller:"+getController().getComponentName()+" Received Reply ACK from Service:"+key);
   }
 
 }
