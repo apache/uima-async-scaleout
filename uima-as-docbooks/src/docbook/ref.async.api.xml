@@ -110,11 +110,15 @@ under the License.
         </listitem>
 
         <listitem>
-          <para><code>CAS getCAS()</code>: Requests a new CAS instance from the CAS pool. This method blocks
-            until a free instance of CAS is available in the CAS pool.
-            Applications that use <code>getCAS()</code> need to call <code>CAS.reset()</code> 
-            before reusing the CAS, or <code>CAS.release()</code>
-            to return it to the Cas pool.
+          <para><code>CAS getCAS()</code>: Requests a new CAS instance from a CAS pool. This method 
+          blocks until a free instance of CAS is available in the CAS pool. Applications that
+          use synchronous <code>sendAndReceive()</code> and <code>getCAS()</code> need to call 
+          <code>CAS.reset()</code> before reusing the CAS, or <code>CAS.release()</code> to return 
+          it to the CAS pool. Applications that use asynchronous <code>sendCAS()</code> and 
+          <code>getCAS()</code> must not call <code>CAS.release()</code> nor <code>CAS.reset()</code>
+          unless <code>sendCAS()</code> throws an exception. If <code>sendCAS()</code> call is successful, 
+          the UIMA AS framework code releases each CAS automatically when a reply is received. The framework 
+          releases a CAS right after a callback listener <code>entityProcessComplete()</code> completes.
           </para>
         </listitem>
 
