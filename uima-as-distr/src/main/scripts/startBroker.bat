@@ -31,7 +31,7 @@ REM   under the License.
 @REM  ActiveMQ needs a HOME
 @setlocal
 @if "%ACTIVEMQ_HOME%" == "" (
-  set "ACTIVEMQ_HOME=%UIMA_HOME%\apache-activemq-4.1.1"
+  set "ACTIVEMQ_HOME=%UIMA_HOME%\apache-activemq-5.4.1"
 )
 
 @REM  ActiveMQ needs a writable directory for the log files and derbydb
@@ -50,6 +50,7 @@ REM   under the License.
 @if not exist "%ACTIVEMQ_BASE%\conf\activemq-nojournal.xml" (
   copy "%UIMA_HOME%\as_config\log4j.properties" "%ACTIVEMQ_BASE%\conf"
   copy "%UIMA_HOME%\as_config\activemq-nojournal.xml" "%ACTIVEMQ_BASE%\conf"
+  copy "%ACTIVEMQ_HOME%\conf\*" "%ACTIVEMQ_BASE%\conf"
 )
 
 call "%ACTIVEMQ_HOME%\bin\activemq.bat" "xbean:file:%ACTIVEMQ_BASE%/conf/activemq-nojournal.xml"
