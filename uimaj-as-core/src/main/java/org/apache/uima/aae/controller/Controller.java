@@ -38,8 +38,6 @@ public class Controller implements ControllerMBean {
   }
 
   public void completeProcessingAndStop() {
-    System.out.println("************> Controller:" + controller.getComponentName()
-            + " JMX MBean Received Stop Command");
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
               "completeProcessingAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
