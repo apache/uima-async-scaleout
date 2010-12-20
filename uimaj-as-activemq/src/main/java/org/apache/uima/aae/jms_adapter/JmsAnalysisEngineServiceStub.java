@@ -190,7 +190,6 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
    */
   public void destroy() {
     try {
-      // System.out.println("destroy methjdssdx");
       uimaEEEngine.stop();
     } catch (Exception e) {
       if (UIMAFramework.getLogger().isLoggable(Level.WARNING)) {
@@ -215,12 +214,10 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
       cpcReceived = false;
       uimaEEEngine.collectionProcessingComplete();
       // make this routine synchronous
-      // System.out.println("CPC no wakeup needed");
       synchronized (mux) {
         while (!cpcReceived) {
           try {
             mux.wait();
-            // System.out.println("CPC wakeup");
           } catch (InterruptedException e) {
             // Only here if something interrupts this thread
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -245,7 +242,6 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
    */
   public void collectionProcessComplete(EntityProcessStatus aStatus) {
     synchronized (mux) {
-      // System.out.println("CPC reply done got one");
       cpcReceived = true;
       mux.notifyAll();
     }
