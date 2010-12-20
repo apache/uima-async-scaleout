@@ -142,33 +142,5 @@ public class ErrorResultBaseImpl implements ErrorResult {
     return wasTerminated;
   }
 
-  public static void main(String[] args) {
-    ErrorResultBaseImpl errorResult = new ErrorResultBaseImpl();
 
-    errorResult.setRootCause(new AsynchAEException(new NullPointerException()));
-    errorResult.addComponentKeyPath("InnerMostLevel");
-    errorResult.addComponentKeyPath("InnerLevel", true, false);
-    errorResult.addComponentKeyPath("TopLevel");
-
-    System.out.println("Root Cause:" + errorResult.getRootCause());
-    ErrorResultComponentPath ercp = errorResult.getComponentKeyPath();
-    Iterator it = ercp.iterator();
-    int inx = 1;
-    while (it.hasNext()) {
-      System.out.print((String) it.next());
-      System.out.println("");
-
-      for (int i = 0; i < inx; i++) {
-        System.out.print("\t");
-      }
-      inx++;
-    }
-    System.out.println("");
-
-    ErrorResultTDs tds = errorResult.getTDs();
-    Iterator it2 = tds.iterator();
-    while (it2.hasNext()) {
-      System.out.println(((TD) it2.next()).gatPath());
-    }
-  }
 }
