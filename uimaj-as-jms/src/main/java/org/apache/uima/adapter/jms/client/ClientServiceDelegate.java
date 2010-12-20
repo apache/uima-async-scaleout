@@ -20,7 +20,6 @@ package org.apache.uima.adapter.jms.client;
 
 import javax.jms.Destination;
 
-import org.apache.derby.catalog.GetProcedureColumns;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.delegate.Delegate;
@@ -117,7 +116,6 @@ public class ClientServiceDelegate extends Delegate {
                           .get(AsynchAEMessage.ErrorCause);
                 }
                 if (isPingTimeout && isAwaitingPingReply()) {
-                  System.out.println(">>>>> Client Ping Timedout");
                   //  reset only if the connection is valid
                   if ( clientUimaAsEngine.state != ClientState.RECONNECTING) {
                     resetAwaitingPingReply();
@@ -134,7 +132,6 @@ public class ClientServiceDelegate extends Delegate {
                             "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                             "UIMAJMS_client_process_timeout__WARNING", new Object[] { super.getCasProcessTimeout() });
                   }
-                  System.out.println(">>>>> Client Process Timed out. Cas Id:"+casReferenceId+" Notifying Listeners");
                   clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
                           BaseUIMAAsynchronousEngineCommon_impl.ProcessTimeout, casReferenceId);
                 }
@@ -144,7 +141,6 @@ public class ClientServiceDelegate extends Delegate {
 
             case AsynchAEMessage.GetMeta:
               if (isAwaitingPingReply()) {
-                System.out.println(">>>>> Client Ping Timedout");
                 clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
                         BaseUIMAAsynchronousEngineCommon_impl.PingTimeout, casReferenceId);
               } else {
@@ -158,7 +154,11 @@ public class ClientServiceDelegate extends Delegate {
                         "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAJMS_meta_timeout_WARNING", new Object[] { getKey() });
               }
-              System.out.println("Stopping Uima AS Client API. Service Not Responding To a Ping.");
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                          "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAJMS_service_not_responding_to_ping__WARNING", new Object[] { clientUimaAsEngine.getEndPointName()});
+                }
               clientUimaAsEngine.stop();
               break;
 
