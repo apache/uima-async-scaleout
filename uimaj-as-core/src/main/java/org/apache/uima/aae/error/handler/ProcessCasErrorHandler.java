@@ -446,8 +446,11 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
       }
 
     } catch (Exception e) {
-      System.out.println("Controller:" + aController.getComponentName() + " CAS:" + casReferenceId
-              + " Not Found In Cache");
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                    "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_parent_cas_notin_cache__INFO", new Object[] { aController.getComponentName(), casReferenceId });
+        }
     }
     // Determine where to send the message
     Endpoint endpoint = getDestination(aController, anErrorContext);
