@@ -605,7 +605,6 @@ public abstract class Delegate {
             errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
           }
         } else if (AsynchAEMessage.GetMeta == aCommand) {
-          System.out.println("getMeta Timeout on delegate:"+delegate.getKey());
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                     "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
