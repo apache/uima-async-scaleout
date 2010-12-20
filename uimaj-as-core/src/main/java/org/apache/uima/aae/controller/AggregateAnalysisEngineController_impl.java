@@ -220,8 +220,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	 */
   public void addMessageOrigin(String aCasReferenceId, Endpoint anEndpoint) {
     if (anEndpoint == null) {
-      System.out.println("Controller:" + getComponentName()
-              + " Endpoint is NULL. Cas Reference Id:" + aCasReferenceId);
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "addMessageOrigin",
+                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_endpoint_null__INFO",
+                  new Object[] { getComponentName(), aCasReferenceId});
+      }
+      return;
     }
     originMap.put(aCasReferenceId, anEndpoint);
     if (UIMAFramework.getLogger().isLoggable(Level.FINE)) {
@@ -659,13 +663,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     InputChannel iC = null;
     String destName = null;
     if (endpoint.getDestination() != null) {
-      System.out.println("Controller:" + getComponentName()
-              + "-Stopping Listener Thread on Endpoint:" + endpoint.getDestination());
       destName = endpoint.getDestination().toString();
       iC = getInputChannel(destName);
     } else {
-      System.out.println("Controller:" + getComponentName()
-              + "-Stopping Listener Thread on Endpoint:" + endpoint.getReplyToEndpoint());
       destName = endpoint.getReplyToEndpoint();
       iC = getInputChannel(destName);
     }
@@ -703,8 +703,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           stopListener(key, endpoint);
           endpoint.setStatus(Endpoint.DISABLED);
         }
-        System.out.println("Controller:" + getComponentName() + " Disabled Delegate:" + key
-                + " Due to Excessive Errors");
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
                   "disableDelegates", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -739,9 +737,14 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             CasStateEntry parentCasCacheEntry = getLocalCache().getTopCasAncestor(aCasReferenceId);
             if (parentCasCacheEntry != null && aDelegateList.size() > 0) {
               String delegateKey = (String) aDelegateList.get(0);
-              System.out.println("Controller:" + getComponentName()
-                      + " Terminating Due to FlowController Failure While Disabling Delegate:"
-                      + delegateKey + " Cas:" + parentCasCacheEntry.getCasReferenceId());
+              
+              
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                          "disableDelegates", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAEE_service_terminating_fc_failure__INFO",
+                          new Object[] { getComponentName(), delegateKey, parentCasCacheEntry.getCasReferenceId() });
+              }
               super.terminate(ex, parentCasCacheEntry.getCasReferenceId());
             } else {
               terminate();
@@ -2589,9 +2592,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         ServiceInfo remoteDelegateServiceInfo = null;
         if (aTypeSystem.trim().length() > 0) {
           if (endpoint.isRemote()) {
-            System.out.println("Remote Service:" + key
-                    + " Initialized. Ready To Process Messages From Queue:"
-                    + endpoint.getEndpoint());
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
                       "mergeTypeSystem", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -2659,8 +2659,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               Endpoint endpt = (Endpoint) destinationMap.get((String) remoteCasMultiplierList
                       .get(i));
               if (endpt != null && endpt.isCasMultiplier() && endpt.isRemote()) {
-                System.out.println("Setting Shadow Pool of Size:" + endpt.getShadowPoolSize()
-                        + " For Cas Multiplier:" + (String) remoteCasMultiplierList.get(i));
+           	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+            	                "mergeTypeSystem", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+            	                "UIMAEE_shadow_caspool_set__INFO",new Object[] { getComponentName(),endpt.getShadowPoolSize(),(String) remoteCasMultiplierList.get(i) } );
+        	    }
                 getCasManagerWrapper().initialize(endpt.getShadowPoolSize(),
                         (String) remoteCasMultiplierList.get(i));
                 if (remoteDelegateServiceInfo != null) {
@@ -2879,8 +2882,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             parentCasReferenceId = parentEntry.getCasReferenceId();
           }
         } catch (Exception e) {
-          System.out.println("Controller:" + getComponentName() + " Parent CAS For CAS:"
-                  + casReferenceId + " Not Found In Cache");
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                        "handleDelegateLifeCycleEvent", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_parent_cas_notin_cache__INFO", new Object[] { getComponentName(), casReferenceId });
+            }
         }
         getInProcessCache().getEndpoint(anEndpoint, casReferenceId).cancelTimer();
         Endpoint requestOrigin = cachedEntries[i].getMessageOrigin();
