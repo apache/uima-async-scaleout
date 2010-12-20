@@ -91,18 +91,13 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(), "initialize",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_primary_cas_pool_init__CONFIG",
-              new Object[] { aCasPoolSize, aContextName });
+              new Object[] { aCasPoolSize, aContextName,aPerformanceTuningSettings.get(UIMAFramework.CAS_INITIAL_HEAP_SIZE) });
     }
     // Create CAS Pool for incoming messages
     casManager.defineCasPool(aContextName, aCasPoolSize, aPerformanceTuningSettings);
     contextName = aContextName;
 
     setInitialized(true);
-    if (aPerformanceTuningSettings != null) {
-      System.out.println("CasManager Initialized Cas Pool:" + aContextName + ". Cas Pool Size:"
-              + aCasPoolSize + " Initial Cas Heap Size:"
-              + aPerformanceTuningSettings.get(UIMAFramework.CAS_INITIAL_HEAP_SIZE) + " cells");
-    }
   }
 
   public int getCasPoolSize() {
