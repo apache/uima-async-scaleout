@@ -107,7 +107,6 @@ public class UimaVmMessageListener implements UimaMessageListener {
         handler.handle(msgContext);
       }
     } catch (InterruptedException e) {
-      System.out.println("VMTransport Latch Interrupted - Processor is Stopping");
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         if ( controller != null ) {
