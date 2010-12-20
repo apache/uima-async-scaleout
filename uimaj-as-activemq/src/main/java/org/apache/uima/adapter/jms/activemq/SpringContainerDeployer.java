@@ -85,6 +85,8 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     connector.setDestinationResolver(resolver);
 
     connector.initializeContainer();
+    
+    connector.start();
     synchronized (mux) {
       while (connector.getListenerEndpoint() == null) {
         try {
@@ -94,8 +96,6 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       }
 
     }
-    // connector.afterPropertiesSet();
-    connector.start();
     return connector;
   }
 
@@ -185,9 +185,6 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       cf.setPrefetchPolicy(prefetchPolicy);
       // Create a listener and a temp queue for Free CAS notifications.
       UimaDefaultMessageListenerContainer connector = produceListenerConnector(cf);
-      System.out.println(">>>> Cas Multiplier Controller:" + cntlr.getComponentName()
-              + " Activated Listener to Receive Free CAS Notifications - Temp Queue Name:"
-              + connector.getEndpointName());
       // Direct all messages to the InputChannel
       connector.setMessageListener(((JmsInputChannel) cntlr.getInputChannel()));
       ((JmsInputChannel) cntlr.getInputChannel()).setListenerContainer(connector);
@@ -240,14 +237,10 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
           if (delegate != null) {
             cc = delegate.getEndpoint().getConcurrentReplyConsumers();
           }          
-          System.out.println("Remote Delegate " + endpoint.getDelegateKey() + " Reply Queue:"
-                  + endpoint.getDestination()
-                  + " Reply Listener Configured With " + cc
-                  + " Concurrent Consumer(s)");
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                     "initializeTopLevelController", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_replyq__CONFIG",
+                    "UIMAJMS_replyq__INFO",
                     new Object[] { endpoint.getDelegateKey(), endpoint.getDestination(), cc });
           }          
         }
@@ -363,7 +356,12 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       //  Only start those listeners that are not running yet. 
       if ( listener != null && !listener.isRunning()) {
         if ( topLevelController != null ) {
-          System.out.println("Controller:"+topLevelController.getComponentName()+" Activating Listener on Queue:"+listener.getDestination()+" Selector:"+listener.getMessageSelector()+" Broker:"+listener.getBrokerUrl());
+        	
+        	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        	      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "doStartListeners",
+        	              JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_starting_listener__INFO",
+        	              new Object[] { topLevelController.getComponentName(), listener.getDestination(), listener.getMessageSelector(), listener.getBrokerUrl() });
+        	}
           topLevelController.changeState(ServiceState.RUNNING);
         }
         listener.start();
@@ -534,7 +532,6 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
   }
 
   public void notifyOnTermination(String message) {
-    System.out.println("-------------------> Container Terminated");
   }
 
   public FileSystemXmlApplicationContext getSpringContext() {
