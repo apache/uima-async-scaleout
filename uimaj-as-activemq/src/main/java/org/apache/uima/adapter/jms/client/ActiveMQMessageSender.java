@@ -115,7 +115,6 @@ public class ActiveMQMessageSender extends BaseMessageSender {
                 new Object[] { destinationName, broker });
       }
       if (connection == null) {
-        System.out.println("UIMA AS Client Shared Connection Is Not Initialized");
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                   "createSession", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
@@ -203,7 +202,6 @@ public class ActiveMQMessageSender extends BaseMessageSender {
         producer = null;
       }
     } catch (Exception e) {
-      System.out.println("JMS Exception While Closing Session - Ignoring");
       // Ignore we are shutting down
     } finally {
       producerMap.clear();
