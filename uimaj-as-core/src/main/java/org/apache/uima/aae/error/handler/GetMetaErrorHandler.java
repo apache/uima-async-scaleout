@@ -95,7 +95,6 @@ public class GetMetaErrorHandler extends ErrorHandlerBase implements ErrorHandle
               || (super.retryLastCommand(AsynchAEMessage.GetMeta, endpoint, aController, key,
                       threshold, anErrorContext) == false)) {
         if (terminate(threshold)) {
-          System.out.println("!!!!!!!!!!!! Exceeded Threshold Terminating !!!!!!!!!!!!!!");
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
                     "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
