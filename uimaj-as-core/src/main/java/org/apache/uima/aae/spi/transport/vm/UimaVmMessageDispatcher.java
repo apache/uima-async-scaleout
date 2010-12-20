@@ -68,8 +68,6 @@ public class UimaVmMessageDispatcher implements UimaMessageDispatcher {
         try {
           if (targetListener instanceof UimaVmMessageListener) {
             ((UimaVmMessageListener) targetListener).onMessage(message);
-          } else {
-            System.out.println("!!!!!!!!!!!!!!! Wrong Type of UimaListener");
           }
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
