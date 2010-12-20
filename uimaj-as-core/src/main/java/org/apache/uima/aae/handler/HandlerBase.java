@@ -161,7 +161,6 @@ public abstract class HandlerBase implements Handler {
   }
 
   public Handler getDelegate() {
-    // System.out.println("In getDelegate() - Returning:"+delegateHandler.getName());
     return delegateHandler;
   }
 
