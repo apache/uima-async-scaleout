@@ -611,7 +611,6 @@ public class ProcessRequestHandler_impl extends HandlerBase {
               }
               // If origin not found log it as this indicates an error
               if (endp == null) {
-                System.out.println("Endpoint Not Found For Cas Id:" + inputCasReferenceId);
                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                   UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                           "handleProcessRequestWithCASReference",
@@ -875,8 +874,12 @@ public class ProcessRequestHandler_impl extends HandlerBase {
     try {
       String casReferenceId = aMessageContext
               .getMessageStringProperty(AsynchAEMessage.CasReference);
-      System.out.println("###################Controller::" + getController().getComponentName()
-              + " Received <<<STOP>>> Request For CAS:" + casReferenceId);
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "handleStopRequest", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_received_stop_request__INFO", new Object[] { getController().getComponentName(), casReferenceId });
+      }
+
       if (getController() instanceof PrimitiveAnalysisEngineController) {
         getController().addAbortedCasReferenceId(casReferenceId);
       } else if (getController() instanceof AggregateAnalysisEngineController_impl) {
