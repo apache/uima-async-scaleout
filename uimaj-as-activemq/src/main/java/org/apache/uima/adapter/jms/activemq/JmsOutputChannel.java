@@ -1789,19 +1789,14 @@ public class JmsOutputChannel implements OutputChannel {
         // Create empty JMS Text Message
         tm = endpointConnection.produceTextMessage("");
       } catch (AsynchAEException ex) {
-        System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
-                + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
-                + " is Unavailable. InputCasReferenceId:" + anInputCasReferenceId
-                + " CasReferenceId:" + aCasReferenceId + " Sequece:" + sequence);
         UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.INFO,
+                Level.WARNING,
                 CLASS_NAME.getName(),
                 "sendCasToRemoteDelegate",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_unable_to_connect__INFO",
+                "UIMAJMS_unable_to_send_reply__WARNING",
                 new Object[] { getAnalysisEngineController().getComponentName(),
-                    anEndpoint.getEndpoint() });
+                	anEndpoint.getDestination(), brokerConnectionURL, anInputCasReferenceId, aCasReferenceId, sequence, ex  });
         return;
       }
       // Save Serialized CAS in case we need to re-send it for analysis
@@ -1920,19 +1915,14 @@ public class JmsOutputChannel implements OutputChannel {
         // Create empty JMS Text Message
         tm = endpointConnection.produceByteMessage();
       } catch (AsynchAEException ex) {
-        System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
-                + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
-                + " is Unavailable. InputCasReferenceId:" + anInputCasReferenceId
-                + " CasReferenceId:" + aCasReferenceId + " Sequece:" + sequence);
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.INFO,
-                CLASS_NAME.getName(),
-                "sendCasToRemoteDelegate",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_unable_to_connect__INFO",
-                new Object[] { getAnalysisEngineController().getComponentName(),
-                    anEndpoint.getEndpoint() });
+          UIMAFramework.getLogger(CLASS_NAME).logrb(
+                  Level.WARNING,
+                  CLASS_NAME.getName(),
+                  "sendCasToRemoteDelegate",
+                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_unable_to_send_reply__WARNING",
+                  new Object[] { getAnalysisEngineController().getComponentName(),
+                  	anEndpoint.getDestination(), brokerConnectionURL, anInputCasReferenceId, aCasReferenceId, sequence, ex  });
         return;
       }
 
@@ -2026,18 +2016,14 @@ public class JmsOutputChannel implements OutputChannel {
         // Create empty JMS Text Message
         tm = endpointConnection.produceTextMessage("");
       } catch (AsynchAEException ex) {
-        System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
-                + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
-                + " is Unavailable. CasReferenceId:" + casStateEntry.getCasReferenceId());
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.INFO,
-                CLASS_NAME.getName(),
-                "sendCasToRemoteDelegate",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_unable_to_connect__INFO",
-                new Object[] { getAnalysisEngineController().getComponentName(),
-                    anEndpoint.getEndpoint() });
+          UIMAFramework.getLogger(CLASS_NAME).logrb(
+                  Level.WARNING,
+                  CLASS_NAME.getName(),
+                  "sendCasToRemoteDelegate",
+                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_unable_to_send_reply__WARNING",
+                  new Object[] { getAnalysisEngineController().getComponentName(),
+                  	anEndpoint.getDestination(), brokerConnectionURL, entry.getInputCasReferenceId() == null ? "" : entry.getInputCasReferenceId(), entry.getCasReferenceId(), 0, ex  });
         return;
       }
 
@@ -2151,10 +2137,14 @@ public class JmsOutputChannel implements OutputChannel {
         // Create empty JMS Text Message
         tm = endpointConnection.produceByteMessage();
       } catch (AsynchAEException ex) {
-        System.out.println("UIMA AS Service:" + getAnalysisEngineController().getComponentName()
-                + " Unable to Send Reply Message To Remote Endpoint: "
-                + anEndpoint.getDestination() + ". Broker:" + brokerConnectionURL
-                + " is Unavailable. CasReferenceId:" + casStateEntry.getCasReferenceId());
+          UIMAFramework.getLogger(CLASS_NAME).logrb(
+                  Level.WARNING,
+                  CLASS_NAME.getName(),
+                  "sendCasToRemoteDelegate",
+                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_unable_to_send_reply__WARNING",
+                  new Object[] { getAnalysisEngineController().getComponentName(),
+                  	anEndpoint.getDestination(), brokerConnectionURL, entry.getInputCasReferenceId() == null ? "" : entry.getInputCasReferenceId(), entry.getCasReferenceId(), 0, ex  });
         return;
       }
       tm.writeBytes(aSerializedCAS);
@@ -2329,7 +2319,6 @@ public class JmsOutputChannel implements OutputChannel {
             if (brokerConnectionEntry.getConnection() != null) {
               try {
                 brokerConnectionEntry.getConnection().close();
-                System.out.println("JMS Connection to Broker: " + key + " Closed");
               } catch (Exception ex) { /* ignore, we are stopping */
               }
             }
