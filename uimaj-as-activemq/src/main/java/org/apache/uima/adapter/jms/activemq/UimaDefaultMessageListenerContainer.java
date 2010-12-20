@@ -19,6 +19,7 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -102,7 +103,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   private ConcurrentMessageListener concurrentListener = null;
 
   private volatile boolean awaitingShutdown = false;
-
+  
+  private boolean brokerWithDaemonThreads = false;
+  
   public UimaDefaultMessageListenerContainer() {
     super();
     UIMAFramework.getLogger(CLASS_NAME).setLevel(Level.WARNING);
@@ -129,7 +132,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * @return
    */
   private boolean disableListener(Throwable t) {
-    System.out.println(t.toString());
     if (t.toString().indexOf("SharedConnectionNotInitializedException") > 0
             || (t instanceof JMSException && t.getCause() != null && t.getCause() instanceof ConnectException))
       return true;
@@ -159,7 +161,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         if (iC != null) {
           iC.destroyListener(queueName, delegateKey);
         } else {
-          System.out.println(">>> Listener Unable To LookUp InputChannel For Queue:" + queueName);
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                        "handleTempQueueFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_unable_to_lookup_input_channel__INFO", queueName);
+          }
         }
       }
     } catch (Exception e) {
@@ -303,9 +309,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
             // Add the delegate to disable to the list
             list.add(delegateKey);
             try {
-              System.out.println(">>>> Controller:" + controller.getComponentName()
-                      + " Disabling Listener On Queue:" + endpoint.getEndpoint() + ". Component's "
-                      + delegateKey + " Broker:" + getBrokerUrl() + " is Invalid");
               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                 UIMAFramework.getLogger(CLASS_NAME)
                         .logrb(
@@ -338,8 +341,14 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         }
       }
     }
-    System.out.println("****** Unable To Connect Listener To Broker:" + getBrokerUrl());
-    System.out.println("****** Closing Listener on Queue:" + endpoint.getEndpoint());
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                "handleQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_closing_channel__WARNING",
+                new Object[] { getBrokerUrl(), endpoint.getEndpoint(),  });
+      }
+    
+    
     setRecoveryInterval(0);
 
     // Spin a shutdown thread to terminate listener.
@@ -405,16 +414,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                 "UIMAJMS_listener_connection_failure__WARNING",
                 new Object[] { controllerId, getBrokerUrl() });
       }
-      System.out.println(controllerId + " Listener Unable to Connect to Broker:" + getBrokerUrl()
-              + " Retrying ....");
-			// Use Spring to retry connection until successful. This call is
-			// blocking this thread.
+ 	  // Use Spring to retry connection until successful. This call is
+	  // blocking this thread.
       refreshConnectionUntilSuccessful();
       if ( controller != null ) {
         controller.changeState(ServiceState.RUNNING);
       }
-      System.out.println(controllerId + " Listener Established Connection to Broker:"
-              + getBrokerUrl());
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                 "handleListenerSetupFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
@@ -455,8 +460,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     // ****************************************
     // terminate the service
     // ****************************************
-    System.out.println(">>>> Terminating Controller:" + controller.getComponentName()
-            + " Unable To Initialize Listener Due to Invalid Broker URL:" + getBrokerUrl());
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
               "terminate", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
@@ -671,8 +674,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           //  on an input queue. Input queue listeners are not started until the service
           //  is fully initialized
           if (__listenerRef.getMessageListener() == null && getDestination() != null) {
-            System.out.println("Service:" + controller.getComponentName()
-                    + " Listener Ready. Broker:" + getBrokerUrl() + " Queue:" + getDestination());
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+                    "afterPropertiesSet", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_listener_ready__INFO",
+                    new Object[] {controller.getComponentName(),  getBrokerUrl(), getDestination() });
           } 
 
         } catch (Exception e) {
@@ -847,8 +852,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 
   protected void setModifiedTaskExecutor(TaskExecutor taskExecutor) {
     super.setTaskExecutor(taskExecutor);
-    System.out.println("Injected Updated Task Executor Into Listener For Destination:"
-            + getDestination());
   }
 
   /**
@@ -873,15 +876,18 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       return;
     }
     awaitingShutdown = true;
+    
     // Spin a thread that will wait until all threads complete. This is needed to avoid
     // memory leak caused by the fact that we did not wait to collect the threads
     Thread threadGroupDestroyer = new Thread(threadGroup.getParent().getParent(),
             "threadGroupDestroyer") {
       public void run() {
         try {
-          // stop Spring listener and ActiveMQ threads
-          __listenerRef.stop();
-          __listenerRef.closeConnection();
+        	if ( !__listenerRef.awaitingShutdown && __listenerRef.isRunning() ) {
+                // stop Spring listener and ActiveMQ threads
+                __listenerRef.stop();
+                __listenerRef.closeConnection();
+        	}
         } catch (Exception e) {
         }
         // If using non-default TaskExecutor, stop its threads
@@ -902,17 +908,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           // Stop internal Executor
           concurrentListener.stop();
         }
-        // if ( taskExecutor != null ) {
-        // System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+
-        // " +++++++++ Listener:"+getDestination()+" Controller ThreadPoolExecutor Stopped ...");
-        // }
         // Shutdown the listener
         __listenerRef.shutdown();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
           threadGroup.getParent().list();
         }
-        // System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+
-        // " ThreadGroupDestroyer waiting for threads to stop. Active thread count:"+threadGroup.activeCount()+" Active thread group count:"+threadGroup.activeGroupCount());
         // Wait until all threads are accounted for
         while (threadGroup.activeCount() > 0) {
           try {
@@ -922,15 +922,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 
             for (Thread t : threads) {
               try {
-                String tName = t.getName();
-                // The following is necessary to account for the AMQ threads
-                // Any threads not named in the list below will cause a wait
-                // and retry until all non-amq threads are stopped
-                if (!tName.startsWith("main") && !tName.equalsIgnoreCase("timer-0")
-                        && !tName.equals("ReaderThread") && !tName.equals("BrokerThreadGroup")
-                        && !tName.startsWith("ActiveMQ")) {
-                  foundExpectedThreads = false;
-                  break; // from for
+            	  if ( !isAmqThread(t) ) {
+                      foundExpectedThreads = false;
+                      break; // from for
+            	  }
+            	// Check if there are still any non-daemon threads left in the thread group
+                if ( !t.isDaemon() ) {
+                    foundExpectedThreads = false;
+                    break; // from for
+                	
                 }
               } catch (Exception e) {
               }
@@ -942,8 +942,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           } catch (InterruptedException e) {
           }
         }
-        // System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+
-        // " ThreadGroupDestroyer all threads stopped");
 
         try {
           synchronized (threadGroup) {
@@ -951,15 +949,26 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               threadGroup.destroy();
             }
           }
-          // System.out.println(">>>>> Thread:"+Thread.currentThread().getId()+
-          // " >>>>>>>>>>>> Listener:"+getDestinationName()+" Thread Group Destroyed");
         } catch (Exception e) {
         } // Ignore
       }
     };
     threadGroupDestroyer.start();
+    
+    
   }
-
+  private boolean isAmqThread(Thread t) {
+	  String tName = t.getName();
+	  // The following is necessary to account for the AMQ threads
+	  // Any threads not named in the list below will cause a wait
+	  // and retry until all non-amq threads are stopped
+	  if (!tName.startsWith("main") && !tName.equalsIgnoreCase("timer-0")
+	          && !tName.equals("ReaderThread") && !tName.equals("BrokerThreadGroup")
+	          && !tName.startsWith("ActiveMQ")) {
+	    return false;
+	  }
+	  return true;
+  }
   /**
    * Called by Spring to inject TaskExecutor
    */
