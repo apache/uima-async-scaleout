@@ -844,7 +844,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     String eName = mL.getEndpointName();
     if (eName != null) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop",
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stopChannel",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopping_jms_transport__INFO",
                 new Object[] { eName });
       }
@@ -855,8 +855,11 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     if (mL.getMessageSelector() != null) {
       selector = " Selector:" + mL.getMessageSelector();
     }
-    System.out.println("Service:" + getController().getComponentName() + " Message Channel:"
-            + mL.getDestination() + selector + " Stopped");
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stopChannel",
+                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopped_jms_transport__INFO",
+                new Object[] {getController().getComponentName(), mL.getDestination(), selector });
+      }
   }
 
   private boolean doCloseChannel(UimaDefaultMessageListenerContainer mL, int channelsToClose) {
@@ -977,15 +980,11 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         // Wait until the resolver plugs in the destination
         while (newListener.getDestination() == null) {
           synchronized (newListener) {
-
-            System.out
-                    .println(".... Waiting For Spring Resolver to Create New Temp Reply Queue ...");
             newListener.wait(100);
           }
         }
         newListener.afterPropertiesSet();
         if ( controller != null && controller.isStopped() ) {
-          System.out.println("Controller:"+controller.getComponentName()+" Stopping New Listener. The Service is stopping");
           newListener.stop();
           //  we are aborting, the controller has been stopped
           return;
@@ -1001,8 +1000,6 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         Object clone = ((Endpoint_impl) endpoint).clone();
         newListener.setTargetEndpoint((Endpoint) clone);
         endpoint.setStatus(Endpoint.OK);
-        System.out
-        .println(".... Listener Started on New Temp Reply Queue ...");
       }
     }
   }
@@ -1085,8 +1082,6 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
             // wait until the listener shutsdown
             while (mListener.isRunning())
               ;
-            System.out.println("Thread:" + Thread.currentThread().getId()
-                    + "++++ Listener on Queue:" + anEndpointName + " Has Been Stopped...");
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)
                     && mListener.getDestination() != null) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(
