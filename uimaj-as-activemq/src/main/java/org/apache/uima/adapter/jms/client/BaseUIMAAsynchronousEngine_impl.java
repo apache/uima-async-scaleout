@@ -257,8 +257,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 						}
 					}
 				} catch (InterruptedException ex) {
-					System.out
-							.println("UIMA AS Client Interrupted While Acquiring sharedConnectioSemaphore to Close Shared Connection");
+					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+							Level.WARNING)) {
+						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
+								CLASS_NAME.getName(), "stop",
+								JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+								"UIMAJMS_client_interrupted_while_acquiring_semaphore__WARNING");
+					}
 				} finally {
 					sharedConnectionSemaphore.release();
 				}
@@ -267,7 +272,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 				}
 				// Undeploy all containers
 				undeploy();
-				System.out.println("UIMA AS Client Undeployed All Containers");
+				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+						Level.INFO)) {
+					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
+							CLASS_NAME.getName(), "stop",
+							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+							"UIMAJMS_undeployed_containers__INFO");
+				}
 				if (initialized) {
 					try {
 						consumerSession.close();
@@ -354,9 +365,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 					addPrefetch((ActiveMQConnection) sharedConnection
 							.getConnection());
 					sharedConnection.start();
-					System.out
-							.println("UIMA AS Client Created Shared Connection To Broker:"
-									+ aBrokerURI);
 					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 							Level.INFO)) {
 						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
@@ -506,8 +514,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     }
     consumer = consumerSession.createConsumer(consumerDestination);
     consumer.setMessageListener(this);
-    System.out.println(">>>> Client Activated Temp Reply Queue:"
-            + consumerDestination.getQueueName());
   }
   
   /**
@@ -685,7 +691,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       try {
         getMetaSemaphore.acquire();
       } catch (InterruptedException e) {
-        System.out.println("UIMA AS Client Interrupted While Waiting On GetMetaSemaphore");
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                      "initialize", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_client_interrupted_while_acquiring_getmeta_semaphore__WARNING");
+            }
       }
       sendMetaRequest();
       waitForMetadataReply();
@@ -1093,21 +1103,26 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
           MessageProducer msgProducer = getMessageProducer(clientCachedRequest
                   .getFreeCasNotificationQueue());
           if (msgProducer != null) {
-            System.out.println(">>> Client Sending Stop to Service for CAS:"
-                    + clientCachedRequest.getCasReferenceId() + " Destination:"
-                    + clientCachedRequest.getFreeCasNotificationQueue());
+        	  
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAJMS_client_sending_stop_to_service__INFO", new Object[] {clientCachedRequest.getCasReferenceId(),clientCachedRequest.getFreeCasNotificationQueue()});
+              }
             // Send STOP message to Cas Multiplier Service
             msgProducer.send(msg);
           } else {
-            System.out
-                    .println(">>> UIMA AS Client Unable to Send Stop To Service. Message Producer Not Initialized");
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAJMS_client_unable_to_send_stop_to_cm__WARNING");
+              }
           }
 
         } catch (Exception ex) {
-          System.out.println("Client Unable to send STOP Request to Service. Reason:");
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                    "notifyOnInitializationFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAJMS_exception__WARNING",
                     ex);
           }
@@ -1116,7 +1131,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "notifyOnInitializationFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_exception__WARNING", e);
       }
     }
