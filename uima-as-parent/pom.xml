@@ -120,7 +120,7 @@
     <uimaScmRoot>uima-as</uimaScmRoot>
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <!-- level of uimaj sdk this release depends on -->
-    <uimajDependencyVersion>${project.version}</uimajDependencyVersion>
+    <uimajDependencyVersion>2.3.1</uimajDependencyVersion>
   </properties>
 
   <profiles>
