@@ -28,7 +28,6 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 
 import javax.jms.Connection;
 import javax.jms.Message;
@@ -36,8 +35,6 @@ import javax.jms.MessageListener;
 import javax.jms.Session;
 
 import junit.framework.Assert;
-
-import mx4j.remote.rmi.ClientExceptionCatcher;
 
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.broker.BrokerService;
@@ -62,13 +59,11 @@ import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.ee.test.utils.BaseTestSupport;
-import org.apache.uima.ee.test.utils.BaseTestSupport.SynchRunner;
 import org.apache.uima.internal.util.XMLUtils;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
-import org.apache.uima.util.Level;
 import org.apache.uima.util.XMLInputSource;
 
 public class TestUimaASExtended extends BaseTestSupport {
