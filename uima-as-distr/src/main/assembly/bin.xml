@@ -135,44 +135,6 @@ under the License.
       <directoryMode>755</directoryMode>        
     </dependencySet>
     
-    <!-- Add selected files from base UIMA Java SDK -->
-    <!-- Adding the entire base UIMA doesn't do the right
-         directory and file permissions setting -->    
-    
-    <dependencySet>
-      <includes>
-        <include>org.apache.uima:uimaj-distr:zip:bin</include>
-      </includes>
-      <outputDirectory>bin</outputDirectory>
-      <unpack>true</unpack>
-      <unpackOptions>
-        <includes>
-          <include>apache-uima/bin/*.sh</include>
-        </includes>
-      </unpackOptions>
-      <useProjectArtifact>false</useProjectArtifact>
-      <fileMode>755</fileMode> 
-      <directoryMode>755</directoryMode>        
-    </dependencySet>
-    
-    <!-- dependencySet>
-      <includes>
-        <include>org.apache.uima:uimaj-distr:zip:${uimajDependencyVersion}:bin</include>
-      </includes>
-      <outputDirectory>bin</outputDirectory>
-      <unpack>true</unpack>
-      <unpackOptions>
-        <includes>
-          <include>apache-uima/bin/*</include>
-        </includes>
-        <excludes>
-          <exclude>apache-uima/bin/*.sh</exclude>
-        </excludes>
-      </unpackOptions>
-      <useProjectArtifact>false</useProjectArtifact>
-      <fileMode>644</fileMode> 
-      <directoryMode>755</directoryMode>        
-    </dependencySet-->
   </dependencySets>
   
   <!-- Add other files - scripts, documentation, examples -->
