@@ -976,6 +976,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     taskExecutor = aTaskExecutor;
   }
 
+  public TaskExecutor getTaskExecutor() {
+	return taskExecutor;
+  }
+  
   /**
    * This method initializes ThreadPoolExecutor with a custom ThreadPool. Each thread produced by
    * the ThreadPool is used to first initialize an instance of the AE before the thread is added to
