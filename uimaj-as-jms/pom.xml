@@ -67,33 +67,60 @@
 			<scope>compile</scope>
 		</dependency>
 
+    <!--  
+     Spring Framework Dependencies
+    -->
     <dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring</artifactId>
-			<version>2.0.6</version>
-		</dependency> 
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+     
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-asm</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
 
-		<dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>apache-activemq</artifactId>
-			<version>4.1.1</version>
-			<exclusions>        
-        <exclusion>
-          <!-- exclude xstream 1.1.2 because it is broken 
-               xstream 1.2.2 (the fixed version) is included in another pom -->
-          <groupId>xstream</groupId>
-          <artifactId>xstream</artifactId>
-        </exclusion>
-                    <!--exclusion>
-                        <groupId>org.apache.activemq</groupId>
-                        <artifactId>activeio-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.xbean</groupId>
-                        <artifactId>xbean-spring</artifactId>
-                    </exclusion-->
-      </exclusions>
-		</dependency> 
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-expression</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-tx</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jms</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+<!--
+		Active MQ Stuff
+	-->
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-all</artifactId>
+      <version>5.4.1</version>
+    </dependency> 
+    
 		
 		<dependency>
 		    <groupId>org.apache.uima</groupId>
