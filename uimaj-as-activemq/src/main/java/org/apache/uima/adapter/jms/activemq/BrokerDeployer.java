@@ -24,6 +24,7 @@ import java.net.BindException;
 import java.net.ServerSocket;
 
 import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 
 import org.apache.activemq.broker.Broker;
@@ -36,7 +37,11 @@ import org.apache.uima.util.Level;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
-
+/**
+ * 
+ * @deprecated
+ *
+ */
 public class BrokerDeployer implements ApplicationListener {
   private static final Class CLASS_NAME = BrokerDeployer.class;
 
@@ -112,24 +117,9 @@ public class BrokerDeployer implements ApplicationListener {
 					startPort++;
 				}
 				if (startPort < (startPort + MAX_PORT_THRESHOLD)) {
-					MBeanServer jmxServer = null;
-					// Check if the MBeanServer is available. If it is, plug it
-					// into the
-					// local Broker. We only need one MBeanServer in the JVM
-					if ((jmxServer = ManagementContext.findTigerMBeanServer()) != null) {
-						System.out
-								.println(">>> Found TigerMBeanServer Running. Attaching Broker to Tiger.");
-						service.getManagementContext()
-								.setMBeanServer(jmxServer);
-						// Specify JMX Port
-						service.getManagementContext().setConnectorPort(
-								startPort);
-					} else {
-						service.getManagementContext().setConnectorPort(
-								startPort);
-						service.setUseJmx(true);
-					}
-
+					service.getManagementContext().setConnectorPort(
+							startPort);
+					service.setUseJmx(true);
 					System.setProperty("com.sun.management.jmxremote.port",
 							String.valueOf(startPort));
 
