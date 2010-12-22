@@ -1611,7 +1611,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath
             + "/Deploy_AggregateWithFlowControllerExceptionOnDisable.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            1, PROCESS_LATCH); // PC_LATCH);
+            1, EXCEPTION_LATCH); 
   }
 
   /**
@@ -2160,7 +2160,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     BrokerService broker = createBroker(8200, true,true);
     //  start a broker that manages top level aggregate service input queue
     broker.start();
-    System.setProperty("BrokerURL", "tcp://0.0.0.0:8200");
+    System.setProperty("BrokerURL", "tcp://localhost:8200");
 
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
@@ -2168,10 +2168,10 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml");
     
     Map<String, Object> appCtx = new HashMap();
-    appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://0.0.0.0:8200");
+    appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://localhost:8200");
     appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
-    runTest(appCtx, eeUimaEngine, "tcp://0.0.0.0:8200",
+    runTest(appCtx, eeUimaEngine, "tcp://localhost:8200",
             "TopLevelTaeQueue", 1, PROCESS_LATCH);    
     
     broker.stop();
