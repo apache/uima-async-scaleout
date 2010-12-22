@@ -37,6 +37,7 @@ import org.apache.activemq.broker.TransportConnector;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
+import org.apache.activemq.store.memory.MemoryPersistenceAdapter;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.util.Level;
@@ -211,7 +212,7 @@ public class ActiveMQSupport extends TestCase {
     System.out.println(">>>> Starting Broker On Port:" + port);
     try {
       ssocket = new ServerSocket();
-      String hostName = ssocket.getInetAddress().getLocalHost().getCanonicalHostName();
+      String hostName = "localhost"; //ssocket.getInetAddress().getLocalHost().getCanonicalHostName();
       uri = "tcp://" + hostName + ":" + port;
       BrokerService broker = BrokerFactory.createBroker(new URI("broker:()/" + hostName
               + "?persistent=false"));
@@ -228,6 +229,16 @@ public class ActiveMQSupport extends TestCase {
       pMap.setDefaultEntry(policy);
 
       broker.setDestinationPolicy(pMap);
+      broker.setPersistenceAdapter(new MemoryPersistenceAdapter());
+      broker.setPersistent(false);
+      broker.setUseShutdownHook(true);
+      broker.setUseLoggingForShutdownErrors(false);
+      try {
+          Method method = broker.getClass().getDeclaredMethod("setSchedulerSupport", new Class[] {Boolean.TYPE});
+          method.invoke(broker, new Object[] {Boolean.FALSE});
+      } catch( NoSuchMethodException e) {
+    	  //	ignore
+      }
 
       return broker;
     } finally {
