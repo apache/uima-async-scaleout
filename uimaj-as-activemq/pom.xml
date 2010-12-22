@@ -62,167 +62,124 @@
 
 	<dependencies>
 		
-	<!--dependency>
-    	<groupId>commons-pool</groupId>
-    	<artifactId>commons-pool</artifactId>
-    	<version>1.2</version>
-		<scope>compile</scope>
-	</dependency--> 
-		
-		<dependency>
-			<groupId>org.apache.uima</groupId>
-			<artifactId>uimaj-core</artifactId>
-			<version>${uimajDependencyVersion}</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring</artifactId>
-			<version>2.0.6</version>
-		</dependency> 
-
-		<dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>apache-activemq</artifactId>
-			<version>4.1.1</version>
-			<exclusions>
-          <!-- exclude xstream 1.1.2 because it is broken 
-               xstream 1.2.2 (the fixed version) is included in another pom -->
-        <!--exclusion>
-          <groupId>xstream</groupId>
-          <artifactId>xstream</artifactId>
-        </exclusion-->
-      </exclusions>		
-		</dependency> 
-
-		<!--dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activemq-core</artifactId>
-			<version>4.1.1</version>
-			<exclusions>
-                    <exclusion>
-                        <groupId>org.apache.activemq</groupId>
-                        <artifactId>activemq-core</artifactId>
-                    </exclusion>
-           </exclusions>
-		</dependency-->
-
-		<!--dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activemq-optional</artifactId>
-			<version>4.1.1</version>
-			<exclusions>
-                    <exclusion>
-                        <groupId>org.apache.activemq</groupId>
-                        <artifactId>activemq-optional</artifactId>
-                    </exclusion>
-           </exclusions>
-		</dependency-->
-
-		<!--dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activeio-core</artifactId>
-			<version>3.0.0-incubator</version>
-		</dependency-->
-
-		<!--dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activemq-console</artifactId>
-			<version>4.1.1</version>
-		</dependency-->
-
-		<!--dependency>
-			<groupId>backport-util-concurrent</groupId>
-			<artifactId>backport-util-concurrent</artifactId>
-			<version>2.1</version>
-		</dependency-->
-
-		<!--dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activemq-jaas</artifactId>
-			<version>4.1.1</version>
-		</dependency-->
-
-		<!--dependency>
-			<groupId>org.apache.activemq</groupId>
-			<artifactId>activemq-web</artifactId>
-			<version>4.1.1</version>
-		</dependency-->    
-
-		<dependency>
-			<groupId>mx4j</groupId>
-			<artifactId>mx4j</artifactId>
-			<version>2.1.1</version>
-		</dependency>
-
-   <!-- lib/optional -->
-
-	<!--dependency>
-		<groupId>commons-beanutils</groupId>
-		<artifactId>commons-beanutils</artifactId>
-		<version>1.6.1</version>
-	</dependency-->
-	
-	<!--dependency>
-		<groupId>commons-collections</groupId>
-		<artifactId>commons-collections</artifactId>
-		<version>2.1</version>
-	</dependency-->
-
-	<!--dependency>
-		<groupId>commons-dbcp</groupId>
-		<artifactId>commons-dbcp</artifactId>
-		<version>1.2</version>
-	</dependency-->
-
-	<!--dependency>
-		<groupId>commons-pool</groupId>
-		<artifactId>commons-pool</artifactId>
-		<version>1.2</version>
-	</dependency-->
-
-    <!--dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1.1</version>
-    </dependency-->
-
-	<!--dependency>
-		<groupId>org.apache.geronimo.specs</groupId>
-		<artifactId>geronimo-j2ee-connector_1.5_spec</artifactId>
-		<version>1.0</version>
-	</dependency-->
-
-	<!--dependency>
-		<groupId>org.apache.geronimo.specs</groupId>
-		<artifactId>geronimo-j2ee-jacc_1.0_spec</artifactId>
-		<version>1.0</version>
-	</dependency-->
-
-	<!--dependency>
-		<groupId>activemq</groupId>
-		<artifactId>jmdns</artifactId>
-		<version>1.0-RC2</version>
-	</dependency-->
-
-	<!--dependency>
-		<groupId>log4j</groupId>
-		<artifactId>log4j</artifactId>
-		<version>1.2.12</version>
-	</dependency-->
-
 	<dependency>
-		<groupId>mx4j</groupId>
-		<artifactId>mx4j-remote</artifactId>
-		<version>2.1.1</version>
+		<groupId>org.apache.uima</groupId>
+		<artifactId>uimaj-core</artifactId>
+		<version>${uimajDependencyVersion}</version>
+		<scope>compile</scope>
 	</dependency>
+	<!--
+		Active MQ Stuff
+	-->
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-all</artifactId>
+      <version>5.4.1</version>
+    </dependency> 
 
-	<!--dependency>
-		<groupId>mx4j</groupId>
-		<artifactId>mx4j-tools</artifactId>
-		<version>2.1.1</version>
-	</dependency-->
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-jaas</artifactId>
+      <version>5.4.1</version>
+    </dependency>
+  
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-web</artifactId>
+      <version>5.4.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-spring</artifactId>
+      <version>5.4.1</version>
+    </dependency> 
+
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-optional</artifactId>
+      <version>5.4.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>kahadb</artifactId>
+      <version>5.4.1</version>
+    </dependency>
+
+    <!--  
+     Spring Framework Dependencies
+    -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+     
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-asm</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-expression</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-tx</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jms</artifactId>
+      <version>3.0.3.RELEASE</version>
+    </dependency>
+
+
+
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jms_1.1_spec</artifactId>
+      <version>1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-j2ee-management_1.1_spec</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-servlet_2.5_spec</artifactId>
+      <version>1.2</version>
+    </dependency>
+
+	<!--
+	   Jetty
+	-->
+	<dependency>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all-server</artifactId>
+      <version>7.0.1.v20091125</version>
+    </dependency>
 
 
 		<dependency>
@@ -239,49 +196,6 @@
 			<scope>compile</scope>
 		</dependency>
 		
-		<!--dependency>
-			<groupId>commons-httpclient</groupId>
-			<artifactId>commons-httpclient</artifactId>
-			<version>2.0.1</version>
-		</dependency--> 
-
-		<!--dependency>
-			<groupId>org.mortbay.jetty</groupId>
-			<artifactId>jetty</artifactId>
-			<version>6.0.1</version>
-		</dependency> 
-
-		<dependency>
-			<groupId>org.mortbay.jetty</groupId>
-			<artifactId>jetty-util</artifactId>
-			<version>6.0.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mortbay.jetty</groupId>
-			<artifactId>servlet-api-2.5</artifactId>
-			<version>6.0.1</version>
-		</dependency-->
-		
-		<!--dependency>
-			<groupId>xmlpull</groupId>
-			<artifactId>xmlpull</artifactId>
-			<version>1.1.3.4d_b4_min</version>
-		</dependency--> 
-	
-	
-		<!--dependency>
-			<groupId>org.apache.derby</groupId>
-			<artifactId>derby</artifactId>
-			<version>10.1.1.0</version>
-		</dependency-->
-	
-		<!--dependency>
-			<groupId>org.apache.xbean</groupId>
-			<artifactId>xbean-spring</artifactId>
-			<version>2.8</version>
-		</dependency-->
-
     <!-- testing dependencies -->
     <dependency>
       <exclusions>
@@ -297,13 +211,6 @@
       <scope>test</scope>
     </dependency>
 		
-    <!--dependency>
-      <groupId>com.thoughtworks.xstream</groupId>
-      <artifactId>xstream</artifactId>
-      <version>1.2.2</version>
-      <scope>test</scope>
-    </dependency-->
-    
     <dependency>
       <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-test-util</artifactId>
