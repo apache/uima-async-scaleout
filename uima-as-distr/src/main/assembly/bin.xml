@@ -168,7 +168,10 @@ under the License.
     <fileSet>
       <directory>target/uimaj/apache-uima/bin</directory>
       <includes><include>*.sh</include></includes>
-      <excludes><exclude>setUimaClassPath.*</exclude></excludes>
+      <excludes>
+          <exclude>setUimaClassPath.*</exclude>
+          <exclude>runUimaClass.*</exclude>
+      </excludes>
       <outputDirectory>bin</outputDirectory>
       <fileMode>755</fileMode>
       <directoryMode>755</directoryMode>
@@ -177,6 +180,7 @@ under the License.
       <directory>target/uimaj/apache-uima/bin</directory>
       <excludes>
         <exclude>*.sh</exclude>
+          <exclude>runUimaClass.*</exclude>
         <exclude>setUimaClassPath.*</exclude>
       </excludes>
       <outputDirectory>bin</outputDirectory>
@@ -249,6 +253,8 @@ under the License.
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>
+    
+    
     <fileSet>
       <directory>src/main/config</directory>
       <outputDirectory>as_config</outputDirectory>
