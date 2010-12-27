@@ -1247,6 +1247,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       if (endpoint != null) {
         endpoint.setController(this);
         CasStateEntry casStateEntry = getLocalCache().lookupEntry(aCasReferenceId);
+        casStateEntry.resetReplyReceived();
         if (enableCasLogMap!=null && enableCasLogMap.containsKey(analysisEngineKey)) {
           //  Get a CAS
           CacheEntry cacheEntry = getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
@@ -1550,7 +1551,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 .logrb(
                         Level.INFO,
                         CLASS_NAME.getName(),
-                        "fetchParentCas",
+                        "fetchParentCasFromLocalCache",
                         UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAEE_cas_not_found__INFO",
                         new Object[] { getComponentName(), casStateEntry.getCasReferenceId(),
@@ -1572,7 +1573,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.INFO,
                 CLASS_NAME.getName(),
-                "fetchParentCas",
+                "fetchParentCasFromGlobalCache",
                 UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_cas_not_found__INFO",
                 new Object[] { getComponentName(), casStateEntry.getInputCasReferenceId(),
