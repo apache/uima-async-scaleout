@@ -93,7 +93,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   // guards uima core code that is not thread safe.
   private static Semaphore sharedInitSemaphore = new Semaphore(1);
 
-  static private Long lastDump = new Long(0);
+  static private Object threadDumpMonitor = new Object();
+  static private Long lastDump = Long.valueOf(0);
 
   public PrimitiveAnalysisEngineController_impl(String anEndpointName,
           String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
@@ -1055,7 +1056,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	    	timerCancelled = true;
 	    	timer.cancel (  ) ; //Terminate the thread
 	    	// create a heap dump. NOTE: this only works with IBM jvm
-	    	synchronized (lastDump) {
+	    	synchronized (threadDumpMonitor) {
 	            long now = System.currentTimeMillis();
 	            if (30000 < (now-lastDump)) {
 	              // create a stack dump. NOTE: this only works with IBM jvm
