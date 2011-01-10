@@ -577,10 +577,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     } else {
       rm = UIMAFramework.newDefaultResourceManager();
     }
+    performanceTuningSettings = new Properties();
     if (anApplicationContext.containsKey(UIMAFramework.CAS_INITIAL_HEAP_SIZE)) {
       String cas_initial_heap_size = (String) anApplicationContext
               .get(UIMAFramework.CAS_INITIAL_HEAP_SIZE);
-      performanceTuningSettings = new Properties();
       performanceTuningSettings.put(UIMAFramework.CAS_INITIAL_HEAP_SIZE, cas_initial_heap_size);
     }
     asynchManager = new AsynchAECasManager_impl(rm);
