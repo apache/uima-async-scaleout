@@ -24,7 +24,7 @@ fi
 
 # ActiveMQ needs a HOME
 if [ -z "$ACTIVEMQ_HOME" ] ; then
-  export ACTIVEMQ_HOME=$UIMA_HOME/apache-activemq-4.1.1
+  export ACTIVEMQ_HOME=$UIMA_HOME/apache-activemq-5.4.1
 fi
 
 # ActiveMQ needs a writeable directory for the log files and derbydb.
@@ -48,4 +48,4 @@ if [ ! -x "$ACTIVEMQ_HOME/bin/activemq" ]; then
     chmod +x "$ACTIVEMQ_HOME/bin/activemq"
 fi
 
-"$ACTIVEMQ_HOME/bin/activemq" "xbean:file:$ACTIVEMQ_BASE/conf/activemq-nojournal.xml"
+"$ACTIVEMQ_HOME/bin/activemq" "start xbean:file:$ACTIVEMQ_BASE/conf/activemq-nojournal.xml"
