@@ -24,11 +24,11 @@
     <!-- Allows us to use system properties as variables in this configuration file -->
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="locations">
-            <value>file:${activemq.base}/conf/credentials.properties</value>
+            <value>file:${activemq.home}/conf/credentials.properties</value>
         </property>      
     </bean>
 
-    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" persistent="false" destroyApplicationContextOnStop="true" schedulerSupport="false">
+    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" persistent="false" schedulerSupport="false">
  
         <!--
 			For better performances use VM cursor and small memory limit.
