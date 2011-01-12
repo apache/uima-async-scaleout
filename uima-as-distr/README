@@ -18,23 +18,21 @@ For more details, please see http://uima.apache.org/building-uima.html
 
 1. What's New in 2.3.1
 ====================== 
-
-tbd - these are the 2.3.0 changes:
-  - UIMA-AS "graduated" from Sandbox, now a top-level (within UIMA) add-on
-  - UIMA-AS repackaged - no longer includes the base UIMA. You must download a comparable version of base UIMA, separately
-  - Many improvements in error handling and recovery
-  - General hardening / bug fixes
-  - Many improvements in JMX reporting
-  - Optimizations and tunings for larger deployments
-  - Support for late binding of broker urls and ports
-  - Support for passing configuration information in URLs to ActiveMQ
-  - Delta Cas format support added, including Delta Binary serialization where the type systems are identical
-  - Multiple remote CAS multiplier support added
-  - Using Java queuing instead of embedded broker for local services (performance improvement)
-  - Support for high volume - multiple concurrent listener threads
-  - Initial support for Apache Camel and OSGI enablement added
-  - New launcher allows specifying directories containing Jars; all Jars found will be added to the classpath
-
+  - UIMA-AS repackaged - includes base UIMA
+  - New ActiveMQ version - includes ActiveMQ 5.4.1 with its dependencies
+  - Each thread uses dedicated Serializer/Deserializer instance, removing a bottleneck 
+  - Many bug fixes 
+  - Multiple improvements to increase performance
+  - Improved error handling and stability
+  - Fixed CDE slow startup with an aggregate containing a remote delegate
+  - Improves and fixes bugs related to XMI delta serialization   
+  - Fixes a bug preventing shutdown of C++ services
+  - Improved debugging with optional dumping of JVM stack if process() takes too long
+  - Added detection of failed client before processing a CAS
+  - Fixed bugs in JMX Monitor integrated with UIMA AS service 
+  - Improved performance by increasing prefetch size on reply queue
+  - Fixed processParentLast logic
+  
 
 1.1 Contents of Apache UIMA-AS binary distribution
 --------------------------------------------------
@@ -201,8 +199,8 @@ b. Run the command:
   as well as directories on UIMA_DATAPATH to resolve the import.
  
   Note: deployAsyncService.sh/cmd scripts launch UimaBootstrap main program which loads UIMA jars
-  dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-4.1.1, UIMA_HOME/apache-activemq-4.1.1/lib,
-  and UIMA_HOME/apache-activemq-4.1.1/lib/optional directories. If you want to use a different
+  dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-5.4.1, UIMA_HOME/apache-activemq-5.4.1/lib,
+  and UIMA_HOME/apache-activemq-5.4.1/lib/optional directories. If you want to use a different
   version of ActiveMQ, set the ACTIVEMQ_HOME environment variable to the location of 
   ActiveMQ you intend to use. Also, if you want to deploy your own annotator that is 
   installed in a different directory than UIMA_HOME/lib, set the UIMA_CLASSPATH 
@@ -398,6 +396,8 @@ An example of this kind of migration is embodied by the sample descriptors:
   4. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
      JMX port (see section 3.8).
 
+  5. Handling of timeouts on Cas Multiplier delegates not working 
+  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
 http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12310570
 
