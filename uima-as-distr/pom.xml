@@ -478,31 +478,35 @@
         <artifactId>maven-assembly-plugin</artifactId>
       </plugin>
       
-      <!-- run Release Audit Tool (RAT) on src and bin distrs -->       
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>default-cli</id>
-            <configuration>
-              <excludes>
-                <exclude>src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
-                <exclude>src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
-                <exclude>src/main/examples/run_configuration/*.launch</exclude> <!-- eclipse launch configurations -->
-                <exclude>release.properties</exclude>
-                <exclude>README*</exclude>
-                <exclude>RELEASE_NOTES*</exclude>
-                <exclude>issuesFixed/**</exclude>
-                <exclude>src/main/resources/docbook-shared/titlepage/*.xsl</exclude>
-                <exclude>marker-file-identifying-*</exclude>
-                <exclude>DEPENDENCIES</exclude>              
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
 		</plugins>
+	  <pluginManagement>
+      <plugins>
+      	<plugin>
+	        <!-- run Release Audit Tool (RAT) on src and bin distrs -->       
+        	<groupId>org.apache.rat</groupId>
+        	<artifactId>apache-rat-plugin</artifactId>
+        	<executions>
+          		<execution>
+            		<id>default-cli</id>
+            		<configuration>
+              			<excludes>
+                			<exclude>src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
+                			<exclude>src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
+                			<exclude>src/main/examples/run_configuration/*.launch</exclude> <!-- eclipse launch configurations -->
+                			<exclude>release.properties</exclude>
+                			<exclude>README*</exclude>
+                			<exclude>RELEASE_NOTES*</exclude>
+                			<exclude>issuesFixed/**</exclude>
+                			<exclude>src/main/resources/docbook-shared/titlepage/*.xsl</exclude>
+                			<exclude>marker-file-identifying-*</exclude>
+                			<exclude>DEPENDENCIES</exclude>              
+              			</excludes>
+            		</configuration>
+          		</execution>
+        	</executions>
+      	</plugin>
+	  </plugins>
+	  </pluginManagement>	
 	</build>
   
   <!-- Use -N option to skip building submodule, for testing uimaj-distr -->
