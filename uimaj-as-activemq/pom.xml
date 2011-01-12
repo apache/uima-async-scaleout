@@ -236,6 +236,11 @@
 				</configuration>
 		  </plugin>
       
+         
+      		
+	  </plugins>
+	  <pluginManagement>
+      <plugins>
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
@@ -250,8 +255,8 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>   
-      		
-	  </plugins>		
+      </plugin>
+      </plugins>
+	  </pluginManagement>		
 	</build>	
 </project>
