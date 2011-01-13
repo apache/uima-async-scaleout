@@ -67,11 +67,6 @@ For the terms of use of this code, see http://www.unicode.org/terms_of_use.html,
 which should be regarded as forming part of these conditions of use, and part 
 of the Saxon documentation. 
 
-This product includes software, Java Multicast Domain Name Server (JmDNS). This project 
-was originally developed by Arthur van Hoff under the GNU Lesser General Public License 
-as jRendevous.  It was moved to Sourceforge by Rick Blair and renamed to JmDNS with the 
-Arthur's kind permission. Currently it has  been re-released under the Apache License, Version 2.0.
-
 This product includes software, Jetty, developed at
 The Apache Software Foundation (http://www.apache.org/) and Mort Bay Consulting Pty Ltd.
 
@@ -81,18 +76,9 @@ distributed under the Common Development and Distribution License.
 You can obtain a copy of the license at
 https://glassfish.dev.java.net/public/CDDLv1.0.html.
 
-The UnixCrypt.java code ~Implements the one way cryptography used by
-Unix systems for simple password protection.  Copyright 1996 Aki Yoshida,
-modified April 2001  by Iris Van den Broeke, Daniel Deville.
-
 The default JSP implementation is provided by the Glassfish JSP engine
 from project Glassfish http://glassfish.dev.java.net.  Copyright 2005
 Sun Microsystems, Inc. and portions Copyright Apache Software Foundation.
 
-Some portions of the code are Copyright:
-  2006 Tim Vernum
-  1999 Jason Gilbert.
-
-The jboss integration module contains some LGPL code.
 
 
