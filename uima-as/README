@@ -2,7 +2,8 @@ To build Apache UIMA-AS, run the command
 
   mvn install
 
-in this directory. This will build all the submodules including the binary distribution package.
+in the uima-as directory containing the pom.xml file. 
+This will build all the submodules including the binary distribution package.
 
 If you are building from trunk, you may need to first build the uimaj project in 
 .../uima/uimaj/trunk using "mvn install", as UIMA-AS depends on the uimaj project. 
