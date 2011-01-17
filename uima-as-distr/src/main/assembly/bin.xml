@@ -83,7 +83,6 @@ under the License.
         <include>org.springframework:spring-beans</include>  
         <include>org.springframework:spring-expression</include>  
         <include>org.springframework:spring-jms</include>  
-        <include>org.springframework:xbean-spring</include>  
         <include>org.apache.xbean:xbean-spring</include>
       </includes>
       <useTransitiveDependencies>false</useTransitiveDependencies>
@@ -295,22 +294,16 @@ under the License.
     <fileSet>
       <directory>src/main/apache-activemq-5.4.1</directory>
       <outputDirectory>apache-activemq-5.4.1</outputDirectory>
-      <includes><include>conf/**</include></includes>
+      <includes>
+          <include>conf/**</include>
+          <include>README.txt</include>
+         <include>bin/*</include>
+         <include>bin/**/*</include>
+      </includes>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>  
 
-    <fileSet>
-      <directory>src/main/apache-activemq-5.4.1</directory>
-      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
-      <includes>
-         <include>bin/*</include>
-         <include>bin/**/*</include>
-      </includes>
-      <fileMode>755</fileMode>
-      <directoryMode>755</directoryMode>        
-    </fileSet>  
-        
     <!-- saxon 8.9 -->    
     <fileSet>
       <directory>src/main/saxon</directory>
