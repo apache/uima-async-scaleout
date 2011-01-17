@@ -102,16 +102,6 @@ under the License.
         <include>com.thoughtworks.xstream:xstream</include> 
         <include>xmlpull:xmlpull</include> 
         <include>org.apache.geronimo.specs:geronimo-servlet_2.5_spec</include>
-<!--  
-        <include>xmlpull:xmlpull</include> 
-        <include>org.apache.derby:derby</include>
-        <include>commons-beanutils:commons-beanutils</include>
-		    <include>commons-collections:commons-collections</include>
-        <include>commons-dbcp:commons-dbcp</include>
-        <include>commons-pool:commons-pool</include>
-        <include>org.apache.geronimo.specs:geronimo-j2ee-connector_1.5_spec</include>
-        <include>org.apache.geronimo.specs:geronimo-j2ee-jacc_1.1_spec</include>
-        <include>activemq:jmdns</include>  -->
         <include>log4j:log4j</include>
       </includes>
       <useTransitiveDependencies>false</useTransitiveDependencies>
@@ -176,6 +166,7 @@ under the License.
       <fileMode>755</fileMode>
       <directoryMode>755</directoryMode>
     </fileSet>
+    
     <fileSet>
       <directory>target/uimaj/apache-uima/bin</directory>
       <excludes>
@@ -275,14 +266,6 @@ under the License.
       <directoryMode>755</directoryMode>        
     </fileSet>
     
-    <fileSet>
-      <directory>../uima-as-docbooks/target/site</directory>
-      <outputDirectory>docs</outputDirectory>
-      <excludes><exclude>pdf/*.fo</exclude></excludes>
-      <fileMode>644</fileMode>
-      <directoryMode>755</directoryMode>        
-    </fileSet>
-        
     <!--fileSet>
       <directory>../uima-as-docbooks/src</directory>
       <outputDirectory>uima-as/docs</outputDirectory>
@@ -293,40 +276,7 @@ under the License.
       <directoryMode>755</directoryMode>        
     </fileSet--> 
        
-    <!--fileSet>
-      <directory>../uimaj-examples/src/main/java</directory>
-      <outputDirectory>examples/src</outputDirectory>
-      <excludes>
-        <exclude> org/apache/uima/examples/xmi/XmiEcoreCasConsumer.java</exclude>
-        <exclude> org/apache/uima/examples/xmi/Ecore2UimaTypeSystem.java</exclude>
-        <exclude> org/apache/uima/examples/xmi/UimaTypeSystem2Ecore.java</exclude>
-      </excludes>
-    </fileSet>
-    <fileSet>
-      <directory>../uimaj-examples/src/main/data</directory>
-      <outputDirectory>examples/data</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>../uimaj-examples/src/main/deploy</directory>
-      <outputDirectory>examples/deploy</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>../uimaj-examples/src/main/descriptors</directory>
-      <outputDirectory>examples/descriptors</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>../uimaj-examples/src/main/opennlp_wrappers</directory>
-      <outputDirectory>examples/opennlp_wrappers</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>../uimaj-examples/src/main/resources</directory>
-      <outputDirectory>examples/resources</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>../uimaj-examples/src/main/run_configuration</directory>
-      <outputDirectory>examples/run_configuration</outputDirectory>
-    </fileSet-->
-    
+       
     <!-- uima-as additions -->
     <fileSet>
       <directory>src/main/examples</directory>
@@ -342,38 +292,22 @@ under the License.
     </fileSet>
     
     <!-- activemq -->
-
-
-    <fileSet>
-      <directory>src/main/apache-activemq-5.4.1</directory>
-      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
-      <includes><include>bin/**</include></includes>
-      <excludes><exclude>bin/**/*.*</exclude></excludes>
-      <fileMode>755</fileMode>
-      <directoryMode>755</directoryMode>        
-    </fileSet>  
-
     <fileSet>
       <directory>src/main/apache-activemq-5.4.1</directory>
       <outputDirectory>apache-activemq-5.4.1</outputDirectory>
       <includes><include>conf/**</include></includes>
-      <excludes><exclude>conf/**/*.*</exclude></excludes>
-      <fileMode>755</fileMode>
+      <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>  
 
     <fileSet>
       <directory>src/main/apache-activemq-5.4.1</directory>
       <outputDirectory>apache-activemq-5.4.1</outputDirectory>
-      <includes><include>bin/**/*.*</include></includes>
-      <fileMode>644</fileMode>
-      <directoryMode>755</directoryMode>        
-    </fileSet>  
-    <fileSet>
-      <directory>src/main/apache-activemq-5.4.1</directory>
-      <outputDirectory>apache-activemq-5.4.1</outputDirectory>
-      <excludes><exclude>bin/**</exclude></excludes>
-      <fileMode>644</fileMode>
+      <includes>
+         <include>bin/*</include>
+         <include>bin/**/*</include>
+      </includes>
+      <fileMode>755</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>  
         
@@ -419,36 +353,7 @@ under the License.
       <fileMode>644</fileMode>
     </file>
     
-    <!--  skip the main uima project files 
-    <file>
-      <source>../uimaj-examples/src/main/eclipseProject/project</source>
-      <outputDirectory>examples</outputDirectory>
-      <destName>.project</destName>
-      <fileMode>644</fileMode> 
-    </file>
-    <file>
-      <source> ../uimaj-examples/src/main/eclipseProject/ecore_src_readme.txt</source>
-      <outputDirectory>examples/ecore_src</outputDirectory>
-      <destName>readme.txt</destName>
-      <fileMode>644</fileMode> 
-    </file>
-    <file>
-      <source>../uimaj-examples/src/main/java/org/apache/uima/examples/xmi/XmiEcoreCasConsumer.java</source>
-      <outputDirectory>examples/ecore_src/org/apache/uima/examples/xmi</outputDirectory>
-      <fileMode>644</fileMode> 
-    </file>
-    <file>
-      <source>../uimaj-examples/src/main/java/org/apache/uima/examples/xmi/Ecore2UimaTypeSystem.java</source>
-      <outputDirectory>examples/ecore_src/org/apache/uima/examples/xmi</outputDirectory>
-      <fileMode>644</fileMode> 
-    </file>
-    <file>
-      <source>../uimaj-examples/src/main/java/org/apache/uima/examples/xmi/UimaTypeSystem2Ecore.java</source>
-      <outputDirectory>examples/ecore_src/org/apache/uima/examples/xmi</outputDirectory>
-      <fileMode>644</fileMode> 
-    </file>
     
-    -->
     <file>
       <source>src/main/eclipseProject/classpath</source>
       <outputDirectory>examples</outputDirectory>
