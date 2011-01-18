@@ -57,8 +57,8 @@ under the License.
    </url>
 
    <requires>
-      <import plugin="org.apache.uima.runtime" version="2.3.0" match="greaterOrEqual"/>
-      <import plugin="org.apache.uima.desceditor" version="2.3.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.uima.runtime" version="2.3.1" match="greaterOrEqual"/>
+      <import plugin="org.apache.uima.desceditor" version="2.3.1" match="greaterOrEqual"/>
    </requires>
 
    <plugin
