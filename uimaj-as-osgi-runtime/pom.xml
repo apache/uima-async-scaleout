@@ -37,8 +37,8 @@
   <!-- Special inheritance note
        even though the <scm> element that follows is exactly the 
        same as those in super poms, it cannot be inherited because 
-       there is some special code that computes the connection elements
-       from the chain of parent poms, if this is omitted. 
+       there is some special code that incorrectly computes the 
+       connection elements from the chain of parent poms, if this is omitted. 
        
        Keeping this a bit factored allows cutting/pasting the <scm>
        element, and just changing the following two properties -->  
@@ -136,7 +136,6 @@
           <execution>
             <id>uima-bundle</id>
             <configuration>
-              <manifestLocation>META-INF</manifestLocation>
               <instructions>
                 <!-- turn off "uses" generation because Eclipse 3.2.x doesn't work with them -->
                 <_nouses>true</_nouses>
@@ -171,13 +170,29 @@
                 <Import-Package>org.apache.log4j;resolution:=optional,*
                 </Import-Package>
                 <Embed-Dependency>*;scope=compile;inline=true</Embed-Dependency>
-                <Fragement-Host>org.apache.uima.runtime</Fragement-Host>
+                <Bundle-SymbolicName>org.apache.uima.runtime.fragments.uimaas;singleton:=true</Bundle-SymbolicName>
+                <Fragment-Host>org.apache.uima.runtime</Fragment-Host>
                 <Eclipse-RegisterBuddy>org.apache.uima.runtime</Eclipse-RegisterBuddy>
               </instructions>
             </configuration>
           </execution>
         </executions>
       </plugin>
+      
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpackDependentJars</id>
+            <goals><goal>unpack-dependencies</goal></goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+              <excludeTransitive>true</excludeTransitive>
+              <includeArtifactIds>uimaj-as-core,uimaj-as-jms,uimaj-as-activemq</includeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>      
     </plugins>
   </build>
 </project>
