@@ -23,13 +23,13 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uima-as-parent</artifactId>
-    <version>2.3.2-SNAPSHOT</version>
+    <version>2.3.1-SNAPSHOT</version>
     <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
   <packaging>jar</packaging>
-  <version>2.3.2-SNAPSHOT</version>
+  <version>2.3.1-SNAPSHOT</version>
   <name>UIMA-AS Eclipse Plugin: ${project.artifactId}</name>
   <description>Bundles the uima-as runtime parts needed for the deploy editor extension to the CDE, as a fragment on top of the main uima runtime</description>
   <url>${uimaWebsiteUrl}</url>
@@ -103,8 +103,10 @@
             </Export-Package>
 
             <Bundle-SymbolicName>org.apache.uima.runtime.fragments.deployeditor;singleton:=true</Bundle-SymbolicName>
-
-            <Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host>
+            <!-- Uncomment Line below for the actual release -->
+            <!-- Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host -->
+            <!-- Remove below line for the actual release -->
+            <Fragment-Host>org.apache.uima.runtime;bundle-version="2.3.1"</Fragment-Host>
           </instructions>
         </configuration>
       </plugin>
