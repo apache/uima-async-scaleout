@@ -472,11 +472,44 @@
 
 			</plugin>
 
+      <!-- https://issues.apache.org/jira/browse/UIMA-2008 -->
+      <!-- no maven deployment of this project's artifacts -->
+      <!-- binary build artifact deployed from apache mirror system after release -->
       <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
+        <artifactId>maven-deploy-plugin</artifactId>      
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
-      
-		</plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate checksums for binary artifacts</id>
+            <goals><goal>run</goal></goals>
+            <phase>verify</phase>
+            <configuration>
+              <target>
+                <checksum algorithm="sha1" format="MD5SUM">
+                  <fileset dir="${project.build.directory}">
+                    <include name="*.zip" />
+                    <include name="*.gz" />
+                  </fileset>
+                </checksum>
+                <checksum algorithm="md5" format="MD5SUM">
+                  <fileset dir="${project.build.directory}">
+                    <include name="*.zip" />
+                    <include name="*.gz" />
+                  </fileset>
+                </checksum>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+		
+    </plugins>
+    
 	  <pluginManagement>
       <plugins>
       	<plugin>
@@ -503,7 +536,7 @@
           		</execution>
         	</executions>
       	</plugin>
-	  </plugins>
+	    </plugins>
 	  </pluginManagement>	
 	</build>
   
@@ -511,7 +544,7 @@
   <modules>
     <module>../aggregate-uima-as</module>
   </modules>      
-
+ 
   <profiles>
     <profile>
       <id>apache-release</id>
