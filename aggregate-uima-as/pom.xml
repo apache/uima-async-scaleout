@@ -24,13 +24,13 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uima-as-parent</artifactId>
-    <version>2.3.1-SNAPSHOT</version>
+    <version>2.3.1</version>
     <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>aggregate-uima-as</artifactId>
   <packaging>pom</packaging>
-  <version>2.3.1-SNAPSHOT</version>
+  <version>2.3.1</version>
   <name>UIMA-AS Aggregate: ${project.artifactId}</name>
   <description>The aggregate for building the uima-as functionality,
     the eclipse plugins, and the docbooks 
@@ -47,13 +47,13 @@
        element, and just changing the following two properties -->
   <scm>
     <connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/trunk/aggregate-uima-as
+      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.3.1-rc3/aggregate-uima-as
     </connection>
     <developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/trunk/aggregate-uima-as
+      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.3.1-rc3/aggregate-uima-as
     </developerConnection>
     <url>
-      http://svn.apache.org/viewvc/uima/uima-as/trunk/aggregate-uima-as
+      http://svn.apache.org/viewvc/uima/uima-as/tags/uima-as-2.3.1-rc3/aggregate-uima-as
     </url>
   </scm>
 
