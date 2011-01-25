@@ -202,7 +202,14 @@ b. Run the command:
   dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-5.4.1, UIMA_HOME/apache-activemq-5.4.1/lib,
   and UIMA_HOME/apache-activemq-5.4.1/lib/optional directories. If you want to use a different
   version of ActiveMQ, set the ACTIVEMQ_HOME environment variable to the location of 
-  ActiveMQ you intend to use. Also, if you want to deploy your own annotator that is 
+  ActiveMQ you intend to use. When using different version of ActiveMQ ( older than version 5.4), start
+  the broker using a startup script located in ACTIVEMQ_HOME/bin directory instead of 
+  UIMA_HOME/bin/startBroker.[cmd|sh] script provided in this release. This is due to the fact that the 
+  5.4 branch of ActiveMQ xml schema has changed. The activemq_nojournal.xml provided in this release two
+  optimizations: schedulerSupport=false to disable broker message scheduler, and producerFlowControl="false" 
+  to turn off producer flow control.
+  
+  Also, if you want to deploy your own annotator that is 
   installed in a different directory than UIMA_HOME/lib, set the UIMA_CLASSPATH 
   environment variable to point to one or more Classpath entries;  these entries can either be
   directories of Java class files, Jar files, or directories of Jar files (in which case, all the 
@@ -288,11 +295,13 @@ is on a broker that is accessable. For example, the service can register with a
 public broker running outside the firewall. Alternatively the broker may be configured 
 to tunnel over HTTP. For details see http://activemq.apache.org/configuring-transports.html
 
-Note: There are bugs in the standard ActiveMQ HTTP connector core librarys (which we have
-      patched) associated with CASes larger than 64KB and with doublebyte characters. 
-      The ActiveMQ jars distributed with UIMA AS include the bug fixes described in 
-      http://issues.apache.org/activemq/browse/AMQ-1308
-      
+Note: The ActiveMQ 5.4.1 jars distributed with this UIMA AS release include bug fixes described in 
+      http://issues.apache.org/activemq/browse/AMQ-1308. Previous releases of UIMA AS included 
+      custom ActiveMQ 4.1.1 jars (which we have patched) to remedy the problems. When using 
+      ActiveMQ HTTP connector, make sure that both a client and a service use either ActiveMQ 4.1.1 
+      or ActivemMQ 5.4.1+ jars. 
+       
+     
 3.7 Monitoring a broker and its queues
 --------------------------------------
 
