@@ -23,13 +23,13 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uima-as-parent</artifactId>
-    <version>2.3.1</version>
+    <version>2.3.2-SNAPSHOT</version>
     <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>aggregate-uima-as-eclipse-plugins</artifactId>
   <packaging>pom</packaging>
-  <version>2.3.1</version>
+  <version>2.3.2-SNAPSHOT</version>
   <name>UIMA-AS Aggregate: ${project.artifactId}</name>
   <description>The aggregate for building the Eclipse plugins 
     that are part of the UIMA-AS framework</description>
@@ -45,13 +45,13 @@
        element, and just changing the following two properties -->
   <scm>
     <connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.3.1-rc2/aggregate-uima-as-eclipse-plugins
+      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/trunk/aggregate-uima-as-eclipse-plugins
     </connection>
     <developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.3.1-rc2/aggregate-uima-as-eclipse-plugins
+      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/trunk/aggregate-uima-as-eclipse-plugins
     </developerConnection>
     <url>
-      http://svn.apache.org/viewvc/uima/uima-as/tags/uima-as-2.3.1-rc2/aggregate-uima-as-eclipse-plugins
+      http://svn.apache.org/viewvc/uima/uima-as/trunk/aggregate-uima-as-eclipse-plugins
     </url>
   </scm>
 
