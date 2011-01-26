@@ -7,11 +7,16 @@
 We use Maven 3.0 for building; download this if needed, 
 and set the environment variable MAVEN_OPTS to -Xmx800m -XX:MaxPerSize-256m.
 
-Then build everything by going into the .../uima-as directory, and issuing the command
+Then do the build by going into the .../uima-as directory, and issuing the command
    mvn clean install.
    
+This builds everything except the ...source-release.zip file. If you want that,
+change the command to 
+
+   mvn clean install -Papache-release
+   
 Look for the result in the two artifacts: 
-   ../uima-as/target/uima-as-[version]-source-release.zip and
+   ../uima-as/target/uima-as-[version]-source-release.zip if run with -Papache-release) and
    ../uima-as-distr/target/uima-as-[version]-bin.zip (or  ...tar.gz) 
 
 For more details, please see http://uima.apache.org/building-uima.html   
