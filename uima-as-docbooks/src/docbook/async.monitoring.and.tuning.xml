@@ -793,7 +793,7 @@ under the License.
                 <listitem><para>%UIMA_HOME%/lib/uimaj-as-activemq.jar</para></listitem>
                 <listitem><para>%UIMA_HOME%/lib/uimaj-as-core.jar</para></listitem>
                 <listitem><para>%UIMA_HOME%/lib/uima-core.jar</para></listitem>
-                <listitem><para>%UIMA_HOME%/apache-activemq-4.1.1/apache-activemq-4.1.1.jar</para></listitem>
+                <listitem><para>%UIMA_HOME%/apache-activemq-5.4.1/activemq-all-5.4.1.jar</para></listitem>
               </itemizedlist>
             </listitem>
             <listitem>
