@@ -11,20 +11,8 @@ licensed to the Apache Software Foundation under the
 "IBM UIMA-EE License Agreement".
 Copyright (c) 2007, 2008 IBM Corporation
 
-Portions of Derby were orginally developed by
-International Business Machines Corporation and are
-licensed to the Apache Software Foundation under the
-"Software Grant and Corporate Contribution License Agreement",
-informally known as the "Derby CLA".
-
-This product also includes software developed by
-Clinton Begin (http://www.ibatis.com).
-
 This product includes software, Apache ActiveMQ, developed
 at the Apache Software Foundation (http://www.apache.org/).
-
-This product includes software, XBean::Spring, developed at
-The Apache Software Foundation (http://www.apache.org/).
 
 This product includes software known as 
 "The Saxon XSLT and XQuery Processor from Saxonica Limited", whose

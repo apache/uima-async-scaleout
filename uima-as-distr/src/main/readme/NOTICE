@@ -11,15 +11,11 @@ licensed to the Apache Software Foundation under the
 "IBM UIMA-EE License Agreement".
 Copyright (c) 2007, 2008 IBM Corporation
 
-Portions of Derby were orginally developed by
-International Business Machines Corporation and are
-licensed to the Apache Software Foundation under the
-"Software Grant and Corporate Contribution License Agreement",
-informally known as the "Derby CLA".
-
+------------------- www.ibatis.com Notice -------
 This product also includes software developed by
 Clinton Begin (http://www.ibatis.com).
 
+----------- ActiveMQ + Spring Notice --------------
 This product includes software, Apache ActiveMQ, developed
 at the Apache Software Foundation (http://www.apache.org/).
 
@@ -49,9 +45,7 @@ Spring Framework (http://www.springframework.org/).
 This product includes software, Spring Framework: Web, developed by
 Spring Framework (http://www.springframework.org/).
 
-This product includes software developed by the MX4J project
-(http://sourceforge.net/projects/mx4j).
-
+---------- Saxon Notice --------
 This product includes software known as 
 "The Saxon XSLT and XQuery Processor from Saxonica Limited", whose
 home page URL is http://www.saxonica.com/ 
@@ -67,6 +61,7 @@ For the terms of use of this code, see http://www.unicode.org/terms_of_use.html,
 which should be regarded as forming part of these conditions of use, and part 
 of the Saxon documentation. 
 
+------- Jetty Notice ----------
 This product includes software, Jetty, developed at
 The Apache Software Foundation (http://www.apache.org/) and Mort Bay Consulting Pty Ltd.
 
@@ -76,9 +71,13 @@ distributed under the Common Development and Distribution License.
 You can obtain a copy of the license at
 https://glassfish.dev.java.net/public/CDDLv1.0.html.
 
-The default JSP implementation is provided by the Glassfish JSP engine
-from project Glassfish http://glassfish.dev.java.net.  Copyright 2005
-Sun Microsystems, Inc. and portions Copyright Apache Software Foundation.
+Some portions of the code are Copyright:
+  2006 Tim Vernum
+  1999 Jason Gilbert
+  
+The UnixCrypt.java code ~Implements the one way cryptography used by
+Unix systems for simple password protection.  Copyright 1996 Aki Yoshida,
+modified April 2001  by Iris Van den Broeke, Daniel Deville.
 
-
+-------------------------------
 
