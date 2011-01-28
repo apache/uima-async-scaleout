@@ -270,15 +270,12 @@ under the License.
       <directoryMode>755</directoryMode>        
     </fileSet>
     
-    <!--fileSet>
-      <directory>../uima-as-docbooks/src</directory>
-      <outputDirectory>uima-as/docs</outputDirectory>
-      <includes>
-        <include>index.html</include>
-      </includes>
+    <fileSet>
+      <directory>../uima-as-docbooks/target/site/d</directory>
+      <outputDirectory>docs/d</outputDirectory>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
-    </fileSet--> 
+    </fileSet> 
        
        
     <!-- uima-as additions -->
