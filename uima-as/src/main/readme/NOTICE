@@ -79,5 +79,8 @@ The UnixCrypt.java code ~Implements the one way cryptography used by
 Unix systems for simple password protection.  Copyright 1996 Aki Yoshida,
 modified April 2001  by Iris Van den Broeke, Daniel Deville.
 
--------------------------------
+-------SVG Icons Notice ------------------------
 
+This product contains icons developed by the SVG Icons project 
+(http://sourceforge.net/projects/svgicons), licensed under the 
+BSD license (see LICENSE file).
