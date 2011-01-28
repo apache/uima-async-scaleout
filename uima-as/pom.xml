@@ -460,6 +460,7 @@
                 			<exclude>README*</exclude>
                 			<exclude>RELEASE_NOTES*</exclude>
                 			<exclude>issuesFixed/**</exclude>
+                			<exclude>LicNoticeAnalysisActiveMQ.txt</exclude>
                 			<exclude>src/main/resources/docbook-shared/titlepage/*.xsl</exclude>
                 			<exclude>marker-file-identifying-*</exclude>
                 			<exclude>DEPENDENCIES</exclude>              

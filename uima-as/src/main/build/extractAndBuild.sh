@@ -69,6 +69,6 @@ svn export -r HEAD http://svn.apache.org/repos/asf/incubator/uima/uima-as/$svnlo
 cp -r $leveldir/* . 
 cd uimaj-as
 mvn ${jvmargs} $mvnCommand
-cd ../uima-as-distr
+# cd ../uima-as-distr
 mvn clean install
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--==================================================================================-->
  <!-- Generated from                                                                                  -->
- <!-- file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/deploy/defaultingAEwithBrokerParms.xml -->
+ <!-- file:/C:/a/Eclipse/apache/uima-as/src/test/resources/deploy/defaultingAEwithBrokerParms.xml -->
  <!-- 17 August, 2009, 3:44:20 P.M.                                                                     -->
  <!--==================================================================================-->
  <!DOCTYPE beans
@@ -93,7 +93,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="RoomNumberAnnotatorQueue"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/tutorial/ex2/RoomNumberAnnotator.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/tutorial/ex2/RoomNumberAnnotator.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 

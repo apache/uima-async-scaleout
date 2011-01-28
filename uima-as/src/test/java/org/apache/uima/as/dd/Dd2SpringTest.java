@@ -61,7 +61,7 @@ public class Dd2SpringTest extends TestCase{
     "^\\s*<!--=*-->[ \\t]*$";     
   
   /* pattern to remove installation-specific paths 
-   * file:/C:/a/Eclipse/3.3/apache/uima-as-distr/src/test/resources/descriptors/tutorial/ex2/RoomNumberAnnotator.xml
+   * file:/C:/a/Eclipse/3.3/apache/uima-as/src/test/resources/descriptors/tutorial/ex2/RoomNumberAnnotator.xml
    */
   
   private static String specificPaths = "\\\"file:[\\w/:\\-\\.]*?src/test/resources/";

@@ -49,7 +49,6 @@
   
   <target name="all" depends=
    "uimaj-as,
-    uima-as-distr,
     normal-modules,
     eclipse-plugins, 
     eclipse-features, 

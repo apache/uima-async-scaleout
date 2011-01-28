@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--==================================================================================-->
  <!-- Generated from                                                                                  -->
- <!-- file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/deploy/Deploy_ComplexAggregateWithInnerAggregateCM.xml -->
+ <!-- file:/C:/a/Eclipse/apache/uima-as/src/test/resources/deploy/Deploy_ComplexAggregateWithInnerAggregateCM.xml -->
  <!-- 2 April, 2009, 11:37:36 A.M.                                                                                  -->
  <!--==================================================================================-->
  <!DOCTYPE beans
@@ -121,7 +121,7 @@
       </constructor-arg>
       <constructor-arg index="1" value="TopLevelTaeQueue"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/analysis_engine/ComplexAggregateWithInnerAggregateCM.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/analysis_engine/ComplexAggregateWithInnerAggregateCM.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
       <constructor-arg index="5" ref="delegate_map_TopLevelTaeQueue_1"/>
@@ -352,7 +352,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="TestMultiplier"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/analysis_engine/../multiplier/SimpleCasGenerator.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/analysis_engine/../multiplier/SimpleCasGenerator.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 
@@ -377,7 +377,7 @@
       <constructor-arg index="0" ref="asAggr_ctlr_TopLevelTaeQueue_1"/>
       <constructor-arg index="1" value="MeetingDetectorAggregate"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/analysis_engine/SimpleTestAggregateCasMultiplier.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/analysis_engine/SimpleTestAggregateCasMultiplier.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
       <constructor-arg index="5" ref="delegate_map_MeetingDetectorAggregate_1.2"/>
@@ -519,7 +519,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="TestMultiplier"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/analysis_engine/../multiplier/SimpleCasGenerator.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/analysis_engine/../multiplier/SimpleCasGenerator.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 
@@ -546,7 +546,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="NoOp"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/analysis_engine/NoOpAnnotator.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/analysis_engine/NoOpAnnotator.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 

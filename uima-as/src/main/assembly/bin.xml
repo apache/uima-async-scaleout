@@ -220,6 +220,10 @@ under the License.
       <outputDirectory/>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>
+      <excludes>
+        <exclude>LicNoticeAnalysisActiveMQ.txt</exclude>
+      </excludes>
+      
       <includes>
         <include>README*</include>
         <include>readme*</include>
@@ -227,6 +231,7 @@ under the License.
         <include>Release-Notes*</include>
         <include>issuesFixed/**</include>
       </includes>        
+      
     </fileSet>
     
     <fileSet>

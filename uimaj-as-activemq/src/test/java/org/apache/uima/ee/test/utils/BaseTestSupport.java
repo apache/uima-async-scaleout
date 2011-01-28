@@ -122,9 +122,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
     Map<String, Object> appCtx = new HashMap();
     appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath,
-            "../uima-as-distr/src/main/scripts/dd2spring.xsl".replace('/', FS));
+            "../uima-as/src/main/scripts/dd2spring.xsl".replace('/', FS));
     appCtx.put(UimaAsynchronousEngine.SaxonClasspath,
-            "file:../uima-as-distr/src/main/saxon/saxon8.jar".replace('/', FS));
+            "file:../uima-as/src/main/saxon/saxon8.jar".replace('/', FS));
     // appCtx.put(UimaAsynchronousEngine.UimaEeDebug, UimaAsynchronousEngine.UimaEeDebug);
     String containerId = null;
     try {
@@ -746,7 +746,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
                     .println("This is expected using http connector with vanilla AMQ 5.0 release,");
             System.out.println("and the test file DoubleByteText.txt contains double byte chars.");
             System.out
-                    .println("To fix, use uima-as-distr/src/main/lib/optional/activemq-optional-5.0.0.jar");
+                    .println("To fix, use uima-as/src/main/lib/optional/activemq-optional-5.0.0.jar");
             unexpectedException = true;
             processCountLatch.countDown();
             return;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--==================================================================================-->
  <!-- Generated from                                                                         -->
- <!-- file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/deploy/defaultingAEaggr.xml -->
+ <!-- file:/C:/a/Eclipse/apache/uima-as/src/test/resources/deploy/defaultingAEaggr.xml -->
  <!-- 2 April, 2009, 11:37:24 A.M.                                                           -->
  <!--==================================================================================-->
  <!DOCTYPE beans
@@ -91,7 +91,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="RoomNumberAnnotatorQueue"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/tutorial/ex4/MeetingDetectorTAE.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/tutorial/ex4/MeetingDetectorTAE.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 

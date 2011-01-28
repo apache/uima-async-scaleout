@@ -30,7 +30,7 @@ goto EXIT
 @if "%JAVA_HOME%"=="" (set UIMA_JAVA_CALL=java) else (set UIMA_JAVA_CALL=%JAVA_HOME%\bin\java)
 
 @if not exist expected (
-  @echo need to run this from directory .../uima-as-distr/src/test/resources/deploy
+  @echo need to run this from directory .../uima-as/src/test/resources/deploy
   goto EXIT
 )
 

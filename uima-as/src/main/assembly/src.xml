@@ -36,7 +36,7 @@ under the License.
   <fileSets>
     <fileSet>
       <directory>.</directory>
-      <outputDirectory>uima-as-distr</outputDirectory>
+      <outputDirectory>uima-as</outputDirectory>
       <includes>
         <include>src/**</include>
         <include>pom.xml</include>
@@ -51,7 +51,7 @@ under the License.
 
     <fileSet>
       <directory>.</directory>
-      <outputDirectory>uima-as-distr</outputDirectory>
+      <outputDirectory>uima-as</outputDirectory>
       <includes>
         <include>src/**/*.sh</include>
     <!-- marks scripts, .so files as executable 
@@ -69,7 +69,7 @@ under the License.
 
     <fileSet>
       <directory>.</directory>
-      <outputDirectory>uima-as-distr</outputDirectory>
+      <outputDirectory>uima-as</outputDirectory>
       <includes>
         <include>src/main/apache-activemq-5.4.1/bin/**/*.bat</include>
         <include>src/main/apache-activemq-5.4.1/bin/**/*.jar</include>

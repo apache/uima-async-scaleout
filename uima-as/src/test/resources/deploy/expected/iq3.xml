@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--===========================================================================-->
  <!-- Generated from                                                            -->
- <!-- file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/deploy/iq3.xml -->
+ <!-- file:/C:/a/Eclipse/apache/uima-as/src/test/resources/deploy/iq3.xml -->
  <!-- 2 April, 2009, 11:37:49 A.M.                                              -->
  <!--===========================================================================-->
  <!DOCTYPE beans
@@ -133,7 +133,7 @@
       </constructor-arg>
       <constructor-arg index="1" value="MeetingDetectorTaeQueue"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/cas_multiplier/SegmenterAndTokenizerAE.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/cas_multiplier/SegmenterAndTokenizerAE.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
       <constructor-arg index="5" ref="delegate_map_MeetingDetectorTaeQueue_1"/>
@@ -454,7 +454,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="Tokenizer"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/cas_multiplier/../analysis_engine/SimpleTokenAndSentenceAnnotator.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/cas_multiplier/../analysis_engine/SimpleTokenAndSentenceAnnotator.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 

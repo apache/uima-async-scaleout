@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--==================================================================================-->
  <!-- Generated from                                                                                  -->
- <!-- file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/deploy/Deploy_AggregateUsingRemoteTempQueue.xml -->
+ <!-- file:/C:/a/Eclipse/apache/uima-as/src/test/resources/deploy/Deploy_AggregateUsingRemoteTempQueue.xml -->
  <!-- 2 April, 2009, 11:37:31 A.M.                                                                               -->
  <!--==================================================================================-->
  <!DOCTYPE beans
@@ -123,7 +123,7 @@
       </constructor-arg>
       <constructor-arg index="1" value="TopLevelTaeQueue"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/analysis_engine/SimpleTestAggregate.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/analysis_engine/SimpleTestAggregate.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
       <constructor-arg index="5" ref="delegate_map_TopLevelTaeQueue_1"/>
@@ -434,7 +434,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="TestMultiplier"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/analysis_engine/../multiplier/SimpleCasGenerator.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/analysis_engine/../multiplier/SimpleCasGenerator.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 

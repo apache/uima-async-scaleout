@@ -17,7 +17,7 @@ change the command to
    
 Look for the result in the two artifacts: 
    ../uima-as/target/uima-as-[version]-source-release.zip if run with -Papache-release) and
-   ../uima-as-distr/target/uima-as-[version]-bin.zip (or  ...tar.gz) 
+   ../uima-as/target/uima-as-[version]-bin.zip (or  ...tar.gz) 
 
 For more details, please see http://uima.apache.org/building-uima.html   
 

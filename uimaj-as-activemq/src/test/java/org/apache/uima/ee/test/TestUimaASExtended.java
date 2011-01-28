@@ -149,7 +149,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         System.out
                 .println(" *** To fix, override the classpath with the jar files in and under the");
         System.out
-                .println(" ***   apache-uima-as/uima-as-distr/src/main/apache-activemq-X.y.z directory");
+                .println(" ***   apache-uima-as/uima-as/src/main/apache-activemq-X.y.z directory");
         System.out.println(" ***   in the apache-uima-as source distribution.");
 
         String httpURI = getHttpURI();

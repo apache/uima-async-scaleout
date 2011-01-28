@@ -116,7 +116,7 @@
       </constructor-arg>
       <constructor-arg index="1" value="MeetingFinderQueue"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/meetingFinder/MeetingFinderAggregate.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/meetingFinder/MeetingFinderAggregate.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
       <constructor-arg index="5" ref="delegate_map_MeetingFinderQueue_1"/>
@@ -413,7 +413,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="CollectionReader"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/meetingFinder/FileSystemCollectionReader.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/meetingFinder/FileSystemCollectionReader.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 
@@ -440,7 +440,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="TokenAndSentence"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/meetingFinder/SimpleTokenAndSentenceAnnotator.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/meetingFinder/SimpleTokenAndSentenceAnnotator.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 
@@ -461,7 +461,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="MeetingDetector"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/meetingFinder/MeetingDetectorTAE.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/meetingFinder/MeetingDetectorTAE.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 
@@ -482,7 +482,7 @@
      <!--      Key name      -->
      <constructor-arg index="1" value="CasConsumer"/>
       <constructor-arg index="2"
-                       value="file:/C:/a/Eclipse/apache/uima-as-distr/src/test/resources/descriptors/meetingFinder/XmiWriterCasConsumer.xml"/>
+                       value="file:/C:/a/Eclipse/apache/uima-as/src/test/resources/descriptors/meetingFinder/XmiWriterCasConsumer.xml"/>
       <constructor-arg index="3" ref="casManager"/>
       <constructor-arg index="4" ref="inProcessCache"/>
 

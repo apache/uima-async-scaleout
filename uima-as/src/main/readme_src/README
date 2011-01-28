@@ -9,7 +9,6 @@ do the following steps:
 
 1) either check out of SVN the following projects into the same 
 "workspace" directory that you checked out the base UIMA:
-   - uima-as-distr
    - uima-as-docbooks
    - uimaj-as
    - uimaj-as-activemq
@@ -26,7 +25,7 @@ do the following steps:
 3) To work with eclipse, following step 2), do mvn eclipse:eclipse
 4) To build the distribution, follow the setup instructions on
 http://incubator.apache.org/uima/svn.html#build.distribution and 
-then cd to uima-as-distr and do mvn assembly:assembly
+then cd to uima-as and do mvn assembly:assembly
 
 -------------------------
 

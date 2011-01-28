@@ -70,7 +70,7 @@ rmdir /S /Q %leveldir%
 cd uimaj-as
 call mvn %jvmarg%  %mvnCommand%
 REM keep these next 2 "cd"s as two separate lines - got strange behavior when combining 2009
-cd ..
-cd uima-as-distr
+REM cd ..
+REM cd uima-as-distr
 call mvn clean install
 @:exit
