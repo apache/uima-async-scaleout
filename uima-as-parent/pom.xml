@@ -38,7 +38,7 @@
   <groupId>org.apache.uima</groupId>
   <artifactId>uima-as-parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.3.2-SNAPSHOT</version>
+  <version>2.3.1-SNAPSHOT</version>
   <name>UIMA-AS: ${project.artifactId}</name>
   <description>The common parent pom for uima-as</description>
   <url>${uimaWebsiteUrl}</url>
