@@ -67,7 +67,7 @@ UIMA-AS components, in addition to those that come with base UIMA include:
   documentation:
   --------------
  
-  docs/pdf/uima_async_scaleout.pdf: UIMA-AS documentation, including the specification
+  docs/d/uima_async_scaleout.pdf: UIMA-AS documentation, including the specification
       for the deployment descriptor file syntax.
 
   examples:
@@ -180,7 +180,7 @@ To connect to a broker running behind a firewall using HTTP tunneling, see secti
 
 a. Create a Deployment Descriptor.
   Examples can be found in the examples/deploy/as directory,
-  and the syntax is documented in docs/pdf/uima_async_scaleout.pdf.
+  and the syntax is documented in docs/d/uima_async_scaleout.pdf.
   
   Note: One of the things that the deployment descriptor may contain is a broker placeholder with 
   this syntax: ${defaultBrokerURL}. The placeholder is replaced at runtime with an actual broker
