@@ -335,7 +335,7 @@ public class RunRemoteAsyncAE {
         System.err.println("Terminating Client...");
         System.exit(1);
       }
-      System.out.println("UIMAEE Initialization Complete");
+      System.out.println("UIMA AS Service Initialization Complete");
     }
 
     /**
