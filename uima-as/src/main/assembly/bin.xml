@@ -143,6 +143,13 @@ under the License.
     <fileSet>
       <directory>target/uimaj/apache-uima/examples</directory>
       <outputDirectory>examples</outputDirectory>
+      <!-- 
+          Remove the following exclude for future releases. It is a temp measure to 
+          include changes to the Collection Reader made after base release 2.3.1
+       -->
+      <excludes>
+        <exclude>descriptors/collection_reader/FileSystemCollectionReader.xml</exclude>
+      </excludes> 
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>
     </fileSet>
@@ -362,6 +369,17 @@ under the License.
       <outputDirectory>examples</outputDirectory>
       <destName>.classpath</destName>
       <fileMode>644</fileMode> 
+    </file>
+
+    <!-- The following should be removed when deploying AS with the Base at the same
+         time. This is a temporary measure for releasing AS 2.3.1 after the Base. There
+         is a change made to the CollectionReader descriptor to fix a missing Language
+         parameter value. The change was made after the base was released. 
+     -->
+    <file>
+      <source>../uimaj-as-activemq/src/test/resources/descriptors/collection_reader/FileSystemCollectionReader.xml</source>
+      <outputDirectory>examples/descriptors/collection_reader</outputDirectory>
+      <fileMode>644</fileMode>
     </file>
     
     <!-- put readme file with altered name at the top level -->
