@@ -886,14 +886,31 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       remoteJMXServer = null;
     }
   }
-
+  public void setTerminating() {
+  	 if ( listenerContainerList.size() > 0 ) {
+  		 //	set a global static flag to stop spring's from automatic recovery on lost connection
+  		 //	This method should be called when a service is shutting down
+  		 ((UimaDefaultMessageListenerContainer)listenerContainerList.get(0)).setTerminating();
+   	 }
+  }
+  public void terminate() {
+	 try {
+		 if ( listenerContainerList.size() > 0 ) {
+	 		 ((UimaDefaultMessageListenerContainer)listenerContainerList.get(0)).closeConnection();
+		 }
+	 } catch( Exception e) {
+	     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "terminate", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", e);
+	 }
+	  
+  }
   public synchronized void stop(int channelsToClose) throws Exception {
-
     List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
     for (Object listenerObject : listenerContainerList) {
       final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer) listenerObject;
       if (mL != null && mL.isRunning() && doCloseChannel(mL, channelsToClose)) {
-        stopChannel(mL);
+    	  stopChannel(mL);
         // Just in case check if the container still in the list. If so, add it to
         // another list that container listeners that have been stopped and need
         // to be removed from the listenerContainerList. Removing the listener from
@@ -903,6 +920,14 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         // one element left. Process removal of listeners outside of the iterator
         // loop
         if (listenerContainerList.contains(mL)) {
+			    // When last listener, close shared connection
+          if ( listenerContainerList.size() == 1 ) {
+            try {
+              mL.closeConnection();
+            } catch( Exception e) {
+              e.printStackTrace();
+            }
+          }
           listenersToRemove.add(mL);
         }
       } else {
@@ -917,6 +942,10 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
     // Remove listeners from the listenerContainerList
     for (UimaDefaultMessageListenerContainer mL : listenersToRemove) {
+      if ( listenerContainerList.size() == 1 ) {
+        ((UimaDefaultMessageListenerContainer)listenerContainerList.get(0)).closeConnection();
+      }
+
       listenerContainerList.remove(mL);
     }
     listenersToRemove.clear();
