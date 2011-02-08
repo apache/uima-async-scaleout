@@ -486,6 +486,10 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
                         + QUIESCE_AND_STOP + " OR " + STOP_NOW
                         + " as an argument to undeploy() method.");
     }
+		//	Close Spring context. 
+    if ( context != null ) {
+        context.stop();
+    }
   }
 
   protected void waitForServiceNotification() throws Exception {
