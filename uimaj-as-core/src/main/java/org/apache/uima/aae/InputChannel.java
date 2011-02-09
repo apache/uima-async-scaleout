@@ -50,4 +50,7 @@ public interface InputChannel extends Channel {
   
   public void removeDelegateFromFailedList( String aDelegateKey );
 
+  public void setTerminating();
+  
+  public void terminate();
 }
