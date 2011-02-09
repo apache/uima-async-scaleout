@@ -136,7 +136,9 @@ public class UimaAsThreadFactory implements ThreadFactory {
                 "UIMAEE_exception__WARNING", e);
       }
     }
-    newThread.setDaemon(isDaemon);
+    if ( newThread != null ) {
+      newThread.setDaemon(isDaemon);
+    }
     return newThread;
   }
 }
