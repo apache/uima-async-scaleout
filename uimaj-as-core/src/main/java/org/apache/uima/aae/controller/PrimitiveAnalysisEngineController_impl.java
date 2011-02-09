@@ -290,8 +290,15 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
               }
             }
             if (isTopLevelComponent()) {
+              // add delay to allow controller listener to plug itself in
+              synchronized(this) {
+                try {
+                  this.wait(100);
+                } catch(Exception exx) {}
+              }
+              
               super.notifyListenersWithInitializationStatus(null);
-            }
+            } 
 
             // All internal components of this Primitive have been initialized. Open the latch
             // so that this service can start processing requests.
@@ -324,7 +331,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
           super.serviceInitialized = true;
         }
-      }
+      } 
     } catch (AsynchAEException e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
