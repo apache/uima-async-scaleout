@@ -23,10 +23,12 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.management.ObjectName;
 
 import junit.framework.TestCase;
 
@@ -37,6 +39,7 @@ import org.apache.activemq.broker.TransportConnector;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
+import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.store.memory.MemoryPersistenceAdapter;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.adapter.jms.JmsConstants;
@@ -106,11 +109,32 @@ public class ActiveMQSupport extends TestCase {
         brokerSemaphore.release();
       }
     } else {
-      // Remove messages from all queues
-      broker.deleteAllMessages();
+      cleanBroker(broker);
     }
   }
+  protected void cleanBroker( BrokerService targetBroker) throws Exception {
+    // Remove messages from all queues
+    targetBroker.deleteAllMessages();
+    org.apache.activemq.broker.Connection[] connections = targetBroker.getRegionBroker().getClients();
+    for( org.apache.activemq.broker.Connection connection : connections) {
+      try {
+        connection.stop();
+      } catch( Exception e) {
+        e.printStackTrace();
+      }
+    }
 
+    ActiveMQDestination[] destinations = targetBroker.getRegionBroker().getDestinations();
+
+    if ( destinations != null ) {
+      for( ActiveMQDestination destination: destinations ) {
+        if ( !destination.isTopic() ) {
+          targetBroker.removeDestination(destination);
+        }
+      }
+    }
+  }
+  
   protected String addHttpConnector(int aDefaultPort) throws Exception {
     return addHttpConnector(broker, aDefaultPort);
   }
