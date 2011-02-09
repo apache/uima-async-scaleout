@@ -1967,7 +1967,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
       // Stop the inflow of new input CASes
       stopInputChannel();
-      iC.terminate();
+      if ( iC != null ) {
+        iC.terminate();
+      }
       stopCasMultipliers();
       stopTransportLayer();
       if (cause != null && aCasReferenceId != null) {
