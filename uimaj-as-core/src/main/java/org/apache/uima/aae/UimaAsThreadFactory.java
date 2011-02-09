@@ -20,6 +20,7 @@
 package org.apache.uima.aae;
 
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
@@ -36,12 +37,23 @@ import org.apache.uima.util.Level;
 public class UimaAsThreadFactory implements ThreadFactory {
   
   private static final Class CLASS_NAME = UimaAsThreadFactory.class;
-  
+  private static final String THREAD_POOL = "[UIMA AS ThreadPool ";
   private PrimitiveAnalysisEngineController controller;
 
   private ThreadGroup theThreadGroup;
 
-  /**
+  private String threadNamePrefix=null;
+  
+  private boolean isDaemon;
+  
+  public static AtomicInteger poolIdGenerator = new AtomicInteger();
+  
+  private final int poolId = poolIdGenerator.incrementAndGet();
+  
+  public UimaAsThreadFactory(ThreadGroup tGroup) {
+    this(tGroup,null);
+  }
+    /**
    * 
    * 
    * @param tGroup
@@ -51,7 +63,15 @@ public class UimaAsThreadFactory implements ThreadFactory {
     controller = aController;
     theThreadGroup = tGroup;
   }
-
+  public void setThreadNamePrefix(String prefix) {
+    threadNamePrefix = prefix;
+  }
+  public void setThreadGroup( ThreadGroup tGroup) {
+    theThreadGroup = tGroup;
+  }
+  public void setDaemon(boolean daemon) {
+    isDaemon = daemon;
+  }
   public void stop() {
   }
 
@@ -66,8 +86,16 @@ public class UimaAsThreadFactory implements ThreadFactory {
     try {
       newThread = new Thread(theThreadGroup, new Runnable() {
         public void run() {
-          Thread.currentThread().setName(
-                  controller.getComponentName() + " Process Thread-"
+          if ( threadNamePrefix == null ) {
+             if ( controller != null ) {
+               threadNamePrefix = THREAD_POOL+poolId+"] "+controller.getComponentName() + " Process Thread";
+             } else {
+               threadNamePrefix = THREAD_POOL+poolId+"] ";
+             }
+          } else {
+            threadNamePrefix = THREAD_POOL+poolId+"] "+threadNamePrefix;
+          }
+          Thread.currentThread().setName( threadNamePrefix +" - "                 
                           + Thread.currentThread().getId());
           try {
             if (controller != null && !controller.threadAssignedToAE()) {
@@ -108,6 +136,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
                 "UIMAEE_exception__WARNING", e);
       }
     }
+    newThread.setDaemon(isDaemon);
     return newThread;
   }
 }
