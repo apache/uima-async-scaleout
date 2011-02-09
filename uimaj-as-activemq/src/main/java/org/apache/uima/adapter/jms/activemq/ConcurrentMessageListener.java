@@ -31,6 +31,7 @@ import javax.jms.Session;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.UimaBlockingExecutor;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
@@ -82,10 +83,6 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
   private LinkedBlockingQueue<Runnable> workQueue;
 
   private CountDownLatch controllerLatch = new CountDownLatch(1);
-  public ConcurrentMessageListener(int concurrentThreads, Object delegateListener )
-  throws InvalidClassException {
-   this(concurrentThreads, delegateListener, null); 
-  }
 
   /**
    * Creates a listener with a given number of process threads. This listener is injected between
@@ -102,7 +99,7 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
    *          - JmsInputChannel instance to delegate CAS to
    * @throws InvalidClassException
    */
-  public ConcurrentMessageListener(int concurrentThreads, Object delegateListener, String destination)
+  public ConcurrentMessageListener(int concurrentThreads, Object delegateListener, String destination, ThreadGroup threadGroup, String threadPrefix)
           throws InvalidClassException {
     if (!(delegateListener instanceof SessionAwareMessageListener)) {
       throw new InvalidClassException("Invalid Delegate Listener. Expected Object of Type:"
@@ -116,6 +113,11 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
       workQueue = new LinkedBlockingQueue<Runnable>();
       executor = new ThreadPoolExecutor(concurrentThreads, concurrentThreads, Long.MAX_VALUE,
               TimeUnit.NANOSECONDS, workQueue);
+      UimaAsThreadFactory tf = new UimaAsThreadFactory(threadGroup);
+      tf.setDaemon(true);
+      tf.setThreadNamePrefix(threadPrefix);
+      executor.setThreadFactory(tf);
+      
       executor.prestartAllCoreThreads();
       if ( destination != null ) {
         blockingExecutor = new UimaBlockingExecutor(executor, concurrentThreads, destination);
