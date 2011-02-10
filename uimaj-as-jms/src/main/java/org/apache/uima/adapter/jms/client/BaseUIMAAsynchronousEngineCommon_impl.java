@@ -1876,7 +1876,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_meta_timeout_WARNING", new Object[] { anEndpoint });
         }
-        status.addEventStatus("GetMeta", "Failed", new UimaASMetaRequestTimeout());
+        status.addEventStatus("GetMeta", "Failed", new UimaASMetaRequestTimeout("UIMA AS Client Timed Out Waiting For GetMeta Reply From a Service On Queue:"+anEndpoint));
         notifyListeners(null, status, AsynchAEMessage.GetMeta);
         abort = true;
         getMetaSemaphore.release();
@@ -1887,7 +1887,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_meta_timeout_WARNING", new Object[] { anEndpoint });
         }
-        status.addEventStatus("Ping", "Failed", new UimaASPingTimeout());
+        status.addEventStatus("Ping", "Failed", new UimaASPingTimeout("UIMA AS Client Timed Out Waiting For Ping Reply From a Service On Queue:"+anEndpoint));
         notifyListeners(null, status, AsynchAEMessage.Ping);
         // The main thread could be stuck waiting for a CAS. Grab any CAS in the
         // client cache and release it so that we can shutdown.
@@ -1905,7 +1905,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_cpc_timeout_INFO", new Object[] { anEndpoint });
         }
-        status.addEventStatus("CpC", "Failed", new UimaASCollectionProcessCompleteTimeout());
+        status.addEventStatus("CpC", "Failed", 
+                new UimaASCollectionProcessCompleteTimeout("UIMA AS Client Timed Out Waiting For CPC Reply From a Service On Queue:"+anEndpoint));
         // release the semaphore acquired in collectionProcessingComplete()
         cpcReplySemaphore.release();
         notifyListeners(null, status, AsynchAEMessage.CollectionProcessComplete);
@@ -1950,10 +1951,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         } else {
           // notify the application listener with the error
           if ( serviceDelegate.isPingTimeout()) {
-            exc = new UimaASProcessCasTimeout(new UimaASPingTimeout());
+            exc = new UimaASProcessCasTimeout(new UimaASPingTimeout("UIMA AS Client Ping Time While Waiting For Reply From a Service On Queue:"+anEndpoint));
             serviceDelegate.resetPingTimeout();
           } else {
-            exc = new UimaASProcessCasTimeout();
+            exc = new UimaASProcessCasTimeout("UIMA AS Client Timed Out Waiting For CAS:"+casReferenceId+ " Reply From a Service On Queue:"+anEndpoint);
           }
           status.addEventStatus("Process", "Failed", exc);
           notifyListeners(aCAS, status, AsynchAEMessage.Process);
