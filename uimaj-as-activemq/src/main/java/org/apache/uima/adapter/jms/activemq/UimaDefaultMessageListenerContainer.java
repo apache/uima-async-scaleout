@@ -789,7 +789,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   public void closeConnection() throws Exception {
     try {
       setRecoveryInterval(0);
-      setAcceptMessagesWhileStopping(false);
       setAutoStartup(false);
       if ( getSharedConnection() != null ) {
         ActiveMQConnection amqc = (ActiveMQConnection)getSharedConnection();
@@ -905,6 +904,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     //  we will start listeners on input queue.
     this.setAutoStartup(false);
   }
+  public void shutdownTaskExecutor(ThreadPoolExecutor tpe) throws InterruptedException {
+    tpe.purge();
+    tpe.shutdownNow();
+    tpe.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+  }
   /**
    * Spins a shutdown thread and stops Sprint and ActiveMQ threads.
    * 
@@ -914,28 +918,32 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if (awaitingShutdown) {
       return;
     }
-    // Spin a thread that will wait until all threads complete. This is needed to avoid
-    // memory leak caused by the fact that we did not wait to collect the threads
+    // Spin a thread that will shutdown all taskExecutors and wait for their threads to stop.
+    // A separate thread is necessary since we cant stop a threadPoolExecutor if one of its
+    // threads is busy stopping the executor. This leads to a hang.
     Thread threadGroupDestroyer = new Thread(threadGroup.getParent().getParent(),
             "threadGroupDestroyer") {
       public void run() {
         try {
         	if ( !__listenerRef.awaitingShutdown && __listenerRef.isRunning() ) {
         	    awaitingShutdown = true;
-                __listenerRef.stop();
-                // If using non-default TaskExecutor, stop its threads
-                if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
-                    ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdownNow();
+                // delegate stop request to Spring 
+              __listenerRef.delegateStop();
+              if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
+                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdownNow();
+                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
                 } else if (concurrentListener != null) {
-                  // Stop internal Executor
+                  shutdownTaskExecutor(concurrentListener.getTaskExecutor());
                   concurrentListener.stop();
                 } else if ( threadPoolExecutor != null ) {
-                	threadPoolExecutor.shutdownNow();
+                  shutdownTaskExecutor(threadPoolExecutor);
                 }
                 __listenerRef.shutdown();
         	}
         } catch (Exception e) {
-        	e.printStackTrace();
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                  "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", e);
         }
 
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
@@ -1077,9 +1085,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     	threadPoolExecutor.prestartAllCoreThreads();
     }
   }
-
+  public void delegateStop() {
+    super.stop();
+  }
   public void stop() throws JmsException {
-    setAcceptMessagesWhileStopping(false);
     destroy();
   }
 }
