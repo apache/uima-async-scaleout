@@ -248,6 +248,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   // Holds destination names of clients known to be dead
   protected ConcurrentHashMap<String,String> deadClientDestinationMap = new ConcurrentHashMap<String, String>();
   
+  private String serviceName=null;
+  
   public BaseAnalysisEngineController() {
 
   }
@@ -308,7 +310,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
     endpointName = anEndpointName;
     delegateKey = anEndpointName;
-
     if (this instanceof AggregateAnalysisEngineController) {
       ConcurrentHashMap endpoints = new ConcurrentHashMap();
       endpoints.putAll(aDestinationMap);
@@ -930,12 +931,48 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public boolean isTopLevelComponent() {
     return (parentController == null);
   }
-
+  private String setupName() {
+    //return ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
+    String serviceName = ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
+    if ( serviceName == null || serviceName.trim().length() == 0 ) {
+      if ( isTopLevelComponent() ) {
+        if ( isPrimitive() ) {
+          String implementationName = ((ResourceCreationSpecifier) resourceSpecifier).getImplementationName();
+          if ( implementationName.indexOf(".") > 0) {
+            implementationName = implementationName.substring(implementationName.lastIndexOf(".")+1);
+          }
+          return implementationName;
+        } else {
+          return "Top Level Aggregate Service";
+        }
+      } else {
+        try {
+          UimaContext childContext = parentController.getChildUimaContext(endpointName);
+          String qualifiedName = ((UimaContextAdmin)childContext).getQualifiedContextName();
+          if ( qualifiedName != null ) {
+            if ( qualifiedName.startsWith("/")) {
+              qualifiedName = qualifiedName.substring(1);
+              qualifiedName = qualifiedName.replaceAll("/", "_"); // normalize
+              if ( qualifiedName.endsWith("_")) {
+                qualifiedName = qualifiedName.substring(0, qualifiedName.length()-1);
+              }
+            }
+          }
+        } catch( Exception e){}
+        return delegateKey;
+      }
+    } else {
+      return serviceName;
+    }
+  }
   /**
    * Returns the name of the component. The name comes from the analysis engine descriptor
    */
   public String getComponentName() {
-    return ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
+    if ( serviceName == null ) {
+      serviceName = setupName();
+    }
+    return serviceName;
   }
 
   /**
