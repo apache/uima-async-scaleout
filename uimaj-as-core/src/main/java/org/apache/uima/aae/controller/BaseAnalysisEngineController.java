@@ -935,35 +935,42 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     //return ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
     String serviceName = ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
     if ( serviceName == null || serviceName.trim().length() == 0 ) {
+      
       if ( isTopLevelComponent() ) {
         if ( isPrimitive() ) {
           String implementationName = ((ResourceCreationSpecifier) resourceSpecifier).getImplementationName();
           if ( implementationName.indexOf(".") > 0) {
             implementationName = implementationName.substring(implementationName.lastIndexOf(".")+1);
           }
-          return implementationName;
+          serviceName = implementationName;
         } else {
-          return "Top Level Aggregate Service";
+          serviceName = "Top Level Aggregate Service";
         }
       } else {
         try {
           UimaContext childContext = parentController.getChildUimaContext(endpointName);
-          String qualifiedName = ((UimaContextAdmin)childContext).getQualifiedContextName();
-          if ( qualifiedName != null ) {
-            if ( qualifiedName.startsWith("/")) {
-              qualifiedName = qualifiedName.substring(1);
-              qualifiedName = qualifiedName.replaceAll("/", "_"); // normalize
-              if ( qualifiedName.endsWith("_")) {
-                qualifiedName = qualifiedName.substring(0, qualifiedName.length()-1);
+          serviceName = ((UimaContextAdmin)childContext).getQualifiedContextName();
+          if ( serviceName != null ) {
+            if ( serviceName.startsWith("/")) {
+              serviceName = serviceName.substring(1);
+              serviceName = serviceName.replaceAll("/", "_"); // normalize
+              if ( serviceName.endsWith("_")) {
+                serviceName = serviceName.substring(0, serviceName.length()-1);
               }
             }
           }
-        } catch( Exception e){}
-        return delegateKey;
+        } catch( Exception e){
+          serviceName = delegateKey;
+        }
       }
-    } else {
-      return serviceName;
-    }
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                "setupName", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_using_generated_name_INFO", new Object[] { serviceName });
+      }
+    
+    } 
+    return serviceName;
   }
   /**
    * Returns the name of the component. The name comes from the analysis engine descriptor
