@@ -584,7 +584,7 @@ public abstract class Delegate {
         delegate.setState(TIMEOUT_STATE);
         ErrorContext errorContext = new ErrorContext();
         errorContext.add(AsynchAEMessage.Command, aCommand);
-        Exception cause = new MessageTimeoutException();
+        Exception cause = new MessageTimeoutException("Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId);
         if (AsynchAEMessage.Process == aCommand) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
