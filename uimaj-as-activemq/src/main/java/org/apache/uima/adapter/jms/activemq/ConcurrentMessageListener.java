@@ -126,19 +126,11 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
       }
     }
   }
-
+  public ThreadPoolExecutor getTaskExecutor() {
+    return executor;
+  }
   public void stop() {
-    if (executor != null) {
-      executor.shutdownNow();
-      blockingExecutor.stop();
-      while (!executor.isTerminated()) {
-        try {
-          executor.awaitTermination(200, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
-    }
+    blockingExecutor.stop();
   }
 
   public void setAnalysisEngineController(AnalysisEngineController controller) {
