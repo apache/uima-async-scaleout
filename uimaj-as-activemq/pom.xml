@@ -264,7 +264,7 @@
 			  <groupId>org.apache.maven.plugins</groupId>
 			  <artifactId>maven-surefire-plugin</artifactId>
 			  <configuration>
-			    <argLine>-Xmx300M</argLine>
+			    <argLine>-Xmx1024M</argLine>
 			    <includes>
 				  <include>**/TestUimaASBasic.java</include>
 				  <include>**/TestUimaASExtended.java</include>
