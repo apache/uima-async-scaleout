@@ -909,7 +909,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
     for (Object listenerObject : listenerContainerList) {
       final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer) listenerObject;
-      if (mL != null && mL.isRunning() && doCloseChannel(mL, channelsToClose)) {
+      if (mL != null && doCloseChannel(mL, channelsToClose)) {
     	  stopChannel(mL);
         // Just in case check if the container still in the list. If so, add it to
         // another list that container listeners that have been stopped and need
