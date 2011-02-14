@@ -675,7 +675,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           // Initialize the TaskExecutor. This call injects a custom Thread Pool into the
           // TaskExecutor provided in the spring xml. The custom thread pool initializes
           // an instance of AE in a dedicated thread
-          initializeTaskExecutor();
+          if ( getMessageSelector() != null && !isGetMetaListener()) {
+            initializeTaskExecutor();
+          }
           if ( threadPoolExecutor == null ) {
               // Plug in TaskExecutor to Spring's Listener
               __listenerRef.injectTaskExecutor();
@@ -925,12 +927,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
             "threadGroupDestroyer") {
       public void run() {
         try {
-        	if ( !__listenerRef.awaitingShutdown && __listenerRef.isRunning() ) {
+          if ( !__listenerRef.awaitingShutdown ) {
         	    awaitingShutdown = true;
                 // delegate stop request to Spring 
               __listenerRef.delegateStop();
               if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
-                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdownNow();
+                ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().purge();
+                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdown();
                   ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
                 } else if (concurrentListener != null) {
                   shutdownTaskExecutor(concurrentListener.getTaskExecutor());
@@ -938,8 +941,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                 } else if ( threadPoolExecutor != null ) {
                   shutdownTaskExecutor(threadPoolExecutor);
                 }
-                __listenerRef.shutdown();
         	}
+          __listenerRef.shutdown();
         } catch (Exception e) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                   "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
@@ -949,36 +952,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
           threadGroup.getParent().list();
         }
-        // Wait until all threads are accounted for
-        while (threadGroup.activeCount() > 0) {
-          try {
-            Thread[] threads = new Thread[threadGroup.activeCount()];
-            threadGroup.enumerate(threads);
-            boolean foundExpectedThreads = true;
-
-            for (Thread t : threads) {
-              try {
-            	  if ( !isAmqThread(t) ) {
-                      foundExpectedThreads = false;
-                      break; // from for
-            	  }
-            	// Check if there are still any non-daemon threads left in the thread group
-                if ( !t.isDaemon() ) {
-                    foundExpectedThreads = false;
-                    break; // from for
-                	
-                }
-              } catch (Exception e) {
-              }
-            }
-            if (foundExpectedThreads) {
-              break; // from while
-            }
-            Thread.sleep(100);
-          } catch (InterruptedException e) {
-          }
-        }
-
         try {
           synchronized (threadGroup) {
             if (!threadGroup.isDestroyed()) {
@@ -994,18 +967,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     
   }
   
-  private boolean isAmqThread(Thread t) {
-	  String tName = t.getName();
-	  // The following is necessary to account for the AMQ threads
-	  // Any threads not named in the list below will cause a wait
-	  // and retry until all non-amq threads are stopped
-	  if (!tName.startsWith("main") && !tName.equalsIgnoreCase("timer-0")
-	          && !tName.equals("ReaderThread") && !tName.equals("BrokerThreadGroup")
-	          && !tName.startsWith("ActiveMQ")) {
-	    return false;
-	  }
-	  return true;
-  }
   private void setUimaASThreadPoolExecutor(int consumentCount) throws Exception{
     super.setMessageListener(ml);
     // create task executor with custom thread pool for:
