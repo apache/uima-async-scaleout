@@ -71,46 +71,11 @@ public class ActiveMQSupport extends TestCase {
   public static Semaphore brokerSemaphore = new Semaphore(1);
 
   protected synchronized void setUp() throws Exception {
-    System.out.println("\nSetting Up New Test - Thread Id:" + Thread.currentThread().getId());
     super.setUp();
-    if (brokerThreadGroup == null) {
-      brokerThreadGroup = new ThreadGroup("BrokerThreadGroup");
-
-      // Acquire a semaphore to force this thread to wait until the broker
-      // starts and initializes
-      brokerSemaphore.acquire();
-
-      brokerThread = new Thread(brokerThreadGroup, "BrokerThread") {
-        public void run() {
-          try {
-            broker = createBroker();
-            broker.start();
-            broker.setMasterConnectorURI(uri);
-            addHttpConnector(8888);
-
-            brokerSemaphore.release(); // broker started
-          } catch (Exception e) {
-            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                      "setUp", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAJMS_exception__WARNING", e);
-            }
-          }
-        }
-      };
-
-      brokerThread.start();
-      try {
-        // wait for the broker to start and initialize. The semaphore is
-        // released
-        // in the run method above
-        brokerSemaphore.acquire();
-      } finally {
-        brokerSemaphore.release();
-      }
-    } else {
-      cleanBroker(broker);
-    }
+    broker = createBroker();
+    broker.start();
+    broker.setMasterConnectorURI(uri);
+    addHttpConnector(8888);
   }
   protected void cleanBroker( BrokerService targetBroker) throws Exception {
     // Remove messages from all queues
@@ -282,6 +247,7 @@ public class ActiveMQSupport extends TestCase {
       removeHttpConnector();
       broker.deleteAllMessages();
       broker.stop();
+      broker.waitUntilStopped();
       System.out.println(">>> Broker Stopped");
     }
   }
@@ -290,7 +256,7 @@ public class ActiveMQSupport extends TestCase {
     super.tearDown();
     System.clearProperty("activemq.broker.jmx.domain");
     System.clearProperty("BrokerURL");
-
+    stopBroker();
 
   }
 
