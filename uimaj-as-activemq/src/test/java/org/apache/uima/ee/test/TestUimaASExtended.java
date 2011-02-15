@@ -2930,13 +2930,13 @@ public class TestUimaASExtended extends BaseTestSupport {
   
   public void testDeployAgainAndAgain() throws Exception {
     System.out.println("-------------- testDeployAgainAndAgain -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl(); // here or
                                                                                           // in the
                                                                                           // loop,
                                                                                           // no
                                                                                           // change.
 
     for (int num = 1; num <= 50; num++) {
+      BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl(); // here or
       System.out.println("\nRunning iteration " + num);
       deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
       deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator2.xml");
@@ -2944,7 +2944,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
               "TopLevelTaeQueue", 1, PROCESS_LATCH);
     }
-    super.stopBroker();
   }
 
   private Exception getCause(Throwable e) {
