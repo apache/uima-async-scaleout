@@ -400,7 +400,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // Send CPC completion reply back to the client. Use internal (non-jms) transport
         transport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
       } else {
-        getOutputChannel().sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint);
+        getOutputChannel().sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint, null, false);
       }
 
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -781,7 +781,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       } else {
         if (!stopped && !clientUnreachable ) {
-            getOutputChannel().sendReply(aCasReferenceId, anEndpoint);
+            getOutputChannel().sendReply(getInProcessCache().getCacheEntryForCAS(aCasReferenceId), anEndpoint);
         }
 
         inputCASReturned = true;
