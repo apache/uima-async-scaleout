@@ -633,6 +633,9 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
             // String cmCasReferenceId = cacheEntry.getRemoteCMCasReferenceId();
             // If the Cas Multiplier is remote send a request to free a CAS with a given cas id
             if (cmEndpoint != null && cmEndpoint.isCasMultiplier() && cmEndpoint.isRemote()) {
+              cmEndpoint.setReplyEndpoint(true);
+              cmEndpoint.setIsCasMultiplier(true);
+              cmEndpoint.setFreeCasEndpoint(true);
               aController.getOutputChannel().sendRequest(AsynchAEMessage.ReleaseCAS,
                       cacheEntry.getCasReferenceId(), cmEndpoint);
             }
