@@ -853,7 +853,7 @@ public class ProcessRequestHandler_impl extends HandlerBase {
   private void handlePingRequest(MessageContext aMessageContext) {
     try {
       getController().getOutputChannel().sendReply(AsynchAEMessage.Ping,
-              aMessageContext.getEndpoint());
+              aMessageContext.getEndpoint(), null, false);
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         if ( getController() != null ) {
