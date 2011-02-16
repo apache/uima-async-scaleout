@@ -385,7 +385,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		    }
 		    try {
 		       if (aTextMessage == null) {
-		          return producerSession.createTextMessage();
+		          return producerSession.createTextMessage("");
 		       } else {
 		          return producerSession.createTextMessage(aTextMessage);
 		       }
@@ -412,17 +412,20 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 	}
   }
 
-  public BytesMessage produceByteMessage() throws AsynchAEException {
+  public BytesMessage produceByteMessage(byte[] aSerializedCAS) throws AsynchAEException {
     synchronized( lock ) {
         if ( producerSession == null ) {
             throw new AsynchAEException("Controller:"+controller.getComponentName()+" Unable to create JMS Message. Producer Session Not Initialized (Null)");
           }
-          boolean done = false;
-          int retryCount = 4;
+          int retryCount = 1;
           while (retryCount > 0) {
             try {
               retryCount--;
-              return producerSession.createBytesMessage();
+              BytesMessage bm = producerSession.createBytesMessage();
+              bm.writeBytes(aSerializedCAS);
+
+              return bm;
+
             } catch (javax.jms.IllegalStateException e) {
               try {
                 open();
