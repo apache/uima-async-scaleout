@@ -307,7 +307,6 @@ public class RunRemoteAsyncAE {
   public static void main(String[] args) throws Exception {
     RunRemoteAsyncAE runner = new RunRemoteAsyncAE(args);
     runner.run();
-    // System.exit(0);
   }
 
   /**
@@ -333,11 +332,20 @@ public class RunRemoteAsyncAE {
           ((Throwable) exceptions.get(i)).printStackTrace();
         }
         System.err.println("Terminating Client...");
-        System.exit(1);
+        stop();
+        
       }
       System.out.println("UIMA AS Service Initialization Complete");
     }
-
+    private void stop() {
+      try {
+        uimaEEEngine.stop();
+      } catch( Exception e) {
+        
+      }
+      System.exit(1);
+      
+    }
     /**
      * Called when the collection processing is completed.
      * 
@@ -351,7 +359,7 @@ public class RunRemoteAsyncAE {
           ((Throwable) exceptions.get(i)).printStackTrace();
         }
         System.err.println("Terminating Client...");
-        System.exit(1);
+        stop();
       }
       System.out.print("Completed " + entityCount + " documents");
       if (size > 0) {
@@ -367,7 +375,7 @@ public class RunRemoteAsyncAE {
         System.out.println(uimaEEEngine.getPerformanceReport());
       }
       // stop the JVM.
-      System.exit(1);
+      stop();
     }
 
     /**
@@ -389,9 +397,7 @@ public class RunRemoteAsyncAE {
           }
           if (!ignoreErrors) {
             System.err.println("Terminating Client...");
-            // uimaEEEngine.stop(); TODO: Does not seem to work
-            // return;
-            System.exit(1);
+            stop();
           }
         }
         if (logCas) {
