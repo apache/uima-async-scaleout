@@ -78,6 +78,7 @@ under the License.
         <include>org.apache.geronimo.specs:geronimo-jms_1.1_spec</include>
         <include>org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec</include>
         <include>org.springframework:spring-asm</include>  
+        <include>org.springframework:spring-aop</include>  
         <include>org.springframework:spring-context</include>  
         <include>org.springframework:spring-tx</include>  
         <include>org.springframework:spring-beans</include>  
