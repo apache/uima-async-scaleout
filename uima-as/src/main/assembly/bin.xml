@@ -24,7 +24,7 @@ under the License.
     <format>zip</format>
   </formats>
   
-  <baseDirectory>apache-uima-as</baseDirectory> 
+  <baseDirectory>apache-uima-as-${project.version}</baseDirectory> 
   <includeBaseDirectory>true</includeBaseDirectory>
   
   <!-- UIMA-AS is built on top of base UIMA -->
@@ -280,6 +280,9 @@ under the License.
     <fileSet>
       <directory>../uima-as-docbooks/target/site/d</directory>
       <outputDirectory>docs/d</outputDirectory>
+      <excludes>
+        <exclude>css/*</exclude>
+      </excludes>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet> 
@@ -289,6 +292,14 @@ under the License.
     <fileSet>
       <directory>src/main/examples</directory>
       <outputDirectory>examples</outputDirectory>
+      <includes>
+          <include>deploy/as/*</include>
+          <include>descriptors/as/*</include>
+          <include>run_configuration/*</include>
+      </includes>
+      <excludes>
+        <exclude>.classpath</exclude>
+      </excludes>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
     </fileSet>
