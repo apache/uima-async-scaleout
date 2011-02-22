@@ -101,7 +101,6 @@ public class UimaAsThreadFactory implements ThreadFactory {
               // AE instance process() method will only be called from this thread
               controller.initializeAnalysisEngine();
             }
-            System.out.println("Thread:"+Thread.currentThread().getName()+" Is Ready");
             // Call given Worker (Runnable) run() method and block. This call block until the
             // TaskExecutor is terminated.
             r.run();
