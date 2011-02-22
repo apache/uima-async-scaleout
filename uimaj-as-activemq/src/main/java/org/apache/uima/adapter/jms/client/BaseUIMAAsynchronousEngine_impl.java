@@ -43,7 +43,9 @@ import javax.naming.InitialContext;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
+import org.apache.activemq.ActiveMQSession;
 import org.apache.activemq.RedeliveryPolicy;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 import org.apache.activemq.command.ActiveMQDestination;
@@ -225,16 +227,27 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 
 	public void stop() {
-		if (!running) {
-			return;
-		}
-		super.stop();
 		synchronized (connectionMux) {
-			running = false;
+      super.doStop();
+      if (!running) {
+        return;
+      }
+      running = false;
 			if (super.serviceDelegate != null) {
 				// Cancel all timers and purge lists
 				super.serviceDelegate.cleanup();
 			}
+      if (sender != null) {
+        sender.doStop();
+      }
+      if (initialized) {
+        try {
+           consumerSession.close();
+           ((ActiveMQMessageConsumer)consumer).stop();
+           consumer.close();
+        } catch (Exception exx) {}
+      }
+
 			try {
 				// SharedConnection object manages a single JMS connection to
 				// the broker. If the client is scaled out in the same JVM, the
@@ -267,9 +280,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 				} finally {
 					sharedConnectionSemaphore.release();
 				}
-				if (sender != null) {
-					sender.doStop();
-				}
 				// Undeploy all containers
 				undeploy();
 				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
@@ -278,13 +288,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 							CLASS_NAME.getName(), "stop",
 							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 							"UIMAJMS_undeployed_containers__INFO");
-				}
-				if (initialized) {
-					try {
-						consumerSession.close();
-						consumer.close();
-					} catch (JMSException exx) {
-					}
 				}
 				// unregister client
 				if (jmxManager != null) {
@@ -543,6 +546,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    */
   public synchronized void initialize(Map anApplicationContext)
           throws ResourceInitializationException {
+    // Add ShutdownHook to make sure the connection to the
+    // broker is always closed on process exit.
+    Runtime.getRuntime().addShutdownHook(
+            new Thread(new UimaASShutdownHook(this)));
     // Check the version of uimaj that UIMA AS was built with, against the UIMA Core version. If not the same throw Exception
     if (!UimaAsVersion.getUimajFullVersionString().equals(UimaVersion.getFullVersionString())) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(

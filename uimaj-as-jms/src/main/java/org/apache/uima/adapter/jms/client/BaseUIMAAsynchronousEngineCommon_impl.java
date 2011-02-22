@@ -29,6 +29,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
@@ -195,6 +197,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   protected static SharedConnection sharedConnection = null;
 
+  private ExecutorService exec = Executors.newFixedThreadPool(1);
+  
   abstract public String getEndPointName() throws Exception;
 
   abstract protected TextMessage createTextMessage() throws Exception;
@@ -409,7 +413,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
   }
 
-  public void stop() {
+  public void doStop() {
     synchronized (stopMux) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop",
@@ -420,7 +424,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         return;
       }
 
-      running = false;
+      exec.shutdownNow();
+      
       casQueueProducerReady = false;
       if (serviceDelegate != null) {
         serviceDelegate.cancelDelegateTimer();
@@ -509,12 +514,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             // Every thread requesting a CAS adds an entry to this
             // queue.
             CasQueueEntry entry = threadQueue.take();
-            if (!running) {
-              return; // client API has been stopped
-            }
             CAS cas = null;
             long startTime = System.nanoTime();
             // Wait for a free CAS instance
+            if (!running || asynchManager == null) {
+              return; // client API has been stopped
+            }
             if (remoteService) {
               cas = asynchManager.getNewCas("ApplicationCasPoolContext");
             } else {
@@ -1312,8 +1317,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     if (exception != null && cachedRequest != null) {
       cachedRequest.setException(exception);
       if (exception instanceof AnalysisEngineProcessException
-              || (exception.getCause() != null && (exception.getCause() instanceof AnalysisEngineProcessException || exception
-                      .getCause() instanceof ServiceShutdownException))) {
+              || (exception.getCause() != null && 
+                      (exception.getCause() instanceof AnalysisEngineProcessException || 
+                       exception.getCause() instanceof ServiceShutdownException))) {
         // Indicate that this is a process exception.
         cachedRequest.setProcessException();
       }
@@ -1649,58 +1655,78 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    * Listener method receiving JMS Messages from the response queue.
    * 
    */
-  public void onMessage(Message message) {
-    try {
-
+  public void onMessage(final Message message) {
+    // Process message in a separate thread. Previously the message was processed in ActiveMQ dispatch thread.
+    // This onMessage() method is called by ActiveMQ code from a critical region protected with a lock. The lock 
+    // is only released if this method returns. Running in a dispatch thread caused a hang when an application
+    // decided to call System.exit() in any of its callback listener methods. The UIMA AS client adds a 
+    // ShutdownHoook to the JVM to enable orderly shutdown which includes stopping JMS Consumer, JMS Producer
+    // and finally stopping JMS Connection. The ShutdownHook support was added to the client in case the 
+    // application doesnt call client's stop() method. Now, the hang was caused by the fact that the dispatch
+    // thread was used to call System.exit() which in turn executed client's ShutdownHook code. The ShutdownHook
+    // code runs in a separate thread, but the the JVM blocks the dispatch thread until the ShutdownHook 
+    // finishes. It never will though, since the ShutdownHook is calling ActiveMQSession.close() which tries to enter
+    // the same critical region that the dispatch thread is still stuck into. DEADLOCK.
+    // The code below uses a simple FixedThreadPool Executor with a single thread. This thread is reused instead
+    // creating one on the fly.
+    exec.execute( new Runnable() {
       
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "onMessage",
-                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_msg_FINEST",
-                new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
-      }
-      if (!message.propertyExists(AsynchAEMessage.Command)) {
-        return;
-      }
+      public void run() {
+        try {
 
-      int command = message.getIntProperty(AsynchAEMessage.Command);
-      if (AsynchAEMessage.CollectionProcessComplete == command) {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "onMessage",
-                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_cpc_reply_FINE",
-                  new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
-        }
-        handleCollectionProcessCompleteReply(message);
-      } else if (AsynchAEMessage.GetMeta == command) {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "onMessage",
-                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_meta_reply_FINE",
-                  new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
-        }
-        handleMetadataReply(message);
-      } else if (AsynchAEMessage.Process == command) {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "onMessage",
-                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_process_reply_FINE",
-                  new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
-        }
-        handleProcessReply(message, true, null);
-      } else if (AsynchAEMessage.ServiceInfo == command) {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
-                  "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_received_service_info_FINEST",
-                  new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
-        }
-        handleServiceInfo(message);
-      }
-    } catch (Exception e) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_exception__WARNING", e);
-      }
+          
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "onMessage",
+                    JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_msg_FINEST",
+                    new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
+          }
+          if (!message.propertyExists(AsynchAEMessage.Command)) {
+            return;
+          }
 
-    }
+          int command = message.getIntProperty(AsynchAEMessage.Command);
+          if (AsynchAEMessage.CollectionProcessComplete == command) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "onMessage",
+                      JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_cpc_reply_FINE",
+                      new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
+            }
+            handleCollectionProcessCompleteReply(message);
+          } else if (AsynchAEMessage.GetMeta == command) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "onMessage",
+                      JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_meta_reply_FINE",
+                      new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
+            }
+            handleMetadataReply(message);
+          } else if (AsynchAEMessage.Process == command) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "onMessage",
+                      JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_received_process_reply_FINE",
+                      new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
+            }
+            handleProcessReply(message, true, null);
+          } else if (AsynchAEMessage.ServiceInfo == command) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
+                      "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_received_service_info_FINEST",
+                      new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom) });
+            }
+            handleServiceInfo(message);
+          }
+        } catch (Exception e) {
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", e);
+          }
+
+        }
+        
+      }
+    });
+
   }
 
   /**
@@ -2410,7 +2436,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_error_while_sending_msg__WARNING",
               new Object[] { aDestination, aFailure });
     }
-    stop();
+    try {
+      stop();
+    } catch( Exception e) {
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -2609,11 +2639,17 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       synchronized(destroyMux) {
         //  Check if all clients have terminated and only than stop the shared connection
         if (getClientCount() == 0 && connection != null
-                && !((ActiveMQConnection) connection).isClosed()) {
+                && !((ActiveMQConnection) connection).isClosed() 
+                && !((ActiveMQConnection) connection).isClosing()) {
           try {
             stop = true;
             connection.stop();
             connection.close();
+            while( !((ActiveMQConnection) connection).isClosed() ) {
+              try {
+                destroyMux.wait(100);
+              } catch( InterruptedException exx) {}
+            }
           } catch (Exception e) {
             /* ignore */
           }
@@ -2635,5 +2671,21 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         return false;
       }
     }
+  }
+  public class UimaASShutdownHook implements Runnable {
+    UimaAsynchronousEngine asEngine=null;
+    public UimaASShutdownHook( UimaAsynchronousEngine asEngine) {
+      this.asEngine = asEngine;
+    }
+    public void run() {
+      try {
+        if ( asEngine != null ) {
+          asEngine.stop();
+        } 
+      } catch( Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+    
   }
 }
