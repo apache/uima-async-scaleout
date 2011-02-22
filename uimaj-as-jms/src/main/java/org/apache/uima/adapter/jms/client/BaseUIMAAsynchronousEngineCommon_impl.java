@@ -1317,9 +1317,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     if (exception != null && cachedRequest != null) {
       cachedRequest.setException(exception);
       if (exception instanceof AnalysisEngineProcessException
-              || (exception.getCause() != null && 
-                      (exception.getCause() instanceof AnalysisEngineProcessException || 
-                       exception.getCause() instanceof ServiceShutdownException))) {
+              || (exception.getCause() != null && (exception.getCause() instanceof AnalysisEngineProcessException || exception
+                      .getCause() instanceof ServiceShutdownException))) {
         // Indicate that this is a process exception.
         cachedRequest.setProcessException();
       }
