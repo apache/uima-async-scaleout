@@ -40,25 +40,27 @@
             For more information, see:
             http://activemq.apache.org/producer-flow-control.html
         -->
-              
+        <!-- 
+          Broker optimizations for better performance:
+          1) optimizedDispatch="true" - use a single thread per JMS Session. This setting instructs
+             AMQ to use a transport thread to deliver messages to JMS Listener. By default two threads
+             are used: Transport thread and a Session thread. This optimization yields the best 
+             performance gain.
+             
+          2) producerFlowControl="false" - instructs the AMQ to never slow down or block a producer      
+        -->      
         <destinationPolicy>
             <policyMap>
               <policyEntries>
-                <policyEntry topic=">" producerFlowControl="false" memoryLimit="1mb">
+                <policyEntry topic=">" producerFlowControl="false" optimizedDispatch="true" memoryLimit="1mb">
                   <pendingSubscriberPolicy>
                     <vmCursor />
                   </pendingSubscriberPolicy>
                 </policyEntry>
-                <policyEntry queue=">" producerFlowControl="false" memoryLimit="1mb">
-                  <!-- Use VM cursor for better latency
-                       For more information, see:
-                       
-                       http://activemq.apache.org/message-cursors.html
-                       
+                <policyEntry queue=">" producerFlowControl="false" optimizedDispatch="true" memoryLimit="1mb">
                   <pendingQueuePolicy>
                     <vmQueueCursor/>
                   </pendingQueuePolicy>
-                  -->
                 </policyEntry>
               </policyEntries>
             </policyMap>
