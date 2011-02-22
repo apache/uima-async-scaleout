@@ -598,9 +598,13 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         
+        String key = "";
+        if ( delegateEndpoint != null ) {
+          delegateEndpoint.getDelegateKey();
+        }
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_service_exception_WARNING", controller.getComponentName());
+                "send", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_service_delivery_exception__WARNING",new Object[] { controller.getComponentName(), key});
 
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "send", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
