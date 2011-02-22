@@ -933,7 +933,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               __listenerRef.delegateStop();
               if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
                 ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().purge();
-                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdown();
+                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdownNow();
                   ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
                 } else if (concurrentListener != null) {
                   shutdownTaskExecutor(concurrentListener.getTaskExecutor());
