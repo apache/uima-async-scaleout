@@ -225,7 +225,20 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     }
 
   }
-
+  private void stopConnection() {
+    if (sharedConnection != null) {
+      // Remove a client from registry
+      sharedConnection.unregisterClient(this);
+      // The destroy method closes the JMS connection when
+      // the number of
+      // clients becomes 0, otherwise it is a no-op
+      if (sharedConnection.destroy()) {
+        // This needs to be done to invalidate the
+        // object for JUnit tests
+        sharedConnection = null;
+      }
+    }
+  }
 	public void stop() {
 		synchronized (connectionMux) {
       super.doStop();
@@ -247,7 +260,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
            consumer.close();
         } catch (Exception exx) {}
       }
-
 			try {
 				// SharedConnection object manages a single JMS connection to
 				// the broker. If the client is scaled out in the same JVM, the
@@ -257,19 +269,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 				// connection. The connection is closed when the last client calls stop().
 				try {
 					sharedConnectionSemaphore.acquire();
-					if (sharedConnection != null) {
-						// Remove a client from registry
-						sharedConnection.unregisterClient(this);
-						// The destroy method closes the JMS connection when
-						// the number of
-						// clients becomes 0, otherwise it is a no-op
-						if (sharedConnection.destroy()) {
-							// This needs to be done to invalidate the
-							// object for JUnit tests
-							sharedConnection = null;
-						}
-					}
+					stopConnection();
 				} catch (InterruptedException ex) {
+				  // Force connection stop
+          stopConnection();
 					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 							Level.WARNING)) {
 						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
