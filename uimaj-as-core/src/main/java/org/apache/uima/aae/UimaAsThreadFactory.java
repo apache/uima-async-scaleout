@@ -92,9 +92,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
              } else {
                threadNamePrefix = THREAD_POOL+poolId+"] ";
              }
-          } else {
-            threadNamePrefix = THREAD_POOL+poolId+"] "+threadNamePrefix;
-          }
+          } 
           Thread.currentThread().setName( threadNamePrefix +" - "                 
                           + Thread.currentThread().getId());
           try {
@@ -103,6 +101,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
               // AE instance process() method will only be called from this thread
               controller.initializeAnalysisEngine();
             }
+            System.out.println("Thread:"+Thread.currentThread().getName()+" Is Ready");
             // Call given Worker (Runnable) run() method and block. This call block until the
             // TaskExecutor is terminated.
             r.run();
