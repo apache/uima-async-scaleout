@@ -67,7 +67,6 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.util.XMLInputSource;
 
 public class TestUimaASExtended extends BaseTestSupport {
-  private static final int DEFAULT_HTTP_PORT = 8888;
 
   private CountDownLatch getMetaCountLatch = null;
 
@@ -107,8 +106,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
   public void testClientHttpTunnellingToAggregate() throws Exception {
     System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
-    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-    // available the test fails
+    // Add HTTP Connector to the broker. 
     String httpURI = getHttpURI();
     // Create Uima EE Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -186,9 +184,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   /**
    * Tests support for ActiveMQ failover protocol expressed in broker
    * URL as follows "failover:(tcp:IP:Port1,tcp:IP:Port2)". The test launches a secondary
-   * broker on port 8200, launches a Primitive service that uses that broker,
-   * and finally configures the UIMA AS Client to connect to ther broker on port
-   * 8200 and specifies broker on port 8118 as an alternative. This test 
+   * broker, launches a Primitive service that uses that broker,
+   * and finally configures the UIMA AS Client to connect to the secondary broker
+   * and specifies an alternative broker on a different port. This test 
    * only tests ability of UIMA AS to handle a complex URL, and it does *not*
    * test the actual failover from one broker to the next. 
    * 
@@ -198,17 +196,14 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-      BrokerService broker2 = createBroker(8200, true, true);
-      broker2.start();
-      addHttpConnector(broker2, 1088);
-      
-      System.setProperty("BrokerURL", "failover:(http://localhost:1088,http://localhost:8200)?randomize=false"); //tcp://localhost:8200");
+      BrokerService broker2 = setupSecondaryBroker(false);
+
+      String bhttpURL = addHttpConnector(broker2, findOpenPort(DEFAULT_HTTP_PORT2));
+      String burl = "failover:("+bhttpURL+","+broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString().replaceAll("tcp","http")+")?randomize=false";
+      System.setProperty("BrokerURL", burl); 
       // Deploy Uima AS Primitive Service
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      //  Client will use a failover protocol and use broker on port 8200
-      //  as primary
-      Map<String, Object> appCtx = buildContext("failover:(http://localhost:1088,http://localhost:8200)?randomize=false","NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = buildContext(burl,"NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
@@ -237,9 +232,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   /**
    * Tests support for ActiveMQ failover protocol expressed in broker
    * URL as follows "failover:(tcp:IP:Port1,tcp:IP:Port2)". The test launches a secondary
-   * broker on port 8200, launches a Primitive service that uses that broker,
-   * and finally configures the UIMA AS Client to connect to ther broker on port
-   * 8200 and specifies broker on port 8118 as an alternative. This test 
+   * broker, launches a Primitive service that uses that broker,
+   * and finally configures the UIMA AS Client to connect to the secondary broker
+   * and specifies an alternate broker on a different port. This test 
    * only tests ability of UIMA AS to handle a complex URL, and it does *not*
    * test the actual failover from one broker to the next. 
    * 
@@ -249,15 +244,11 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-      BrokerService broker2 = createBroker(8200, true,true);
-      broker2.start();
-      System.setProperty("BrokerURL", "tcp://localhost:8200");
+      
+      BrokerService broker2 = setupSecondaryBroker(true);
       // Deploy Uima AS Primitive Service
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      //  Client will use a failover protocol and use broker on port 8200
-      //  as primary
-      Map<String, Object> appCtx = buildContext("failover:(tcp://localhost:8200,tcp://localhost:8118)?randomize=false","NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = buildContext("failover:("+System.getProperty("BrokerURL")+","+getBrokerUri()+")?randomize=false","NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
@@ -286,9 +277,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
   
   /**
-   * This test starts a broker on port 8200, starts NoOp Annotator, and
+   * This test starts a secondary broker, starts NoOp Annotator, and
    * using synchronous sendAndReceive() sends 10 CASes for analysis. Before sending 11th, the test
-   * stops the broker and sends 5 more CASes. All CASes sent after
+   * stops the secondary broker and sends 5 more CASes. All CASes sent after
    * the broker shutdown result in GetMeta ping and a subsequent timeout.
    * @throws Exception
    */
@@ -297,15 +288,11 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testSyncClientRecoveryFromBrokerStop -------------");
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      
-      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-      BrokerService broker2 = createBroker(8200, true,true);
-      broker2.start();
-      System.setProperty("BrokerURL", "tcp://localhost:8200");
+      BrokerService broker2 = setupSecondaryBroker(true);
       // Deploy Uima AS Primitive Service
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
-              "NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = 
+      buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
@@ -340,9 +327,9 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
   }
   /**
-   * This test starts a broker on port 8200, starts NoOp Annotator, and
+   * This test starts a secondary broker, starts NoOp Annotator, and
    * using synchronous sendAndReceive() sends 5 CASes for analysis. Before sending 6th, the test
-   * stops the broker and sends 5 more CASes. All CASes sent after
+   * stops the secondary broker and sends 5 more CASes. All CASes sent after
    * the broker shutdown result in GetMeta ping and a subsequent timeout. Before
    * sending 11th CAS the test starts the broker again and sends 10 more CASes 
    * @throws Exception
@@ -351,15 +338,12 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testSyncClientRecoveryFromBrokerStopAndRestart -------------");
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      
-      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-      BrokerService broker2 = createBroker(8200, true, true);
-      broker2.start();
-      System.setProperty("BrokerURL", "tcp://localhost:8200");
+      BrokerService broker2 = setupSecondaryBroker(true);
       // Deploy Uima AS Primitive Service
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
-              "NoOpAnnotatorQueue");
+      
+      Map<String, Object> appCtx = 
+      buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
@@ -375,7 +359,8 @@ public class TestUimaASExtended extends BaseTestSupport {
         } else if ( i == 10 ) {
           //  restart the broker 
           System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-          broker2 = createBroker(8200, true, true);
+          broker2 = setupSecondaryBroker(true);
+          
           broker2.start();
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
@@ -420,10 +405,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testMultipleSyncClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testMultipleSyncClientsRecoveryFromBrokerStopAndRestart -------------");
-    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-    BrokerService broker2 = createBroker(8200, true, true);
-    broker2.start();
-    System.setProperty("BrokerURL", "tcp://localhost:8200");
+    final BrokerService broker2 = setupSecondaryBroker(true);
     final CountDownLatch latch = new CountDownLatch(4);
     Thread[] clientThreads = new Thread[4];
     
@@ -435,13 +417,13 @@ public class TestUimaASExtended extends BaseTestSupport {
           try {
             // Deploy Uima AS Primitive Service
             deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-            Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
-                    "NoOpAnnotatorQueue");
+            Map<String, Object> appCtx = 
+              buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+
             appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
             appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
             initialize(uimaAsEngine, appCtx);
             waitUntilInitialized();
-            int errorCount=0;
             for (int i = 0; i < 1000; i++) {
               if ( i == 5 ) {
                 latch.countDown();   // indicate that some CASes were processed
@@ -467,7 +449,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       };
       clientThreads[i].start();
     }
-    
+    BrokerService broker3 =  null;
     try {
       latch.await();  // wait for all threads to process a few CASes
 
@@ -478,45 +460,44 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       System.out.println("Restarting Broker - wait ...");
       //  restart the broker 
-      System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-      broker2 = createBroker(8200, true, true);
-      broker2.start();
+      broker3 = setupSecondaryBroker(true);
+      
       synchronized(this) {
         wait(3000);   // allow broker some time to start  
       }
     } catch ( Exception e ) {
       
-    }
-    for(int i=0; i < 4; i++ ) {
-      clientThreads[i].join();
-    }
-    System.out.println("Stopping Broker - wait ...");
-    super.cleanBroker(broker2);
+    } finally {
+      for(int i=0; i < 4; i++ ) {
+        clientThreads[i].join();
+      }
+      System.out.println("Stopping Broker - wait ...");
+      if ( broker3 != null ) {
+        super.cleanBroker(broker3);
 
-    broker2.stop();
-    synchronized(this) {
-       wait(3000);   // allow broker some time to stop  
+        broker3.stop();
+        synchronized(this) {
+           wait(3000);   // allow broker some time to stop  
+        }
+      }
     }
 }
   /**
-   * This test starts a broker on port 8200, starts NoOp Annotator, and
+   * This test starts a secondary broker, starts NoOp Annotator, and
    * using asynchronous send() sends a total of 15 CASes for analysis. After processing 11th
-   * the test stops the broker and sends 4 more CASes which fails due to broker not running.
+   * the test stops the secondary broker and sends 4 more CASes which fails due to broker not running.
    * 
    * @throws Exception
    */
   public void testAsyncClientRecoveryFromBrokerStop() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStop -------------");
-    System.setProperty("BrokerURL", "tcp://localhost:8200");
-    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-    BrokerService broker2 = createBroker(8200, true, true);
-
-    broker2.start();
+    
+    BrokerService broker2 = setupSecondaryBroker(true);
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
-      "NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = 
+      buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
@@ -546,16 +527,15 @@ public class TestUimaASExtended extends BaseTestSupport {
   
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStopAndRestart -------------");
-    System.setProperty("BrokerURL", "tcp://localhost:8200");
-    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-    BrokerService broker2 = createBroker(8200, true, true);
-    broker2.start();
+
+    BrokerService broker2 = setupSecondaryBroker(true);
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       // Deploy Uima AS Primitive Service
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
-      "NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = 
+        buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
@@ -568,9 +548,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             wait(3000);   // allow broker some time to stop  
           }
         } else if ( i == 20 ) {
-          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-          broker2 = createBroker(8200, true, true);
-          broker2.start();
+          broker2 = setupSecondaryBroker(true);
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
           }
@@ -611,17 +589,14 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testMultipleClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testMultipleClientsRecoveryFromBrokerStopAndRestart -------------");
       
-    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-      BrokerService broker2 = createBroker(8200, true, true);
-      broker2.start();
-      System.setProperty("BrokerURL", "tcp://localhost:8200");
-
+    BrokerService broker2 = setupSecondaryBroker(true);
       // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaClient1 = new BaseUIMAAsynchronousEngine_impl();
       // Deploy Uima AS Primitive Service
       deployService(uimaClient1, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
-              "NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = 
+        buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+    
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaClient1, appCtx);
@@ -629,8 +604,10 @@ public class TestUimaASExtended extends BaseTestSupport {
       
       // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaClient2 = new BaseUIMAAsynchronousEngine_impl();
-      Map<String, Object> appCtx2 = buildContext("tcp://localhost:8200",
-              "NoOpAnnotatorQueue");
+      Map<String, Object> appCtx2 = 
+      buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+
+      
       appCtx2.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx2.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaClient2, appCtx2);
@@ -647,9 +624,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           }
           //  restart broker before 3rd CAS is sent
           //  restart the broker 
-          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-          broker2 = createBroker(8200, true, true);
-          broker2.start();
+          broker2 = setupSecondaryBroker(true);
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
           }
@@ -701,18 +676,17 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testAggregateRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAggregateRecoveryFromBrokerStopAndRestart -------------");
-    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-      BrokerService broker2 = createBroker(8200, true,true);
-      broker2.start();
-      System.setProperty("BrokerURL", "tcp://localhost:8200");
+    BrokerService broker2 = setupSecondaryBroker(false);
+    System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
 
       // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaClient1 = new BaseUIMAAsynchronousEngine_impl();
       // Deploy Uima AS Primitive Service
       deployService(uimaClient1, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
       deployService(uimaClient1, relativePath + "/Deploy_AggregateWithRemoteNoOpOnBroker8200.xml");
-      Map<String, Object> appCtx = buildContext("tcp://localhost:8200",
-              "NoOpAnnotatorQueue");
+      Map<String, Object> appCtx = 
+      buildContext(broker.getMasterConnectorURI(), "TopLevelTaeQueue");
+
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaClient1, appCtx);
@@ -723,17 +697,14 @@ public class TestUimaASExtended extends BaseTestSupport {
       for (int i = 0; i < 10; i++) {
         //  Stop broker before second CAS is sent to the service
         if ( i == 1 ) {
-          System.out.println("Stopping Broker Running on Port 8200");
+          System.out.println("Stopping Secondary Broker Running on Port:"+broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
           broker2.stop();
           synchronized(this) {
             wait(3000);   // allow broker some time to stop 
           }
           //  restart broker before 3rd CAS is sent
           //  restart the broker 
-          System.out.println("Starting Broker on Port 8200");
-          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-          broker2 = createBroker(8200, true, true);
-          broker2.start();
+          broker2 = setupSecondaryBroker(true);
           synchronized(this) {
             wait(3000);   // allow broker some time to start  
           }
@@ -743,6 +714,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaClient1.sendAndReceiveCAS(cas);
+          System.out.println("UIMA AS Client Received Reply For CAS#" + (i + 1) );
         } catch( Exception e) {
           errorCount++;
           System.out.println("UIMA AS Client Received Expected Error on CAS:"+(i+1));
@@ -773,7 +745,7 @@ public class TestUimaASExtended extends BaseTestSupport {
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorAWithLongDelay.xml");
-      Map<String, Object> appCtx = buildContext("tcp://localhost:8118",
+      Map<String, Object> appCtx = buildContext(broker.getMasterConnectorURI(),
       "NoOpAnnotatorAQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 5000);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
@@ -792,7 +764,6 @@ public class TestUimaASExtended extends BaseTestSupport {
   
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
-    
     // Instantiate Uima AS Client
     BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy Uima AS Primitive Service
@@ -812,6 +783,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     }
     
     uimaAsEngine.collectionProcessingComplete();
+    System.clearProperty("DefaultBrokerURL");
     uimaAsEngine.stop();
   }
   
@@ -1410,8 +1382,6 @@ public class TestUimaASExtended extends BaseTestSupport {
             .println("-------------- testDeployAggregateServiceWithBrokerPlaceholder -------------");
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
-    System.setProperty("AggregateBroker", "tcp://localhost:8120");
-    System.setProperty("NoOpBroker", "tcp://localhost:8120");
 
     try {
       Thread t = new Thread() {
@@ -1423,9 +1393,9 @@ public class TestUimaASExtended extends BaseTestSupport {
               this.wait(5000); // wait for 5 secs
             }
             // Create a new broker that runs a different port that the rest of testcases
-            System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-            bs = createBroker(8120, true, true);
-            bs.start();
+            bs = setupSecondaryBroker(false);
+            System.setProperty("AggregateBroker", bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
+            System.setProperty("NoOpBroker", bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
             deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorUsingPlaceholder.xml");
             deployService(eeUimaEngine, relativePath
                     + "/Deploy_AggregateAnnotatorUsingPlaceholder.xml");
@@ -1453,8 +1423,6 @@ public class TestUimaASExtended extends BaseTestSupport {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    // runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue",
-    // 1, PROCESS_LATCH);
   }
 
   /**
@@ -1470,9 +1438,29 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testDelayedBrokerWithAggregateService() throws Exception {
     System.out.println("-------------- testDelayedBrokerWithAggregateService -------------");
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    BrokerService bs = null;
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    // set up and start secondary broker. It is started only to detect an open port so that we
+    // define SecondaryBrokerURL property. This property is used to resolve a placeholder
+    // in the aggregate descriptor. Once the property is set we shutdown the secondary broker to
+    // test aggregate recovery from missing broker. Hopefully the same port is still open when
+    // the test starts the secondary broker for the second time. 
+    bs = setupSecondaryBroker(false);
+    System.setProperty("SecondaryBrokerURL",bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
+    bs.stop();
+    // wait for the broker to stop
+    while( bs.isStarted() ) {
+      try {
+        synchronized(this) {
+          this.wait(100);
+        }
+      } catch( Exception e) {}
+    }
+    // Deploy aggregate on a secondary broker which was shutdown above. The aggregate should 
+    // detect missing broker and silently wait for the broker to come up
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorOnSecondaryBroker.xml");
     try {
+      // spin a thread to restart a broker after 5 seconds
       Thread t = new Thread() {
         public void run() {
           BrokerService bs = null;
@@ -1482,12 +1470,11 @@ public class TestUimaASExtended extends BaseTestSupport {
               this.wait(5000); // wait for 5 secs
             }
             // Create a new broker on port 8119
-            System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-            bs = createBroker(8119, true, true);
-            bs.start();
+            bs = setupSecondaryBroker(false);
+            System.setProperty("SecondaryBrokerURL",bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
             // Start the uima AS client. It connects to the top level service and sends
             // 10 messages
-            runTest(null, eeUimaEngine, "tcp://localhost:8119", "TopLevelTaeQueue", 10,
+            runTest(null, eeUimaEngine, bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "TopLevelTaeQueue", 10,
                     PROCESS_LATCH);
           } catch (InterruptedException e) {
           } catch (Exception e) {
@@ -1539,7 +1526,6 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
     deployService(eeUimaEngine, relativePath
             + "/Deploy_AggregateAnnotatorWithInternalCM1000Docs.xml");
-    // deployService(eeUimaEngine, relativePath+"/Deploy_AggregateAnnotatorWith1MillionDocs.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
 
@@ -1554,33 +1540,6 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
-  /**
-   * Tests exception thrown in the Uima EE Client when the Collection Reader is added after the uima
-   * ee client is initialized
-   * 
-   * @throws Exception
-   */
-  /*
-   * 
-   * public void testCollectionReader() throws Exception {
-   * System.out.println("-------------- testCollectionReader -------------"); // Instantiate Uima EE
-   * Client BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-   * deployService(eeUimaEngine, relativePath+"/Deploy_PersonTitleAnnotator.xml"); Map<String,
-   * Object> appCtx = buildContext(
-   * String.valueOf(broker.getMasterConnectorURI()),"PersonTitleAnnotatorQueue" ); // reduce the cas
-   * pool size and reply window appCtx.remove(UimaAsynchronousEngine.CasPoolSize);
-   * appCtx.put(UimaAsynchronousEngine.CasPoolSize, Integer.valueOf(2));
-   * appCtx.remove(UimaAsynchronousEngine.ReplyWindow);
-   * appCtx.put(UimaAsynchronousEngine.ReplyWindow, 1); // set the collection reader File
-   * collectionReaderDescriptor = new
-   * File("resources/descriptors/collection_reader/FileSystemCollectionReader.xml");
-   * CollectionReaderDescription collectionReaderDescription = UIMAFramework.getXMLParser()
-   * .parseCollectionReaderDescription(new XMLInputSource(collectionReaderDescriptor));
-   *  collectionReader = UIMAFramework
-   * .produceCollectionReader(collectionReaderDescription);
-   * eeUimaEngine.setCollectionReader(collectionReader); initialize(eeUimaEngine, appCtx);
-   * waitUntilInitialized(); runCrTest(eeUimaEngine, 7); eeUimaEngine.stop(); }
-   */
   /**
    * Tests exception thrown in the Uima EE Client when the Collection Reader is added after the uima
    * ee client is initialized
@@ -2174,10 +2133,8 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out
             .println("-------------- testProcessWithAggregateUsingRemoteMultiplierOnSeparateBroker -------------");
     System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-    BrokerService broker2 = createBroker(8200, true,true);
-    //  start a broker that manages top level aggregate service input queue
-    broker2.start();
-    System.setProperty("BrokerURL", "tcp://localhost:8200");
+    BrokerService broker2 = setupSecondaryBroker(true);
+    System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
 
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
@@ -2185,10 +2142,10 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml");
     
     Map<String, Object> appCtx = new HashMap();
-    appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://localhost:8200");
+    appCtx.put(UimaAsynchronousEngine.ServerUri, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
     appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
-    runTest(appCtx, eeUimaEngine, "tcp://localhost:8200",
+    runTest(appCtx, eeUimaEngine, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(),
             "TopLevelTaeQueue", 1, PROCESS_LATCH);    
     super.cleanBroker(broker2);
 
@@ -2312,7 +2269,6 @@ public class TestUimaASExtended extends BaseTestSupport {
     // CM1 --> CM2 --> Remote AggregateCM --> Candidate Answer --> CC
     deployService(eeUimaEngine, relativePath + "/Deploy_TopLevelBlueJAggregateCM.xml");
 
-    // runTest2(null,eeUimaEngine,"tcp://localhost:61616","BJTopLevelAggregate", 1, PROCESS_LATCH);
     runTest2(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue", 10, PROCESS_LATCH);
   }
@@ -2447,109 +2403,6 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, CPC_LATCH);
   }
 
-//  public void testClientHttpTunnelling() throws Exception {
-//    System.out.println("-------------- testClientHttpTunnelling -------------");
-//    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-//    // available the test fails
-//    String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
-//    // Create Uima EE Client
-//    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-//    // Deploy remote service
-//    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-//    // Initialize and run the Test. Wait for a completion and cleanup resources.
-//    runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
-//    // Remove the HTTP Connector
-//    removeHttpConnector();
-//  }
-//
-//  public void testClientHttpTunnellingToAggregate() throws Exception {
-//    System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
-//    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-//    // available the test fails
-//    String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
-//    // Create Uima EE Client
-//    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-//    // Deploy remote service
-//    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-//    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
-//    // Initialize and run the Test. Wait for a completion and cleanup resources.
-//    runTest(null, eeUimaEngine, httpURI, "TopLevelTaeQueue", 1, CPC_LATCH);
-//    // Remove the HTTP Connector
-//    removeHttpConnector();
-//  }
-//
-//  public void testClientHttpTunnellingWithDoubleByteText() throws Exception {
-//    System.out.println("-------------- testClientHttpTunnellingWithDoubleByteText -------------");
-//
-//    BufferedReader in = null;
-//    try {
-//      File file = new File(relativeDataPath + "/DoubleByteText.txt");
-//      System.out.println("Checking for existence of File:" + file.getAbsolutePath());
-//      // Process only if the file exists
-//      if (file.exists()) {
-//        System.out
-//                .println(" *** DoubleByteText.txt exists and will be sent through http connector.");
-//        System.out.println(" ***   If the vanilla activemq release is being used,");
-//        System.out
-//                .println(" ***   and DoubleByteText.txt is bigger than 64KB or so, this test case will hang.");
-//        System.out
-//                .println(" *** To fix, override the classpath with the jar files in and under the");
-//        System.out
-//                .println(" ***   apache-uima-as/uima-as-distr/src/main/apache-activemq-X.y.z directory");
-//        System.out.println(" ***   in the apache-uima-as source distribution.");
-//
-//        // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-//        // available the test fails
-//        String httpURI = addHttpConnector(DEFAULT_HTTP_PORT);
-//        // Create Uima EE Client
-//        BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-//        // Deploy remote service
-//        deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-//
-//        InputStream fis = new FileInputStream(file);
-//        Reader rd = new InputStreamReader(fis, "UTF-8");
-//        in = new BufferedReader(rd);
-//        // Set the double-byte text. This is what will be sent to the service
-//        String line = in.readLine();
-//        super.setDoubleByteText(line);
-//        int err = XMLUtils.checkForNonXmlCharacters(line);
-//        if (err >= 0) {
-//          fail("Illegal XML char at offset " + err);
-//        }
-//        // Initialize and run the Test. Wait for a completion and cleanup resources.
-//        runTest(null, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
-//      }
-//    } catch (Exception e) {
-//      // Double-Byte Text file not present. Continue on with the next test
-//      e.printStackTrace();
-//      fail("Could not complete test");
-//    } finally {
-//      if (in != null) {
-//        in.close();
-//      }
-//      // Remove the HTTP Connector
-//      removeHttpConnector();
-//    }
-//  }
-//
-//  public void testAggregateHttpTunnelling() throws Exception {
-//    System.out.println("-------------- testAggregateHttpTunnelling -------------");
-//    // Add HTTP Connector to the broker. The connector will use port 8888. If this port is not
-//    // available the test fails
-//    addHttpConnector(DEFAULT_HTTP_PORT);
-//    // Create Uima EE Client
-//    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-//    // Deploy remote service
-//    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-//    // Deploy top level aggregate that communicates with the remote via Http Tunnelling
-//    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithHttpDelegate.xml");
-//
-//    // Initialize and run the Test. Wait for a completion and cleanup resources.
-//    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-//            10, CPC_LATCH);
-//    // Remove the HTTP Connector
-//    removeHttpConnector();
-//  }
 
   /**
    * Tests exception thrown in the Uima EE Client when the Collection Reader is added after the uima
@@ -2842,8 +2695,6 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             10, PROCESS_LATCH);
-    // runTest(null,eeUimaEngine,"tcp://hbca-3.watson.ibm.com:61616","TopLevelTaeQueue", 10,
-    // PROCESS_LATCH);
   }
   /*
    * Tests Uima AS client placeholder handling and substitution. The Uima Aggregate instantiates
@@ -2882,7 +2733,6 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testJmsServiceAdapterWithException -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
-    // deployService(eeUimaEngine, relativePath+"/Deploy_NoOpAnnotator.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue");
@@ -2899,8 +2749,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       cas.reset();
     }
     eeUimaEngine.stop();
-    // runTest(null,eeUimaEngine,String.valueOf(broker.getMasterConnectorURI()),"TopLevelTaeQueue",
-    // 1, EXCEPTION_LATCH);
   }
 
   public void testJmsServiceAdapterWithProcessTimeout() throws Exception {
