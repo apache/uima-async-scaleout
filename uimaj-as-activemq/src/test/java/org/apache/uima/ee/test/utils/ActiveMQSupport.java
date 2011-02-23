@@ -47,7 +47,16 @@ import org.apache.uima.util.Level;
 
 public class ActiveMQSupport extends TestCase {
   private static final Class CLASS_NAME = ActiveMQSupport.class;
+  protected static final String DEFAULT_BROKER_URL_KEY="DefaultBrokerURL";
+  protected static final String DEFAULT_BROKER_URL_KEY_2="DefaultBrokerURL2";
+  protected static final String DEFAULT_HTTP_BROKER_URL_KEY="DefaultHttpBrokerURL";
+  protected static final String DEFAULT_HTTP_BROKER_URL_KEY_2="DefaultHttpBrokerURL2";
+  protected static final int DEFAULT_BROKER_PORT=61617;
+  protected static final int DEFAULT_BROKER_PORT_2=61620;
+  protected static final int DEFAULT_HTTP_PORT = 18888;
+  protected static final int DEFAULT_HTTP_PORT2 = 18890;
 
+  
   protected static BrokerService broker;
 
   protected String uri = null;
@@ -75,7 +84,15 @@ public class ActiveMQSupport extends TestCase {
     broker = createBroker();
     broker.start();
     broker.setMasterConnectorURI(uri);
-    addHttpConnector(8888);
+    addHttpConnector(DEFAULT_HTTP_PORT);
+    if ( System.getProperty(DEFAULT_BROKER_URL_KEY) != null) {
+      System.clearProperty(DEFAULT_BROKER_URL_KEY);
+    }
+    System.setProperty(DEFAULT_BROKER_URL_KEY, broker.getMasterConnectorURI());
+    if ( System.getProperty(DEFAULT_HTTP_BROKER_URL_KEY) != null) {
+      System.clearProperty(DEFAULT_HTTP_BROKER_URL_KEY);
+    }
+    System.setProperty(DEFAULT_HTTP_BROKER_URL_KEY, httpConnector.getConnectUri().toString());
   }
   protected void cleanBroker( BrokerService targetBroker) throws Exception {
     // Remove messages from all queues
@@ -145,7 +162,27 @@ public class ActiveMQSupport extends TestCase {
     httpConnector.stop();
     broker.removeConnector(httpConnector);
   }
+  protected int findOpenPort(int startWithPort) {
+    boolean success = false;
+    ServerSocket ssocket = null;
 
+    while (!success) {
+      try {
+        ssocket = new ServerSocket(startWithPort);
+        success = true;
+      } catch (Exception e) {
+        startWithPort++;
+      } finally {
+        try {
+          if (ssocket != null) {
+            ssocket.close();
+          }
+        } catch (IOException ioe) {
+        }
+      }
+    }
+    return startWithPort;
+  }
   private String generateInternalURI(String aProtocol, int aDefaultPort) throws Exception {
     boolean success = false;
     int openPort = aDefaultPort;
@@ -154,19 +191,11 @@ public class ActiveMQSupport extends TestCase {
     while (!success) {
       try {
         ssocket = new ServerSocket(openPort);
-        // String uri = aProtocol + "://" +
-        // ssocket.getInetAddress().getLocalHost().getCanonicalHostName()
-        // + ":" + openPort;
         String uri = aProtocol + "://localhost:" + openPort;
         success = true;
         return uri;
       } catch (Exception e) {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                  "generateInternalURI", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", e);
-        }
-        throw e;
+        openPort++;
       } finally {
         try {
           if (ssocket != null) {
@@ -193,24 +222,23 @@ public class ActiveMQSupport extends TestCase {
   }
 
   public BrokerService createBroker() throws Exception {
-    return createBroker(8118, true, false);
+    return createBroker(findOpenPort(DEFAULT_BROKER_PORT), true, false);
   }
 
   protected BrokerService createBroker(int port, boolean useJmx, boolean secondaryBroker) throws Exception {
-    ServerSocket ssocket = null;
     System.out.println(">>>> Starting Broker On Port:" + port);
-    try {
-      ssocket = new ServerSocket();
-      String hostName = "localhost"; //ssocket.getInetAddress().getLocalHost().getCanonicalHostName();
+      String hostName = "localhost"; 
       uri = "tcp://" + hostName + ":" + port;
       BrokerService broker = BrokerFactory.createBroker(new URI("broker:()/" + hostName
               + "?persistent=false"));
+      tcpConnector = broker.addConnector(uri);
       if ( secondaryBroker ) {
         broker.getManagementContext().setJmxDomainName(broker.getManagementContext().getJmxDomainName()+".test");      
+        tcpConnector.setName(DEFAULT_BROKER_URL_KEY_2);
+      } else {
+        tcpConnector.setName(DEFAULT_BROKER_URL_KEY);
       }
       broker.setUseJmx(useJmx);
-      tcpConnector = broker.addConnector(uri);
-
       PolicyEntry policy = new PolicyEntry();
       policy.setDeadLetterStrategy(new SharedDeadLetterStrategy());
 
@@ -230,12 +258,16 @@ public class ActiveMQSupport extends TestCase {
       }
 
       return broker;
-    } finally {
-      if (ssocket != null)
-        ssocket.close();
-    }
   }
-
+  protected BrokerService setupSecondaryBroker(boolean addProperty) throws Exception {
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+    BrokerService broker2 = createBroker(findOpenPort(DEFAULT_BROKER_PORT_2), true, true);
+    broker2.start();
+    if ( addProperty ) {
+      System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
+    }
+    return broker2;
+  }
   protected void stopBroker() throws Exception {
     if (broker != null) {
       System.out.println(">>> Stopping Broker");
