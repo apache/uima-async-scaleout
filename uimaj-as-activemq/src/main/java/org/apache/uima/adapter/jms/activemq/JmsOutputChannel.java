@@ -564,7 +564,6 @@ public class JmsOutputChannel implements OutputChannel {
         }
         delegate = lookupDelegate(delegateKey);
         if (delegate.getGetMetaTimeout() > 0) {
-          System.out.println("--------------- Service:"+getAnalysisEngineController().getComponentName()+" Starting getMeta Timer For Delegate:"+anEndpoint.getDelegateKey());
           delegate.startGetMetaRequestTimer();
         }
       }
