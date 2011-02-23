@@ -232,7 +232,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     // the cause. Just the top level IllegalStateException with a text message. This is what we need
     // to
     // check for.
-    if (t instanceof javax.jms.IllegalStateException
+    ActiveMQConnection conn = null;
+    try {
+      conn = (ActiveMQConnection)getSharedConnection();
+    } catch( Exception exx ) { // shared connection  may not exist yet if a broker is not up
+    }
+    if ( (conn != null && conn.isTransportFailed() ) || 
+            t instanceof javax.jms.IllegalStateException
             && t.getMessage().equals("The Consumer is closed")) {
       if (controller != null && controller instanceof AggregateAnalysisEngineController) {
         String delegateKey = ((AggregateAnalysisEngineController) controller)
