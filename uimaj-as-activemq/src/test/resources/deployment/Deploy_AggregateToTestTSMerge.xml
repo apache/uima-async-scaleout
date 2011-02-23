@@ -29,7 +29,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/TypeSystemMergeTestAggregate.xml"/>
       </topDescriptor>
@@ -41,7 +41,7 @@
           </analysisEngine>
 
           <remoteAnalysisEngine key="GovOffReco" remoteReplyQueueScaleout="1">
-	                  <inputQueue endpoint="GovOfficialRecognizerQueue" brokerURL="tcp://localhost:8118"/>
+	                  <inputQueue endpoint="GovOfficialRecognizerQueue" brokerURL="${DefaultBrokerURL}"/>
 	                  <serializer method="xmi"/>
                       <asyncAggregateErrorConfiguration>
                             <getMetadataErrors maxRetries="3" timeout="5000" errorAction="continue" />
@@ -50,7 +50,7 @@
           </remoteAnalysisEngine>
 
           <remoteAnalysisEngine key="PersonTitleReco" remoteReplyQueueScaleout="1">
-	                  <inputQueue endpoint="NamesAndPersonTitlesQueue" brokerURL="tcp://localhost:8118"/>
+	                  <inputQueue endpoint="NamesAndPersonTitlesQueue" brokerURL="${DefaultBrokerURL}"/>
 	                  <serializer method="xmi"/>
                       <asyncAggregateErrorConfiguration>
                             <getMetadataErrors maxRetries="3" timeout="5000" errorAction="continue" />
@@ -59,7 +59,7 @@
           </remoteAnalysisEngine>
 
           <remoteAnalysisEngine key="TokenSentenceReco" remoteReplyQueueScaleout="1">
-	                  <inputQueue endpoint="TokenSentenceRecognizerQueue" brokerURL="tcp://localhost:8118"/>
+	                  <inputQueue endpoint="TokenSentenceRecognizerQueue" brokerURL="${DefaultBrokerURL}"/>
 	                  <serializer method="xmi"/>
                       <asyncAggregateErrorConfiguration>
                             <getMetadataErrors maxRetries="3" timeout="5000" errorAction="continue" />

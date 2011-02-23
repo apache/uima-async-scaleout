@@ -27,7 +27,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5" initialFsHeapSize="2000000"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/CasMultiplierAggregateWith2Multipliers.xml"/>
       </topDescriptor>
@@ -58,7 +58,7 @@
 			
           <remoteAnalysisEngine key="BlueJInnerRemoteCMAggregate">
             <casMultiplier poolSize="5" initialFsHeapSize="2000000"/> 
-            <inputQueue brokerURL="tcp://localhost:8118" endpoint="InnerAggregateQueue"/>
+            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="InnerAggregateQueue"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="disable"/>

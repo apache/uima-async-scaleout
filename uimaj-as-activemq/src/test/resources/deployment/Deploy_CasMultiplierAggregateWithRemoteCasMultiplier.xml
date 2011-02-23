@@ -27,7 +27,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5" initialFsHeapSize="2000000"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/SimpleTestCasMultiplierAggregateWithRemoteMultiplier.xml"/>
       </topDescriptor>
@@ -35,7 +35,7 @@
         <scaleout numberOfInstances="1"/>
         <delegates>
 		  <remoteAnalysisEngine key="SimpleCasGenerator">
-            <inputQueue brokerURL="tcp://localhost:8118" endpoint="TestMultiplierQueue"/>
+            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="TestMultiplierQueue"/>
             <casMultiplier poolSize="3" initialFsHeapSize="2000000"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="terminate"/>
@@ -45,7 +45,7 @@
           </remoteAnalysisEngine>
 
 		  <remoteAnalysisEngine key="NoOp">
-            <inputQueue brokerURL="tcp://localhost:8118" endpoint="NoOpAnnotatorQueue"/>
+            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="NoOpAnnotatorQueue"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="60000" errorAction="disable"/>

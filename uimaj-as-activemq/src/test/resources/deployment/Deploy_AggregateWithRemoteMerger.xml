@@ -29,7 +29,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/SimpleTestAggregateWithCasMerger.xml"/>
       </topDescriptor>
@@ -47,7 +47,7 @@
           </analysisEngine>
 
           <remoteAnalysisEngine key="TestMerger">
-	                  <inputQueue endpoint="TestMergerQueue" brokerURL="tcp://localhost:8118"/>
+	                  <inputQueue endpoint="TestMergerQueue" brokerURL="${DefaultBrokerURL}"/>
                       <casMultiplier poolSize="5"/>
 	                  <serializer method="xmi"/>
           </remoteAnalysisEngine>

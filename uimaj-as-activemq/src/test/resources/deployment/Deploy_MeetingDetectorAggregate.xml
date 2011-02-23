@@ -30,7 +30,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5"/> 
     <service>
-      <inputQueue endpoint="MeetingDetectorQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="MeetingDetectorQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
        <import location="../descriptors/tutorial/ex4/MeetingDetectorTAE.xml"/> 
       </topDescriptor>

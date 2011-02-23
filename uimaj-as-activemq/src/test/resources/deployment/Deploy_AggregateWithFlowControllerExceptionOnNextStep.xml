@@ -29,7 +29,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/ComplexNestedAggregate_TAE.xml"/>
       </topDescriptor>
@@ -41,7 +41,7 @@
           </analysisEngine>
 
           <remoteAnalysisEngine key="MeetingDetector">
-            <inputQueue endpoint="MeetingDetectorTaeQueue" brokerURL="tcp://localhost:8118"/>
+            <inputQueue endpoint="MeetingDetectorTaeQueue" brokerURL="${DefaultBrokerURL}"/>
             <serializer method="xmi"/>
           </remoteAnalysisEngine>
         </delegates>

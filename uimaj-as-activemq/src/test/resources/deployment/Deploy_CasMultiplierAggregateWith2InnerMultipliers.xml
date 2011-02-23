@@ -27,7 +27,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5" initialFsHeapSize="2000000"/>
     <service>
-      <inputQueue endpoint="InnerAggregateCMQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="InnerAggregateCMQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/CasMultiplierAggregateWith2InnerMultipliers.xml"/>
       </topDescriptor>

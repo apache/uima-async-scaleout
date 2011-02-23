@@ -30,7 +30,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5"/> 
     <service>
-      <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
        <import location="../descriptors/analysis_engine/NoOpAnnotatorWithDelay.xml"/> 
       </topDescriptor>

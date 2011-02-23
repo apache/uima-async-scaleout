@@ -27,7 +27,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="1"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/SimpleTestAggregateWithRetries.xml"/>
       </topDescriptor>
@@ -43,7 +43,7 @@
             </asyncAggregateErrorConfiguration>
           </analysisEngine>
           <remoteAnalysisEngine key="WriterAnnotatorA">
-            <inputQueue brokerURL="tcp://localhost:8118" endpoint="WriterAnnotatorA"/>
+            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="WriterAnnotatorA"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="terminate"/>
@@ -61,7 +61,7 @@
             </asyncAggregateErrorConfiguration>
           </analysisEngine>
           <remoteAnalysisEngine key="WriterAnnotatorB">
-            <inputQueue brokerURL="tcp://localhost:8118" endpoint="WriterAnnotatorB"/>
+            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="WriterAnnotatorB"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="terminate"/>

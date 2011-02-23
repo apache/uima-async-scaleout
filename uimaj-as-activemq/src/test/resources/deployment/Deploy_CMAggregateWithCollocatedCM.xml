@@ -27,7 +27,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="3" initialFsHeapSize="2000000"/> 
     <service>
-      <inputQueue endpoint="InnerAggregateQueue" brokerURL="tcp://localhost:8118" prefetch="0"/>
+      <inputQueue endpoint="InnerAggregateQueue" brokerURL="${DefaultBrokerURL}" prefetch="0"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/SimpleTestCMAggregateWithCollocatedCM.xml"/>
       </topDescriptor>
@@ -44,7 +44,7 @@
           </analysisEngine>
 			
           <remoteAnalysisEngine key="RemoteNoOp">
-            <inputQueue brokerURL="tcp://localhost:8118" endpoint="NoOpAnnotatorQueue"/>
+            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="NoOpAnnotatorQueue"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="disable"/>

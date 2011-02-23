@@ -26,7 +26,7 @@
   <vendor/>
   <deployment protocol="jms" provider="activemq">
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="0"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="0"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/SimpleTestCMAggregateWithCollocated1MillionCM.xml"/>
       </topDescriptor>
@@ -43,7 +43,7 @@
           </analysisEngine>
 			
           <remoteAnalysisEngine key="RemoteNoOp">
-            <inputQueue brokerURL="tcp://localhost:8118" endpoint="NoOpAnnotatorQueue"/>
+            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="NoOpAnnotatorQueue"/>
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="disable"/>

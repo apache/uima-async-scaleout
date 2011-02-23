@@ -29,7 +29,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="tcp://localhost:8118" prefetch="1"/>
+      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/SimpleTestAggregateWithParallelFlowCheck.xml"/>
       </topDescriptor>
@@ -41,7 +41,7 @@
           </analysisEngine>
 
           <remoteAnalysisEngine key="NoOp1">
-	                  <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="tcp://localhost:8118"/>
+	                  <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="${DefaultBrokerURL}"/>
 	                  <serializer method="xmi"/>
                       <asyncAggregateErrorConfiguration>
                             <getMetadataErrors maxRetries="0" timeout="4000" errorAction="terminate" />
@@ -50,7 +50,7 @@
           </remoteAnalysisEngine>
 
           <remoteAnalysisEngine key="NoOp2">
-	                  <inputQueue endpoint="NoOpAnnotatorQueue2" brokerURL="tcp://localhost:8118"/>
+	                  <inputQueue endpoint="NoOpAnnotatorQueue2" brokerURL="${DefaultBrokerURL}"/>
 	                  <serializer method="xmi"/>
                       <asyncAggregateErrorConfiguration>
                             <getMetadataErrors maxRetries="0" timeout="4000" errorAction="terminate" />

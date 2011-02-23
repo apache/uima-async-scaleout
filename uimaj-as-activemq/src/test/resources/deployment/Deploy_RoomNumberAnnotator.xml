@@ -30,7 +30,7 @@
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5"/> 
     <service>
-      <inputQueue endpoint="RoomNumberAnnotatorQueue" brokerURL="tcp://localhost:8118"/>
+      <inputQueue endpoint="RoomNumberAnnotatorQueue" brokerURL="${DefaultBrokerURL}"/>
       <topDescriptor>
        <import location="../descriptors/tutorial/ex2/RoomNumberAnnotator.xml"/> 
       </topDescriptor>
