@@ -19,16 +19,13 @@
 
 package org.apache.uima.ee.test.utils;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.ServerSocket;
+import java.net.BindException;
 import java.net.URI;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.management.ObjectName;
 
 import junit.framework.TestCase;
 
@@ -72,8 +69,6 @@ public class ActiveMQSupport extends TestCase {
   protected static final String relativeDataPath = "src" + System.getProperty("file.separator")
           + "test" + System.getProperty("file.separator") + "resources"
           + System.getProperty("file.separator") + "data";
-
-  private static Thread brokerThread = null;
 
   protected static TransportConnector httpConnector = null;
 
@@ -122,9 +117,7 @@ public class ActiveMQSupport extends TestCase {
   }
   protected String addHttpConnector(BrokerService aBroker, int aDefaultPort) throws Exception {
     try {
-      String httpURI = generateInternalURI("http", aDefaultPort);
-      httpConnector = aBroker.addConnector(httpURI);
-      
+      httpConnector = addConnector(aBroker, "http",aDefaultPort);
       //  Use reflection to determine if the AMQ version is at least 5.2. If it is, we must
       //  plug in a broker to the httpConnector otherwise we get NPE when starting the connector.
       //  AMQ version 4.1.1 doesn't exhibit this problem.
@@ -136,7 +129,7 @@ public class ActiveMQSupport extends TestCase {
       }
       System.out.println("Adding HTTP Connector:" + httpConnector.getConnectUri());
       httpConnector.start();
-      return httpURI;
+      return httpConnector.getUri().toString();
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -162,51 +155,22 @@ public class ActiveMQSupport extends TestCase {
     httpConnector.stop();
     broker.removeConnector(httpConnector);
   }
-  protected int findOpenPort(int startWithPort) {
-    boolean success = false;
-    ServerSocket ssocket = null;
-
-    while (!success) {
+  
+  protected TransportConnector addConnector(BrokerService aBroker, String type, int basePort) throws Exception {
+    boolean found = false;
+    TransportConnector transportConnector = null;
+    while( !found ) {
       try {
-        ssocket = new ServerSocket(startWithPort);
-        success = true;
-      } catch (Exception e) {
-        startWithPort++;
-      } finally {
-        try {
-          if (ssocket != null) {
-            ssocket.close();
-          }
-        } catch (IOException ioe) {
-        }
+        String uri = "tcp://localhost:" + basePort;
+        transportConnector = aBroker.addConnector(uri);
+        found = true;
+      } catch ( BindException e) {
+        basePort++;
+      } catch( Exception e) {
+        throw e;
       }
     }
-    return startWithPort;
-  }
-  private String generateInternalURI(String aProtocol, int aDefaultPort) throws Exception {
-    boolean success = false;
-    int openPort = aDefaultPort;
-    ServerSocket ssocket = null;
-
-    while (!success) {
-      try {
-        ssocket = new ServerSocket(openPort);
-        String uri = aProtocol + "://localhost:" + openPort;
-        success = true;
-        return uri;
-      } catch (Exception e) {
-        openPort++;
-      } finally {
-        try {
-          if (ssocket != null) {
-            ssocket.close();
-          }
-        } catch (IOException ioe) {
-        }
-      }
-    }
-    return null;
-
+    return transportConnector;
   }
 
   protected String getBrokerUri() {
@@ -222,16 +186,17 @@ public class ActiveMQSupport extends TestCase {
   }
 
   public BrokerService createBroker() throws Exception {
-    return createBroker(findOpenPort(DEFAULT_BROKER_PORT), true, false);
+    return createBroker(DEFAULT_BROKER_PORT, true, false);
   }
 
   protected BrokerService createBroker(int port, boolean useJmx, boolean secondaryBroker) throws Exception {
-    System.out.println(">>>> Starting Broker On Port:" + port);
       String hostName = "localhost"; 
-      uri = "tcp://" + hostName + ":" + port;
-      BrokerService broker = BrokerFactory.createBroker(new URI("broker:()/" + hostName
-              + "?persistent=false"));
-      tcpConnector = broker.addConnector(uri);
+      BrokerService broker = 
+        BrokerFactory.createBroker(new URI("broker:()/" + hostName + "?persistent=false"));
+      tcpConnector = addConnector(broker, "tcp",port);
+      uri = tcpConnector.getUri().toString();
+      System.out.println(">>>> Starting Broker With URL:" + uri);
+
       if ( secondaryBroker ) {
         broker.getManagementContext().setJmxDomainName(broker.getManagementContext().getJmxDomainName()+".test");      
         tcpConnector.setName(DEFAULT_BROKER_URL_KEY_2);
@@ -261,7 +226,7 @@ public class ActiveMQSupport extends TestCase {
   }
   protected BrokerService setupSecondaryBroker(boolean addProperty) throws Exception {
     System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-    BrokerService broker2 = createBroker(findOpenPort(DEFAULT_BROKER_PORT_2), true, true);
+    BrokerService broker2 = createBroker(DEFAULT_BROKER_PORT_2, true, true);
     broker2.start();
     if ( addProperty ) {
       System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
