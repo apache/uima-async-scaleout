@@ -198,7 +198,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       BrokerService broker2 = setupSecondaryBroker(false);
 
-      String bhttpURL = addHttpConnector(broker2, findOpenPort(DEFAULT_HTTP_PORT2));
+      String bhttpURL = addHttpConnector(broker2, DEFAULT_HTTP_PORT2);
       String burl = "failover:("+bhttpURL+","+broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString().replaceAll("tcp","http")+")?randomize=false";
       System.setProperty("BrokerURL", burl); 
       // Deploy Uima AS Primitive Service
