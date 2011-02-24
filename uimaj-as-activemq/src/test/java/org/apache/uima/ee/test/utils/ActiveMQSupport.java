@@ -161,7 +161,7 @@ public class ActiveMQSupport extends TestCase {
     TransportConnector transportConnector = null;
     while( !found ) {
       try {
-        String uri = "tcp://localhost:" + basePort;
+        String uri = type+"://localhost:" + basePort;
         transportConnector = aBroker.addConnector(uri);
         found = true;
       } catch ( BindException e) {
