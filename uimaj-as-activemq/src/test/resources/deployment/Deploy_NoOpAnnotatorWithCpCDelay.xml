@@ -32,7 +32,7 @@
     <service>
       <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
-       <import location="../descriptors/analysis_engine/NoOpAnnotatorWithCpCDelay.xml"/> 
+       <import location="../descriptors/analysis_engine/NoOpAnnotatorWithCpcDelay.xml"/> 
       </topDescriptor>
       <analysisEngine>
       <asyncPrimitiveErrorConfiguration>
