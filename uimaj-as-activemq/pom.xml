@@ -286,6 +286,7 @@
 		        </executions>
 			  <configuration>
 			    <argLine>-Xmx1024M</argLine>
+			    <encoding>UTF-8</encoding>
 			    <includes>
 				  <include>**/TestUimaASBasic.java</include>
 				  <include>**/TestUimaASExtended.java</include>
