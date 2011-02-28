@@ -40,6 +40,7 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.store.memory.MemoryPersistenceAdapter;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.util.Level;
 
 public class ActiveMQSupport extends TestCase {
@@ -156,7 +157,8 @@ public class ActiveMQSupport extends TestCase {
     broker.removeConnector(httpConnector);
   }
   
-  protected TransportConnector addConnector(BrokerService aBroker, String type, int basePort) throws Exception {
+  protected TransportConnector addConnector(BrokerService aBroker, String type, int basePort) 
+  throws BrokerConnectionException{
     boolean found = false;
     TransportConnector transportConnector = null;
     while( !found ) {
@@ -167,7 +169,7 @@ public class ActiveMQSupport extends TestCase {
       } catch ( BindException e) {
         basePort++;
       } catch( Exception e) {
-        throw e;
+        throw new BrokerConnectionException("Unexpected Exception While Connecting to Broker with URL:"+uri+"\n"+e);
       }
     }
     return transportConnector;
