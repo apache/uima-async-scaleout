@@ -136,32 +136,6 @@ public class VmTransport implements UimaTransport {
       UimaVmMessageDispatcher dispatcher = entry.getValue();
       dispatcher.stop();
     }
-    if (threadGroup != null) {
-      // Spin a thread where we wait for threads in the threadGroup to stop.
-      new Thread(threadGroup.getParent(), threadGroup.getName() + ":Reaper") {
-        public void run() {
-
-          while (threadGroup.activeCount() > 0) {
-            synchronized (this) {
-              try {
-                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-                  threadGroup.list();
-                }
-                wait(1000);
-              } catch (InterruptedException ex) {
-
-              }
-            }
-          }
-          try {
-            threadGroup.destroy();
-          } catch (Exception e) {
-          } finally {
-            threadGroup = null;
-          }
-        }
-      }.start();
-    }
   }
 
   public void destroy() {
@@ -180,12 +154,15 @@ public class VmTransport implements UimaTransport {
       // a fixed number of threads that never expire and are never passivated.
       executor = new ThreadPoolExecutor(concurrentConsumerCount, concurrentConsumerCount,
               Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue);
+      UimaAsThreadFactory tf = null;
       if (controller instanceof PrimitiveAnalysisEngineController) {
-        UimaAsThreadFactory tf = new UimaAsThreadFactory(threadGroup,
+        tf = new UimaAsThreadFactory(threadGroup,
                 (PrimitiveAnalysisEngineController) controller);
-        tf.setDaemon(true);
-        executor.setThreadFactory(tf);
+      } else {
+        tf = new UimaAsThreadFactory(threadGroup,null);
       }
+      tf.setDaemon(true);
+      executor.setThreadFactory(tf);
       executor.prestartAllCoreThreads();
       controller.changeState(ServiceState.RUNNING);
     }
