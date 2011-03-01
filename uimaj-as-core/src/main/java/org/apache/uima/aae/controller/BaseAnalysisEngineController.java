@@ -537,7 +537,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
       StringBuffer platformInfo = new StringBuffer();
       platformInfo.append("\n+------------------------------------------------------------------");
-      platformInfo.append("\n                   Starting UIMA AS Service - PID:" + processPid);
+      platformInfo.append("\n                   Starting UIMA AS Service - PID: " + processPid);
       platformInfo.append("\n+------------------------------------------------------------------");
       platformInfo.append("\n+ Service Name:" + serviceName);
       platformInfo.append("\n+ Service Queue Name:" + endpointName);
