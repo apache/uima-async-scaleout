@@ -915,7 +915,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   public void shutdownTaskExecutor(ThreadPoolExecutor tpe) throws InterruptedException {
     tpe.purge();
     tpe.shutdownNow();
-    tpe.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
   /**
    * Spins a shutdown thread and stops Sprint and ActiveMQ threads.
@@ -940,7 +939,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
                 ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().purge();
                   ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdownNow();
-                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
                 } else if (concurrentListener != null) {
                   shutdownTaskExecutor(concurrentListener.getTaskExecutor());
                   concurrentListener.stop();
