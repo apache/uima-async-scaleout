@@ -126,6 +126,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected InitialContext jndiContext;
   
   private ObjectName clientJmxObjectName = null;
+  
+  
   public BaseUIMAAsynchronousEngine_impl() {
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
             "UIMA-AS version " + UIMAFramework.getVersionString());
@@ -551,8 +553,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
           throws ResourceInitializationException {
     // Add ShutdownHook to make sure the connection to the
     // broker is always closed on process exit.
-    Runtime.getRuntime().addShutdownHook(
-            new Thread(new UimaASShutdownHook(this)));
+    shutdownHookThread = new Thread(new UimaASShutdownHook(this));
+    Runtime.getRuntime().addShutdownHook(shutdownHookThread);
+           
     // Check the version of uimaj that UIMA AS was built with, against the UIMA Core version. If not the same throw Exception
     if (!UimaAsVersion.getUimajFullVersionString().equals(UimaVersion.getFullVersionString())) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(
