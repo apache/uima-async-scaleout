@@ -197,6 +197,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   protected static SharedConnection sharedConnection = null;
 
+  protected Thread shutdownHookThread = null;
+
   private ExecutorService exec = Executors.newFixedThreadPool(1);
   
   abstract public String getEndPointName() throws Exception;
@@ -486,6 +488,13 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                   "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_exception__WARNING", e);
+        }
+      } finally {
+        //  Shutdown hook has been previously added in case an epplication 'forgets'
+        //  to call stop. Since we are in the stop() method, the hook is no longer 
+        //  needed.
+        if ( shutdownHookThread != null ) {
+          Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
         }
       }
     }
