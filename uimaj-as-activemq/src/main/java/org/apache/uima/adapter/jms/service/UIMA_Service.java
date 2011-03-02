@@ -450,11 +450,13 @@ public class UIMA_Service implements ApplicationListener {
 
     public void run() {
       try {
-    	AnalysisEngineController topLevelController = serviceDeployer.getTopLevelController();
-    	if (topLevelController != null && !topLevelController.isStopped() ) {
-          System.err.println("Uima AS Service Wrapper Caught Kill Signal - Initiating Quiesce and Stop");
-          serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
-    	}
+      	AnalysisEngineController topLevelController = serviceDeployer.getTopLevelController();
+      	if (topLevelController != null && !topLevelController.isStopped() ) {
+      	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_caught_signal__INFO", new Object[] { topLevelController.getComponentName() });
+    	    serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+    	  }
       } catch( Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
