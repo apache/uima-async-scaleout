@@ -167,6 +167,8 @@ public class ActiveMQSupport extends TestCase {
         String uri = type+"://localhost:" + basePort;
         transportConnector = aBroker.addConnector(uri);
         found = true;
+      } catch ( BindException e) { 
+        basePort++;
       } catch ( IOException e) {
         if ( e.getCause() != null && e.getCause() instanceof BindException ) {
           basePort++;
