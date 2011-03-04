@@ -22,7 +22,9 @@ package org.apache.uima.aae.handler.input;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
+import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.handler.HandlerBase;
@@ -129,6 +131,7 @@ public class MetadataResponseHandler_impl extends HandlerBase {
               fromServer = ((MessageContext) anObjectToHandle)
                       .getMessageStringProperty(AsynchAEMessage.EndpointServer);
             }
+            ((AggregateAnalysisEngineController)getController()).changeCollocatedDelegateState(delegateKey, ServiceState.RUNNING);
             // If old service does not echo back the external broker name then the queue name must
             // be unique.
             // The ServerURI set by the service may be its local name for the broker, e.g.
