@@ -1462,13 +1462,14 @@ public class JmsOutputChannel implements OutputChannel {
           if (aSerializedCAS != null) {
             msgSize = ((String)aSerializedCAS).length();
           }
-
+          tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.XMIPayload);
         } else {
           // Create empty JMS Bytes Message
           tm = endpointConnection.produceByteMessage((byte[])aSerializedCAS);
           if (aSerializedCAS != null) {
             msgSize = ((byte[])aSerializedCAS).length;
           }
+          tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.BinaryPayload);
         }
       } catch (AsynchAEException ex) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -1481,7 +1482,6 @@ public class JmsOutputChannel implements OutputChannel {
                   	anEndpoint.getDestination(), brokerConnectionURL, entry.getInputCasReferenceId() == null ? "" : entry.getInputCasReferenceId(), entry.getCasReferenceId(), 0, ex  });
         return;
       }
-      tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.BinaryPayload);
       // Add Cas Reference Id to the outgoing JMS Header
       tm.setStringProperty(AsynchAEMessage.CasReference, entry.getCasReferenceId());
       // Add common properties to the JMS Header
