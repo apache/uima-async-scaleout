@@ -1451,6 +1451,19 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public void sendRequestForMetadataToRemoteDelegates() throws AsynchAEException {
     synchronized(childControllerList) {
+      //  Add a delay of 100ms before sending requests for metadata to remote delegates.
+      //  This is done to give the broker enough time to 'finalize' creation of
+      //  temp reply queues for each remote delegate. It's been observed (on MAC OS only) that AMQ
+      //  broker QueueSession.createTemporaryQueue() call is not synchronous. Meaning,
+      //  return from createTemporaryQueue() does not guarantee immediate availability
+      //  of the temp queue. It seems like this operation is asynchronous, causing: 
+      //  "InvalidDestinationException: Cannot publish to a deleted Destination..."
+      //  when a request is send quickly to a service before the broker 'finalizes'
+      //  creation of the temp queue.
+      try {
+        childControllerList.wait(100);
+      } catch( InterruptedException e) {}
+      
       if ( childControllerList.size() > 0 ) {
         for( AnalysisEngineController childController : childControllerList ) {
           if (childController instanceof AggregateAnalysisEngineController) {
