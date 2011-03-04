@@ -826,6 +826,15 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   public ArrayList<ControllerCallbackListener> getCallbackListeners() {
 	  return this.listeners;
   }
+
+  public String getKey() {
+    return "";
+  }
+
+  public void dumpState() {
+    // TODO Auto-generated method stub
+    
+  }
 }
 
 /**
