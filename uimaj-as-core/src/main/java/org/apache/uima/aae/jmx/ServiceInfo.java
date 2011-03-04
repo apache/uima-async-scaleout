@@ -99,6 +99,11 @@ public class ServiceInfo implements ServiceInfoMBean {
     }
   }
 
+  public void dumpState() {
+    if ( controller != null ) {
+      controller.dumpState();
+    }    
+  }
   public void setState(String aState) {
     state = aState;
   }
