@@ -1075,4 +1075,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 
   }
+
+  public void dumpState() {
+    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "dumpState",
+            UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_state__INFO",
+            new Object[] { getComponentName()+" State:"+getState()});
+    
+  }
 }
