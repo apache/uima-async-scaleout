@@ -19,6 +19,7 @@
 
 package org.apache.uima.ee.test.utils;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.BindException;
 import java.net.URI;
@@ -166,8 +167,12 @@ public class ActiveMQSupport extends TestCase {
         String uri = type+"://localhost:" + basePort;
         transportConnector = aBroker.addConnector(uri);
         found = true;
-      } catch ( BindException e) {
-        basePort++;
+      } catch ( IOException e) {
+        if ( e.getCause() != null && e.getCause() instanceof BindException ) {
+          basePort++;
+        } else {
+          throw new BrokerConnectionException("Unexpected Exception While Connecting to Broker with URL:"+uri+"\n"+e);
+        }
       } catch( Exception e) {
         throw new BrokerConnectionException("Unexpected Exception While Connecting to Broker with URL:"+uri+"\n"+e);
       }
