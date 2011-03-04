@@ -164,7 +164,7 @@ public class VmTransport implements UimaTransport {
       tf.setDaemon(true);
       executor.setThreadFactory(tf);
       executor.prestartAllCoreThreads();
-      controller.changeState(ServiceState.RUNNING);
+      //controller.changeState(ServiceState.RUNNING);
     }
     return executor;
   }
