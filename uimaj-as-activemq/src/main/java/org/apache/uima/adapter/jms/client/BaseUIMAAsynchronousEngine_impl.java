@@ -710,6 +710,17 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
                       "UIMAJMS_client_interrupted_while_acquiring_getmeta_semaphore__WARNING");
             }
       }
+      //  Add a delay of 100ms before sending a request for metadata to remote service.
+      //  This is done to give the broker enough time to 'finalize' creation of
+      //  temp reply queue. It's been observed (on MAC OS only) that AMQ
+      //  broker QueueSession.createTemporaryQueue() call is not synchronous. Meaning,
+      //  return from createTemporaryQueue() does not guarantee immediate availability
+      //  of the temp queue. It seems like this operation is asynchronous, causing: 
+      //  "InvalidDestinationException: Cannot publish to a deleted Destination..."
+      //  on the service side when it tries to reply to the client.
+      try {
+        wait(100);
+      } catch( InterruptedException e) {}
       sendMetaRequest();
       waitForMetadataReply();
       if (abort || !running) {
