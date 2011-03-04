@@ -40,6 +40,7 @@ import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.ControllerDelegate;
 import org.apache.uima.aae.delegate.Delegate;
@@ -2683,7 +2684,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         //  
         if (collocatedAggregate || resource instanceof ProcessingResourceMetaData) {
           if (allTypeSystemsMerged()) {
-
             for (int i = 0; i < remoteCasMultiplierList.size(); i++) {
               Endpoint endpt = (Endpoint) destinationMap.get((String) remoteCasMultiplierList
                       .get(i));
@@ -3075,7 +3075,55 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
     }
   }
-
+  
+  public void changeCollocatedDelegateState( String delegateKey, ServiceState state ) throws Exception {
+    if ( delegateKey != null && state != null ) {
+      synchronized(childControllerList) {
+        if ( childControllerList.size() > 0 ) {
+          for( AnalysisEngineController childController : childControllerList ) {
+            if ( delegateKey.equals(childController.getKey())) {
+              childController.changeState(state);
+            }
+          }
+        }
+      }
+    } else {
+      throw new Exception("Controller:"+getComponentName()+" Unable to change state of colocated delegate");
+    }
+  }
+  
+  public void dumpState() {
+    StringBuffer remoteDelegates = new StringBuffer("------------ "+getComponentName()+" Remote Delegates:\n\t");
+    StringBuffer colocatedDelegates = new StringBuffer("------------ "+getComponentName()+" Colocated Delegates:\n\t");
+    
+    synchronized(destinationMap) {
+      Set set = destinationMap.entrySet();
+      for (Iterator it = set.iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
+        Endpoint endpoint = (Endpoint) entry.getValue();
+        if ( endpoint.isRemote() ) {
+            if ( endpoint.isInitialized() ) {
+              remoteDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
+            } else {
+              remoteDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
+            }
+            remoteDelegates.append("\n\t");
+        } else {
+          if ( endpoint.isInitialized() ) {
+            colocatedDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
+          } else {
+            colocatedDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
+          }
+          colocatedDelegates.append("\n\t");
+        }
+      }
+      
+    }
+    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "dumpState",
+            UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_state__INFO",
+            new Object[] { "\n"+remoteDelegates.toString()+"\n"+colocatedDelegates.toString()});
+  
+  }
   public LocalCache getLocalCache() {
     return localCache;
   }
