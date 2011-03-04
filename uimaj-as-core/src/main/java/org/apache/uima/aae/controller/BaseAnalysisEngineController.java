@@ -250,6 +250,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   
   private String serviceName=null;
   
+  public abstract void dumpState();
+
   public BaseAnalysisEngineController() {
 
   }
@@ -1445,6 +1447,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   public String getName() {
     return endpointName;
+  }
+
+  public String getKey() {
+    return delegateKey;
   }
 
   public void process(CAS aCas, String aCasId) {
@@ -2764,6 +2770,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
   }
   
+
   public Map<String,String> getDeadClientMap() {
 	  return deadClientDestinationMap;
   }
