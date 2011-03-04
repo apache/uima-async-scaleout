@@ -490,11 +490,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   "UIMAEE_exception__WARNING", e);
         }
       } finally {
-        //  Shutdown hook has been previously added in case an epplication 'forgets'
+        //  Shutdown hook has been previously added in case an application 'forgets'
         //  to call stop. Since we are in the stop() method, the hook is no longer 
-        //  needed.
+        //  needed. Catch IllegalStateException which is thrown by JVM if it is already 
+        //  in the process of shutting down
         if ( shutdownHookThread != null ) {
-          Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
+          try {
+            Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
+          } catch( IllegalStateException e) {}
         }
       }
     }
