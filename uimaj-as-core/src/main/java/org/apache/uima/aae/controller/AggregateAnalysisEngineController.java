@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.uima.UimaContext;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.AggregateServiceInfo;
@@ -126,4 +127,7 @@ public interface AggregateAnalysisEngineController extends AnalysisEngineControl
   public void stopCasMultiplier(Delegate casMultiplier, String aCasReferenceId);
 
   public void setCasLoggingDirectory(String key, String directoryName);
+  
+  public void changeCollocatedDelegateState( String delegateKey, ServiceState state ) throws Exception;
+
 }
