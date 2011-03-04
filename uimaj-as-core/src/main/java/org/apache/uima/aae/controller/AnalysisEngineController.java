@@ -222,4 +222,7 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public Map<String,String> getDeadClientMap();
 
+  public String getKey();
+  
+  public void dumpState();
 }
