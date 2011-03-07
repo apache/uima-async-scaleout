@@ -3091,38 +3091,51 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       throw new Exception("Controller:"+getComponentName()+" Unable to change state of colocated delegate");
     }
   }
+
   
-  public void dumpState() {
-    StringBuffer remoteDelegates = new StringBuffer("------------ "+getComponentName()+" Remote Delegates:\n\t");
-    StringBuffer colocatedDelegates = new StringBuffer("------------ "+getComponentName()+" Colocated Delegates:\n\t");
+  public void dumpState(StringBuffer buffer, String lbl1) {
     
+    StringBuffer delegates = new StringBuffer();
+    boolean first = false;
+    if ( buffer.length() == 0) {
+      first = true;
+      delegates.append("\n"+lbl1+getComponentName()+" Delegates:");
+    }
+    int remotes=0;
     synchronized(destinationMap) {
       Set set = destinationMap.entrySet();
       for (Iterator it = set.iterator(); it.hasNext();) {
+        delegates.append("\n");
         Map.Entry entry = (Map.Entry) it.next();
         Endpoint endpoint = (Endpoint) entry.getValue();
         if ( endpoint.isRemote() ) {
             if ( endpoint.isInitialized() ) {
-              remoteDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
+              delegates.append(lbl1+lbl1+"Remote Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
             } else {
-              remoteDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
+              delegates.append(lbl1+lbl1+"Remote Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
             }
-            remoteDelegates.append("\n\t");
         } else {
           if ( endpoint.isInitialized() ) {
-            colocatedDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
+            delegates.append(lbl1+lbl1+"Co-located Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
           } else {
-            colocatedDelegates.append("Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
+            delegates.append(lbl1+lbl1+"Co-located Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
           }
-          colocatedDelegates.append("\n\t");
+          synchronized(childControllerList) {
+            if ( childControllerList.size() > 0 ) {
+              for( AnalysisEngineController childController : childControllerList ) {
+                if ( endpoint.getDelegateKey().equals(childController.getKey()) && !childController.isPrimitive()) {
+                  buffer.append(delegates.toString());
+                  childController.dumpState(buffer,lbl1+lbl1);
+                  delegates.setLength(0);
+                }
+              }
+            }
+          }
         }
       }
       
     }
-    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "dumpState",
-            UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_state__INFO",
-            new Object[] { "\n"+remoteDelegates.toString()+"\n"+colocatedDelegates.toString()});
-  
+    buffer.append(delegates.toString());
   }
   public LocalCache getLocalCache() {
     return localCache;
