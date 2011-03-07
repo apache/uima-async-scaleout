@@ -830,8 +830,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   public String getKey() {
     return "";
   }
-
-  public void dumpState() {
+  public void dumpState(StringBuffer buffer, String lbl1) {
     // TODO Auto-generated method stub
     
   }
