@@ -250,7 +250,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   
   private String serviceName=null;
   
-  public abstract void dumpState();
+  public abstract void dumpState(StringBuffer buffer, String lbl1);
 
   public BaseAnalysisEngineController() {
 
