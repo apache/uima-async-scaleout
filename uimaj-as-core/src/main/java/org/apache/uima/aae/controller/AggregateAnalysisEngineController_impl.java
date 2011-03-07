@@ -3096,30 +3096,28 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   public void dumpState(StringBuffer buffer, String lbl1) {
     
     StringBuffer delegates = new StringBuffer();
-    boolean first = false;
     if ( buffer.length() == 0) {
-      first = true;
       delegates.append("\n"+lbl1+getComponentName()+" Delegates:");
     }
-    int remotes=0;
     synchronized(destinationMap) {
       Set set = destinationMap.entrySet();
+      // For all delegates ...
       for (Iterator it = set.iterator(); it.hasNext();) {
         delegates.append("\n");
         Map.Entry entry = (Map.Entry) it.next();
         Endpoint endpoint = (Endpoint) entry.getValue();
+        ServiceState state = ServiceState.INITIALIZING;
         if ( endpoint.isRemote() ) {
             if ( endpoint.isInitialized() ) {
-              delegates.append(lbl1+lbl1+"Remote Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
-            } else {
-              delegates.append(lbl1+lbl1+"Remote Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
+              state = ServiceState.RUNNING;
             }
+            delegates.append(lbl1+lbl1+"Remote Delegate:"+endpoint.getDelegateKey()+" State: "+state.toString());
         } else {
           if ( endpoint.isInitialized() ) {
-            delegates.append(lbl1+lbl1+"Co-located Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.RUNNING);
-          } else {
-            delegates.append(lbl1+lbl1+"Co-located Delegate:"+endpoint.getDelegateKey()+" State: "+ServiceState.INITIALIZING);
+            state = ServiceState.RUNNING;
           }
+          delegates.append(lbl1+lbl1+"Co-located Delegate:"+endpoint.getDelegateKey()+" State: "+state.toString());
+          //  If a delegate is an aggregate, call its dumpState method
           synchronized(childControllerList) {
             if ( childControllerList.size() > 0 ) {
               for( AnalysisEngineController childController : childControllerList ) {
