@@ -224,5 +224,5 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public String getKey();
   
-  public void dumpState();
+  public void dumpState(StringBuffer buffer, String lbl1);
 }
