@@ -42,6 +42,6 @@ public interface ServiceInfoMBean extends Serializable {
   
   public String getCmRegisteredName();
   
-  public void dumpState();
+  public String dumpState();
 
 }

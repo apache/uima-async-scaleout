@@ -105,15 +105,13 @@ public class ServiceInfo implements ServiceInfoMBean {
     }
   }
 
-  public void dumpState() {
+  public String dumpState() {
     if ( controller != null ) {
       StringBuffer buffer = new StringBuffer();
       controller.dumpState(buffer,"  ");
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "dumpState",
-              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_state__INFO",
-              new Object[] { buffer.toString() });
-
+      return buffer.toString();
     }    
+    return "";
   }
   public void setState(String aState) {
     state = aState;
