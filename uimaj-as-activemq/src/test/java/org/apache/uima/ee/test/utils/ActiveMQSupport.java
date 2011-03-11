@@ -118,28 +118,33 @@ public class ActiveMQSupport extends TestCase {
     return addHttpConnector(broker, aDefaultPort);
   }
   protected String addHttpConnector(BrokerService aBroker, int aDefaultPort) throws Exception {
-    try {
-      httpConnector = addConnector(aBroker, "http",aDefaultPort);
-      //  Use reflection to determine if the AMQ version is at least 5.2. If it is, we must
-      //  plug in a broker to the httpConnector otherwise we get NPE when starting the connector.
-      //  AMQ version 4.1.1 doesn't exhibit this problem.
+    boolean found = false;
+    while( !found ) {
       try {
-        Method m = httpConnector.getClass().getDeclaredMethod("setBrokerService", new Class[] {BrokerService.class});
-        m.invoke(httpConnector, aBroker);
-      } catch ( NoSuchMethodException e) {
-        //  Ignore, this is not AMQ 5.2
-      }
-      System.out.println("Adding HTTP Connector:" + httpConnector.getConnectUri());
-      httpConnector.start();
-      return httpConnector.getUri().toString();
-    } catch (Exception e) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "addHttpConnector", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", e);
-      }
-      throw e;
+        httpConnector = addConnector(aBroker, "http",aDefaultPort);
+        //  Use reflection to determine if the AMQ version is at least 5.2. If it is, we must
+        //  plug in a broker to the httpConnector otherwise we get NPE when starting the connector.
+        //  AMQ version 4.1.1 doesn't exhibit this problem.
+        try {
+          Method m = httpConnector.getClass().getDeclaredMethod("setBrokerService", new Class[] {BrokerService.class});
+          m.invoke(httpConnector, aBroker);
+        } catch ( NoSuchMethodException e) {
+          //  Ignore, this is not AMQ 5.2
+        }
+        System.out.println("Adding HTTP Connector:" + httpConnector.getConnectUri());
+        httpConnector.start();
+        return httpConnector.getUri().toString();
+      } catch ( BindException e) { 
+        aDefaultPort++;
+      } catch ( IOException e) {
+        if ( e.getCause() != null && e.getCause() instanceof BindException ) {
+          aDefaultPort++;
+        } else {
+          throw new BrokerConnectionException("Unexpected Exception While Connecting to Broker with URL:"+uri+"\n"+e);
+        }
+      } 
     }
+    throw new BrokerConnectionException("Unable to acquire Open Port for HTTPConnector");
   }
   protected String getHttpURI() throws Exception {
     while ( httpConnector == null  ) {
