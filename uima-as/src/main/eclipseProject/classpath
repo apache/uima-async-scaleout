@@ -62,7 +62,6 @@
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-tx-3.0.3.RELEASE.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-camel-5.4.1.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-spring-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-all-5.4.1.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/geronimo-jms_1.1_spec-1.1.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-beans-3.0.3.RELEASE.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-expression-3.0.3.RELEASE.jar"/>
@@ -70,7 +69,6 @@
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-console-5.4.1.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/kahadb-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-context-3.0.3.RELEASE.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-jms-3.0.3.RELEASE.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/commons-codec-1.2.jar"/>
