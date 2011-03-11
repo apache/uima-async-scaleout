@@ -150,6 +150,9 @@ under the License.
        -->
       <excludes>
         <exclude>descriptors/collection_reader/FileSystemCollectionReader.xml</exclude>
+        <!--  These ought to be excluded always. We need UIMA AS versions of these
+              from eclipseProject folder under uima-as  -->
+        <exclude>.classpath</exclude>
       </excludes> 
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>
