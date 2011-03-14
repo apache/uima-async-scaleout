@@ -356,7 +356,11 @@ under the License.
       <destName>README.uimaj.txt</destName>
       <fileMode>644</fileMode>
     </file>
-    
+    <file>
+      <source>target/uimaj/apache-uima/examples/.project</source>
+      <outputDirectory>examples</outputDirectory>
+      <fileMode>644</fileMode> 
+    </file>
     <file>
       <source>target/uimaj/apache-uima/RELEASE_NOTES.html</source>
       <outputDirectory/>
