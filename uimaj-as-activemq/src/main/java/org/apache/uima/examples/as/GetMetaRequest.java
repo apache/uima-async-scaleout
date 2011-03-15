@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.jms.Connection;
+import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
@@ -73,11 +74,11 @@ public class GetMetaRequest {
         System.exit(1);
       }
     }
-    Connection connection = null;
+    final Connection connection;
     Session producerSession = null;
     Queue producerQueue = null;
-    MessageProducer producer = null;
-    MessageConsumer consumer = null;
+    MessageProducer producer;
+    MessageConsumer consumer;
     Session consumerSession = null;
     TemporaryQueue consumerDestination = null;
     long startTime = 0;
@@ -89,6 +90,28 @@ public class GetMetaRequest {
     }
 
     try {
+      //  First create connection to a broker
+      ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerURI);
+      connection = factory.createConnection();
+      connection.start();
+      Runtime.getRuntime().addShutdownHook( 
+         new Thread(
+              new Runnable() {
+                  public void run() {
+                    try {
+                        if ( connection != null ) {
+                          connection.close();
+                        } 
+                        if ( jmxc != null ) {
+                          jmxc.close();
+                        }
+                    } catch( Exception ex) {
+                    }
+                  }       
+              }
+         )
+      );
+      
       URI target = new URI(brokerURI);
       String brokerHost = target.getHost();
 
@@ -105,18 +128,21 @@ public class GetMetaRequest {
         System.out.println("Cannot see queues on JMX port "+brokerHost+":"+jmxPort);
         System.out.println("Sending getMeta anyway...");
       }
-      
-      ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerURI);
-      connection = factory.createConnection();
-      connection.start();
 
       producerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
       producerQueue = producerSession.createQueue(queueName);
       producer = producerSession.createProducer(producerQueue);
       consumerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
       consumerDestination = consumerSession.createTemporaryQueue();
-      consumer = consumerSession.createConsumer(consumerDestination);
-
+      //  -----------------------------------------------------------------------------
+      //  Create message consumer. The consumer uses a selector to filter out messages other
+      //  then GetMeta replies. Currently UIMA AS service returns two messages for each request:
+      //  ServiceInfo message and GetMeta message. The ServiceInfo messageis returned by the 
+      //  service immediately upon receiving a message from a client. This serves dual purpose, 
+      //  1) to make sure the client reply destination exists
+      //  2) informs the client which service is processing its request
+      //  -----------------------------------------------------------------------------
+      consumer = consumerSession.createConsumer(consumerDestination, "Command=2001");
       TextMessage msg = producerSession.createTextMessage();
       msg.setStringProperty(AsynchAEMessage.MessageFrom, consumerDestination.getQueueName());
       msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
@@ -128,19 +154,18 @@ public class GetMetaRequest {
       startTime = System.nanoTime();
 
       System.out.println("Sent getMeta request to " + queueName + " at " + brokerURI);
-      System.out.println("Waiting for reply...");
+      System.out.println("Waiting for getMeta reply...");
       ActiveMQTextMessage reply = (ActiveMQTextMessage) consumer.receive();
       long waitTime = (System.nanoTime() - startTime)/1000000;
       System.out.println("Reply received in " + waitTime + " ms");
       if (printReply) {
         System.out.println("Reply MessageText: " + reply.getText());
       }
-      System.exit(0);
     } catch (Exception e) {
       System.err.println(e.toString());
-//      e.printStackTrace();
     }
-  }
+    System.exit(0);
+}
   /**
    * Connects to this service Broker's JMX Server. If unable to connect, this method
    * fails silently. The method uses default JMX Port number 1099 to create a connection
