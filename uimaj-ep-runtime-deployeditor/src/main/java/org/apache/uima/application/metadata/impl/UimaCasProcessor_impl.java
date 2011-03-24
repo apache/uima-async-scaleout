@@ -303,7 +303,9 @@ public class UimaCasProcessor_impl extends AbstractUimaCasProcessor implements U
             // Create a name from URI
             String name = "Unknow";
             try {
-                name = new URI(specifier.getUri()).getPath();
+              // use 3 arg form of URI Constructor to properly quote any otherwise illegal chars such as blank
+              // https://issues.apache.org/jira/browse/UIMA-2097
+              name = UriUtils.quote(specifier.getUri()).getPath();
             } catch (URISyntaxException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -377,7 +379,7 @@ public class UimaCasProcessor_impl extends AbstractUimaCasProcessor implements U
             // Create a name from URI
             String name = "Unknow";
             try {
-                name = new URI(specifier.getUri()).getPath();
+              name = UriUtils.quote(specifier.getUri()).getPath();
             } catch (URISyntaxException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
