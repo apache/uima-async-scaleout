@@ -225,7 +225,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
               "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAJMS_jms_listener_failed_WARNING",
-              new Object[] { endpoint.getDestination(), getBrokerUrl(), t });
+              new Object[] { getDestination(), getBrokerUrl(), t });
     }
     // Check if the failure is due to the failed connection. Spring (and ActiveMQ) dont seem to
     // provide
@@ -241,7 +241,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
             t instanceof javax.jms.IllegalStateException
             && t.getMessage().equals("The Consumer is closed")) {
       if (controller != null && controller instanceof AggregateAnalysisEngineController) {
-        String delegateKey = ((AggregateAnalysisEngineController) controller)
+				//	If endpoint not set, this is a temp reply queue listener.
+        if ( endpoint == null ) {
+          destroy();
+          return;
+        }
+  
+      String delegateKey = ((AggregateAnalysisEngineController) controller)
                 .lookUpDelegateKey(endpoint.getEndpoint());
         try {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
@@ -885,6 +891,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               "UIMAJMS_jms_listener_failed_WARNING",
               new Object[] { endpointName, getBrokerUrl(), arg0 });
     }
+
+    if ( getDestination() != null && ((ActiveMQDestination)getDestination()).isTemporary() ) {
+      handleTempQueueFailure(arg0);
+    }
+  
   }
 
   public void setTargetEndpoint(Endpoint anEndpoint) {
