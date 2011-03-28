@@ -36,7 +36,7 @@ public class UimaAsComponent extends DefaultComponent<Exchange> {
 	protected Endpoint<Exchange> createEndpoint(String uri, String remaining,
     		Map parameters) throws Exception {
 		
-    	URI hbaseURI = URI.create(uri);
+    	URI hbaseURI = UriUtils.create(uri);
     	
     	String scheme = hbaseURI.getScheme();
     	
