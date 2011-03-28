@@ -666,16 +666,35 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
   }
   /**
-   * Tests ability of an aggregate to recover from Broker restart. The broker managing
-   * delegate's input queue is stopped after 1st CAS is received from a delegate. The 
-   * listener for the temp reply queue is stopped and a delegate marked as FAILED. When
-   * the broker is restarted, a 2nd CAS is sent from a client to the aggregate. This 
-   * forces instantiation and initialization of a new temp reply queue and a new listener
-   * Once this is done, 2nd CAS is sent to the delegate and processing continues.
+   * Tests ability of an aggregate to recover from a Broker restart. The broker managing
+   * delegate's input queue is stopped after 1st CAS is fully processed. As part of error
+   * handling the listener on delegate temp reply queue is stopped and a delegate marked 
+   * as FAILED. The aggregate error handling is configured to retry the command and as
+   * part of retry a new temp queue and a listener are created for the delegate when
+   * the broker is restarted. When a 2nd CAS is sent from a client to the aggregate the 
+   * aggregate will force retry of the previous CAS. Once this is done, 2nd CAS is sent 
+   * to the delegate and processing continues.
    * @throws Exception
    */
   public void testAggregateRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAggregateRecoveryFromBrokerStopAndRestart -------------");
+    runAggregateRecoveryFromBrokerStopAndRestart("Deploy_AggregateWithRemoteNoOpOnBroker8200.xml");
+
+  }
+  /**
+   * Tests ability of an aggregate to recover from a Broker restart. The broker managing
+   * delegate's input queue is stopped after 1st CAS is fully processed. As part of error
+   * handling the listener on delegate temp reply queue is stopped and a delegate marked 
+   * as FAILED. The aggregate error handling is configured with no retries. After the broker
+   * is stopped, the listener on a temp reply queue is shutdown. When the broker is restarted
+   * the client sends a new CAS which forces creation of a new temp queue and new listener.
+   * @throws Exception
+   */
+  public void testAggregateRecoveryFromBrokerStopAndRestartNoDelegateRetries() throws Exception  {
+    System.out.println("-------------- testAggregateRecoveryFromBrokerStopAndRestartNoDelegateRetries -------------");
+    runAggregateRecoveryFromBrokerStopAndRestart("Deploy_AggregateWithRemoteNoOpOnBroker8200NoRetry.xml");
+  }
+  private void runAggregateRecoveryFromBrokerStopAndRestart(String aggregateDescriptor ) throws Exception {
     BrokerService broker2 = setupSecondaryBroker(false);
     System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
 
@@ -683,7 +702,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       BaseUIMAAsynchronousEngine_impl uimaClient1 = new BaseUIMAAsynchronousEngine_impl();
       // Deploy Uima AS Primitive Service
       deployService(uimaClient1, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      deployService(uimaClient1, relativePath + "/Deploy_AggregateWithRemoteNoOpOnBroker8200.xml");
+      deployService(uimaClient1, relativePath + "/"+aggregateDescriptor);
       Map<String, Object> appCtx = 
       buildContext(broker.getMasterConnectorURI(), "TopLevelTaeQueue");
 
@@ -731,6 +750,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       synchronized(this) {
         wait(3000);   // allow broker some time to stop  
       }
+    
   }
   /**
    * Tests sending CPC after CAS timeout. The service is a Primitive taking 
