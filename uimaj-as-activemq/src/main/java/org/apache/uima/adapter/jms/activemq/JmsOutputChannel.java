@@ -470,6 +470,45 @@ public class JmsOutputChannel implements OutputChannel {
                 new Object[] { getAnalysisEngineController().getComponentName(), destination,
                   brokerConnectionURL });
       }
+      
+      Endpoint masterEndpoint = null;
+      if ( getAnalysisEngineController() instanceof AggregateAnalysisEngineController ) {
+        //  Check if the endpoint has previously FAILED. It may have been marked as FAILED
+        //  due to a temp queue listener shutdown caused by a Broker failure. In such case,
+        //  before sending a message to a remote delegate we need to start a new instance
+        //  of a listener which creates a new temp reply queue. 
+        if ( !anEndpoint.isReplyEndpoint() ) {  // this just means that we are not sending reply to a client
+          //  The masterEndoint has the most current state. The 'anEndpoint' instance passed into
+          //  this method is a clone from the master made at the begining of processing. The master endpoint
+          //  may have been marked as FAILED after the clone was made
+          masterEndpoint = ((AggregateAnalysisEngineController) getAnalysisEngineController()).
+                    lookUpEndpoint(anEndpoint.getDelegateKey(),false);
+          if ( masterEndpoint != null ) {
+            //  Only one thread at a time is allowed here.
+            synchronized( masterEndpoint ) {
+              if ( masterEndpoint.getStatus() == Endpoint.FAILED ) {
+                //  Returns InputChannel if the Reply Listener for the delegate has previously failed.
+                //  If the listener hasnt failed the getReplyInputChannel returns null
+                InputChannel iC = getAnalysisEngineController().getReplyInputChannel(anEndpoint.getDelegateKey());
+                if ( iC != null ) { 
+                  try {
+                    // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
+                    iC.createListener(anEndpoint.getDelegateKey(), anEndpoint);
+                    iC.removeDelegateFromFailedList(masterEndpoint.getDelegateKey());
+                  } catch( Exception exx) { 
+                    throw new AsynchAEException(exx);
+                  }
+                }
+              } else if ( !masterEndpoint.isFreeCasEndpoint() ) {
+                //  In case this thread blocked while the reply queue listener was created, make sure
+                //  that this endpoint uses the most up-date reply queue destination
+                anEndpoint.setDestination(masterEndpoint.getDestination());
+              }
+            }
+          }
+        }
+      }
+      
       endpointConnection = new JmsEndpointConnection_impl(brokerConnectionEntry, anEndpoint,
               getAnalysisEngineController());
       brokerConnectionEntry.addEndpointConnection(key, endpointConnection);
