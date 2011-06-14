@@ -216,6 +216,16 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 
     private volatile boolean deliveryToClientFailed;
     
+    private String hostIpProcessingCAS;
+    
+    public String getHostIpProcessingCAS() {
+      return hostIpProcessingCAS;
+    }
+
+    public void setHostIpProcessingCAS(String hostIpProcessingCAS) {
+      this.hostIpProcessingCAS = hostIpProcessingCAS;
+    }
+
     public boolean deliveryToClientFailed() {
 		return deliveryToClientFailed;
 	}
