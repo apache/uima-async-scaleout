@@ -20,7 +20,9 @@
 package org.apache.uima.aae.delegate;
 
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.error.ErrorContext;
+import org.apache.uima.aae.message.AsynchAEMessage;
 
 public class ControllerDelegate extends Delegate {
   // Controller that owns this delegate
@@ -39,7 +41,20 @@ public class ControllerDelegate extends Delegate {
   public String getComponentName() {
     return controller.getComponentName();
   }
-
+  public String enrichProcessCASTimeoutMessage(int aCommand, String casReferenceId, long timeToWait, String timeoutMessage) {
+    StringBuffer sb = new StringBuffer(timeoutMessage);
+    try {
+      if ( aCommand == AsynchAEMessage.Process  && controller != null && casReferenceId != null ) {
+        CasStateEntry cse = 
+          controller.getLocalCache().lookupEntry(casReferenceId);
+        if ( cse != null && cse.getHostIpProcessingCAS() != null) {
+          sb.append(". Process CAS on host: "+cse.getHostIpProcessingCAS()+" exceeded configured timeout threshold of "+timeToWait+" ms");
+        }
+      } 
+    } catch( Exception e) {
+    }
+    return sb.toString();
+  }
   public void handleError(Exception e, ErrorContext errorContext) {
     if (controller != null && controller.getErrorHandlerChain() != null) {
       // Handle Timeout

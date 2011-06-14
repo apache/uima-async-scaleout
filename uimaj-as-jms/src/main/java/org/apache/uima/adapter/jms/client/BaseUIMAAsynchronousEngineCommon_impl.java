@@ -747,7 +747,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
   }
 
-  protected ConcurrentHashMap getCache() {
+  protected ConcurrentHashMap<String, ClientRequest> getCache() {
     return clientCache;
   }
 
@@ -1128,6 +1128,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           return;
         }
       }
+    }
+    if ( casReferenceId != null && getCache().containsKey(casReferenceId) ) {
+      ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+      casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
     }
   }
   protected void decrementOutstandingCasCounter() {
@@ -1945,13 +1949,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         break;
 
       case (ProcessTimeout):
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                  "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_process_timeout_WARNING", new Object[] { anEndpoint });
-        }
         ClientRequest cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-        if (cachedRequest == null) {
+        if (cachedRequest != null) {
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_process_timeout_WARNING", new Object[] { anEndpoint, cachedRequest.getHostIpProcessingCAS() });
+          }
+        } else {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             // if missing for any reason ...
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
@@ -2068,6 +2073,16 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     private volatile boolean processException;
 
     private Destination freeCasNotificationQueue = null;
+
+    private String hostIpProcessingCAS;
+    
+    public String getHostIpProcessingCAS() {
+      return hostIpProcessingCAS;
+    }
+
+    public void setHostIpProcessingCAS(String hostIpProcessingCAS) {
+      this.hostIpProcessingCAS = hostIpProcessingCAS;
+    }
 
     public Destination getFreeCasNotificationQueue() {
       return freeCasNotificationQueue;

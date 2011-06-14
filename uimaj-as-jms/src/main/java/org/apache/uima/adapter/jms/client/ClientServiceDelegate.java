@@ -18,10 +18,14 @@
  */
 package org.apache.uima.adapter.jms.client;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import javax.jms.Destination;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.MessageTimeoutException;
@@ -105,7 +109,7 @@ public class ClientServiceDelegate extends Delegate {
                   UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                           "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                           "UIMAJMS_process_timeout_WARNING",
-                          new Object[] { getEndpoint().getEndpoint() });
+                          new Object[] { getEndpoint().getEndpoint(), cachedRequest.getHostIpProcessingCAS() });
                 }
                 if (cachedRequest != null && cachedRequest.isRemote()) {
                   cas = cachedRequest.getCAS();
@@ -180,6 +184,21 @@ public class ClientServiceDelegate extends Delegate {
       }
 
     }
+  }
+  public String enrichProcessCASTimeoutMessage(int aCommand, String casReferenceId, long timeToWait, String timeoutMessage) {
+    StringBuffer sb = new StringBuffer(timeoutMessage);
+    try {
+      if ( clientUimaAsEngine.getCache().containsKey(casReferenceId) ) {
+        ClientRequest cr = 
+          (ClientRequest)clientUimaAsEngine.getCache().get(casReferenceId);
+        if ( cr != null ) {
+          sb.append(". Process CAS on host: "+cr.getHostIpProcessingCAS()+" exceeded configured timeout threshold of "+timeToWait+" ms");
+        }
+      }
+    } catch( Exception e) {
+      e.printStackTrace();
+    }
+    return sb.toString();
   }
 
 }

@@ -81,6 +81,13 @@ public abstract class Delegate {
 
   private Endpoint notificationEndpoint = null;
 
+  public abstract void handleError(Exception e, ErrorContext errorContext);
+
+  public abstract String getComponentName();
+
+  public abstract String enrichProcessCASTimeoutMessage(int aCommand, String casReferenceId, long timeToWait, String timeoutMessage);
+
+  
   public Endpoint getNotificationEndpoint() {
     return notificationEndpoint;
   }
@@ -584,7 +591,9 @@ public abstract class Delegate {
         delegate.setState(TIMEOUT_STATE);
         ErrorContext errorContext = new ErrorContext();
         errorContext.add(AsynchAEMessage.Command, aCommand);
-        Exception cause = new MessageTimeoutException("Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId);
+        String enrichedMessage = enrichProcessCASTimeoutMessage(aCommand, aCasReferenceId,timeToWait,"Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId );
+        Exception cause = new MessageTimeoutException(enrichedMessage);
+//        Exception cause = new MessageTimeoutException("Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId);
         if (AsynchAEMessage.Process == aCommand) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
@@ -697,9 +706,6 @@ public abstract class Delegate {
     }
   }
 
-  public abstract void handleError(Exception e, ErrorContext errorContext);
-
-  public abstract String getComponentName();
 
   /**
    * Entry in the list of CASes pending reply. It stores the {@link CacheEntry} containing
