@@ -628,6 +628,11 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
     private String casSent = null;
     private int pingTimeoutCount=0;
+    
+    public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
+      System.out.println("runTest: onBeforeProcessCAS() Notification - CAS:"
+              + status.getCasReferenceId()+" is being processed on machine:"+nodeIP+" by process (PID):"+pid);
+    }
     public synchronized void onBeforeMessageSend(UimaASProcessStatus status) {
       casSent = status.getCasReferenceId();
       System.out.println("runTest: Received onBeforeMessageSend() Notification With CAS:"
