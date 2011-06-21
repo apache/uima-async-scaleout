@@ -487,6 +487,15 @@ public class RunRemoteAsyncAE {
       long current = System.nanoTime() / 1000000 - mStartTime;
       casMap.put(status.getCasReferenceId(), current);
     }
+    /**
+     * This method is called when a CAS is picked up by remote UIMA AS
+     * from a queue right before processing. This callback identifies
+     * on which machine the CAS is being processed and by which UIMA AS
+     * service (PID).
+     */
+    public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
+      
+    }
 
   }
 
