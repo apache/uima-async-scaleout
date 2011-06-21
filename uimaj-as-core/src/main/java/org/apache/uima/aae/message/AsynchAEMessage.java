@@ -49,6 +49,8 @@ public interface AsynchAEMessage {
   public static final String EndpointServer = "EndpointServer";
 
   public static final String ServerIP = "ServerIP";
+  
+  public static final String UimaASProcessPID = "ProcessPID";
 
   public static final String RemoveEndpoint = "RemoveEndpoint";
 
