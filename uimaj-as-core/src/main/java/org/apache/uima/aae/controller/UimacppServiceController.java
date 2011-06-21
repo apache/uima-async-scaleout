@@ -834,6 +834,11 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
     // TODO Auto-generated method stub
     
   }
+
+  public String getPID() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }
 
 /**
