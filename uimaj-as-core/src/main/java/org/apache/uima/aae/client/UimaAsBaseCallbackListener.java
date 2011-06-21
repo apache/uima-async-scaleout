@@ -37,7 +37,14 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
   public void onBeforeMessageSend(UimaASProcessStatus status) {
     // to be overridden
   }
-
+  /**
+   * Called by Uima AS client API before CAS processing begins at the remote
+   * UIMA AS service
+   * 
+   * @param status
+   * @param nodeIP
+   * @param pid
+   */
   public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
     // to be overridden
   }
