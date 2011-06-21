@@ -38,6 +38,9 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
     // to be overridden
   }
 
+  public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
+    // to be overridden
+  }
   /**
    * The callback used to inform the application that the initialization request has completed. On
    * success aStatus will be null; on failure use the EntityProcessStatus class to get the details.
