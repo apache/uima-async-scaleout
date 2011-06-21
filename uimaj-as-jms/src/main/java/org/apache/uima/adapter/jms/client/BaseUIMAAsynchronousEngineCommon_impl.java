@@ -276,6 +276,13 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
   }
 
+  public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
+    for (int i = 0; listeners != null && i < listeners.size(); i++) {
+      UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
+      statCL.onBeforeProcessCAS(status, nodeIP, pid);
+    }
+  }
+
   public synchronized void setCollectionReader(CollectionReader aCollectionReader)
           throws ResourceInitializationException {
     if (initialized) {
@@ -1116,6 +1123,20 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    */
   protected void handleServiceInfo(Message message) throws Exception {
     String casReferenceId = message.getStringProperty(AsynchAEMessage.CasReference);
+    try {
+      //  entering user provided callback. Handle exceptions.
+      UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),
+              casReferenceId);
+      String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
+      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
+      if ( casReferenceId != null && nodeIP != null && pid != null) {
+        onBeforeProcessCAS(status,nodeIP, pid);
+      }
+    } catch( Exception e) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+              "handleServiceInfo", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_exception__WARNING", e);
+    }
     if (message.getJMSReplyTo() != null) {
       List<DelegateEntry> outstandingCasList = serviceDelegate.getDelegateCasesPendingReply();
       for (DelegateEntry entry : outstandingCasList) {
