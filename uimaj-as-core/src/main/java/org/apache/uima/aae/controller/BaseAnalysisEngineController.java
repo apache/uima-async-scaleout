@@ -492,7 +492,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       registerWithAgent(controller, jmxName);
     }
   }
-
+  public String getPID() {
+    return processPid;
+  }
   /**
    * Returns resources loaded by the URLClassLoader on startup.
    * 
