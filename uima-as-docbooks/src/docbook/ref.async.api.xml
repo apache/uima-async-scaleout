@@ -318,6 +318,14 @@ under the License.
             returned in the callback listener as part of the status object.</para>
         </listitem>
 
+        <listitem>
+          <para><code>onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid)</code>: The callback 
+            used to inform the application that a CAS has been delivered to UIMA AS service and is about to be processed. 
+            The status object has <code>getCasReferenceId()</code> method that returns a unique CAS id assigned by 
+            UIMA AS. The nodeIP contains IP address of a machine where UIMA AS service is running. The pid is the 
+            UIMA AS service PID.
+		  </para>
+        </listitem>
       </itemizedlist>
       </para>
   </section>
