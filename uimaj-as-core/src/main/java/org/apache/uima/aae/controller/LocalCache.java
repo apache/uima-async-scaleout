@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
@@ -218,6 +220,17 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     
     private String hostIpProcessingCAS;
     
+    //  Binary semaphore used to make sure that child CASes obtain their Flow objects
+    //  before the parent CAS is handled by the Flow Controller. The single permit
+    //  is acquired by a child CAS when childCasOutstandingFlowCounter=0.    
+    private Semaphore flowSemaphore = new Semaphore(1);
+    
+    //  Counts how many child CASes need their Flow objects. Incremented immediately when a child
+    //  CAS arrives at the aggregate and decremented right after the flow is computed from the
+    //  parent CAS flow.
+    private AtomicInteger childCasOutstandingFlowCounter = new AtomicInteger();
+    
+    
     public String getHostIpProcessingCAS() {
       return hostIpProcessingCAS;
     }
@@ -378,6 +391,54 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 
     public List<Throwable> getErrors() {
       return exceptionList;
+    }
+    /**
+     * Grab a permit from a binary semaphore blocking if the permit is not 
+     * available.
+     * 
+     * @throws InterruptedException - thrown if thread is interrupted
+     */
+    public void acquireFlowSemaphore() throws InterruptedException {
+      flowSemaphore.acquire();
+    }
+    /**
+     * Release a permit to the binary semaphore.
+     */
+    public void releaseFlowSemaphore() {
+      flowSemaphore.release();
+    }
+    /**
+     * Count the number of child CASes that have not yet obtained their Flow
+     * object. If this is the first child with no Flow object, grab a permit
+     * from a binary semaphore preventing parent CAS from calling Flow Controller's
+     * next() method. 
+     * 
+     */
+    public void incrementOutstandingFlowCounter() {
+      synchronized( flowSemaphore ) {
+        if ( childCasOutstandingFlowCounter.incrementAndGet() == 1  ) {
+          try {
+            acquireFlowSemaphore();
+          } catch( InterruptedException e) {
+          }
+        }
+      }
+    }
+    /**
+     * Decrement the number of child CASes with no Flow object. Releases
+     * the permit to the binary semaphore if all child CASes in-play obtain
+     * their Flow objects. This releases the parent CAS which can than continue
+     * with its Flow. 
+     */
+    public void decrementOutstandingFlowCounter() {
+      synchronized( flowSemaphore ) {
+        if( flowSemaphore.availablePermits() == 0 ) {
+          if ( childCasOutstandingFlowCounter.get() > 0 ) {
+            childCasOutstandingFlowCounter.decrementAndGet();
+          }
+          releaseFlowSemaphore();
+        }
+      }
     }
   }
 }

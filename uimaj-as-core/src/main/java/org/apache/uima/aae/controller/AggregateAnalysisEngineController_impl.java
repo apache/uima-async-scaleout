@@ -920,6 +920,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // be dropped in the delegate. Check Final Step logic.
           getInProcessCache().getCacheEntryForCAS(aNewCasReferenceId).setNewCas(true,
                   getComponentName());
+          getLocalCache().lookupEntry(anInputCasReferenceId).decrementOutstandingFlowCounter();
         } else {
           throw new AsynchAEException(
                   "Flow Object Not In Flow Cache. Expected Flow Object in FlowCache for Cas Reference Id:"
@@ -1107,18 +1108,27 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           Endpoint lastDelegateEndpoint = casStateEntry.getLastDelegate().getEndpoint();
           // Check if this delegate is a Cas Multiplier and the parent CAS is to be processed last
           casStateEntry.setReplyReceived();
-          if (lastDelegateEndpoint.isCasMultiplier() && lastDelegateEndpoint.processParentLast()) {
-            synchronized (super.finalStepMux) {
-              // Determine if the CAS should be held until all its children leave this aggregate.
-              if (casStateEntry.getSubordinateCasInPlayCount() > 0) {
-                // This input CAS has child CASes still in play. It will remain in the cache
-                // until the last of the child CASes is released. Only than, the input CAS is
-                // is allowed to continue into the next step in the flow.
-                // The CAS has to be in final state
-                casStateEntry.setState(CacheEntry.FINAL_STATE);
-                // The input CAS will be interned until all children leave this aggregate
-                return;
+          if (lastDelegateEndpoint.isCasMultiplier()){
+            //  The following blocks until all child CASes acquire their Flow objects from the Flow
+            //  Controller. Release the semaphore immediately after acquiring it. This semaphore is 
+            //  no longer needed. This synchronization is only necessary for blocking the parent
+            //  CAS until all child CASes acquire their Flow objects.
+            casStateEntry.acquireFlowSemaphore();
+            casStateEntry.releaseFlowSemaphore();
+            if ( lastDelegateEndpoint.processParentLast()) {
+              synchronized (super.finalStepMux) {
+                // Determine if the CAS should be held until all its children leave this aggregate.
+                if (casStateEntry.getSubordinateCasInPlayCount() > 0) {
+                  // This input CAS has child CASes still in play. It will remain in the cache
+                  // until the last of the child CASes is released. Only than, the input CAS is
+                  // is allowed to continue into the next step in the flow.
+                  // The CAS has to be in final state
+                  casStateEntry.setState(CacheEntry.FINAL_STATE);
+                  // The input CAS will be interned until all children leave this aggregate
+                  return;
+                }
               }
+              
             }
           }
         }
@@ -2122,6 +2132,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             parentController.getLocalCache().lookupEntry(inputCasId);
           if ( parentCasStateEntry != null ) {
             parentCasStateEntry.incrementSubordinateCasInPlayCount();
+            parentCasStateEntry.incrementOutstandingFlowCounter();
           }
         }
       }

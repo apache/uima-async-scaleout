@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
@@ -50,6 +51,7 @@ import org.apache.uima.aae.spi.transport.UimaMessage;
 import org.apache.uima.aae.spi.transport.UimaTransport;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
+import org.apache.uima.analysis_engine.AnalysisEngineManagement;
 import org.apache.uima.analysis_engine.CasIterator;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
@@ -171,7 +173,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       sharedInitSemaphore.acquire();
       // Parse the descriptor in the calling thread.
       rSpecifier = UimaClassFactory.produceResourceSpecifier(super.aeDescriptor);
-        AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
+
+      AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
         //  Call to produceAnalysisEngine() may take a long time to complete. While this
         //  method was executing, the service may have been stopped. Before continuing 
         //  check if the service has been stopped. If so, destroy AE instance and return.
@@ -517,7 +520,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     	  stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
           // it in case an exception happens below
       }
-
+      
       // Store how long it took to call processAndOutputNewCASes()
       totalProcessTime = (super.getCpuTime() - time);
       long sequence = 1;
@@ -657,6 +660,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         childCasStateEntry.setInputCasReferenceId(aCasReferenceId);
         // Increment number of child CASes generated from the input CAS
         parentCasStateEntry.incrementSubordinateCasInPlayCount();
+        parentCasStateEntry.incrementOutstandingFlowCounter();
 
         // Associate input CAS with the new CAS
         newEntry.setInputCasReferenceId(aCasReferenceId);

@@ -30,6 +30,7 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.UimaBlockingExecutor;
@@ -179,6 +180,13 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
           CasStateEntry parentEntry = controller.getLocalCache().lookupEntry(parentCasReferenceId);
           // increment number of child CASes this parent has in play
           parentEntry.incrementSubordinateCasInPlayCount();
+          //  increment a counter that counts number of child CASes that have no
+          //  flow object yet. The flow object is created for each child CAS from
+          //  the parent flow object. The method below will actually acquire a 
+          //  permit from a binary semaphore to force the parent to block until
+          //  the last of its children acquires its Flow object.
+          parentEntry.incrementOutstandingFlowCounter();
+
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             
