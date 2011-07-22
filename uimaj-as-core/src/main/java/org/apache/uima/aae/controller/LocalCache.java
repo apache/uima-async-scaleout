@@ -20,6 +20,7 @@
 package org.apache.uima.aae.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.delegate.Delegate;
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.flow.FinalStep;
 import org.apache.uima.util.Level;
 
@@ -49,6 +51,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
   public CasStateEntry createCasStateEntry(String aCasReferenceId) {
     CasStateEntry entry = new CasStateEntry(aCasReferenceId);
     super.put(aCasReferenceId, entry);
+    Collections.synchronizedCollection(entry.getAEPerformanceList());
     return entry;
   }
 
@@ -229,7 +232,11 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     //  CAS arrives at the aggregate and decremented right after the flow is computed from the
     //  parent CAS flow.
     private AtomicInteger childCasOutstandingFlowCounter = new AtomicInteger();
+
+    private List<AnalysisEnginePerformanceMetrics> performanceList = 
+      new ArrayList<AnalysisEnginePerformanceMetrics>();
     
+
     
     public String getHostIpProcessingCAS() {
       return hostIpProcessingCAS;
@@ -439,6 +446,9 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
           releaseFlowSemaphore();
         }
       }
+    }
+    public List<AnalysisEnginePerformanceMetrics> getAEPerformanceList() {
+      return performanceList;
     }
   }
 }

@@ -64,6 +64,8 @@ public interface AsynchAEMessage {
 
   public static final String TimeInProcessCAS = "TimeInProcessCAS";
 
+  public static final String CASPerComponentMetrics = "CASPerComponentMetrics";
+
   public static final String IdleTime = "IdleTime";
 
   public static final String CAS = "CAS";

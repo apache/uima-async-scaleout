@@ -77,6 +77,8 @@ import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.util.Level;
 
+import com.thoughtworks.xstream.XStream;
+
 public class JmsOutputChannel implements OutputChannel {
 
   private static final Class CLASS_NAME = JmsOutputChannel.class;
@@ -116,6 +118,8 @@ public class JmsOutputChannel implements OutputChannel {
 
   // By default every message will have expiration time added
   private volatile boolean addTimeToLive = true;
+
+  private XStream xstream = new XStream();
 
   public JmsOutputChannel() {
     try {
@@ -1197,7 +1201,18 @@ public class JmsOutputChannel implements OutputChannel {
         getAnalysisEngineController().saveTime(departureTime, aCasReferenceId,
                 anEndpoint.getEndpoint());
       } else {
-
+        try {
+          CasStateEntry entry = 
+            getAnalysisEngineController().getLocalCache().lookupEntry(aCasReferenceId);
+          if ( entry.getAEPerformanceList().size() > 0 ) {
+            aTextMessage.setStringProperty(AsynchAEMessage.CASPerComponentMetrics, 
+                    xstream.toXML(entry.getAEPerformanceList()));
+          }
+        } catch( Exception ex) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                  "populateStats", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", ex);        
+        }
         ServicePerformance casStats = getAnalysisEngineController().getCasStatistics(
                 aCasReferenceId);
 

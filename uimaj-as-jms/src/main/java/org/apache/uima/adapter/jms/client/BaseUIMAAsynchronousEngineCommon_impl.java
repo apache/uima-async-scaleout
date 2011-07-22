@@ -71,6 +71,7 @@ import org.apache.uima.aae.error.UimaEEServiceException;
 import org.apache.uima.aae.jmx.UimaASClientInfo;
 import org.apache.uima.aae.jmx.UimaASClientInfoMBean;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.adapter.jms.ConnectionValidator;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.message.PendingMessage;
@@ -88,6 +89,8 @@ import org.apache.uima.util.Level;
 import org.apache.uima.util.ProcessTrace;
 import org.apache.uima.util.XMLInputSource;
 import org.apache.uima.util.impl.ProcessTrace_impl;
+
+import com.thoughtworks.xstream.XStream;
 
 public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsynchronousEngine,
         MessageListener {
@@ -1033,6 +1036,17 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       getMetaSemaphore.release();
     }
   }
+  @SuppressWarnings("unchecked")
+  protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand, String serializedComponentStats) {
+    if ( aCommand == AsynchAEMessage.Process) {
+      for (int i = 0; listeners != null && i < listeners.size(); i++) {
+        UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
+        XStream xstream = new XStream();
+        statCL.entityProcessComplete(aCAS, aStatus, 
+                (List<AnalysisEnginePerformanceMetrics>)xstream.fromXML(serializedComponentStats));
+      }
+    }
+  }
 
   protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand) {
     for (int i = 0; listeners != null && i < listeners.size(); i++) {
@@ -1446,8 +1460,13 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           } else {
             status = new UimaASProcessStatusImpl(pt, casReferenceId);
           }
-          // Add CAS identifier to enable matching replies with requests
-          notifyListeners(cas, status, AsynchAEMessage.Process);
+          if ( message.propertyExists(AsynchAEMessage.CASPerComponentMetrics)) {
+            // Add CAS identifier to enable matching replies with requests
+            notifyListeners(cas, status, AsynchAEMessage.Process, message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics));
+          } else {
+            // Add CAS identifier to enable matching replies with requests
+            notifyListeners(cas, status, AsynchAEMessage.Process);
+          }
         }
       } finally {
         // Dont release the CAS if the application uses synchronous API

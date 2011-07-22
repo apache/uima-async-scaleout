@@ -47,12 +47,14 @@ import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.aae.monitor.Monitor;
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.spi.transport.UimaMessage;
 import org.apache.uima.aae.spi.transport.UimaTransport;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineManagement;
 import org.apache.uima.analysis_engine.CasIterator;
+import org.apache.uima.analysis_engine.impl.AnalysisEngineManagementImpl;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.CASImpl;
@@ -64,6 +66,9 @@ import org.apache.uima.resource.metadata.ConfigurationParameter;
 import org.apache.uima.resource.metadata.impl.ConfigurationParameter_impl;
 import org.apache.uima.util.InvalidXMLException;
 import org.apache.uima.util.Level;
+import org.apache.xmlbeans.impl.common.XmlStreamUtils;
+
+import com.thoughtworks.xstream.XStream;
 
 public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineController implements
         PrimitiveAnalysisEngineController {
@@ -97,6 +102,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   static private Object threadDumpMonitor = new Object();
   static private Long lastDump = Long.valueOf(0);
+  private XStream xstream = new XStream();
 
   public PrimitiveAnalysisEngineController_impl(String anEndpointName,
           String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
@@ -459,6 +465,26 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 	  return null;
   }
+  private AnalysisEngineManagement deepCopy(AnalysisEngineManagement aem) {
+    String xml = xstream.toXML(aem); // serialize to XML
+    return (AnalysisEngineManagement)xstream.fromXML(xml);
+  }
+  private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEngineManagement> result, boolean deepCopy) {
+    if (aem.getComponents().isEmpty()) {
+      if (!aem.getName().equals("Fixed Flow Controller")) {
+        if ( deepCopy ) {
+          result.add(deepCopy(aem)); // deep copy
+        } else {
+          result.add(aem); // reference
+        }
+      }
+    } else {
+      for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
+        getLeafManagementObjects(child, result, deepCopy);
+      }
+    }
+  }
+
   /**
    * This is called when a Stop request is received from a client. Add the provided Cas id to the
    * list of aborted CASes. The process() method checks this list to determine if it should continue
@@ -476,6 +502,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (stopped) {
       return;
     }
+    List<AnalysisEngineManagement> beforeAnalysisManagementObjects = new ArrayList<AnalysisEngineManagement>();
+    List<AnalysisEngineManagement> afterAnalysisManagementObjects = new ArrayList<AnalysisEngineManagement>();
     CasStateEntry parentCasStateEntry = null;
     //	If enabled, keep a reference to a timer which
     //  when it expires, will cause a JVM to dump a stack
@@ -514,6 +542,13 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       //	method is allowed to complete. If the method is not complete in allowed window
       //	the heap and stack trace dump of all threads will be produced.
       stackDumpTimer = ifEnabledStartHeapDumpTimer();
+      
+      
+      AnalysisEngineManagement rootAem = ae.getManagementInterface();
+      beforeAnalysisManagementObjects.add(deepCopy(rootAem));   
+      getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects, true);
+      
+      
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
       if ( stackDumpTimer != null ) {
     	  stackDumpTimer.cancel();
@@ -761,6 +796,39 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // Set total number of children generated from this CAS
       // Store total time spent processing this input CAS
       getCasStatistics(aCasReferenceId).incrementAnalysisTime(totalProcessTime);
+
+      //  Fetch AE's management information that includes per component performance stats
+      //  These stats are internally maintained in a Map. If the AE is an aggregate
+      //  the Map will contain AnalysisEngineManagement instance for each AE.
+      AnalysisEngineManagement aem = ae.getManagementInterface();
+      //  Add the top level AnalysisEngineManagement instance.
+      afterAnalysisManagementObjects.add(aem);    
+      //  Flatten the hierarchy by recursively (if this AE is an aggregate) extracting  
+      //  primitive AE's AnalysisEngineManagement instance and placing it in 
+      //  afterAnalysisManagementObjects List.
+      getLeafManagementObjects(aem, afterAnalysisManagementObjects, false);
+
+      //  Create a List to hold per CAS analysisTime and total number of CASes processed
+      //  by each AE. This list will be serialized and send to the client
+      List<AnalysisEnginePerformanceMetrics> performanceList = 
+        new ArrayList<AnalysisEnginePerformanceMetrics>();
+      //  Diff the before process() performance metrics with post process performance
+      //  metrics
+      for (AnalysisEngineManagement after : afterAnalysisManagementObjects) {
+        for( AnalysisEngineManagement before: beforeAnalysisManagementObjects) {
+          if ( before.getUniqueMBeanName().equals(after.getUniqueMBeanName())) {
+            AnalysisEnginePerformanceMetrics metrics = 
+              new AnalysisEnginePerformanceMetrics(after.getName(),
+                      after.getUniqueMBeanName(),
+                      after.getAnalysisTime()- before.getAnalysisTime(),
+                      after.getNumberOfCASesProcessed());
+            performanceList.add(metrics);
+            break;
+          }
+        }
+      }
+      //  Save this CAS per component performance metrics
+      parentCasStateEntry.getAEPerformanceList().addAll(performanceList);
       
       if (!anEndpoint.isRemote()) {
         inputCASReturned = true;

@@ -42,6 +42,7 @@ import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.error.UimaASPingTimeout;
 import org.apache.uima.aae.error.UimaASProcessCasTimeout;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.EntityProcessStatus;
@@ -484,6 +485,17 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       }
 
     }
+    /*
+    Object o = new Object();
+    
+    try {
+      synchronized(o) {
+        o.wait();
+      }
+    } catch( Exception e) {
+      
+    }
+*/
     isStopping = true;
     aUimaEeEngine.stop();
 
@@ -638,7 +650,19 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       System.out.println("runTest: Received onBeforeMessageSend() Notification With CAS:"
               + status.getCasReferenceId());
     }
-
+    public synchronized void entityProcessComplete(CAS aCAS, EntityProcessStatus aProcessStatus, List<AnalysisEnginePerformanceMetrics> componentMetricsList) {
+      entityProcessComplete(aCAS, aProcessStatus);
+      StringBuilder sb = new StringBuilder("--- CAS");
+      sb.append(((UimaASProcessStatus) aProcessStatus).getCasReferenceId()).append(" Per Component Performance Metrics:\n");
+      for(AnalysisEnginePerformanceMetrics metrics : componentMetricsList) {
+        sb.append("\n\t-- Component:").
+          append(metrics.getUniqueName()).
+          append(" AnalysisTime:").
+          append(metrics.getAnalysisTime()).
+          append(" Cases Processed:").append(metrics.getNumProcessed());
+      }
+      System.out.println(sb.toString());
+    }
     /**
      * Callback method which is called by Uima EE client when a reply to process CAS is received.
      * The reply contains either the CAS or an exception that occurred while processing the CAS.
