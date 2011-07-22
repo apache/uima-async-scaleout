@@ -1349,7 +1349,7 @@ public class JmsOutputChannel implements OutputChannel {
       if (hostIP != null) {
         aMessage.setStringProperty(AsynchAEMessage.ServerIP, hostIP);
         if ( getAnalysisEngineController() != null ) {
-          aMessage.setStringProperty(AsynchAEMessage.UimaASProcessPID, getAnalysisEngineController().getPID());
+          aMessage.setStringProperty(AsynchAEMessage.UimaASProcessPID, getAnalysisEngineController().getPID()+":"+Thread.currentThread().getId());
         }
       }
       if (anEndpoint.getEndpointServer() != null) {
