@@ -123,7 +123,11 @@ public class JmsOutputChannel implements OutputChannel {
 
   public JmsOutputChannel() {
     try {
-      hostIP = InetAddress.getLocalHost().getHostAddress();
+    	if( System.getenv("IP") != null ) {
+   		  hostIP = System.getenv("IP");
+    	} else {
+   	      hostIP = InetAddress.getLocalHost().getHostAddress();
+    	}
     } catch (Exception e) { /* silently deal with this error */
     }
     // Check the environment for existence of NoTTL tag. If present,
