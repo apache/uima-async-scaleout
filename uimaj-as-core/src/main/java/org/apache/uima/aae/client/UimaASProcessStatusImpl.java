@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.uima.cas.CAS;
 import org.apache.uima.util.ProcessTrace;
 
 public class UimaASProcessStatusImpl implements UimaASProcessStatus {
@@ -50,19 +51,22 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
 
   private String parentCasId;
 
+  private CAS cas;
+  
   public UimaASProcessStatusImpl(ProcessTrace p) {
-    this(p, null);
+    this(p, null, null);
   }
 
-  public UimaASProcessStatusImpl(ProcessTrace p, String aCasReferenceId) {
-    this(p, aCasReferenceId, null);
+  public UimaASProcessStatusImpl(ProcessTrace p, CAS cas, String aCasReferenceId) {
+    this(p, cas, aCasReferenceId, null);
   }
 
-  public UimaASProcessStatusImpl(ProcessTrace p, String aCasReferenceId,
+  public UimaASProcessStatusImpl(ProcessTrace p, CAS cas, String aCasReferenceId,
           String aParentCasReferenceId) {
     prT = p;
     casReferenceId = aCasReferenceId;
     parentCasId = aParentCasReferenceId;
+    this.cas = cas;
   }
 
   public UimaASProcessStatusImpl(ProcessTrace p, boolean aSkip) {
@@ -70,6 +74,9 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
     isSkipped = aSkip;
   }
 
+  public CAS getCAS() {
+	  return cas;
+  }
   public boolean isException() {
     if (failedList.size() > 0) {
       return true;

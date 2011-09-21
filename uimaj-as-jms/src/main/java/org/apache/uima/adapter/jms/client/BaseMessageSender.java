@@ -19,37 +19,27 @@
 
 package org.apache.uima.adapter.jms.client;
 
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 
 import javax.jms.Connection;
-import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.InvalidDestinationException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
-import javax.jms.TextMessage;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
-import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.delegate.Delegate;
-import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UimaMessageValidator;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.ClientRequest;
-import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.SharedConnection;
 import org.apache.uima.adapter.jms.message.PendingMessage;
-import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
-import org.apache.uima.cas.CAS;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.util.Level;
-import org.apache.uima.util.ProcessTrace;
 import org.apache.uima.util.impl.ProcessTrace_impl;
 
 /**
@@ -336,7 +326,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                    cacheEntry.setCASDepartureTime(System.nanoTime());
                  }
                  cacheEntry.setCASDepartureTime(System.nanoTime());
-                 UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),
+                 UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),cacheEntry.getCAS(),
                          cacheEntry.getCasReferenceId());
                  // Notify engine before sending a message
                  engine.onBeforeMessageSend(status);
