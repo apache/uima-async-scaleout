@@ -293,8 +293,9 @@ public class TestUimaASExtended extends BaseTestSupport {
       deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
       Map<String, Object> appCtx = 
       buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+      appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 1100);
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
-      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 300);
       initialize(uimaAsEngine, appCtx);
       waitUntilInitialized();
       int errorCount = 0;
@@ -314,7 +315,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           uimaAsEngine.sendAndReceiveCAS(cas);
         } catch( Exception e) {
           errorCount++;
-          System.out.println("Client Received Expected Error on CAS:"+(i+1));
+          System.out.println("Client Received Expected Error on CAS:"+(i+1)+" ErrorCount:"+errorCount);
         } finally {
           cas.release();
         }
@@ -346,6 +347,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
       initialize(uimaAsEngine, appCtx);
       waitUntilInitialized();
       int errorCount=0;
@@ -2503,14 +2505,14 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "NoOpAnnotatorQueue");
-    initialize(eeUimaEngine, appCtx);
-    // Wait until the top level service returns its metadata
-    waitUntilInitialized();
-    CAS cas = eeUimaEngine.getCAS();
     // Register special callback listener. This listener will receive
     // an exception with the Cas Reference id.
     TestListener listener = new TestListener(this);
     eeUimaEngine.addStatusCallbackListener(listener);
+    initialize(eeUimaEngine, appCtx);
+    // Wait until the top level service returns its metadata
+    waitUntilInitialized();
+    CAS cas = eeUimaEngine.getCAS();
 
     // Send request out and save Cas Reference id
     String casReferenceId = eeUimaEngine.sendCAS(cas);
