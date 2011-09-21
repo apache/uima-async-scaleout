@@ -92,6 +92,7 @@ import org.apache.uima.util.XMLInputSource;
 import org.apache.uima.util.impl.ProcessTrace_impl;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomDriver;
 
 public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsynchronousEngine,
         MessageListener {
@@ -1058,7 +1059,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     if ( aCommand == AsynchAEMessage.Process) {
       for (int i = 0; listeners != null && i < listeners.size(); i++) {
         UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
-        XStream xstream = new XStream();
+        XStream xstream = new XStream(new DomDriver());
         statCL.entityProcessComplete(aCAS, aStatus, 
                 (List<AnalysisEnginePerformanceMetrics>)xstream.fromXML(serializedComponentStats));
       }
