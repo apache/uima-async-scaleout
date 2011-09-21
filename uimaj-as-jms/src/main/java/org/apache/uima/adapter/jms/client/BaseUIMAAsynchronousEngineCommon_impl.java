@@ -48,6 +48,7 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UIMAEE_Constants;
@@ -238,6 +239,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   abstract protected void initializeConsumer(String aBrokerURI, Connection connection) throws Exception;
 
   public void addStatusCallbackListener(UimaAsBaseCallbackListener aListener) {
+    if (running) {
+	   throw new UIMA_IllegalStateException(JmsConstants.JMS_LOG_RESOURCE_BUNDLE,"UIMAJMS_listener_added_after_initialize__WARNING", new Object[]{});
+	}
     listeners.add(aListener);
   }
 
