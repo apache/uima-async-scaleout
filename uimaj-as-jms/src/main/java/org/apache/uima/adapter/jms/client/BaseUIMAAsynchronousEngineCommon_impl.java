@@ -277,16 +277,29 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   }
 
   public void onBeforeMessageSend(UimaASProcessStatus status) {
-    for (int i = 0; listeners != null && i < listeners.size(); i++) {
-      UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
-      statCL.onBeforeMessageSend(status);
-    }
+      try {
+   	    for (int i = 0; listeners != null && i < listeners.size(); i++) {
+   	        UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
+   	        statCL.onBeforeMessageSend(status);
+        }
+      } catch( Throwable t) {
+			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "onBeforeMessageSend", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", t);
+      }	  
   }
 
   public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
     for (int i = 0; listeners != null && i < listeners.size(); i++) {
       UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
-      statCL.onBeforeProcessCAS(status, nodeIP, pid);
+      try {
+          statCL.onBeforeProcessCAS(status, nodeIP, pid);
+    	  
+      } catch( Throwable t) {
+			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "onBeforeProcessCAS", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", t);
+      }
     }
   }
 
