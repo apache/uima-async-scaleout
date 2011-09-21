@@ -1137,15 +1137,22 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    */
   protected void handleServiceInfo(Message message) throws Exception {
     String casReferenceId = message.getStringProperty(AsynchAEMessage.CasReference);
+    ClientRequest casCachedRequest = null;
+    if ( casReferenceId != null ) {
+    	casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+    }
     try {
-      //  entering user provided callback. Handle exceptions.
-      UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),
-              casReferenceId);
-      String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
-      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
-      if ( casReferenceId != null && nodeIP != null && pid != null) {
-        onBeforeProcessCAS(status,nodeIP, pid);
-      }
+    	if ( casCachedRequest != null ) {
+    	      //  entering user provided callback. Handle exceptions.
+    	      UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),casCachedRequest.getCAS(),
+    	              casReferenceId);
+    	      
+    	      String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
+    	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
+    	      if ( casReferenceId != null && nodeIP != null && pid != null) {
+    	        onBeforeProcessCAS(status,nodeIP, pid);
+    	      }
+    	}
     } catch( Exception e) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
               "handleServiceInfo", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1156,7 +1163,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       for (DelegateEntry entry : outstandingCasList) {
         if (entry.getCasReferenceId().equals(casReferenceId)) {
           // The Cas is still being processed
-          ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+          //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
           if (casCachedRequest != null) {
             casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
           }
@@ -1165,7 +1172,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       }
     }
     if ( casReferenceId != null && getCache().containsKey(casReferenceId) ) {
-      ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+      //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
       casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
     }
   }
@@ -1390,11 +1397,16 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         } else if (casReferenceId != null ) {
           serviceDelegate.removeCasFromOutstandingList(casReferenceId);
         }
-
-        // Add Cas referenceId(s) to enable matching replies with requests (ids may be null)
-        UimaASProcessStatusImpl status = new UimaASProcessStatusImpl(pt, casReferenceId,
-                inputCasReferenceId);
-
+        UimaASProcessStatusImpl status;
+        
+        if (cachedRequest != null ) {
+            // Add Cas referenceId(s) to enable matching replies with requests (ids may be null)
+            status = new UimaASProcessStatusImpl(pt, cachedRequest.getCAS(), casReferenceId,
+                    inputCasReferenceId);
+        } else {
+            status = new UimaASProcessStatusImpl(pt, null, casReferenceId,
+                    inputCasReferenceId);
+        }
         status.addEventStatus("Process", "Failed", exception);
         if (cachedRequest != null && !cachedRequest.isSynchronousInvocation()
                 && cachedRequest.getCAS() != null) {
@@ -1456,9 +1468,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           String inputCasReferenceId = message.getStringProperty(AsynchAEMessage.InputCasReference);
           if (inputCasReferenceId != null
                   && inputCasReferenceId.equals(cachedRequest.getCasReferenceId())) {
-            status = new UimaASProcessStatusImpl(pt, casReferenceId, inputCasReferenceId);
+            status = new UimaASProcessStatusImpl(pt, cas,casReferenceId, inputCasReferenceId);
           } else {
-            status = new UimaASProcessStatusImpl(pt, casReferenceId);
+            status = new UimaASProcessStatusImpl(pt, cas, casReferenceId);
           }
           if ( message.propertyExists(AsynchAEMessage.CASPerComponentMetrics)) {
             // Add CAS identifier to enable matching replies with requests
@@ -1943,7 +1955,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   protected void notifyOnTimout(CAS aCAS, String anEndpoint, int aTimeoutKind, String casReferenceId) {
 
     ProcessTrace pt = new ProcessTrace_impl();
-    UimaASProcessStatusImpl status = new UimaASProcessStatusImpl(pt, casReferenceId);
+    UimaASProcessStatusImpl status = new UimaASProcessStatusImpl(pt, aCAS, casReferenceId);
 
     switch (aTimeoutKind) {
       case (MetadataTimeout):
