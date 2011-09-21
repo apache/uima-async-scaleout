@@ -1859,6 +1859,16 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       try {
         threadMonitor.getMonitor().acquire();
       } catch (InterruptedException e) {
+      	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                    "sendAndReceiveCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_client_interrupted_INFO", new Object[] { casReferenceId, aCAS.hashCode()});
+        }
+    	// cancel the timer if it is associated with a CAS this thread is waiting for. This would be
+    	// the oldest CAS submitted to a queue for processing. The timer will be canceled and restarted
+    	// for the second oldest CAS in the outstanding list.
+    	serviceDelegate.cancelTimerForCasOrPurge(casReferenceId);
+    	throw new ResourceProcessException(e);
       }
     }
     try {
@@ -1905,7 +1915,16 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             break; // done here, received a reply or the client is not running
           }
         } catch (InterruptedException e) {
-
+        	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                        "sendAndReceiveCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_client_interrupted_INFO", new Object[] { casReferenceId, aCAS.hashCode()});
+            }
+        	// cancel the timer if it is associated with a CAS this thread is waiting for. This would be
+        	// the oldest CAS submitted to a queue for processing. The timer will be canceled and restarted
+        	// for the second oldest CAS in the outstanding list.
+        	serviceDelegate.cancelTimerForCasOrPurge(casReferenceId);
+        	throw new ResourceProcessException(e);
         } finally {
           threadMonitor.getMonitor().release();
         }
