@@ -56,7 +56,7 @@ public abstract class Delegate {
   private Endpoint endpoint;
 
   // Timer object to time replies
-  private Timer timer;
+  private DelegateTimer timer;
 
   // Process Timeout value for this delegate
   private long casProcessTimeout = 0;
@@ -136,6 +136,19 @@ public abstract class Delegate {
     return endpoint;
   }
 
+  public void cancelTimerForCasOrPurge(String casReferenceId) {
+	  if ( timer != null && timer.getTimerCasId() != null && timer.getTimerCasId().equals(casReferenceId)) {
+		  //System.out.println("\n\n\t Canceled Timer For CAS:"+casReferenceId+" and Restarting Timer for the next oldest CAS in the outstanding list\n\n");
+		  cancelDelegateTimer();
+		  //	Restart timer for the next older CAS in the oustanding list
+		  restartTimerForOldestCasInOutstandingList();
+	  } else {
+		  // Given CAS is not the oldest in outstanding list. Purge the CAS from both outstanding and
+		  // pending dispatch lists (if exists).
+		  removeCasFromOutstandingList(casReferenceId);
+		  removeCasFromPendingDispatchList(casReferenceId);
+	  }
+  }
   /**
    * Forces Timer restart for the oldest CAS sitting in the list of CASes pending reply.
    */
@@ -251,6 +264,7 @@ public abstract class Delegate {
                   new Object[] { getComponentName(), delegateKey, aCasReferenceId,
                       outstandingCasList.size() });
         }
+        //System.out.println("\n\n\t++++++++++++++++++++++++ :::::: Added New CAS to Outstanding List:"+entry.getCasReferenceId()+"\n\tOutstanding:"+toString());
       }
     }
   }
@@ -294,7 +308,7 @@ public abstract class Delegate {
    * Logs CASes sitting in the list of CASes pending dispatch. These CASes were delayed due to a bad
    * state of the delegate.
    */
-  private void dumpDelayedList() {
+  protected void dumpDelayedList() {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
       for (DelegateEntry entry : pendingDispatchList) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, this.getClass().getName(),
@@ -571,6 +585,12 @@ public abstract class Delegate {
   public void startGetMetaRequestTimer() {
     startDelegateTimer(null, AsynchAEMessage.GetMeta);
   }
+  /**
+   * Starts GetMeta Request timer
+   */
+  public void startGetMetaRequestTimer(String casReferenceId) {
+    startDelegateTimer(casReferenceId, AsynchAEMessage.GetMeta);
+  }
 
   /**
    * Starts a timer for a given command
@@ -581,10 +601,11 @@ public abstract class Delegate {
    *          - command for which the timer is started
    */
   private synchronized void startDelegateTimer(final String aCasReferenceId, final int aCommand) {
-    final long timeToWait = getTimeoutValueForCommand(aCommand);
+    
+	  final long timeToWait = getTimeoutValueForCommand(aCommand);
     Date timeToRun = new Date(System.currentTimeMillis() + timeToWait);
-    timer = new Timer("Controller:" + getComponentName() + ":Request TimerThread-Endpoint_impl:"
-            + endpoint + ":" + System.nanoTime() + ":Cmd:" + aCommand);
+    timer = new DelegateTimer("Controller:" + getComponentName() + ":Request TimerThread-Endpoint_impl:"
+            + endpoint + ":" + System.nanoTime() + ":Cmd:" + aCommand, true, aCasReferenceId,this);
     final Delegate delegate = this;
     timer.schedule(new TimerTask() {
       public void run() {
@@ -593,7 +614,6 @@ public abstract class Delegate {
         errorContext.add(AsynchAEMessage.Command, aCommand);
         String enrichedMessage = enrichProcessCASTimeoutMessage(aCommand, aCasReferenceId,timeToWait,"Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId );
         Exception cause = new MessageTimeoutException(enrichedMessage);
-//        Exception cause = new MessageTimeoutException("Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId);
         if (AsynchAEMessage.Process == aCommand) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
@@ -614,6 +634,10 @@ public abstract class Delegate {
             errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
           }
         } else if (AsynchAEMessage.GetMeta == aCommand) {
+        	if ( aCasReferenceId != null ) {  // true on GetMeta Ping timeout
+            	errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
+                errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
+        	}
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                     "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -758,6 +782,19 @@ public abstract class Delegate {
       return casReferenceId;
     }
   }
+  protected String getDelayedCASes() {
+	    StringBuffer sb = new StringBuffer();
+	    List<DelegateEntry> copyOfOutstandingCASes = 
+	      new ArrayList<DelegateEntry>(outstandingCasList);
+	    for (DelegateEntry entry : copyOfOutstandingCASes) {
+	      if ( entry != null && entry.getCasReferenceId() != null ) {
+	        sb.append("["+entry.getCasReferenceId()+"]");
+	      } 
+	    }
+	    return sb.toString();
+
+  }
+  
   public String toString(){
     StringBuffer sb = new StringBuffer();
     List<DelegateEntry> copyOfOutstandingCASes = 
@@ -768,5 +805,22 @@ public abstract class Delegate {
       } 
     }
     return sb.toString();
+  }
+  private class DelegateTimer extends Timer {
+	  String casReferenceId;
+	  Delegate delegate;
+	  public DelegateTimer(String threadName, boolean isDaemon, String casReferenceId, Delegate delegate) {
+		  super(threadName, isDaemon);
+		  this.casReferenceId = casReferenceId;
+		  this.delegate = delegate;
+	  }
+	  public void cancel() {
+		  super.cancel();
+	      //System.out.println("\n\n---------------------------------- Cancelled Timer on CAS:"+casReferenceId+" .\n\tOutstanding:"+delegate.toString()+"\n\n");
+	      //Thread.dumpStack();
+	  }
+	  public String getTimerCasId() {
+		  return casReferenceId;
+	  }
   }
 }

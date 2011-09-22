@@ -834,15 +834,27 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           if ( !serviceDelegate.isAwaitingPingReply() && sharedConnection.isOpen() ) {
             serviceDelegate.setAwaitingPingReply();
             // Add the cas to a list of CASes pending reply. Also start the timer if necessary
-            serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
+			// serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
+        	  
+        	  // since the service is in time out state, we dont send CASes to it just yet. Instead, place
+        	  // a CAS in a pending dispatch list. CASes from this list will be sent once a response to PING
+        	  // arrives.
+            serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId());
             if ( cpcReadySemaphore.availablePermits() > 0 ) {
               acquireCpcReadySemaphore();
             }
 
             // Send PING Request to check delegate's availability
             sendMetaRequest();
-            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "sendCAS",
+            serviceDelegate.cancelDelegateTimer();
+            // Start a timer for GetMeta ping and associate a cas id
+            // with this timer. The delegate is currently in a timed out
+            // state due to a timeout on a CAS with a given casReferenceId.
+            //  
+            serviceDelegate.startGetMetaRequestTimer(casReferenceId);
+            
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendCAS",
                       JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_sending_ping__FINE",
                       new Object[] { serviceDelegate.getKey() });
             }
@@ -854,7 +866,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
               return casReferenceId;
             } else {
               //  Add to the outstanding list.  
-              serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
+			  //  serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
+        	  // since the service is in time out state, we dont send CASes to it just yet. Instead, place
+        	  // a CAS in a pending dispatch list. CASes from this list will be sent once a response to PING
+        	  // arrives.
+              serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId());
               return casReferenceId;
             }
           }
@@ -973,12 +989,16 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //  reset the state of the service. The client received its ping reply  
       serviceDelegate.resetAwaitingPingReply();
       String casReferenceId = null;
-      if (serviceDelegate.getCasPendingReplyListSize() > 0) {
-        casReferenceId = serviceDelegate.removeOldestCasFromOutstandingList();        
-        ClientRequest cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-        if (cachedRequest != null) {
-          sendCAS(cachedRequest.getCAS(), cachedRequest);
-        }
+      if (serviceDelegate.getCasPendingReplyListSize() > 0 || serviceDelegate.getCasPendingDispatchListSize() > 0) {
+    	  serviceDelegate.restartTimerForOldestCasInOutstandingList();
+          //	We got a reply to GetMeta ping. Send all CASes that have been
+          //    placed on the pending dispatch queue to a service.
+    	  while( (casReferenceId = serviceDelegate.removeOldestFromPendingDispatchList()) != null ) {
+    	        ClientRequest cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+    	        if (cachedRequest != null) {
+    	          sendCAS(cachedRequest.getCAS(), cachedRequest);
+    	        }
+    	  }
       } else {
         ProcessTrace pt = new ProcessTrace_impl();
         UimaASProcessStatusImpl status = new UimaASProcessStatusImpl(pt);
@@ -2038,60 +2058,79 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         break;
 
       case (ProcessTimeout):
-        ClientRequest cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-        if (cachedRequest != null) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                  "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_process_timeout_WARNING", new Object[] { anEndpoint, cachedRequest.getHostIpProcessingCAS() });
-          }
-        } else {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            // if missing for any reason ...
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                    "handleProcessReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_received_expired_msg_INFO",
-                    new Object[] { anEndpoint, casReferenceId });
-          }
-          return;
-        }
-        // Store the total latency for this CAS. The departure time is set right before the CAS
-        // is sent to a service.
-        cachedRequest.setTimeWaitingForReply(System.nanoTime()
-                - cachedRequest.getCASDepartureTime());
+    	  if ( casReferenceId != null ) {
+    	        ClientRequest cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+    	        if (cachedRequest != null) {
+    	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+    	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+    	                  "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+    	                  "UIMAJMS_process_timeout_WARNING", new Object[] { anEndpoint, cachedRequest.getHostIpProcessingCAS() });
+    	          }
+    	        } else {
+    	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+    	            // if missing for any reason ...
+    	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+    	                    "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+    	                    "UIMAJMS_received_expired_msg_INFO",
+    	                    new Object[] { anEndpoint, casReferenceId });
+    	          }
+    	          return;
+    	        }
+    	        // Store the total latency for this CAS. The departure time is set right before the CAS
+    	        // is sent to a service.
+    	        cachedRequest.setTimeWaitingForReply(System.nanoTime()
+    	                - cachedRequest.getCASDepartureTime());
 
-        // mark timeout exception
-        cachedRequest.setTimeoutException();
+    	        // mark timeout exception
+    	        cachedRequest.setTimeoutException();
 
-        if (cachedRequest.isSynchronousInvocation()) {
-          // Signal a thread that we received a reply, if in the map
-          if (threadMonitorMap.containsKey(cachedRequest.getThreadId())) {
-            ThreadMonitor threadMonitor = (ThreadMonitor) threadMonitorMap.get(cachedRequest
-                    .getThreadId());
-            // Unblock the sending thread so that it can complete processing with an error
-            if (threadMonitor != null) {
-              threadMonitor.getMonitor().release();
-              cachedRequest.setReceivedProcessCasReply(); // should not be needed
-            }
-          }
-        } else {
-          // notify the application listener with the error
-          if ( serviceDelegate.isPingTimeout()) {
-            exc = new UimaASProcessCasTimeout(new UimaASPingTimeout("UIMA AS Client Ping Time While Waiting For Reply From a Service On Queue:"+anEndpoint));
-            serviceDelegate.resetPingTimeout();
-          } else {
-            exc = new UimaASProcessCasTimeout("UIMA AS Client Timed Out Waiting For CAS:"+casReferenceId+ " Reply From a Service On Queue:"+anEndpoint);
-          }
-          status.addEventStatus("Process", "Failed", exc);
-          notifyListeners(aCAS, status, AsynchAEMessage.Process);
-        }
-        cachedRequest.removeEntry(casReferenceId);
-        serviceDelegate.removeCasFromOutstandingList(casReferenceId);
-        // Check if all replies have been received
-        long outstandingCasCount = outstandingCasRequests.decrementAndGet();
-        if (outstandingCasCount == 0) {
-          cpcReadySemaphore.release();
-        }
+    	        if (cachedRequest.isSynchronousInvocation()) {
+    	          // Signal a thread that we received a reply, if in the map
+    	          if (threadMonitorMap.containsKey(cachedRequest.getThreadId())) {
+    	            ThreadMonitor threadMonitor = (ThreadMonitor) threadMonitorMap.get(cachedRequest
+    	                    .getThreadId());
+    	            // Unblock the sending thread so that it can complete processing with an error
+    	            if (threadMonitor != null) {
+    	              threadMonitor.getMonitor().release();
+    	              cachedRequest.setReceivedProcessCasReply(); // should not be needed
+    	            }
+    	          }
+    	        } else {
+    	          // notify the application listener with the error
+    	          if ( serviceDelegate.isPingTimeout()) {
+    	            exc = new UimaASProcessCasTimeout(new UimaASPingTimeout("UIMA AS Client Ping Time While Waiting For Reply From a Service On Queue:"+anEndpoint));
+    	            serviceDelegate.resetPingTimeout();
+    	          } else {
+    	            exc = new UimaASProcessCasTimeout("UIMA AS Client Timed Out Waiting For CAS:"+casReferenceId+ " Reply From a Service On Queue:"+anEndpoint);
+    	          }
+    	          status.addEventStatus("Process", "Failed", exc);
+    	          notifyListeners(aCAS, status, AsynchAEMessage.Process);
+    	        }
+    	        boolean isSynchronousCall = cachedRequest.isSynchronousInvocation();
+    	        
+    	        cachedRequest.removeEntry(casReferenceId);
+    	        serviceDelegate.removeCasFromOutstandingList(casReferenceId);
+    	        // Check if all replies have been received
+    	        long outstandingCasCount = outstandingCasRequests.decrementAndGet();
+    	        if (outstandingCasCount == 0) {
+    	          cpcReadySemaphore.release();
+    	        }
+    	        //	
+    	        if ( !isSynchronousCall && serviceDelegate.getCasPendingReplyListSize() > 0) {
+    	            String nextOutstandingCasReferenceId = 
+    	            		serviceDelegate.getOldestCasIdFromOutstandingList();
+    	        	if ( nextOutstandingCasReferenceId != null ) {
+    	        		cachedRequest = (ClientRequest) clientCache.get(nextOutstandingCasReferenceId);
+    	        		try {
+    	            		sendCAS(cachedRequest.getCAS());
+    	        		} catch( Exception e) {
+    	        			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+    	                            "notifyOnTimout", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+    	                            "UIMAEE_exception__WARNING", e);
+    	        		}
+    	        	}
+    	        }
+    	  }
         break;
     } // case
   }

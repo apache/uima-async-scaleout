@@ -89,7 +89,8 @@ public class ClientServiceDelegate extends Delegate {
     String casReferenceId = null;
     CAS cas = null;
     ClientRequest cachedRequest = null;
-    
+    casReferenceId = (String) errorContext.get(AsynchAEMessage.CasReference);
+
     synchronized(errorMux) {
       if (!clientUimaAsEngine.running) {
         cancelDelegateTimer();
@@ -101,7 +102,7 @@ public class ClientServiceDelegate extends Delegate {
         if (e instanceof MessageTimeoutException) {
           switch (command) {
             case AsynchAEMessage.Process:
-              casReferenceId = (String) errorContext.get(AsynchAEMessage.CasReference);
+              //casReferenceId = (String) errorContext.get(AsynchAEMessage.CasReference);
               if (casReferenceId != null) {
                 cachedRequest = (ClientRequest) clientUimaAsEngine.clientCache.get(casReferenceId);
                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)
@@ -145,25 +146,27 @@ public class ClientServiceDelegate extends Delegate {
 
             case AsynchAEMessage.GetMeta:
               if (isAwaitingPingReply()) {
+            	  
+                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                        "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_client_ping_timed_out__WARNING", new Object[] { clientUimaAsEngine.getEndPointName()});
+                }
+                super.resetAwaitingPingReply();
+                // Handling a Ping timeout, treat it as if it was a Process timeout. 
                 clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
-                        BaseUIMAAsynchronousEngineCommon_impl.PingTimeout, casReferenceId);
+                		BaseUIMAAsynchronousEngineCommon_impl.ProcessTimeout, casReferenceId);
               } else {
+                  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                              "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                              "UIMAJMS_meta_timeout_WARNING", new Object[] { getKey() });
+                    }
                 // Notifies Listeners and removes ClientRequest instance from the client cache
                 clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
                         BaseUIMAAsynchronousEngineCommon_impl.MetadataTimeout, casReferenceId);
                 clientUimaAsEngine.clientSideJmxStats.incrementMetaTimeoutErrorCount();
               }
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                        "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAJMS_meta_timeout_WARNING", new Object[] { getKey() });
-              }
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                          "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                          "UIMAJMS_service_not_responding_to_ping__WARNING", new Object[] { clientUimaAsEngine.getEndPointName()});
-                }
-              clientUimaAsEngine.stop();
               break;
 
             case AsynchAEMessage.CollectionProcessComplete:
@@ -188,7 +191,7 @@ public class ClientServiceDelegate extends Delegate {
   public String enrichProcessCASTimeoutMessage(int aCommand, String casReferenceId, long timeToWait, String timeoutMessage) {
     StringBuffer sb = new StringBuffer(timeoutMessage);
     try {
-      if ( clientUimaAsEngine.getCache().containsKey(casReferenceId) ) {
+      if ( casReferenceId != null && clientUimaAsEngine.getCache().containsKey(casReferenceId) ) {
         ClientRequest cr = 
           (ClientRequest)clientUimaAsEngine.getCache().get(casReferenceId);
         if ( cr != null ) {
