@@ -70,6 +70,8 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
 
   private AnalysisEngineController topLevelController = null;
 
+  private Exception cause=null;
+  
   public SpringContainerDeployer() {
   }
 
@@ -507,12 +509,16 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       serviceInitializationSemaphore.release();
     }
     if (serviceInitializationException) {
-      throw new ResourceInitializationException(new Exception("Details of failure(s) written to UIMA log"));
+    	if ( cause != null ) {
+  	      throw new ResourceInitializationException(cause);
+    	} else {
+    	  throw new ResourceInitializationException(new Exception("Details of failure(s) written to UIMA log"));
+    	}
     }
   }
 
   public void notifyOnInitializationFailure(AnalysisEngineController aController, Exception e) {
-
+	  cause = e;
     // Initialization exception. Notify blocking thread and indicate a
     // problem
     serviceInitializationException = true;

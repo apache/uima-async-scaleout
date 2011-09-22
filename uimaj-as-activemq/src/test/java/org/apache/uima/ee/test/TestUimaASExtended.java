@@ -22,6 +22,7 @@ package org.apache.uima.ee.test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -2536,6 +2537,29 @@ public class TestUimaASExtended extends BaseTestSupport {
       eeUimaEngine.stop();
     }
   }
+  public void testCauseOfInitializationFailure() throws Exception {
+	    System.out.println("-------------- testCauseOfInitializationFailure -------------");
+	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    try {
+	      deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithInitException.xml");
+	      Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+	              "NoOpAnnotatorQueue");
+	      exceptionCountLatch = new CountDownLatch(1);
+	      initialize(eeUimaEngine, appCtx);
+	      fail("Expected ResourceInitializationException. Instead, the Aggregate Reports Successfull Initialization");
+	    } catch (ResourceInitializationException e) {
+	      Exception cause = getCause(e);
+	      if ( cause != null && (cause instanceof FileNotFoundException) ) {
+		      System.out.println("Expected FileNotFoundException was received");
+	      } else {
+		      fail("Expected FileNotFoundException NOT received as a cause of failure. Instead Got:" + cause);
+	      }
+	    } catch (Exception e) {
+	      fail("Expected ResourceInitializationException. Instead Got:" + e.getClass());
+	    } finally {
+	      eeUimaEngine.stop();
+	    }
+	  }
 
   public void testTerminateOnInitializationFailure() throws Exception {
     System.out.println("-------------- testTerminateOnInitializationFailure -------------");
