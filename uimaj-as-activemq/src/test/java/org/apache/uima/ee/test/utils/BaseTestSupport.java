@@ -312,6 +312,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     Map appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()), queueName, timeout);
     // Set an explicit getMeta (Ping)timeout
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, aGetMetaTimeout);
+    appCtx.put(UimaAsynchronousEngine.Timeout, 1000);
 
     initialize(eeUimaEngine, appCtx);
 
@@ -963,7 +964,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           try {
             // Send CAS and wait for a response
             String casReferenceId = uimaClient.sendAndReceiveCAS(cas, pt);
-            status = new UimaASProcessStatusImpl(pt, casReferenceId);
+            status = new UimaASProcessStatusImpl(pt, cas, casReferenceId);
           } catch (ResourceProcessException rpe) {
             //rpe.printStackTrace();
             status = new UimaASProcessStatusImpl(pt);
