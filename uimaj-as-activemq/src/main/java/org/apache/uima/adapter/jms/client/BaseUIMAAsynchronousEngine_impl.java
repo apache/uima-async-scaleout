@@ -127,6 +127,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   private ObjectName clientJmxObjectName = null;
   
+  private String amqUser = null;
+  
+  private String amqPassword = null;
+  
   
   public BaseUIMAAsynchronousEngine_impl() {
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
@@ -361,6 +365,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 					// Create AMQ specific connection validator. It uses
 					// AMQ specific approach to test the state of the connection
 					ActiveMQConnectionValidator connectionValidator = new ActiveMQConnectionValidator();
+					//Initalize the connection Factory
+					ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(aBrokerURI);
+					connectionFactory.setUserName(amqUser);
+					connectionFactory.setPassword(amqPassword);
 					// Create a singleton shared connection object
 					sharedConnection = new SharedConnection(
 							new ActiveMQConnectionFactory(aBrokerURI),
@@ -642,6 +650,14 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       super.serializationStrategy = (String) anApplicationContext
               .get(UimaAsynchronousEngine.SerializationStrategy);
       clientSideJmxStats.setSerialization(super.serializationStrategy);
+    }
+    if (anApplicationContext.containsKey(UimaAsynchronousEngine.userName)) {
+        amqUser = (String) anApplicationContext
+                .get(UimaAsynchronousEngine.userName);
+    }
+    if (anApplicationContext.containsKey(UimaAsynchronousEngine.password)) {
+    	amqPassword = (String) anApplicationContext
+    	.get(UimaAsynchronousEngine.password);
     }
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {

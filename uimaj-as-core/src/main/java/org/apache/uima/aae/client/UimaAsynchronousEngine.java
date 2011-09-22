@@ -169,7 +169,16 @@ public interface UimaAsynchronousEngine {
    * in a Map which is an argument in {@link #initialize(Map)}
    */
   public static final String SerializationStrategy = "SerializationStrategy";
-
+  
+  /**
+   * The userName for Message queuing connection if needed 
+   */
+  public static final String userName = null;
+  
+  /**
+   * The password for Message queuing connection if needed
+   */
+  public static final String password = null;
   /**
    * @deprecated 
    */
