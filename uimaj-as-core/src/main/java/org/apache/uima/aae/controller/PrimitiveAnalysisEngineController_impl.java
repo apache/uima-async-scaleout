@@ -23,24 +23,21 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.InProcessCache;
+import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
-import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandler;
-import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.jmx.JmxManagement;
 import org.apache.uima.aae.jmx.PrimitiveServiceInfo;
 import org.apache.uima.aae.jmx.ServicePerformance;
@@ -51,24 +48,20 @@ import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.spi.transport.UimaMessage;
 import org.apache.uima.aae.spi.transport.UimaTransport;
 import org.apache.uima.analysis_engine.AnalysisEngine;
-import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineManagement;
 import org.apache.uima.analysis_engine.CasIterator;
-import org.apache.uima.analysis_engine.impl.AnalysisEngineManagementImpl;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.CASImpl;
 import org.apache.uima.cas.impl.OutOfTypeSystemData;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ConfigurationParameter;
 import org.apache.uima.resource.metadata.impl.ConfigurationParameter_impl;
-import org.apache.uima.util.InvalidXMLException;
 import org.apache.uima.util.Level;
-import org.apache.xmlbeans.impl.common.XmlStreamUtils;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomDriver;
 
 public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineController implements
         PrimitiveAnalysisEngineController {
@@ -102,7 +95,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   static private Object threadDumpMonitor = new Object();
   static private Long lastDump = Long.valueOf(0);
-  private XStream xstream = new XStream();
+  private XStream xstream = new XStream(new DomDriver());
 
   public PrimitiveAnalysisEngineController_impl(String anEndpointName,
           String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
@@ -179,7 +172,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       sharedInitSemaphore.acquire();
       // Parse the descriptor in the calling thread.
       rSpecifier = UimaClassFactory.produceResourceSpecifier(super.aeDescriptor);
-
       AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
         //  Call to produceAnalysisEngine() may take a long time to complete. While this
         //  method was executing, the service may have been stopped. Before continuing 
@@ -546,8 +538,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       
       AnalysisEngineManagement rootAem = ae.getManagementInterface();
       beforeAnalysisManagementObjects.add(deepCopy(rootAem));   
-      getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects, true);
-      
+      if ( rootAem.getComponents().size() > 0 ) {
+          getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects, true);
+      }
       
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
       if ( stackDumpTimer != null ) {
@@ -803,13 +796,15 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       AnalysisEngineManagement aem = ae.getManagementInterface();
       //  Add the top level AnalysisEngineManagement instance.
       afterAnalysisManagementObjects.add(aem);    
-      //  Flatten the hierarchy by recursively (if this AE is an aggregate) extracting  
-      //  primitive AE's AnalysisEngineManagement instance and placing it in 
-      //  afterAnalysisManagementObjects List.
-      getLeafManagementObjects(aem, afterAnalysisManagementObjects, false);
+      if ( aem.getComponents().size() > 0) {
+          //  Flatten the hierarchy by recursively (if this AE is an aggregate) extracting  
+          //  primitive AE's AnalysisEngineManagement instance and placing it in 
+          //  afterAnalysisManagementObjects List.
+          getLeafManagementObjects(aem, afterAnalysisManagementObjects, false);
+      }
 
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
-      //  by each AE. This list will be serialized and send to the client
+      //  by each AE. This list will be serialized and sent to the client
       List<AnalysisEnginePerformanceMetrics> performanceList = 
         new ArrayList<AnalysisEnginePerformanceMetrics>();
       //  Diff the before process() performance metrics with post process performance
@@ -827,7 +822,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
         }
       }
-      //  Save this CAS per component performance metrics
+      //  Save this component performance metrics
       parentCasStateEntry.getAEPerformanceList().addAll(performanceList);
       
       if (!anEndpoint.isRemote()) {
