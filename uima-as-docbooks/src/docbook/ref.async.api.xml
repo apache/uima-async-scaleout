@@ -313,6 +313,28 @@ under the License.
         </listitem>
 
         <listitem>
+          <para><code>entityProcessComplete(CAS aCas, EntityProcessStatus aStatus, List&lt;AnalysisEnginePerformanceMetrics&gt; componentMetricsList)</code>: 
+          Same as above with an additional <code>componentMetricsList</code> argument. It provides per component performance breakdown as reported by UIMA
+          aggregate. Useful for identifying how much time each component took to analyze the CAS. The <code>AnalysisEnginePerformanceMetrics</code>
+          class provides the following API:
+          <itemizedlist>
+             <listitem>
+              <para><code>public String getName()</code>: identifies component by name</para>
+             </listitem>
+             <listitem>
+              <para><code>public String getUniqueName()</code>: identifies component by unique name</para>
+             </listitem>
+             <listitem>
+              <para><code>public long getAnalysisTime()</code>: time (in millis) compnent spent analyzing the CAS</para>
+             </listitem>
+             <listitem>
+              <para><code>public long getNumProcessed()</code>: total number of CASes processed so far by the component</para>
+             </listitem>
+          </itemizedlist>  
+          </para>
+        </listitem>
+
+        <listitem>
           <para><code>collectionProcessComplete(EntityProcessStatus aStatus)</code>: The callback used to inform the
             application that the CPC request has completed. On success aStatus will be
             null; on failure use the <code>UimaASProcessStatus</code> class to get the details.</para>
@@ -330,8 +352,9 @@ under the License.
           <para><code>onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid)</code>: The callback 
             used to inform the application that a CAS has been delivered to UIMA AS service and is about to be processed. 
             The status object has <code>getCasReferenceId()</code> method that returns a unique CAS id assigned by 
-            UIMA AS. The nodeIP contains IP address of a machine where UIMA AS service is running. The pid is the 
-            UIMA AS service PID.
+            UIMA AS. The nodeIP contains IP address of a machine where UIMA AS service is running. The pid contains
+            UIMA AS service PID and a thread id. Its syntax is:&lt;PID&gt;:&lt;thread id&gt;. The thread id identifies which 
+            thread in UIMA AS service analyzes a CAS.
 		  </para>
         </listitem>
       </itemizedlist>
