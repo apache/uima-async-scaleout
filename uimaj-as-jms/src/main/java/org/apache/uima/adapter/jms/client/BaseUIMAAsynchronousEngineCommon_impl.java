@@ -2121,12 +2121,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	            		serviceDelegate.getOldestCasIdFromOutstandingList();
     	        	if ( nextOutstandingCasReferenceId != null ) {
     	        		cachedRequest = (ClientRequest) clientCache.get(nextOutstandingCasReferenceId);
-    	        		try {
-    	            		sendCAS(cachedRequest.getCAS());
-    	        		} catch( Exception e) {
-    	        			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-    	                            "notifyOnTimout", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-    	                            "UIMAEE_exception__WARNING", e);
+    	        		if ( cachedRequest != null && cachedRequest.getCAS() != null ) {
+        	        		try {
+        	            		sendCAS(cachedRequest.getCAS());
+        	        		} catch( Exception e) {
+        	        			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+        	                            "notifyOnTimout", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+        	                            "UIMAEE_exception__WARNING", e);
+        	        		}
     	        		}
     	        	}
     	        }
