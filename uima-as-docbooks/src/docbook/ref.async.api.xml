@@ -263,6 +263,14 @@ under the License.
             <para>SerializationStrategy:(Optional) xmi or binary serialization. Default = xmi </para>
           </listitem>
 
+          <listitem>
+            <para>userName:(Optional) to authenticate user with ActiveMQ broker. Default = null </para>
+          </listitem>
+
+          <listitem>
+            <para>password:(Optional) to authenticate user with ActiveMQ broker. Default = null </para>
+          </listitem>
+
         </itemizedlist></para>
       
     </section>
