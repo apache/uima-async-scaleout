@@ -84,6 +84,10 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
    * @param aStatus
    *          the status of the processing. This object contains a record of any Exception that
    *          occurred, as well as timing information.
+   * @param componentMetricsList
+   *          List containing CAS per component performance breakdown as reported by UIMA
+   *          aggregate. Useful for identifying how much time each component took to analyze
+   *          the CAS.  
    */
   public void entityProcessComplete(CAS aCas, EntityProcessStatus aStatus, List<AnalysisEnginePerformanceMetrics> componentMetricsList) {
 
