@@ -136,7 +136,7 @@ public abstract class Delegate {
     return endpoint;
   }
 
-  public void cancelTimerForCasOrPurge(String casReferenceId) {
+  public synchronized void cancelTimerForCasOrPurge(String casReferenceId) {
 	  if ( timer != null && timer.getTimerCasId() != null && timer.getTimerCasId().equals(casReferenceId)) {
 		  //System.out.println("\n\n\t Canceled Timer For CAS:"+casReferenceId+" and Restarting Timer for the next oldest CAS in the outstanding list\n\n");
 		  cancelDelegateTimer();
@@ -806,7 +806,7 @@ public abstract class Delegate {
     }
     return sb.toString();
   }
-  private class DelegateTimer extends Timer {
+  private static class DelegateTimer extends Timer {
 	  String casReferenceId;
 	  Delegate delegate;
 	  public DelegateTimer(String threadName, boolean isDaemon, String casReferenceId, Delegate delegate) {
