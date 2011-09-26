@@ -51,7 +51,7 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
 
   private String parentCasId;
 
-  private CAS cas;
+  transient private CAS cas;
   
   public UimaASProcessStatusImpl(ProcessTrace p) {
     this(p, null, null);
