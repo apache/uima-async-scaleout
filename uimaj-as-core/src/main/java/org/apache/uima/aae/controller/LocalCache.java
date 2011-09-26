@@ -236,7 +236,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     private List<AnalysisEnginePerformanceMetrics> performanceList = 
       new ArrayList<AnalysisEnginePerformanceMetrics>();
     
-
+    private Object monitor = new Object();
     
     public String getHostIpProcessingCAS() {
       return hostIpProcessingCAS;
@@ -422,7 +422,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
      * 
      */
     public void incrementOutstandingFlowCounter() {
-      synchronized( flowSemaphore ) {
+      synchronized( monitor ) {
         if ( childCasOutstandingFlowCounter.incrementAndGet() == 1  ) {
           try {
             acquireFlowSemaphore();
@@ -438,7 +438,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
      * with its Flow. 
      */
     public void decrementOutstandingFlowCounter() {
-      synchronized( flowSemaphore ) {
+      synchronized( monitor ) {
         if( flowSemaphore.availablePermits() == 0 ) {
           if ( childCasOutstandingFlowCounter.get() > 0 ) {
             childCasOutstandingFlowCounter.decrementAndGet();
