@@ -623,6 +623,9 @@ public class ProcessResponseHandler extends HandlerBase {
         casStateEntry.setHostIpProcessingCAS(serviceHostIp);
       }
     } catch (Exception e) {
+    	UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                "handleServiceInfoReply", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAEE_exception__WARNING", e);
     	return;
     }
 
