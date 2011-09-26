@@ -3110,10 +3110,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if ( buffer.length() == 0) {
       delegates.append("\n"+lbl1+getComponentName()+" Delegates:");
     }
-    synchronized(destinationMap) {
-      Set set = destinationMap.entrySet();
-      // For all delegates ...
-      for (Iterator it = set.iterator(); it.hasNext();) {
+    Set set = destinationMap.entrySet();
+    // For all delegates ...
+    for (Iterator it = set.iterator(); it.hasNext();) {
         delegates.append("\n");
         Map.Entry entry = (Map.Entry) it.next();
         Endpoint endpoint = (Endpoint) entry.getValue();
@@ -3141,8 +3140,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             }
           }
         }
-      }
-      
     }
     buffer.append(delegates.toString());
   }
