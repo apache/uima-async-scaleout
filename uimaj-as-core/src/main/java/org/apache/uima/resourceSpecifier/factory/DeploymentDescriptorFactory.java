@@ -18,6 +18,9 @@
  */
 package org.apache.uima.resourceSpecifier.factory;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.List;
 
 import org.apache.uima.resource.ResourceInitializationException;
@@ -49,10 +52,10 @@ public final class DeploymentDescriptorFactory {
   }
 
   /**
-   * Parses provided UIMA AS deployment descriptor xml file and returns a Java Object representing
+   * Parses provided UIMA AS deployment descriptor contents (as String) and returns a Java Object representing
    * the descriptor.
    *
-   * @param xmlDescriptor - deployment descriptor path
+   * @param xmlDescriptor - deployment descriptor xml contents as String
    * @return - Java Object representing deployment descriptor
    * @throws ResourceInitializationException the resource initialization exception
    */
@@ -64,7 +67,40 @@ public final class DeploymentDescriptorFactory {
       throw new ResourceInitializationException(e);
     }
   }
+  /**
+   * Parses provided UIMA AS deployment descriptor xml file and returns a Java Object representing
+   * the descriptor.
+   *
+   * @param xmlFileDescriptor - deployment descriptor file
+   * @return - Java Object representing deployment descriptor
+   * @throws ResourceInitializationException the resource initialization exception
+   */
+  public static UimaASDeploymentDescriptor createDeploymentDescriptor(File xmlFileDescriptor) 
+  throws ResourceInitializationException {
+    try {
+      return new UimaASDeploymentDescriptorImpl(AnalysisEngineDeploymentDescriptionDocument.Factory.parse(xmlFileDescriptor),new ServiceContextImpl("","","","") );
+    } catch( Exception e ) {
+      throw new ResourceInitializationException(e);
+    }
+  }
   
+  /**
+   * Parses provided UIMA AS deployment descriptor InputStream and returns a Java Object representing
+   * the descriptor.
+   *
+   * @param xmlFileDescriptor - deployment descriptor InputStream
+   * @return - Java Object representing deployment descriptor
+   * @throws ResourceInitializationException the resource initialization exception
+   */
+  public static UimaASDeploymentDescriptor createDeploymentDescriptor(InputStream descriptorInputStream) 
+  throws ResourceInitializationException {
+    try {
+      return new UimaASDeploymentDescriptorImpl(AnalysisEngineDeploymentDescriptionDocument.Factory.parse(descriptorInputStream),new ServiceContextImpl("","","","") );
+    } catch( Exception e ) {
+      throw new ResourceInitializationException(e);
+    }
+  }
+
   /**
    * Creates a new DeploymentDescriptor object.
    *
@@ -322,7 +358,26 @@ public static RemoteDelegateConfiguration createRemoteDelegateConfiguration(Stri
    */
   public static void main(String[] args) {
   
+	  try {
+		  File file = new File(args[0]);
+		  UimaASDeploymentDescriptor primitiveDD =
+				  DeploymentDescriptorFactory.createDeploymentDescriptor(new FileInputStream(file));  
+		  System.out.println(primitiveDD.toXML());
+		  
+	  } catch( Exception e) {
+		  e.printStackTrace();
+	  }
     
+	  try {
+		  File file = new File(args[0]);
+		  UimaASDeploymentDescriptor primitiveDD =
+				  DeploymentDescriptorFactory.createDeploymentDescriptor(file);  
+		  System.out.println(primitiveDD.toXML());
+		  
+	  } catch( Exception e) {
+		  e.printStackTrace();
+	  } 
+	  
     ServiceContext context =
       new ServiceContextImpl("Person Title", "Person Title Annotator", "../descriptors/analysis_engine/PersonTitleAnnotator.xml","PersonTitleQueue");
     try {
