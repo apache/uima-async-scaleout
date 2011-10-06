@@ -686,10 +686,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       clientJmxObjectName = new ObjectName("org.apache.uima:name=" + applicationName);
       jmxManager.registerMBean(clientSideJmxStats, clientJmxObjectName);
 
-      Properties props = new Properties();
-      props.setProperty(Context.INITIAL_CONTEXT_FACTORY,"org.apache.activemq.jndi.ActiveMQInitialContextFactory");
-      props.setProperty(Context.PROVIDER_URL,brokerURI);
-      jndiContext = new InitialContext(props);
+      // these next lines were an experiment - not used https://issues.apache.org/jira/browse/UIMA-2249
+//      Properties props = new Properties();
+//      props.setProperty(Context.INITIAL_CONTEXT_FACTORY,"org.apache.activemq.jndi.ActiveMQInitialContextFactory");
+//      props.setProperty(Context.PROVIDER_URL,brokerURI);
+//      jndiContext = new InitialContext(props);
       
       // Check if sharedConnection exists. If not create a new one. The sharedConnection
       // is static and shared by all instances of UIMA AS client in a jvm. The check
