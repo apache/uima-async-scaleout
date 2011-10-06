@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.jms.Connection;
-import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;

@@ -150,7 +150,7 @@ under the License.
           include changes to the Collection Reader made after base release 2.3.1
        -->
       <excludes>
-        <exclude>descriptors/collection_reader/FileSystemCollectionReader.xml</exclude>
+        <!-- exclude>descriptors/collection_reader/FileSystemCollectionReader.xml</exclude-->
         <!--  These ought to be excluded always. We need UIMA AS versions of these
               from eclipseProject folder under uima-as  -->
         <exclude>.classpath</exclude>
@@ -396,11 +396,11 @@ under the License.
          is a change made to the CollectionReader descriptor to fix a missing Language
          parameter value. The change was made after the base was released. 
      -->
-    <file>
+    <!-- file>
       <source>../uimaj-as-activemq/src/test/resources/descriptors/collection_reader/FileSystemCollectionReader.xml</source>
       <outputDirectory>examples/descriptors/collection_reader</outputDirectory>
       <fileMode>644</fileMode>
-    </file>
+    </file-->
     
     <!-- put readme file with altered name at the top level -->
     <!-- file>

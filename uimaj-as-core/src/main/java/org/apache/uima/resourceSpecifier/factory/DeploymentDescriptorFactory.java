@@ -301,7 +301,7 @@ public static RemoteDelegateConfiguration createRemoteDelegateConfiguration(Stri
     ServiceContext aggregateContext =
       new ServiceContextImpl("Aggregate Annotator", 
               "Aggregate Annotator that does nothing", 
-              "C:/uima/releases/apache-uima-as-2.3.1/examples/descriptors/tutorial/ex4/MeetingDetectorTAE.xml",
+              "C:/uima/releases/apache-uima-as-2.4.0/examples/descriptors/tutorial/ex4/MeetingDetectorTAE.xml",
               "AggregateQueue");
     try {
       UimaASAggregateDeploymentDescriptor dd = 
