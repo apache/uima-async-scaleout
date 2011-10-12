@@ -46,7 +46,10 @@ import org.apache.uima.aae.message.UIMAMessage;
 import org.springframework.jmx.JmxException;
 
 /**
+ * This is a stand-alone utility class with a "main".
+ * It is used to retrieve the meta information for a UIMA service, which is attached to a JMS Broker
  * 
+ * It is passed the broker URI and the service name, and optionally, a -verbose flag.
  */
 public class GetMetaRequest {
   private static MBeanServerConnection brokerMBeanServer = null;
@@ -56,6 +59,16 @@ public class GetMetaRequest {
   private static enum QueueState {exists, existsnot, jmxnot};
   private static String jmxPort;
 
+  /**
+   * retrieve meta information for a UIMA-AS Service attached to a broker
+   * It uses the port 1099 as the JMX port on the broker, unless overridden
+   *   by defining the system property activemq.broker.jmx.port with a value of another port number
+   * It uses the default JMX ActiveMQ Domain "org.apache.activemq", unless overridden
+   *   by defining the system property activemq.broker.jmx.domain with a value of the domain to use
+   *   This normally never needs to be done unless multiple brokers are run on the same node 
+   *   as is sometimes done for unit tests.
+   * @param args - brokerUri serviceName [-verbose]
+   */
   public static void main(String[] args) {
     if (args.length < 2) {
       System.err.println("Need arguments: brokerURI serviceName [-verbose]");
@@ -136,7 +149,7 @@ public class GetMetaRequest {
       //  -----------------------------------------------------------------------------
       //  Create message consumer. The consumer uses a selector to filter out messages other
       //  then GetMeta replies. Currently UIMA AS service returns two messages for each request:
-      //  ServiceInfo message and GetMeta message. The ServiceInfo messageis returned by the 
+      //  ServiceInfo message and GetMeta message. The ServiceInfo message is returned by the 
       //  service immediately upon receiving a message from a client. This serves dual purpose, 
       //  1) to make sure the client reply destination exists
       //  2) informs the client which service is processing its request
