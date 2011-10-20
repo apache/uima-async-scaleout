@@ -809,16 +809,12 @@ public abstract class Delegate {
   }
   private static class DelegateTimer extends Timer {
 	  String casReferenceId;
-	  Delegate delegate;
 	  public DelegateTimer(String threadName, boolean isDaemon, String casReferenceId, Delegate delegate) {
 		  super(threadName, isDaemon);
 		  this.casReferenceId = casReferenceId;
-		  this.delegate = delegate;
 	  }
 	  public void cancel() {
 		  super.cancel();
-	      //System.out.println("\n\n---------------------------------- Cancelled Timer on CAS:"+casReferenceId+" .\n\tOutstanding:"+delegate.toString()+"\n\n");
-	      //Thread.dumpStack();
 	  }
 	  public String getTimerCasId() {
 		  return casReferenceId;
