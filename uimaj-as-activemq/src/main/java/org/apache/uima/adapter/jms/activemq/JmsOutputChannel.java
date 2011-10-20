@@ -1386,6 +1386,10 @@ public class JmsOutputChannel implements OutputChannel {
 
   private void dispatch(Message aMessage, Endpoint anEndpoint, CacheEntry entry, boolean isRequest,
           JmsEndpointConnection_impl endpointConnection, long msgSize) throws Exception {
+	  
+	  if ( anEndpoint == null ) { 
+		  throw new UimaEEServiceException("UIMA AS service:"+getAnalysisEngineController().getComponentName()+" unable to dispatch request to a remote delegate. Endpoint is null. This is an invalid state.");
+	  }
     // Add stats
     populateStats(aMessage, anEndpoint, entry.getCasReferenceId(), AsynchAEMessage.Process,
             isRequest);
@@ -1444,8 +1448,10 @@ public class JmsOutputChannel implements OutputChannel {
     	      // check if the broker connection entry contains an endpoint that we failed on while
     	      // sending a message. If it exits, remove the endpoint to allow recovery to work on 
     	      // a subsequent message. 
-    	      if (brokerConnectionEntry.endpointExists(key)) {
-    	    	brokerConnectionEntry.removeEndpoint(key);
+    	      if ( brokerConnectionEntry != null ) {
+        	      if (brokerConnectionEntry.endpointExists(key)) {
+          	    	brokerConnectionEntry.removeEndpoint(key);
+          	      }
     	      }
     	    } 
         // Spin recovery thread to handle send error. After the recovery thread
