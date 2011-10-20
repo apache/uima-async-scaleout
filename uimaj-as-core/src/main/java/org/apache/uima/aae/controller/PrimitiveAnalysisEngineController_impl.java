@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae.controller;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -1091,18 +1092,24 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
    This method forces a heap and java dump. It only works with IBM jvm. 
    **/
   protected final synchronized void forceStackDump() {
+	  Class<?> params[] = {};
+      Object paramsObj[] = {};
+      
+	  
 	  try {
-		  Class<?> params[] = {};
-	      Object paramsObj[] = {};
-	      
 		  Class<?> dumpClass = Class.forName("com.ibm.jvm.Dump");
 	      //	Get a handle to the static method
-          Method javaDumpMethod = dumpClass.getDeclaredMethod("JavaDump", params);
-          //	dump the stack of all threads
-          javaDumpMethod.invoke(null, paramsObj);
-		  
-	  } catch( Exception e) {
+	      Method javaDumpMethod = dumpClass.getDeclaredMethod("JavaDump", params);
+	      //	dump the stack of all threads
+	      javaDumpMethod.invoke(null, paramsObj);
+	  } catch( ClassNotFoundException e) {
 		  //	ignore ClassNotFoundException in case of sun jvm
+	  } catch( InvocationTargetException e) {
+		  
+	  } catch (NoSuchMethodException e) {
+		  
+	  } catch( IllegalAccessException e) {
+		  
 	  }
   }
   
@@ -1115,7 +1122,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
    */
   public class StackDumpTimer  {
 	  Timer timer;
-	  volatile boolean timerCancelled;
 	  
 	  public StackDumpTimer ( int seconds )   {
 	    timer = new Timer (  ) ;
@@ -1127,7 +1133,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 	  class dumpTheStackTask extends TimerTask  {
 	    public void run (  )   {
-	    	timerCancelled = true;
 	    	timer.cancel (  ) ; //Terminate the thread
 	    	// create a heap dump. NOTE: this only works with IBM jvm
 	    	synchronized (threadDumpMonitor) {
