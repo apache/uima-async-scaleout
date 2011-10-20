@@ -1283,6 +1283,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       // Store the total latency for this CAS. The departure time is set right before the CAS
       // is sent to a service.
       cachedRequest.setTimeWaitingForReply(System.nanoTime() - cachedRequest.getCASDepartureTime());
+  	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
+                "handleProcessReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_cas_reply_rcvd_FINE", new Object[] { casReferenceId, String.valueOf(cachedRequest.getCAS().hashCode())});
+      }
 
       // If the CAS was sent from a synchronous API sendAndReceive(), wake up the thread that
       // sent the CAS and process the reply
@@ -1882,7 +1887,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                     "sendAndReceiveCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_client_interrupted_INFO", new Object[] { casReferenceId, aCAS.hashCode()});
+                    "UIMAJMS_client_interrupted_INFO", new Object[] { casReferenceId, String.valueOf(aCAS.hashCode())});
         }
     	// cancel the timer if it is associated with a CAS this thread is waiting for. This would be
     	// the oldest CAS submitted to a queue for processing. The timer will be canceled and restarted
@@ -1894,6 +1899,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     try {
       // send CAS. This call does not block. Instead we will block the sending thread below.
       casReferenceId = sendCAS(aCAS, cachedRequest);
+    	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                    "sendAndReceiveCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_cas_submitted_FINE", new Object[] { casReferenceId, String.valueOf(aCAS.hashCode()), Thread.currentThread().getName()});
+        }
+
     } catch( ResourceProcessException e) {
       threadMonitor.getMonitor().release();
       throw e;

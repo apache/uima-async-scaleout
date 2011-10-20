@@ -38,6 +38,7 @@ import org.apache.uima.aae.message.UimaMessageValidator;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.ClientRequest;
 import org.apache.uima.adapter.jms.message.PendingMessage;
+import org.apache.uima.cas.CAS;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.impl.ProcessTrace_impl;
@@ -309,7 +310,9 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                cacheEntry = (ClientRequest) engine.getCache().get(
                        pm.get(AsynchAEMessage.CasReference));
                if (cacheEntry != null) {
-                 // Use Process Timeout value for the time-to-live property in the
+                   CAS cas = cacheEntry.getCAS();
+
+            	   // Use Process Timeout value for the time-to-live property in the
                  // outgoing JMS message. When this time is exceeded
                  // while the message sits in a queue, the JMS Server will remove it from
                  // the queue. What happens with the expired message depends on the
@@ -329,13 +332,49 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                  UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),cacheEntry.getCAS(),
                          cacheEntry.getCasReferenceId());
                  // Notify engine before sending a message
+                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+                     UIMAFramework.getLogger(CLASS_NAME).logrb(
+                             Level.FINE,
+                             CLASS_NAME.getName(),
+                             "run",
+                             JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                             "UIMAJMS_calling_onBeforeMessageSend__FINE",
+                             new Object[] {
+                            	 pm.get(AsynchAEMessage.CasReference),
+                            	 String.valueOf(cas.hashCode())
+                             });
+                   }
                  engine.onBeforeMessageSend(status);
-               }
+             } else {
+                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                     UIMAFramework.getLogger(CLASS_NAME).logrb(
+                             Level.WARNING,
+                             CLASS_NAME.getName(),
+                             "run",
+                             JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                             "UIMAJMS_failed_cache_lookup__WARNING",
+                             new Object[] {
+                            	 pm.get(AsynchAEMessage.CasReference),
+                                 UimaMessageValidator.decodeIntToString(AsynchAEMessage.Command, message
+                                         .getIntProperty(AsynchAEMessage.Command)),
+                                 UimaMessageValidator.decodeIntToString(AsynchAEMessage.MessageType, message
+                                         .getIntProperty(AsynchAEMessage.MessageType)), destination });
+                   }
+                }
+            	 
              }
              // start timers
              if( casProcessRequest ) { 
+            	 CAS cas = cacheEntry.getCAS();
                // Add the cas to a list of CASes pending reply. Also start the timer if necessary
                engine.serviceDelegate.addCasToOutstandingList(cacheEntry.getCasReferenceId());
+               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+            	   UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
+                        "sendCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAJMS_cas_added_to_pending_FINE", new Object[] { cacheEntry.getCasReferenceId(), String.valueOf(cas.hashCode()), engine.serviceDelegate.toString()});
+               }
+
+             
              } else if ( pm.getMessageType() == AsynchAEMessage.GetMeta &&
                      engine.serviceDelegate.getGetMetaTimeout() > 0 ) {
                // timer for PING has been started in sendCAS()
