@@ -316,7 +316,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     open(delegateEndpoint.getEndpoint(), serverUri);
   }
 
-  public synchronized void open(String brokerUri, String anEndpointName) throws AsynchAEException,
+  public synchronized void open( String anEndpointName, String brokerUri) throws AsynchAEException,
           ServiceShutdownException {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "open",
@@ -545,16 +545,6 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
           map.put(AsynchAEMessage.CasReference, aMessage.getStringProperty(AsynchAEMessage.CasReference));
           map.put(AsynchAEMessage.Endpoint, masterEndpoint);
           Exception e = new DelegateConnectionLostException("Controller:"+controller.getComponentName()+" Lost Connection to "+target+ ":"+masterEndpoint.getDelegateKey());
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                    "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_service_exception_WARNING", controller.getComponentName());
-
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                    "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_exception__WARNING", e);
-          }
           //  Handle error in ProcessErrorHandler
           ((BaseAnalysisEngineController)controller).handleError(map, e);
           return true; // return true as if this was successful send 
@@ -567,9 +557,6 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
           return true;
         }
       }
-
-      // Send a reply to a queue provided by the client
-
       // Stop messages and replies are sent to the endpoint provided in the destination object
       if ((command == AsynchAEMessage.Stop || command == AsynchAEMessage.ReleaseCAS || isReplyEndpoint)
               && delegateEndpoint.getDestination() != null) {
@@ -605,6 +592,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
         brokerDestinations.getConnectionTimer().startTimer(connectionCreationTimestamp,
                 delegateEndpoint);
       }
+      
       // Succeeded sending the CAS
       return true;
     } catch (Exception e) {

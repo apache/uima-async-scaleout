@@ -501,11 +501,14 @@ public class JmsOutputChannel implements OutputChannel {
                 if ( iC != null ) { 
                   try {
                     // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
+                	// Also resets endpoint status to OK  
                     iC.createListener(anEndpoint.getDelegateKey(), anEndpoint);
                     iC.removeDelegateFromFailedList(masterEndpoint.getDelegateKey());
                   } catch( Exception exx) { 
                     throw new AsynchAEException(exx);
                   }
+                } else{
+                	throw new AsynchAEException("Aggregate:"+getAnalysisEngineController()+" Has not yet recovered a listener for delegate: "+anEndpoint.getDelegateKey());
                 }
               } else if ( !masterEndpoint.isFreeCasEndpoint() ) {
                 //  In case this thread blocked while the reply queue listener was created, make sure
@@ -1428,8 +1431,23 @@ public class JmsOutputChannel implements OutputChannel {
       // Failure on sending a request requires cleanup that includes stopping a listener
       // on the delegate that we were unable to send a message to. The delegate state is
       // set to FAILED. If there are retries or more CASes to send to this delegate the
-      // connection will be retried.
+      // connection will be retried. The error handler called from the send() above already
+      // removed the CAS from outstanding list.
       if (isRequest && anEndpoint.getDelegateKey() != null) {
+    	  Endpoint master= ((AggregateAnalysisEngineController) getAnalysisEngineController()).lookUpEndpoint(anEndpoint.getDelegateKey(), false);
+    	  master.setStatus(Endpoint.FAILED);
+    	  
+    	  String key = getLookupKey(anEndpoint);
+    	    if (connectionMap.containsKey(brokerConnectionURL)) {
+         	  // First get a Map containing destinations managed by a broker provided by the client
+    	      BrokerConnectionEntry brokerConnectionEntry = (BrokerConnectionEntry) connectionMap.get(brokerConnectionURL);
+    	      // check if the broker connection entry contains an endpoint that we failed on while
+    	      // sending a message. If it exits, remove the endpoint to allow recovery to work on 
+    	      // a subsequent message. 
+    	      if (brokerConnectionEntry.endpointExists(key)) {
+    	    	brokerConnectionEntry.removeEndpoint(key);
+    	      }
+    	    } 
         // Spin recovery thread to handle send error. After the recovery thread
         // is started the current (process) thread goes back to a thread pool in
         // ThreadPoolExecutor. The recovery thread can than stop the listener and the
