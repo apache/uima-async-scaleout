@@ -68,11 +68,9 @@ public class UIMA_Service implements ApplicationListener {
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
             "UIMA-AS version " + UimaAsVersion.getFullVersionString());
 
-    String[] springConfigFileArray = {};
-    String[] deploymentDescriptors = {};
     int nbrOfArgs = args.length;
-
-    deploymentDescriptors = getMultipleArg("-d", args);
+    String[] springConfigFileArray;
+    String[] deploymentDescriptors = getMultipleArg("-d", args);
     if (deploymentDescriptors.length == 0) {
       // allow multiple args for one key
       deploymentDescriptors = getMultipleArg2("-dd", args);
