@@ -786,6 +786,7 @@ public abstract class Delegate {
 	    StringBuffer sb = new StringBuffer();
 	    List<DelegateEntry> copyOfOutstandingCASes = 
 	      new ArrayList<DelegateEntry>(outstandingCasList);
+	    sb.append("Outstanding CAS count:").append(copyOfOutstandingCASes.size()).append("-->");
 	    for (DelegateEntry entry : copyOfOutstandingCASes) {
 	      if ( entry != null && entry.getCasReferenceId() != null ) {
 	        sb.append("["+entry.getCasReferenceId()+"]");
