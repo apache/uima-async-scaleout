@@ -614,13 +614,13 @@ public class ProcessResponseHandler extends HandlerBase {
               .getLocalCache().lookupEntry(casReferenceId);
       if (casStateEntry != null) {
         casStateEntry.setFreeCasNotificationEndpoint(freeCasEndpoint);
-      }
-      //  Fetch host IP where the CAS is being processed. When the UIMA AS service
-      //  receives a CAS it immediately sends ServiceInfo Reply message containing 
-      //  IP of the host where the service is running.
-      String serviceHostIp = messageContext.getMessageStringProperty(AsynchAEMessage.ServerIP);
-      if ( serviceHostIp != null ) {
-        casStateEntry.setHostIpProcessingCAS(serviceHostIp);
+        //  Fetch host IP where the CAS is being processed. When the UIMA AS service
+        //  receives a CAS it immediately sends ServiceInfo Reply message containing 
+        //  IP of the host where the service is running.
+        String serviceHostIp = messageContext.getMessageStringProperty(AsynchAEMessage.ServerIP);
+        if ( serviceHostIp != null ) {
+          casStateEntry.setHostIpProcessingCAS(serviceHostIp);
+        }
       }
     } catch (Exception e) {
     	UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
