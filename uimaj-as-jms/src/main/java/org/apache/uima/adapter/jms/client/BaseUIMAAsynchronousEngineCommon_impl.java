@@ -2834,7 +2834,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       }
     }
   }
-  public class UimaASShutdownHook implements Runnable {
+  public static class UimaASShutdownHook implements Runnable {
     UimaAsynchronousEngine asEngine=null;
     public UimaASShutdownHook( UimaAsynchronousEngine asEngine) {
       this.asEngine = asEngine;
