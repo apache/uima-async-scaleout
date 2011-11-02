@@ -30,7 +30,6 @@ import java.util.concurrent.Semaphore;
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.Destination;
-import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
@@ -38,18 +37,13 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.management.ObjectName;
-import javax.naming.Context;
 import javax.naming.InitialContext;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
-import org.apache.activemq.ActiveMQSession;
-import org.apache.activemq.RedeliveryPolicy;
 import org.apache.activemq.command.ActiveMQBytesMessage;
-import org.apache.activemq.command.ActiveMQDestination;
-import org.apache.activemq.command.ActiveMQTempDestination;
 import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalArgumentException;
@@ -64,7 +58,6 @@ import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.ControllerLifecycle;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.UimacppServiceController;
-import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.UimaASMetaRequestTimeout;
@@ -74,9 +67,7 @@ import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
 import org.apache.uima.adapter.jms.activemq.UimaEEAdminSpringContext;
-import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.ClientRequest;
 import org.apache.uima.adapter.jms.service.Dd2spring;
-import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.impl.UimaVersion;
@@ -97,8 +88,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   private MessageSender sender = null;
 
   private MessageProducer producer;
-
-  private String brokerURI = null;
 
   private Session session = null;
 
@@ -136,6 +125,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
             "UIMA-AS version " + UIMAFramework.getVersionString());
   }
+
 
   protected TextMessage createTextMessage() throws ResourceInitializationException {
     return new ActiveMQTextMessage();
@@ -232,7 +222,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   }
   private void stopConnection() {
-    if (sharedConnection != null) {
+	SharedConnection sharedConnection;
+    if ((sharedConnection = lookupConnection(brokerURI)) != null) {
       // Remove a client from registry
       sharedConnection.unregisterClient(this);
       // The destroy method closes the JMS connection when
@@ -277,8 +268,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 					sharedConnectionSemaphore.acquire();
 					stopConnection();
 				} catch (InterruptedException ex) {
-				  // Force connection stop
-          stopConnection();
+				    // Force connection stop
+                    stopConnection();
 					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 							Level.WARNING)) {
 						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
@@ -330,6 +321,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
 	private boolean connectionClosedOrInvalid() {
 		synchronized (connectionMux) {
+			SharedConnection sharedConnection = lookupConnection(brokerURI);
 			if (sharedConnection == null
 					|| sharedConnection.getConnection() == null
 					|| ((ActiveMQConnection) sharedConnection.getConnection())
@@ -344,11 +336,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		return false;
 	}
 
-	protected void createSharedConnection(String aBrokerURI) throws Exception {
+	protected SharedConnection createSharedConnection(String aBrokerURI) throws Exception {
+		SharedConnection sharedConnection = null;
 		synchronized (connectionMux) {
 			try {
 				// Acquire global static semaphore
 				sharedConnectionSemaphore.acquire();
+				sharedConnection = lookupConnection(aBrokerURI);
 				// check the state of a connection
 				if (connectionClosedOrInvalid()) {
 					if (sharedConnection != null
@@ -373,6 +367,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 					sharedConnection = new SharedConnection(
 							new ActiveMQConnectionFactory(aBrokerURI),
 							aBrokerURI);
+
+					sharedConnections.put( aBrokerURI, sharedConnection);
 					// Add AMQ specific connection validator
 					sharedConnection
 							.setConnectionValidator(connectionValidator);
@@ -399,6 +395,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 			}
 
 		}
+		return sharedConnection;
 	}
 
   private void addPrefetch(ActiveMQConnection aConnection) {
@@ -407,13 +404,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     ((ActiveMQConnection) aConnection).setPrefetchPolicy(prefetchPolicy);
   }
 
-  private void validateConnection(String aBrokerURI) throws Exception {
+  private SharedConnection validateConnection(String aBrokerURI) throws Exception {
     // checks if a sharedConnection exists and if not creates a new one
-    createSharedConnection(aBrokerURI);
+    return createSharedConnection(aBrokerURI);
   }
 
   protected Session getSession(String aBrokerURI) throws Exception {
-    validateConnection(aBrokerURI);
+	SharedConnection sharedConnection = validateConnection(aBrokerURI);
     return getSession(sharedConnection.getConnection());
   }
 
@@ -423,7 +420,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 
   protected MessageProducer lookupProducerForEndpoint(Endpoint anEndpoint) throws Exception {
-    if (sharedConnection == null || producerSession == null) {
+    if (lookupConnection(brokerURI) == null || producerSession == null) {
       throw new ResourceInitializationException();
     }
     Destination dest = producerSession.createQueue(anEndpoint.getEndpoint());
@@ -432,7 +429,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   protected void initializeProducer(String aBrokerURI, String aQueueName) throws Exception {
     // Check if a sharedConnection exists. If not it creates one
-    createSharedConnection(aBrokerURI);
+    SharedConnection sharedConnection = createSharedConnection(aBrokerURI);
 	synchronized (connectionMux) {
 	    initializeProducer(aBrokerURI, aQueueName, sharedConnection.getConnection());
 	}
@@ -503,7 +500,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * @throws Exception
    */
   protected void initializeConsumer(String aBrokerURI) throws Exception {
-    createSharedConnection(aBrokerURI);
+	SharedConnection  sharedConnection = createSharedConnection(aBrokerURI);
 	synchronized (connectionMux) {
 	    initializeConsumer(aBrokerURI, sharedConnection.getConnection());
 	}
@@ -698,6 +695,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       // prevent a race condition.
       createSharedConnection(brokerURI);
   	  synchronized (connectionMux) {
+        SharedConnection sharedConnection = lookupConnection(brokerURI);
         // Reuse existing JMS connection if available
         if (sharedConnection != null) {
           initializeProducer(brokerURI, endpoint, sharedConnection.getConnection());
@@ -876,7 +874,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * 
    */
   public void undeploy(String aSpringContainerId, int stop_level) throws Exception {
-    if (aSpringContainerId == null) {
+    if (aSpringContainerId == null  ) {
       return;
     }
 

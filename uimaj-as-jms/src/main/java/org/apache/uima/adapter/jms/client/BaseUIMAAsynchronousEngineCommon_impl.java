@@ -76,7 +76,6 @@ import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.adapter.jms.ConnectionValidator;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.message.PendingMessage;
-import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
@@ -101,7 +100,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   public enum ClientState {INITIALIZING, RUNNING, FAILED, RECONNECTING, STOPPING, STOPPED};
   
   protected ClientState state = ClientState.INITIALIZING;
-  
+
+  protected String brokerURI = null;
+
   protected static final String SHADOW_CAS_POOL = "ShadowCasPool";
 
   protected static final int MetadataTimeout = 1;
@@ -200,7 +201,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   protected volatile boolean producerInitialized;
 
-  protected static SharedConnection sharedConnection = null;
+  protected static ConcurrentHashMap<String, SharedConnection> sharedConnections =
+		  new ConcurrentHashMap<String, SharedConnection>();
+  
+  //protected static SharedConnection sharedConnection = null;
 
   protected Thread shutdownHookThread = null;
 
@@ -239,6 +243,15 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   
   abstract protected void initializeConsumer(String aBrokerURI, Connection connection) throws Exception;
 
+  //abstract protected  String getBrokerURI();
+
+  protected void setBrokeryURI(String brokerURI ) {
+	  this.brokerURI = brokerURI;
+  }
+  protected String getBrokerURI() {
+	  return brokerURI;
+  }
+  
   public void addStatusCallbackListener(UimaAsBaseCallbackListener aListener) {
     if (running) {
 	   throw new UIMA_IllegalStateException(JmsConstants.JMS_LOG_RESOURCE_BUNDLE,"UIMAJMS_listener_added_after_initialize__WARNING", new Object[]{});
@@ -830,6 +843,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
         // The sendCAS() method is synchronized no need to synchronize the code below
         if (serviceDelegate.getState() == Delegate.TIMEOUT_STATE ) {
+          SharedConnection sharedConnection = lookupConnection(getBrokerURI());
+
           //  Send Ping to service as getMeta request
           if ( !serviceDelegate.isAwaitingPingReply() && sharedConnection.isOpen() ) {
             serviceDelegate.setAwaitingPingReply();
@@ -861,7 +876,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             return casReferenceId;
           } else {
             if ( !requestToCache.isSynchronousInvocation() ) {
-              Exception exception = new BrokerConnectionException("Unable To Deliver CAS:"+requestToCache.getCasReferenceId()+" To Destination. Connection To Broker "+sharedConnection.getBroker()+" Has Been Lost");
+              Exception exception = new BrokerConnectionException("Unable To Deliver CAS:"+requestToCache.getCasReferenceId()+" To Destination. Connection To Broker "+getBrokerURI()+" Has Been Lost");
               handleException(exception, requestToCache.getCasReferenceId(), null, requestToCache, true);
               return casReferenceId;
             } else {
@@ -875,7 +890,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             }
           }
         }
-
+        SharedConnection sharedConnection = lookupConnection(getBrokerURI());
         if ( !sharedConnection.isOpen() ) {
           if (requestToCache != null && !requestToCache.isSynchronousInvocation() && aCAS != null ) {
             aCAS.release();
@@ -926,7 +941,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    * 
    */
   public synchronized String sendCAS(CAS aCAS) throws ResourceProcessException {
-    return this.sendCAS(aCAS, produceNewClientRequestObject());
+    if ( !running ) {
+    	throw new ResourceProcessException(new UimaEEServiceException("Uima AS Client Has Been Stopped. Rejecting Request to Process CAS"));
+    }
+	  return this.sendCAS(aCAS, produceNewClientRequestObject());
   }
 
   /**
@@ -1188,8 +1206,45 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	      String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
     	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
     	      if ( casReferenceId != null && nodeIP != null && pid != null) {
-    	        onBeforeProcessCAS(status,nodeIP, pid);
-    	      }
+    	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+                      UIMAFramework.getLogger(CLASS_NAME).logrb(
+                              Level.FINE,
+                              CLASS_NAME.getName(),
+                              "handleServiceInfo",
+                              JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                              "UIMAJMS_calling_onBeforeProcessCAS_FINE",
+                              new Object[] {
+                            	  casReferenceId,
+                             	 String.valueOf(casCachedRequest.getCAS().hashCode())
+                              });
+                  }
+    	    	  onBeforeProcessCAS(status,nodeIP, pid);
+    	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+                      UIMAFramework.getLogger(CLASS_NAME).logrb(
+                              Level.FINE,
+                              CLASS_NAME.getName(),
+                              "handleServiceInfo",
+                              JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                              "UIMAJMS_completed_onBeforeProcessCAS_FINE",
+                              new Object[] {
+                            	  casReferenceId,
+                             	 String.valueOf(casCachedRequest.getCAS().hashCode())
+                              });
+                  }
+    	     } else {
+                 UIMAFramework.getLogger(CLASS_NAME).logrb(
+                         Level.INFO,
+                         CLASS_NAME.getName(),
+                         "handleServiceInfo",
+                         JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                         "UIMAJMS_skipping_onBeforeProcessCAS_INFO",
+                         new Object[] {
+                       	  casReferenceId,
+                        	 String.valueOf(casCachedRequest.getCAS().hashCode()),
+                        	 nodeIP, pid 
+                         });
+    	    	 
+    	     }
     	}
     } catch( Exception e) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
@@ -2561,7 +2616,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   }
 
   public boolean connectionOpen() {
-    if ( sharedConnection != null ) {
+	SharedConnection sharedConnection;
+    if ( (sharedConnection = lookupConnection(getBrokerURI())) != null ) {
       return sharedConnection.isConnectionValid();
     }
     return false;
@@ -2571,7 +2627,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    * when the client is stopped or the connection is recovered.
    */
   public boolean recoverSharedConnectionIfClosed() {
+	SharedConnection sharedConnection;
     if ( !connectionOpen() ) {
+      sharedConnection = lookupConnection(getBrokerURI());
       while ( running ) {
         //  blocks until connection is refreshed 
         try {
@@ -2611,6 +2669,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   protected void setReleaseCASMessage(TextMessage msg, String aCasReferenceId) throws Exception {
   }
 
+  
+  protected SharedConnection lookupConnection(String brokerUrl) {
+	  if ( sharedConnections.containsKey(brokerUrl) ) {
+		  return sharedConnections.get(brokerUrl);
+	  }
+	  return null;
+  }
+  
   // This class is used to share JMS Connection by all instances of UIMA AS
   // client deployed in the same JVM.
   public static class SharedConnection {
@@ -2798,6 +2864,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
      * @return
      */
     public boolean destroy() {
+    	return destroy(false);
+    }
+    
+    public boolean destroy(boolean doShutdown) {
       synchronized(destroyMux) {
         //  Check if all clients have terminated and only than stop the shared connection
         if (getClientCount() == 0 && connection != null

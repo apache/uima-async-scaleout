@@ -164,7 +164,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     return false;
   }
 
-  protected void initialize(BaseUIMAAsynchronousEngine_impl eeUimaEngine, Map<String, Object> appCtx)
+  public void initialize(BaseUIMAAsynchronousEngine_impl eeUimaEngine, Map<String, Object> appCtx)
           throws Exception {
     eeUimaEngine.addStatusCallbackListener(listener);
     eeUimaEngine.initialize(appCtx);

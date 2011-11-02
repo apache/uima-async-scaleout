@@ -29,6 +29,9 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.jms.Connection;
 import javax.jms.Message;
@@ -40,6 +43,7 @@ import junit.framework.Assert;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.command.ActiveMQDestination;
+import org.apache.commons.collections.functors.NotNullPredicate;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.UimaClassFactory;
@@ -47,6 +51,7 @@ import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.Endpoint;
+import org.apache.uima.aae.error.MessageTimeoutException;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
@@ -65,7 +70,10 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
+import org.apache.uima.resourceSpecifier.factory.DeploymentDescriptorFactory;
+import org.apache.uima.resourceSpecifier.factory.UimaASDeploymentDescriptor;
 import org.apache.uima.util.XMLInputSource;
+import org.josql.expressions.IsNullExpression;
 
 public class TestUimaASExtended extends BaseTestSupport {
 
@@ -91,6 +99,81 @@ public class TestUimaASExtended extends BaseTestSupport {
             + System.getProperty("file.separator") + "bin" + System.getProperty("file.separator")
             + "dd2spring.xsl");
   }
+  public void testMultipleSyncClientsWithMultipleBrokers() throws Exception  {
+	    System.out.println("-------------- testMultipleSyncClientsWithMultipleBrokers -------------");
+	    
+	    class RunnableClient implements Runnable {
+	    	String brokerURL;
+	    	BaseTestSupport testSupport;
+            BaseUIMAAsynchronousEngine_impl uimaAsEngine;
+	    	
+	    	RunnableClient(String brokerURL,BaseTestSupport testSupport) {
+	    		this.brokerURL = brokerURL;
+	    		this.testSupport = testSupport;
+	    	}
+	    	public void initialize(String dd, String serviceEndpoint) throws Exception {
+	    		uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	            // Deploy Uima AS Primitive Service
+	            deployService(uimaAsEngine, dd);
+
+	    		@SuppressWarnings("unchecked")
+			  Map<String, Object> appCtx = buildContext(brokerURL, serviceEndpoint);
+		  	  appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+		  	  appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+		  	  testSupport.initialize(uimaAsEngine, appCtx);
+		  	  waitUntilInitialized();
+	    	}
+			public void run() {
+				try {
+		            for (int i = 0; i < 1000; i++) {
+			              CAS cas = uimaAsEngine.getCAS();
+			              cas.setDocumentText("Some Text");
+			              System.out.println("UIMA AS Client#"+ Thread.currentThread().getId()+" Sending CAS#"+(i + 1) + " Request to a Service Managed by Broker:"+brokerURL);
+			              try {
+				                uimaAsEngine.sendAndReceiveCAS(cas);
+			              } catch( Exception e) {
+			            	  e.printStackTrace();
+			              } finally {
+			                cas.release();
+			              }
+			            }
+			            System.out.println("Thread:"+Thread.currentThread().getId()+" Completed run()");
+			            uimaAsEngine.stop();
+				} catch( Exception e) {
+					e.printStackTrace();
+				}
+
+			}
+	    	
+	    }
+	    
+	    ExecutorService executor = Executors.newCachedThreadPool();
+
+	    //	change broker URl in system properties
+	    System.setProperty("BrokerURL", broker.getMasterConnectorURI().toString());
+	    
+	    RunnableClient client1 = 
+	    		new RunnableClient(broker.getMasterConnectorURI(), this);
+	    client1.initialize(relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml", "NoOpAnnotatorQueue");
+
+	    final BrokerService broker2 = setupSecondaryBroker(true);
+
+	    //	change broker URl in system properties
+	    System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
+
+	    RunnableClient client2 = 
+	    		new RunnableClient(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), this);
+	    client2.initialize(relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml", "NoOpAnnotatorQueue");
+
+	    Future<?> f1 = executor.submit(client1);
+	    Future<?> f2 = executor.submit(client2);
+	    f1.get();
+	    f2.get();
+	    executor.shutdownNow();
+	    broker2.stop();
+	    broker.stop();
+	}
+  
   /**
    * Tests service quiesce and stop support. This test sets a CasPool to 1 to send just one CAS at a
    * time. After the first CAS is sent, a thread is started with a timer to expire before the reply
@@ -120,6 +203,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     spinShutdownThread(eeUimaEngine, 5000, containers, SpringContainerDeployer.QUIESCE_AND_STOP);
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue", 3, EXCEPTION_LATCH);
+    eeUimaEngine.stop();
   }
 
   public void testStopNow() throws Exception {
@@ -1243,8 +1327,16 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            1, PROCESS_LATCH);
+    
+    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+            "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.Timeout, 0);
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
+    
+    addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class); 
+    
+    runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            10, PROCESS_LATCH);
   }
 
   public void testDeployAggregateServiceWithDelegateTimeoutAndContinueOnError() throws Exception {

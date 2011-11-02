@@ -37,6 +37,7 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UimaMessageValidator;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.ClientRequest;
+import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.SharedConnection;
 import org.apache.uima.adapter.jms.message.PendingMessage;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
@@ -135,7 +136,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
    * that it will not be sent to the destination due to the fact the broker connection is down.
    */
   private boolean reject(PendingMessage pm ) {
-    return reject(pm, new BrokerConnectionException("Unable To Deliver Message To Destination. Connection To Broker "+engine.sharedConnection.getBroker()+" Has Been Lost"));
+    return reject(pm, new BrokerConnectionException("Unable To Deliver Message To Destination. Connection To Broker "+engine.getBrokerURI()+" Has Been Lost"));
   }
   
   /**
@@ -146,7 +147,8 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     boolean rejectRequest = false;
     //  If the connection to a broker was lost, notify the client
     //  and reject the request unless this is getMeta Ping request.
-    if ( !engine.sharedConnection.isConnectionValid() ) {
+    SharedConnection sharedConnection = engine.lookupConnection(engine.getBrokerURI());
+    if ( sharedConnection != null && !sharedConnection.isConnectionValid() ) {
       String messageKind = "";
       if (pm.getMessageType() == AsynchAEMessage.GetMeta ) {
         messageKind = "GetMeta";
@@ -265,6 +267,9 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
       //  special case that we dont reject even though the broker connection has been lost. It is allow to
       //  fall through and will be sent as soon as the connection is recovered.
       boolean rejectRequest = reject(pm);
+      if ( !engine.running) {
+    	  break;
+      }
       //  blocks until the connection is re-established with a broker
       engine.recoverSharedConnectionIfClosed();
       //  get the producer initialized from a valid connection
