@@ -538,9 +538,10 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       
       
       AnalysisEngineManagement rootAem = ae.getManagementInterface();
-      beforeAnalysisManagementObjects.add(deepCopy(rootAem));   
       if ( rootAem.getComponents().size() > 0 ) {
           getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects, true);
+      } else {
+          beforeAnalysisManagementObjects.add(deepCopy(rootAem));   
       }
       
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
@@ -795,13 +796,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       //  These stats are internally maintained in a Map. If the AE is an aggregate
       //  the Map will contain AnalysisEngineManagement instance for each AE.
       AnalysisEngineManagement aem = ae.getManagementInterface();
-      //  Add the top level AnalysisEngineManagement instance.
-      afterAnalysisManagementObjects.add(aem);    
       if ( aem.getComponents().size() > 0) {
           //  Flatten the hierarchy by recursively (if this AE is an aggregate) extracting  
           //  primitive AE's AnalysisEngineManagement instance and placing it in 
           //  afterAnalysisManagementObjects List.
           getLeafManagementObjects(aem, afterAnalysisManagementObjects, false);
+      } else {
+          //  Add the top level AnalysisEngineManagement instance.
+          afterAnalysisManagementObjects.add(aem);    
       }
 
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
