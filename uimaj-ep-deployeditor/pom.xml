@@ -352,8 +352,7 @@ org.eclipse.core.runtime
               !org.eclipse.core.runtime,
               *,
               org.apache.uima.taeconfigurator.editors.ui.dialogs,
-              org.apache.uima.taeconfigurator.files,
-              org.apache.uima.application.util
+              org.apache.uima.taeconfigurator.files
             </Import-Package>
 
             <!--Import-Package>*,

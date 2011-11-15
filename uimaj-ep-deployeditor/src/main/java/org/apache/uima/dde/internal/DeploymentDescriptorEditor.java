@@ -25,9 +25,9 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.uima.aae.deployment.AEDeploymentDescription;
+import org.apache.uima.aae.deployment.UimaParserExtender;
 import org.apache.uima.aae.deployment.impl.AEDeploymentDescription_Impl;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
-import org.apache.uima.application.metadata.impl.UimaApplication_Impl;
 import org.apache.uima.dde.internal.page.AEConfigurationPage;
 import org.apache.uima.dde.internal.page.OverviewPage;
 import org.apache.uima.resource.ResourceSpecifier;
@@ -94,7 +94,7 @@ public class DeploymentDescriptorEditor implements IUimaMultiPageEditor, IUimaEd
   }
   
   public void init () {
-    UimaApplication_Impl.initUimaApplicationFramework();
+    UimaParserExtender.initUimaApplicationFramework();
   }
   
   public boolean canEdit(MultiPageEditor cde, XMLizable xmlizable) {

@@ -95,10 +95,6 @@
             <Export-Package>
               org.apache.uima.aae.deployment,
               org.apache.uima.aae.deployment.impl,
-              org.apache.uima.application.metadata,
-              org.apache.uima.application.metadata.impl,
-              org.apache.uima.application.util,
-              org.apache.uima.cpe.model,
               org.apache.uima.tools.debug.util
             </Export-Package>
 
