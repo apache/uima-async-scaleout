@@ -30,7 +30,7 @@
   <artifactId>aggregate-uima-as-eclipse-plugins</artifactId>
   <packaging>pom</packaging>
   <version>2.4.0-SNAPSHOT</version>
-  <name>UIMA-AS Aggregate: ${project.artifactId}</name>
+  <name>Apache UIMA-AS Aggregate: ${project.artifactId}</name>
   <description>The aggregate for building the Eclipse plugins 
     that are part of the UIMA-AS framework</description>
   <url>${uimaWebsiteUrl}</url>

@@ -30,7 +30,7 @@
 	<artifactId>uimaj-as-camel</artifactId>
 	<packaging>jar</packaging>
 	<version>2.4.0-SNAPSHOT</version>
-	<name>UIMA-AS: ${project.artifactId}</name>
+	<name>Apache UIMA-AS: ${project.artifactId}</name>
   <description>Apache UIMA-AS Camel Driver</description>
   <url>${uimaWebsiteUrl}</url>
 

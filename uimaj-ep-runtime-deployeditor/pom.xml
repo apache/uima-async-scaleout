@@ -30,7 +30,7 @@
   <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
   <packaging>jar</packaging>
   <version>2.4.0-SNAPSHOT</version>
-  <name>UIMA-AS Eclipse Plugin: ${project.artifactId}</name>
+  <name>Apache UIMA-AS Eclipse Plugin: ${project.artifactId}</name>
   <description>Bundles the uima-as runtime parts needed for the deploy editor extension to the CDE, as a fragment on top of the main uima runtime</description>
   <url>${uimaWebsiteUrl}</url>
 

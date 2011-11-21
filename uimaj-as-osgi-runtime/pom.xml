@@ -30,7 +30,7 @@
   <artifactId>uimaj-as-osgi-runtime</artifactId>
   <packaging>jar</packaging>
   <version>2.4.0-SNAPSHOT</version>
-  <name>UIMA AS: ${project.artifactId}</name>
+  <name>Apache UIMA AS: ${project.artifactId}</name>
   <description>Apache UIMA AS runtime code packaged for osgi use</description>
   <url>${uimaWebsiteUrl}</url>
 
