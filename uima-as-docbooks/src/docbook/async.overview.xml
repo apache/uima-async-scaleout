@@ -1049,9 +1049,11 @@ under the License.
     <parameter name="endpoint" 
                value="uima.as.RoomDateMeetingDetectorAggregateQueue"/>
     <parameter name="timeout" 
-               value="xxx"/>
+               value="xxx"/>  
     <parameter name="getmetatimeout" 
-               value="yyy"/>               
+               value="yyy"/>
+    <parameter name="cpctimeout" 
+               value="zzz"/>                              
   </parameters>
 </customResourceSpecifier>]]></programlisting>
     
@@ -1061,6 +1063,12 @@ under the License.
       which processes one CAS at a time, so it will not take advantage of the scalability that UIMA AS provides. To
       process more than one CAS at a time, you must use the Asynchronous UIMA AS Client API 
       <xref linkend="ugr.ref.async.api"/>.</para>
+    
+    <para>The three timeouts are all expressed in milliseconds.  The getmetatimeout is typically short, but if the
+    service is just starting, and initialization takes a while, it may need to be longer, because the service
+    won't reply to the getmeta request until it is finished initializing.  
+    The cpctimeout is the Collection Processing Complete
+    timeout.  Defaults are taken if the value is omitted, or is 0.</para>
       
     <para>Other parameters may be specified:
       <variablelist>
