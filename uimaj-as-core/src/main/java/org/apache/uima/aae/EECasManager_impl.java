@@ -31,7 +31,6 @@ import org.apache.uima.resource.impl.CasManager_impl;
 
 public class EECasManager_impl extends CasManager_impl {
   Map casPoolMap = new HashMap();
-
   protected long initialCasHeapSize = 0;
 
   public EECasManager_impl(ResourceManager aResourceManager) {
@@ -59,14 +58,17 @@ public class EECasManager_impl extends CasManager_impl {
   @Override
   public void defineCasPool(UimaContextAdmin aRequestorContext, int aMinimumSize,
           Properties aPerformanceTuningSettings) throws ResourceInitializationException {
-    if (aPerformanceTuningSettings == null) {
-      aPerformanceTuningSettings = new Properties();
-    }
-    if (initialCasHeapSize > 0) {
-      aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
-              (int) initialCasHeapSize).toString());
-    }
-    super.defineCasPool(aRequestorContext, aMinimumSize, aPerformanceTuningSettings);
+	  // synchronize on class level lock for mutual exclusion between different instances of the object	
+	  synchronized(CasManager_impl.class) {
+		  if (aPerformanceTuningSettings == null) {
+	  	      aPerformanceTuningSettings = new Properties();
+  	      }
+	  	  if (initialCasHeapSize > 0) {
+	  	      aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
+	  	              (int) initialCasHeapSize).toString());
+	  	  }
+	  	  super.defineCasPool(aRequestorContext, aMinimumSize, aPerformanceTuningSettings);
+	  }
   }
 
   public void setPoolSize(String aRequestorContextName, int aSize) {
