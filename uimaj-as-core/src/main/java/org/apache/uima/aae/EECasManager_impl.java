@@ -44,31 +44,34 @@ public class EECasManager_impl extends CasManager_impl {
   }
 
   public void defineCasPool(String aRequestorContextName, int aMinimumSize,
-          Properties aPerformanceTuningSettings) throws ResourceInitializationException {
+    Properties aPerformanceTuningSettings) throws ResourceInitializationException {
     if (aPerformanceTuningSettings == null) {
       aPerformanceTuningSettings = new Properties();
     }
     if (initialCasHeapSize > 0) {
-      aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
-              (int) initialCasHeapSize).toString());
+      aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, String.valueOf(
+              initialCasHeapSize));
     }
-    super.defineCasPool(aRequestorContextName, aMinimumSize, aPerformanceTuningSettings);
+    synchronized (CasManager_impl.class) {
+      super.defineCasPool(aRequestorContextName, aMinimumSize, aPerformanceTuningSettings);
+    }
   }
 
   @Override
   public void defineCasPool(UimaContextAdmin aRequestorContext, int aMinimumSize,
-          Properties aPerformanceTuningSettings) throws ResourceInitializationException {
-	  // synchronize on class level lock for mutual exclusion between different instances of the object	
-	  synchronized(CasManager_impl.class) {
-		  if (aPerformanceTuningSettings == null) {
-	  	      aPerformanceTuningSettings = new Properties();
-  	      }
-	  	  if (initialCasHeapSize > 0) {
-	  	      aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
-	  	              (int) initialCasHeapSize).toString());
-	  	  }
-	  	  super.defineCasPool(aRequestorContext, aMinimumSize, aPerformanceTuningSettings);
-	  }
+    Properties aPerformanceTuningSettings) throws ResourceInitializationException {
+    // synchronize on class level lock for mutual exclusion between different instances of the
+    // object
+    if (aPerformanceTuningSettings == null) {
+      aPerformanceTuningSettings = new Properties();
+    }
+    if (initialCasHeapSize > 0) {
+      aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE,
+              String.valueOf(initialCasHeapSize));
+    }
+    synchronized (CasManager_impl.class) {
+      super.defineCasPool(aRequestorContext, aMinimumSize, aPerformanceTuningSettings);
+    }
   }
 
   public void setPoolSize(String aRequestorContextName, int aSize) {
