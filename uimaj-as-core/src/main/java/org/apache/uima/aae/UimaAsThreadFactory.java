@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController_impl;
 import org.apache.uima.util.Level;
 
 /**
@@ -44,7 +45,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
 
   private String threadNamePrefix=null;
   
-  private boolean isDaemon;
+  private boolean isDaemon=false;
   
   public static AtomicInteger poolIdGenerator = new AtomicInteger();
   
@@ -70,7 +71,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
     theThreadGroup = tGroup;
   }
   public void setDaemon(boolean daemon) {
-    isDaemon = daemon;
+ //   isDaemon = daemon;
   }
   public void stop() {
   }
@@ -99,6 +100,9 @@ public class UimaAsThreadFactory implements ThreadFactory {
             if (controller != null && !controller.threadAssignedToAE()) {
               // call the controller to initialize next instance of AE. Once initialized this
               // AE instance process() method will only be called from this thread
+			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+					"UIMAEE_calling_ae_initialize__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
               controller.initializeAnalysisEngine();
             }
             // Call given Worker (Runnable) run() method and block. This call block until the
@@ -118,7 +122,18 @@ public class UimaAsThreadFactory implements ThreadFactory {
             	  controller.notifyListenersWithInitializationStatus(ex);
         	  } 
             return;
+          } finally {
+              if ( controller instanceof PrimitiveAnalysisEngineController_impl ) {
+       			 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+        					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+        					"UIMAEE_process_thread_exiting__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
+            	  ((PrimitiveAnalysisEngineController_impl)controller).destroyAE();
+        			 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+         					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+         					"UIMAEE_ae_instance_destroy_called__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
+              }
           }
+        
         }
       });
     } catch (Exception e) {

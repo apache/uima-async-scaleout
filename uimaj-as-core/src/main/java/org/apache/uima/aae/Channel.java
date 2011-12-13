@@ -24,9 +24,9 @@ public interface Channel {
 
   public static final int InputChannels = 1;
 
-  public void stop() throws Exception;
+  public void stop(boolean shutdownNow) throws Exception;
 
-  public void stop(int channelsToStop) throws Exception;
+  public void stop(int channelsToStop, boolean shutdownNow) throws Exception;
 
   public String getName();
 

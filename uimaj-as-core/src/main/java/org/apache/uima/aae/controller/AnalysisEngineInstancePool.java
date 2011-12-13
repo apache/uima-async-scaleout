@@ -25,16 +25,6 @@ import org.apache.uima.analysis_engine.AnalysisEngine;
 
 public interface AnalysisEngineInstancePool {
   /**
-   * Creates and initializes the AE Pool with intances of AEs provided in the
-   * anAnalysisEngineInstanceList
-   * 
-   * @param anAnalysisEngineInstanceList
-   *          - list of AnalysisEngine instances
-   * @throws Exception
-   */
-  public void intialize(List anAnalysisEngineInstanceList) throws Exception;
-
-  /**
    * Adds an instance of AnalysisEngine to the pool
    * 
    * @param anAnalysisEngine

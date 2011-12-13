@@ -923,15 +923,22 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     //  we will start listeners on input queue.
     this.setAutoStartup(false);
   }
-  public void shutdownTaskExecutor(ThreadPoolExecutor tpe) throws InterruptedException {
-    tpe.purge();
-    tpe.shutdownNow();
+  public void shutdownTaskExecutor(ThreadPoolExecutor tpe, boolean stopImmediate) throws InterruptedException {
+    if ( stopImmediate ) {
+  	  tpe.purge();
+      tpe.shutdownNow();
+    } else {
+      tpe.shutdown();
+    }
+  }
+  public void destroy() {
+	  destroy(true); 
   }
   /**
    * Spins a shutdown thread and stops Sprint and ActiveMQ threads.
    * 
    */
-  public void destroy() {
+  public void destroy(final boolean stopImmediate) {
 	  
     if (awaitingShutdown) {
       return;
@@ -948,16 +955,33 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                 // delegate stop request to Spring 
               __listenerRef.delegateStop();
               if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
-                ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().purge();
-                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdownNow();
-                } else if (concurrentListener != null) {
-                  shutdownTaskExecutor(concurrentListener.getTaskExecutor());
+              	//	Modify task executor to terminate idle threads. While the thread terminates
+              	//  it calls destroy() method on the pinned instance of AE
+              	((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().allowCoreThreadTimeOut(true);
+                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setKeepAliveTime(1000, TimeUnit.MILLISECONDS);
+                	((ThreadPoolTaskExecutor) taskExecutor).setWaitForTasksToCompleteOnShutdown(true);
+              	((ThreadPoolTaskExecutor) taskExecutor).shutdown();
+              } else if (concurrentListener != null) {
+                  shutdownTaskExecutor(concurrentListener.getTaskExecutor(), stopImmediate);
                   concurrentListener.stop();
-                } else if ( threadPoolExecutor != null ) {
-                  shutdownTaskExecutor(threadPoolExecutor);
-                }
+              } else if ( threadPoolExecutor != null ) {
+            	  shutdownTaskExecutor(threadPoolExecutor, true);
+              }
         	}
+          // Close Connection to the broker
+          String controllerName = (__listenerRef.controller == null) ? "" :__listenerRef.controller.getComponentName();
+          __listenerRef.getSharedConnection().close();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                       "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                       "UIMAJMS_listener_shutdown__INFO", new Object[] {controllerName,__listenerRef.getMessageSelector(),__listenerRef.getBrokerUrl()});
+         }
           __listenerRef.shutdown();
+         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                       "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                       "UIMAJMS_listener_jms_connection_closed__INFO", new Object[] {controllerName,__listenerRef.getMessageSelector()});
+         }
         } catch (Exception e) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                   "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
@@ -989,7 +1013,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     // 2) ReleaseCAS request
     if ( taskExecutor == null ) {
       UimaAsThreadFactory tf = new UimaAsThreadFactory(threadGroup);
-      tf.setDaemon(true);
+      tf.setDaemon(false);
       if ( isFreeCasQueueListener()) {
         tf.setThreadNamePrefix(controller.getComponentName()+" - FreeCASRequest Thread");
       } else if ( isGetMetaListener()  ) {
@@ -1006,6 +1030,20 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           threadPoolExecutor = (ThreadPoolExecutor)es;
           super.setTaskExecutor(es);
       }
+    } else {
+        UimaAsThreadFactory tf = new UimaAsThreadFactory(threadGroup);
+        tf.setDaemon(false);
+        if ( isFreeCasQueueListener()) {
+          tf.setThreadNamePrefix(controller.getComponentName()+" - FreeCASRequest Thread");
+        } else if ( isGetMetaListener()  ) {
+          tf.setThreadNamePrefix(super.getBeanName()+" - Thread");
+        } else if ( getDestination() != null && getMessageSelector() != null ) {
+          tf.setThreadNamePrefix(controller.getComponentName() + " Process Thread");
+        } else if ( endpoint != null && endpoint.isTempReplyDestination() ) {
+          tf.setThreadNamePrefix(super.getBeanName()+" - Thread");
+        } else { 
+          throw new Exception("Unknown Context Detected in setUimaASThreadPoolExecutor()");
+        }
     }
   }
 

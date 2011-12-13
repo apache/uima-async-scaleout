@@ -840,17 +840,20 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
 
-  private void stopChannel(UimaDefaultMessageListenerContainer mL) throws Exception {
+  private void stopChannel(UimaDefaultMessageListenerContainer mL, boolean shutdownNow) throws Exception {
     String eName = mL.getEndpointName();
     if (eName != null) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stopChannel",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_stopping_jms_transport__INFO",
-                new Object[] { eName });
+                new Object[] { eName, shutdownNow });
       }
     }
-    mL.stop();
-
+    mL.delegateStop();
+    if (shutdownNow) {
+        mL.destroy(shutdownNow);
+    }
+   
     String selector = "";
     if (mL.getMessageSelector() != null) {
       selector = " Selector:" + mL.getMessageSelector();
@@ -877,14 +880,20 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     return true;
   }
 
-  public void stop() throws Exception {
-    stop(InputChannel.CloseAllChannels);
+  public void stop(boolean shutdownNow) throws Exception {
+    stop(InputChannel.CloseAllChannels, shutdownNow);
     listenerContainerList.clear();
     failedListenerMap.clear();
     if ( remoteJMXServer != null ) {
       remoteJMXServer.disconnect();
       remoteJMXServer = null;
     }
+  }
+  public void disconnectListenersFromQueue() throws Exception {
+	for (Object listenerObject : listenerContainerList) {
+	  final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer) listenerObject;
+	  	stopChannel(mL, false);
+	}	  
   }
   public void setTerminating() {
   	 if ( listenerContainerList.size() > 0 ) {
@@ -905,12 +914,12 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	 }
 	  
   }
-  public synchronized void stop(int channelsToClose) throws Exception {
-    List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
+  public synchronized void stop(int channelsToClose, boolean shutdownNow) throws Exception {
+	  List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
     for (Object listenerObject : listenerContainerList) {
       final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer) listenerObject;
       if (mL != null && doCloseChannel(mL, channelsToClose)) {
-    	  stopChannel(mL);
+    	  stopChannel(mL, shutdownNow);
         // Just in case check if the container still in the list. If so, add it to
         // another list that container listeners that have been stopped and need
         // to be removed from the listenerContainerList. Removing the listener from
@@ -1014,7 +1023,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         }
         newListener.afterPropertiesSet();
         if ( controller != null && controller.isStopped() ) {
-          newListener.stop();
+          newListener.destroy(true);  // shutdownNow
           //  we are aborting, the controller has been stopped
           return;
         }

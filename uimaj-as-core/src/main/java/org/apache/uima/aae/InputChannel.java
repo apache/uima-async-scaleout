@@ -53,4 +53,6 @@ public interface InputChannel extends Channel {
   public void setTerminating();
   
   public void terminate();
+  
+  public void disconnectListenersFromQueue() throws Exception;
 }

@@ -656,7 +656,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
     // Any problems in completeInitialization() is a reason to stop
     notifyListenersWithInitializationStatus(ex);
-    super.stop();
+    super.stop(true);   // shutdown now
   }
 
   private void stopListener(String key, Endpoint endpoint) throws Exception {
@@ -3064,7 +3064,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   public void stop() {
-    super.stop();
+    super.stop(true);  // shutdown now
     this.cleanUp();
   }
 

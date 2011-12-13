@@ -22,54 +22,39 @@
 
 package org.apache.uima.aae.controller;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.util.Level;
 
 public class AnalysisEngineInstancePoolWithThreadAffinity implements AnalysisEngineInstancePool {
   private static final Class CLASS_NAME = AnalysisEngineInstancePoolWithThreadAffinity.class;
 
-  private boolean allThreadsAlreadyAssigned = false;
-
-  private Map aeInstanceMap = new HashMap();
-
-  private List aeList = new ArrayList();
-
-  private int analysisEnginePoolSize = 0;
-
-  public AnalysisEngineInstancePoolWithThreadAffinity(int aePoolSize) {
-    analysisEnginePoolSize = aePoolSize;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.apache.uima.aae.controller.AnalysisEngineInstancePool#intialize(java.util.List)
-   */
-  public void intialize(List anAnalysisEngineInstanceList) throws Exception {
-    aeList = anAnalysisEngineInstanceList;
-  }
+  private volatile boolean destroyAEInstanceIfFree=false;
+  private Semaphore lock = new Semaphore(1);
+  
+  private Map<Long, AnalysisEngine> aeInstanceMap = new HashMap<Long,AnalysisEngine>();
 
   public int size() {
     return aeInstanceMap.size();
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see
-   * org.apache.uima.aae.controller.AnalysisEngineInstancePool#checkin(org.apache.uima.analysis_engine
-   * .AnalysisEngine)
-   */
-  public synchronized void checkin(AnalysisEngine anAnalysisEngine) throws Exception {
-    aeInstanceMap.put(Thread.currentThread().getId(), anAnalysisEngine);
+  public void checkin(AnalysisEngine anAnalysisEngine) throws Exception {
+	  try {
+		  lock.acquireUninterruptibly();
+		  aeInstanceMap.put(Thread.currentThread().getId(), anAnalysisEngine);
+	  } catch( Exception e) {
+		  e.printStackTrace();
+		  throw e;
+	  } finally {
+		  lock.release();
+	  }
   }
 
   public boolean exists() {
@@ -83,39 +68,38 @@ public class AnalysisEngineInstancePoolWithThreadAffinity implements AnalysisEng
    * 
    * @see org.apache.uima.aae.controller.AnalysisEngineInstancePool#checkout()
    **/
-  public synchronized AnalysisEngine checkout() throws Exception {
-    AnalysisEngine ae = null;
+  public AnalysisEngine checkout() throws Exception {
+	  try {
+		  lock.acquireUninterruptibly();
+		  if ( !exists() ) {
+			  throw new AsynchAEException("AE instance not found in AE pool. Most likely due to service quiescing");
+		  }
+	    // AEs are instantiated and initialized in the the main thread and placed in the temporary list.
+	    // First time in the process() method, each thread will remove AE instance from the temporary
+	    // list
+	    // and place it in the permanent instanceMap. The key to the instanceMap is the thread name.
+	    // Each
+	    // thread will always process a CAS using its own and dedicated AE instance.
+	    return (AnalysisEngine) aeInstanceMap.remove(Thread.currentThread().getId());
 
-    // AEs are instantiated and initialized in the the main thread and placed in the temporary list.
-    // First time in the process() method, each thread will remove AE instance from the temporary
-    // list
-    // and place it in the permanent instanceMap. The key to the instanceMap is the thread name.
-    // Each
-    // thread will always process a CAS using its own and dedicated AE instance.
-    return (AnalysisEngine) aeInstanceMap.remove(Thread.currentThread().getId());
+	  } catch( Exception e) {
+		  throw e;
+	  } finally {
+		  lock.release();
+	  }
 
+	  
+	  
   }
-
   /*
    * (non-Javadoc)
    * 
    * @see org.apache.uima.aae.controller.AnalysisEngineInstancePool#destroy()
    */
   public void destroy() throws Exception {
-
-    Iterator aeInstanceIterator = aeInstanceMap.keySet().iterator();
-    int i = 0;
-    while (aeInstanceIterator.hasNext()) {
-      AnalysisEngine ae = (AnalysisEngine) aeInstanceMap.get((Long) aeInstanceIterator.next());
-      ae.destroy();
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "abort",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_destroying_ae__INFO",
-                new Object[] { ae.getAnalysisEngineMetaData().getName(), i });
-      }
-      i++;
-    }
-    aeInstanceMap.clear();
+	  //	set the flag so that any AE instance returned from PrimitiveController
+	  //    will be destroyed. 
+	  destroyAEInstanceIfFree = true;
   }
 
 }

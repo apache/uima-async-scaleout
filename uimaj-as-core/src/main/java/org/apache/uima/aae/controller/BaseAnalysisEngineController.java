@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
@@ -210,6 +211,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   protected ConcurrentHashMap<String, UimaMessageListener> messageListeners = new ConcurrentHashMap<String, UimaMessageListener>();
 
   private Exception initException = null;
+  
+  private Object lock = new Object();
 
   // Local cache for this controller only. This cache stores state of
   // each CAS. The actual CAS is still stored in the global cache. The
@@ -230,7 +233,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   // Monitor used in stop() to await a callback from InProcessCache
   protected Object callbackMonitor = new Object();
-
+  
+  protected Semaphore onEmptyCacheSemaphore = new Semaphore(1);
+  
   protected volatile boolean awaitingCacheCallbackNotification = false;
 
   protected ConcurrentHashMap<String, String> abortedCasesMap = new ConcurrentHashMap<String, String>();
@@ -1768,11 +1773,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    * Stops input channel(s) and initiates a shutdown of all delegates ( if this is an aggregate ).
    * At the end sends an Exception to the client and closes an output channel.
    */
-  public void stop() {
-    this.stop(null, null);
+  public void stop(boolean shutdownNow) {
+    this.stop(null, null,shutdownNow);
   }
 
-  public void stop(Throwable cause, String aCasReferenceId) {
+  public void stop(Throwable cause, String aCasReferenceId, boolean shutdownNow ) {
     if (!isStopped()) {
       setStopped();
     }
@@ -1792,11 +1797,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
       getControllerLatch().release();
       // Stops the input channel of this service
-      stopInputChannels(InputChannel.CloseAllChannels);
+      stopInputChannels(InputChannel.CloseAllChannels, shutdownNow);
     } else {
       ((AggregateAnalysisEngineController_impl) this).stopTimers();
       // Stops ALL input channels of this service including the reply channels
-      stopInputChannels(InputChannel.CloseAllChannels);
+      stopInputChannels(InputChannel.CloseAllChannels,shutdownNow);
       
       List<AnalysisEngineController> colocatedControllerList = 
         ((AggregateAnalysisEngineController_impl)this).getChildControllerList();
@@ -1843,7 +1848,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         }
       }
     }
-
     getInProcessCache().releaseAllCASes();
 
     releasedAllCASes = true;
@@ -1857,6 +1861,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         jmxManagement.destroy();
       } catch (Exception e) {
       }
+      
       try {
         getInProcessCache().destroy();
       } catch (Exception e) {
@@ -1936,11 +1941,34 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
         // Stops all input channels of this service, but keep temp reply queue input channels open
         // to process replies.
-        stopInputChannels(InputChannel.InputChannels);
+        stopReceivingCASes();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
                   "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_register_onEmpty_callback__INFO", new Object[] { getComponentName() });
+        }
+        if ( this instanceof PrimitiveAnalysisEngineController_impl &&
+        		((PrimitiveAnalysisEngineController_impl)this).aeInstancePool != null ) {
+        	//	Since we are quiescing, destroy all AEs that are in AE pool. Those that
+        	//  are still busy processing will be destroyed when they finish.
+        	try {
+        		//	Sleep for 2secs to allow any CASes that just arrived to reach process
+        		//  method. There may be CASes in flight that just came in before we
+        		//  stopped input channel but not yet reached process method. We allow
+        		//  them to be processed before we clean AE pool below.
+        		synchronized(lock) {
+        			lock.wait(2000);
+        		}
+        		//	Set a flag on the AEPool manager to destroy any AE instance being returned
+        		//  to the pool. The AE.destroy() method must be called on the same thread
+        		//  that initialized the AE instance. Any AE instances already in the pool
+        		//  will be destroyed when a thread pool is shutdown
+        		((PrimitiveAnalysisEngineController_impl)this).aeInstancePool.destroy();
+        	} catch( Exception e) {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                        "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_exception__WARNING", e);
+        	}
         }
         // Register a callback with the cache. The callback will be made when the cache becomes
         // empty
@@ -1970,8 +1998,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                   "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_onEmpty_callback_received__INFO", new Object[] { getComponentName() });
         }
-        getInputChannel().terminate();
-        stop();
+        stopInputChannels(InputChannel.InputChannels, true);  
+        // close JMS connection 
+        stop(false); // wait for any remaining CASes in flight to finish
       }
     }
   }
@@ -2018,14 +2047,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           iC.setTerminating();
       }
       // Stop the inflow of new input CASes
-      stopInputChannel();
-      if ( iC != null ) {
+      stopInputChannel(true);  // shutdownNow
+       if ( iC != null ) {
         iC.terminate();
       }
       stopCasMultipliers();
       stopTransportLayer();
       if (cause != null && aCasReferenceId != null) {
-        this.stop(cause, aCasReferenceId);
+        this.stop(cause, aCasReferenceId, true);  // shutdownNow
       } else {
         this.stop();
       }
@@ -2150,11 +2179,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    * Stops a listener on the main input channel
    * 
    */
-  protected void stopInputChannel() {
+  protected void stopInputChannel(boolean shutdownNow) {
     InputChannel iC = getInputChannel(endpointName);
     if (iC != null && !iC.isStopped()) {
       try {
-        iC.stop();
+        iC.stop(shutdownNow);
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "terminate",
@@ -2171,7 +2200,43 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 		  iC.setTerminating();
 	  }
   }
-  protected void stopInputChannels( int channelsToStop) {   //, boolean norecovery) {
+  protected void stopReceivingCASes()  {
+	  
+	    InputChannel iC = null;
+	    setInputChannelForNoRecovery();
+	    Iterator<String> it = inputChannelMap.keySet().iterator();
+	    while (it.hasNext()) {
+	      try {
+	        String key = it.next();
+	        if (key != null && key.trim().length() > 0) {
+	          iC = (InputChannel) inputChannelMap.get(key);
+	          if (iC != null) {
+	        	  iC.disconnectListenersFromQueue();
+               }
+	        }
+	      } catch (Exception e) {
+	        if (iC != null) {
+	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+	                    "stopReceivingCASes", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                    "UIMAEE_unable_to_stop_inputchannel__INFO",
+	                    new Object[] { getComponentName(), iC.getInputQueueName() });
+	          }
+	        } else {
+	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                    "stopReceivingCASes", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                    "UIMAEE_service_exception_WARNING", getComponentName());
+	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+	                    "stopReceivingCASes", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                    "UIMAEE_exception__WARNING", e);
+	          }
+	        }
+	      }
+	    }
+	  
+  }
+  protected void stopInputChannels( int channelsToStop, boolean shutdownNow) {   //, boolean norecovery) {
 	    InputChannel iC = null;
 	    setInputChannelForNoRecovery();
 	    Iterator it = inputChannelMap.keySet().iterator();
@@ -2186,10 +2251,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	                    && iC.getServiceInfo().getInputQueueName().startsWith("top_level_input_queue")) {
 	              // This closes both listeners on the input queue: Process Listener and GetMeta
 	              // Listener
-	            	iC.stop(channelsToStop);
+	            	iC.stop(channelsToStop,shutdownNow);
 	              return; // Just closed input channels. Keep the others open
 	            }
-	            iC.stop(channelsToStop);
+	            iC.stop(channelsToStop,shutdownNow);
 	          }
 	        }
 	        i++;

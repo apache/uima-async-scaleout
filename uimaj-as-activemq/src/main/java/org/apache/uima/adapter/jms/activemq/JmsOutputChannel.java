@@ -1671,12 +1671,15 @@ public class JmsOutputChannel implements OutputChannel {
     long t = System.nanoTime();
     getAnalysisEngineController().saveReplyTime(t, "");
   }
-
   public void stop() {
-    stop(Channel.CloseAllChannels);
+	    stop(Channel.CloseAllChannels, true);
+}
+
+  public void stop(boolean shutdownNow) {
+	    stop(Channel.CloseAllChannels, shutdownNow);
   }
 
-  public void stop(int channelsToClose) {
+  public void stop(int channelsToClose, boolean shutdownNow) {
     aborting = true;
     try {
       // Fetch iterator over all Broker Connections. This service may be connected

@@ -86,7 +86,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   // Pool containing instances of AE. The default implementation provides Thread affinity
   // meaning each thread executes the same AE instance.
-  private AnalysisEngineInstancePool aeInstancePool = null;
+  protected AnalysisEngineInstancePool aeInstancePool = null;
 
   private String abortedCASReferenceId = null;
   // Create a shared semaphore to serialize creation of AE instances.
@@ -182,7 +182,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           return;
         }
         if (aeInstancePool == null) {
-          aeInstancePool = new AnalysisEngineInstancePoolWithThreadAffinity(analysisEnginePoolSize);
+          aeInstancePool = new AnalysisEngineInstancePoolWithThreadAffinity();//analysisEnginePoolSize);
         }
         if (analysisEngineMetadata == null) {
           analysisEngineMetadata = ae.getAnalysisEngineMetaData();
@@ -283,6 +283,10 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // Initialize Cas Manager
         if (getCasManagerWrapper() != null) {
           try {
+        	  // Below should always be true. In spring context file AsynchAECasManager_impl
+        	  // is instantiated and setCasPoolSize() method is called which sets the 
+        	  // initialized state = true. isInitialized() returning true just means that
+        	  // setCasPoolSize() was called.
             if (getCasManagerWrapper().isInitialized()) {
               getCasManagerWrapper().addMetadata(getAnalysisEngineMetadata());
               if (isTopLevelComponent()) {
@@ -477,7 +481,15 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
     }
   }
+  public void destroyAE()  {
+	  try {
+		  AnalysisEngine ae = aeInstancePool.checkout();
+		  ae.destroy();
+	  } catch( Exception e) {
+		  e.printStackTrace();
+	  }
 
+  }
   /**
    * This is called when a Stop request is received from a client. Add the provided Cas id to the
    * list of aborted CASes. The process() method checks this list to determine if it should continue
@@ -1017,7 +1029,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   public void stop() {
-    super.stop();
+    super.stop(true);  // shutdown now
     if (aeInstancePool != null) {
       try {
         aeInstancePool.destroy();
