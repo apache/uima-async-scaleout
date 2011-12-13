@@ -19,8 +19,10 @@
 
 package org.apache.uima.aae.client;
 
+import java.util.List;
 import java.util.Map;
 
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.EntityProcessStatus;
@@ -321,7 +323,20 @@ public interface UimaAsynchronousEngine {
    * @throws ResourceProcessException
    */
   public String sendAndReceiveCAS(CAS aCAS) throws ResourceProcessException;
-
+  /**
+   * This synchronous method sends a given CAS to a UIMA AS service and waits for response. The
+   * method either returns a CAS with the result of analysis or throws an exception. It doesn't 
+   * use call-backs through a registered application listener. If there is
+   * no exception, the method also returns per Analysis Engine performance breakdown for the CAS.
+   * This breakdown can be used to identify how much time each AE took to process the CAS. 
+   * 
+   * @param aCAS
+   *          - a CAS to analyze.
+   * @param   - componentMetricsList - empty list to be filled with per AE performance metrics
+   * @return - a unique id assigned to the CAS
+   * @throws ResourceProcessException
+   */
+  public String sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList) throws ResourceProcessException;
   /**
    * Deploys a UIMA AS container and all services defined in provided deployment descriptor. Each
    * deployment descriptor contains an assembly of related UIMA AS services. This method is
