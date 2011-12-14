@@ -19,6 +19,7 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -957,9 +958,19 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
               	//	Modify task executor to terminate idle threads. While the thread terminates
               	//  it calls destroy() method on the pinned instance of AE
-              	((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().allowCoreThreadTimeOut(true);
-                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setKeepAliveTime(1000, TimeUnit.MILLISECONDS);
-                	((ThreadPoolTaskExecutor) taskExecutor).setWaitForTasksToCompleteOnShutdown(true);
+                
+                //  java 5 ThreadPoolExecutor doesnt implement allowCoreThreadTimeout Method. 
+                //  Use alternate mechanism to passivate threads in the pool.
+                try {
+                  Method m = ((ThreadPoolTaskExecutor) taskExecutor).
+                    getThreadPoolExecutor().getClass().getMethod("allowCoreThreadTimeOut", boolean.class);
+                  m.invoke(((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor(), true);
+                } catch ( NoSuchMethodException e) {
+                  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setCorePoolSize(0);
+                }
+               // ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().allowCoreThreadTimeOut(true);
+                ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setKeepAliveTime(1000, TimeUnit.MILLISECONDS);
+              	((ThreadPoolTaskExecutor) taskExecutor).setWaitForTasksToCompleteOnShutdown(true);
               	((ThreadPoolTaskExecutor) taskExecutor).shutdown();
               } else if (concurrentListener != null) {
                   shutdownTaskExecutor(concurrentListener.getTaskExecutor(), stopImmediate);
