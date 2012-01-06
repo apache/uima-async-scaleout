@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -113,6 +114,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   private ThreadPoolExecutor threadPoolExecutor = null;
   
   private boolean pluginThreadPool;
+  
+  private CountDownLatch latchToCountNumberOfTerminatedThreads;
   
   public UimaDefaultMessageListenerContainer() {
     super();
@@ -689,7 +692,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           // TaskExecutor provided in the spring xml. The custom thread pool initializes
           // an instance of AE in a dedicated thread
           if ( getMessageSelector() != null && !isGetMetaListener()) {
-            initializeTaskExecutor();
+            initializeTaskExecutor(cc);
           }
           if ( threadPoolExecutor == null ) {
               // Plug in TaskExecutor to Spring's Listener
@@ -987,7 +990,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                        "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                        "UIMAJMS_listener_shutdown__INFO", new Object[] {controllerName,__listenerRef.getMessageSelector(),__listenerRef.getBrokerUrl()});
          }
-          __listenerRef.shutdown();
+         // __listenerRef.shutdown();
          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                        "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1013,7 +1016,18 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
     };
     threadGroupDestroyer.start();
-    
+	  //	Wait for process threads to finish. Each thread
+	  // will count down the latch on exit. When all thread
+	  // finish we can continue. Otherwise we block on the latch
+    try {
+      if ( latchToCountNumberOfTerminatedThreads != null && cc > 1) {
+        latchToCountNumberOfTerminatedThreads.await();
+      }
+    } catch( Exception ex) {
+       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                  "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", ex);
+    }
     
   }
   
@@ -1055,6 +1069,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         } else { 
           throw new Exception("Unknown Context Detected in setUimaASThreadPoolExecutor()");
         }
+        
     }
   }
 
@@ -1078,7 +1093,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * 
    * @throws Exception
    */
-  private void initializeTaskExecutor() throws Exception {
+  private void initializeTaskExecutor(int consumers) throws Exception {
     // TaskExecutor is only used with primitives
     if (controller instanceof PrimitiveAnalysisEngineController) {
       // in case the taskExecutor is not plugged in yet, wait until one
@@ -1088,10 +1103,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           mux2.wait(20);
         }
       }
+      latchToCountNumberOfTerminatedThreads = new CountDownLatch(consumers);
       // Create a Custom Thread Factory. Provide it with an instance of
       // PrimitiveController so that every thread can call it to initialize
       // the next available instance of a AE.
-      tf = new UimaAsThreadFactory(threadGroup, (PrimitiveAnalysisEngineController) controller);
+      tf = new UimaAsThreadFactory(threadGroup, (PrimitiveAnalysisEngineController) controller, latchToCountNumberOfTerminatedThreads);
       ((UimaAsThreadFactory)tf).setDaemon(true);
       // This ThreadExecutor will use custom thread factory instead of defult one
       ((ThreadPoolTaskExecutor) taskExecutor).setThreadFactory(tf);
