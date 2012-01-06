@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,6 +52,8 @@ public class UimaAsThreadFactory implements ThreadFactory {
   
   private final int poolId = poolIdGenerator.incrementAndGet();
   
+  private CountDownLatch latchToCountNumberOfTerminatedThreads;
+  
   public UimaAsThreadFactory(ThreadGroup tGroup) {
     this(tGroup,null);
   }
@@ -61,9 +64,14 @@ public class UimaAsThreadFactory implements ThreadFactory {
    * @param aController
    */
   public UimaAsThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController) {
+    this( tGroup, aController, null);
+  }
+  public UimaAsThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController, CountDownLatch latchToCountNumberOfTerminatedThreads) {
     controller = aController;
     theThreadGroup = tGroup;
+    this.latchToCountNumberOfTerminatedThreads = latchToCountNumberOfTerminatedThreads;
   }
+  
   public void setThreadNamePrefix(String prefix) {
     threadNamePrefix = prefix;
   }
@@ -124,13 +132,16 @@ public class UimaAsThreadFactory implements ThreadFactory {
             return;
           } finally {
               if ( controller instanceof PrimitiveAnalysisEngineController_impl ) {
-       			 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+       			     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
         					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
         					"UIMAEE_process_thread_exiting__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
             	  ((PrimitiveAnalysisEngineController_impl)controller).destroyAE();
-        			 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+        			  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
          					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
          					"UIMAEE_ae_instance_destroy_called__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
+        			  if ( latchToCountNumberOfTerminatedThreads != null ) {
+                  latchToCountNumberOfTerminatedThreads.countDown();
+        			  }
               }
           }
         
