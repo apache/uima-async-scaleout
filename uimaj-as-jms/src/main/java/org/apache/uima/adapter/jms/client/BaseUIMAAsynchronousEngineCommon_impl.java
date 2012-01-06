@@ -191,7 +191,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   protected Semaphore cpcSemaphore = new Semaphore(1);
 
   // Create Semaphore that will signal when GetMeta reply has been received
-  protected Semaphore getMetaSemaphore = new Semaphore(1);
+  protected Semaphore getMetaSemaphore = new Semaphore(0, true);
 
   // Signals when the client is ready to send CPC request
   protected Semaphore cpcReadySemaphore = new Semaphore(1);
@@ -748,9 +748,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       getMetaSemaphore.acquire();
     } catch (InterruptedException e) {
     	e.printStackTrace();
-    } finally {
-      getMetaSemaphore.release();
-    }
+    } 
   }
 
   public String getPerformanceReport() {
@@ -1107,8 +1105,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   }
   @SuppressWarnings("unchecked")
   private List<AnalysisEnginePerformanceMetrics> deserializePerformanceMetrics(String serializedComponentStats) {
-      XStream xstream = new XStream(new DomDriver());
-      return (List<AnalysisEnginePerformanceMetrics>)xstream.fromXML(serializedComponentStats);
+    XStream xstream = new XStream(new DomDriver());
+    return (List<AnalysisEnginePerformanceMetrics>)xstream.fromXML(serializedComponentStats);
   }
   protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand) {
     for (int i = 0; listeners != null && i < listeners.size(); i++) {
@@ -2708,9 +2706,11 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   
   protected SharedConnection lookupConnection(String brokerUrl) {
-	  if ( sharedConnections.containsKey(brokerUrl) ) {
-		  return sharedConnections.get(brokerUrl);
-	  }
+    if ( brokerUrl != null ) {
+      if ( sharedConnections.containsKey(brokerUrl) ) {
+        return sharedConnections.get(brokerUrl);
+      }
+    }
 	  return null;
   }
   
