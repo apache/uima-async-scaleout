@@ -320,7 +320,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 
 	private boolean connectionClosedOrInvalid() {
-		synchronized (connectionMux) {
 			SharedConnection sharedConnection = lookupConnection(brokerURI);
 			if (sharedConnection == null
 					|| sharedConnection.getConnection() == null
@@ -332,13 +331,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 							.isTransportFailed()) {
 				return true;
 			}
-		}
 		return false;
 	}
 
 	protected SharedConnection createSharedConnection(String aBrokerURI) throws Exception {
 		SharedConnection sharedConnection = null;
-		synchronized (connectionMux) {
 			try {
 				// Acquire global static semaphore
 				sharedConnectionSemaphore.acquire();
@@ -394,7 +391,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 				sharedConnectionSemaphore.release();
 			}
 
-		}
 		return sharedConnection;
 	}
 
@@ -430,9 +426,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected void initializeProducer(String aBrokerURI, String aQueueName) throws Exception {
     // Check if a sharedConnection exists. If not it creates one
     SharedConnection sharedConnection = createSharedConnection(aBrokerURI);
-	synchronized (connectionMux) {
-	    initializeProducer(aBrokerURI, aQueueName, sharedConnection.getConnection());
-	}
+    initializeProducer(aBrokerURI, aQueueName, sharedConnection.getConnection());
   }
 
   protected void initializeProducer(String aBrokerURI, String aQueueName, Connection aConnection)
@@ -500,10 +494,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * @throws Exception
    */
   protected void initializeConsumer(String aBrokerURI) throws Exception {
-	SharedConnection  sharedConnection = createSharedConnection(aBrokerURI);
-	synchronized (connectionMux) {
-	    initializeConsumer(aBrokerURI, sharedConnection.getConnection());
-	}
+	  SharedConnection  sharedConnection = createSharedConnection(aBrokerURI);
+    initializeConsumer(aBrokerURI, sharedConnection.getConnection());
   }
 
   protected void initializeConsumer(String aBrokerURI, Connection connection) throws Exception {
@@ -517,6 +509,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
         //  ignore, creating a new Session below
       }
     }
+    
     consumerSession = getSession(connection);
     consumerDestination = consumerSession.createTemporaryQueue();
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
@@ -714,18 +707,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
       }
       running = true;
-      // Acquire GetMeta Semaphore Before Sending a GetMeta Request. This will force
-      // the client to block in waitForMetadataReply() until GetMeta reply is received
-      try {
-        getMetaSemaphore.acquire();
-      } catch (InterruptedException e) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                      "initialize", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAJMS_client_interrupted_while_acquiring_getmeta_semaphore__WARNING");
-            }
-      }
-      //  Add a delay of 100ms before sending a request for metadata to remote service.
       //  This is done to give the broker enough time to 'finalize' creation of
       //  temp reply queue. It's been observed (on MAC OS only) that AMQ
       //  broker QueueSession.createTemporaryQueue() call is not synchronous. Meaning,
@@ -877,7 +858,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if (aSpringContainerId == null  ) {
       return;
     }
-
     UimaEEAdminSpringContext adminContext = null;
     if (!springContainerRegistry.containsKey(aSpringContainerId)) {
         return;
