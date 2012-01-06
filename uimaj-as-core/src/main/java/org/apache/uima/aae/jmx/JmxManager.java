@@ -43,25 +43,27 @@ public class JmxManager implements JmxManagement {
    * @param aDomain
    */
   public void unregisterDomainObjects(String aDomain) {
-    if (!isInitialized()) {
-      return;
-    }
-    try {
-      Set set = getMBeansInDomain(aDomain);
-      Iterator it = set.iterator();
-      while (it.hasNext()) {
-        ObjectName on = (ObjectName) it.next();
-        try {
-          unregisterMBean(on);
-        } catch (Exception e) {
-        } // Dont care if there is an exception
+    //  use class level locking to make sure one thread at time executes the code
+    synchronized(JmxManager.class) {
+      if (!isInitialized()) {
+        return;
       }
-    } catch (Exception e) {
-      UIMAFramework.getLogger().logrb(Level.WARNING, JmxMBeanAgent.class.getName(),
-              "unregisterDomainObjects", LOG_RESOURCE_BUNDLE,
-              "UIMA_JMX_failed_to_register_mbean__WARNING", e);
+      try {
+        Set set = getMBeansInDomain(aDomain);
+        Iterator it = set.iterator();
+        while (it.hasNext()) {
+          ObjectName on = (ObjectName) it.next();
+          try {
+            unregisterMBean(on);
+          } catch (Exception e) {
+          } // Dont care if there is an exception
+        }
+      } catch (Exception e) {
+        UIMAFramework.getLogger().logrb(Level.WARNING, JmxMBeanAgent.class.getName(),
+                "unregisterDomainObjects", LOG_RESOURCE_BUNDLE,
+                "UIMA_JMX_failed_to_register_mbean__WARNING", e);
+      }
     }
-
   }
 
   private Set getMBeansInDomain(String aDomain) throws Exception {
@@ -90,10 +92,13 @@ public class JmxManager implements JmxManagement {
     }
 
     try {
-      if (((MBeanServer) platformMBeanServer).isRegistered(aName)) {
-        ((MBeanServer) platformMBeanServer).unregisterMBean(aName);
+      //  use class level locking to make sure one thread at time executes the code
+      synchronized(JmxManager.class) {
+        if (((MBeanServer) platformMBeanServer).isRegistered(aName)) {
+          ((MBeanServer) platformMBeanServer).unregisterMBean(aName);
+        }
+        ((MBeanServer) platformMBeanServer).registerMBean(anMBeanToRegister, aName);
       }
-      ((MBeanServer) platformMBeanServer).registerMBean(anMBeanToRegister, aName);
     } catch (Exception e) {
       UIMAFramework.getLogger()
               .logrb(Level.WARNING, JmxMBeanAgent.class.getName(), "registerMBean",
@@ -112,20 +117,22 @@ public class JmxManager implements JmxManagement {
     return true;
   }
 
-  public synchronized void unregisterMBean(ObjectName anMBeanToUnregister) {
-    if (!isInitialized()) {
-      return;
-    }
-    try {
-      if (((MBeanServer) platformMBeanServer).isRegistered(anMBeanToUnregister)) {
-        ((MBeanServer) platformMBeanServer).unregisterMBean(anMBeanToUnregister);
+  public void unregisterMBean(ObjectName anMBeanToUnregister) {
+    //  use class level locking to make sure one thread at time executes the code
+    synchronized(JmxManager.class) {
+      if (!isInitialized()) {
+        return;
       }
-    } catch (Exception e) {
-      UIMAFramework.getLogger()
-              .logrb(Level.WARNING, JmxMBeanAgent.class.getName(), "registerMBean",
-                      LOG_RESOURCE_BUNDLE, "UIMA_JMX_failed_to_register_mbean__WARNING", e);
+      try {
+        if (((MBeanServer) platformMBeanServer).isRegistered(anMBeanToUnregister)) {
+          ((MBeanServer) platformMBeanServer).unregisterMBean(anMBeanToUnregister);
+        }
+      } catch (Exception e) {
+        UIMAFramework.getLogger()
+                .logrb(Level.WARNING, JmxMBeanAgent.class.getName(), "registerMBean",
+                        LOG_RESOURCE_BUNDLE, "UIMA_JMX_failed_to_register_mbean__WARNING", e);
+      }
     }
-
   }
 
   public void destroy() throws Exception {
