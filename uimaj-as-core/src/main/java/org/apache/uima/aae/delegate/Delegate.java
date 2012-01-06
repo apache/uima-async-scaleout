@@ -57,6 +57,8 @@ public abstract class Delegate {
 
   // Timer object to time replies
   private DelegateTimer timer;
+  
+  private Object timerLock = new Object();
 
   // Process Timeout value for this delegate
   private long casProcessTimeout = 0;
@@ -136,18 +138,18 @@ public abstract class Delegate {
     return endpoint;
   }
 
-  public synchronized void cancelTimerForCasOrPurge(String casReferenceId) {
-	  if ( timer != null && timer.getTimerCasId() != null && timer.getTimerCasId().equals(casReferenceId)) {
-		  //System.out.println("\n\n\t Canceled Timer For CAS:"+casReferenceId+" and Restarting Timer for the next oldest CAS in the outstanding list\n\n");
-		  cancelDelegateTimer();
-		  //	Restart timer for the next older CAS in the oustanding list
-		  restartTimerForOldestCasInOutstandingList();
-	  } else {
-		  // Given CAS is not the oldest in outstanding list. Purge the CAS from both outstanding and
-		  // pending dispatch lists (if exists).
-		  removeCasFromOutstandingList(casReferenceId);
-		  removeCasFromPendingDispatchList(casReferenceId);
-	  }
+  public  void cancelTimerForCasOrPurge(String casReferenceId) {
+	    if ( timer != null && timer.getTimerCasId() != null && timer.getTimerCasId().equals(casReferenceId)) {
+	      //System.out.println("\n\n\t Canceled Timer For CAS:"+casReferenceId+" and Restarting Timer for the next oldest CAS in the outstanding list\n\n");
+	      cancelDelegateTimer();
+	      //  Restart timer for the next older CAS in the oustanding list
+	      restartTimerForOldestCasInOutstandingList();
+	    } else {
+	      // Given CAS is not the oldest in outstanding list. Purge the CAS from both outstanding and
+	      // pending dispatch lists (if exists).
+	      removeCasFromOutstandingList(casReferenceId);
+	      removeCasFromPendingDispatchList(casReferenceId);
+	    }
   }
   /**
    * Forces Timer restart for the oldest CAS sitting in the list of CASes pending reply.
@@ -550,11 +552,13 @@ public abstract class Delegate {
   /**
    * Cancels current timer
    */
-  public synchronized void cancelDelegateTimer() {
-    if (timer != null) {
-      timer.cancel();
-      timer.purge();
-    }
+  public void cancelDelegateTimer() {
+   synchronized( timerLock ) {
+     if (timer != null) {
+       timer.cancel();
+       timer.purge();
+     }
+   }
   }
 
   /**
@@ -600,63 +604,64 @@ public abstract class Delegate {
    * @param aCommand
    *          - command for which the timer is started
    */
-  private synchronized void startDelegateTimer(final String aCasReferenceId, final int aCommand) {
-    
-	  final long timeToWait = getTimeoutValueForCommand(aCommand);
-    Date timeToRun = new Date(System.currentTimeMillis() + timeToWait);
-    timer = new DelegateTimer("Controller:" + getComponentName() + ":Request TimerThread-Endpoint_impl:"
-            + endpoint + ":" + System.nanoTime() + ":Cmd:" + aCommand, true, aCasReferenceId,this);
-    final Delegate delegate = this;
-    timer.schedule(new TimerTask() {
-      public void run() {
-        delegate.setState(TIMEOUT_STATE);
-        ErrorContext errorContext = new ErrorContext();
-        errorContext.add(AsynchAEMessage.Command, aCommand);
-        String enrichedMessage = enrichProcessCASTimeoutMessage(aCommand, aCasReferenceId,timeToWait,"Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId );
-        Exception cause = new MessageTimeoutException(enrichedMessage);
-        if (AsynchAEMessage.Process == aCommand) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-                    "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_cas_timeout_no_reply__WARNING",
-                    new Object[] { delegate.getKey(), timeToWait, aCasReferenceId });
-          }
-          errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
-          errorContext.add(ErrorContext.THROWABLE_ERROR, cause);
-          //  Check if this is a Ping timeout and associate this with
-          //	the oldest CAS from the list of CASes pending reply.
-          if (isAwaitingPingReply() && getCasPendingReplyListSize() > 0) {
-            String casReferenceId = getOldestCasIdFromOutstandingList();
-            errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
-            // Override the command to make sure this timeout is handled
-            // by the ProcessCasErrorHandler.
-            errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
-            errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
-          }
-        } else if (AsynchAEMessage.GetMeta == aCommand) {
-        	if ( aCasReferenceId != null ) {  // true on GetMeta Ping timeout
-            	errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
-                errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
-        	}
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-                    "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_meta_timeout_no_reply__WARNING",
-                    new Object[] { delegate.getKey(), timeToWait });
-          }
-        } else if (AsynchAEMessage.CollectionProcessComplete == aCommand) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-                    "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_cpc_timeout_no_reply__WARNING",
-                    new Object[] { delegate.getKey(), timeToWait });
-          }
+  private void startDelegateTimer(final String aCasReferenceId, final int aCommand) {
+    synchronized( timerLock ) {
+      final long timeToWait = getTimeoutValueForCommand(aCommand);
+      Date timeToRun = new Date(System.currentTimeMillis() + timeToWait);
+      timer = new DelegateTimer("Controller:" + getComponentName() + ":Request TimerThread-Endpoint_impl:"
+              + endpoint + ":" + System.nanoTime() + ":Cmd:" + aCommand, true, aCasReferenceId,this);
+      final Delegate delegate = this;
+      timer.schedule(new TimerTask() {
+        public void run() {
+          delegate.setState(TIMEOUT_STATE);
+          ErrorContext errorContext = new ErrorContext();
+          errorContext.add(AsynchAEMessage.Command, aCommand);
+          String enrichedMessage = enrichProcessCASTimeoutMessage(aCommand, aCasReferenceId,timeToWait,"Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId );
+          Exception cause = new MessageTimeoutException(enrichedMessage);
+          if (AsynchAEMessage.Process == aCommand) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                      "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_cas_timeout_no_reply__WARNING",
+                      new Object[] { delegate.getKey(), timeToWait, aCasReferenceId });
+            }
+            errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
+            errorContext.add(ErrorContext.THROWABLE_ERROR, cause);
+            //  Check if this is a Ping timeout and associate this with
+            //  the oldest CAS from the list of CASes pending reply.
+            if (isAwaitingPingReply() && getCasPendingReplyListSize() > 0) {
+              String casReferenceId = getOldestCasIdFromOutstandingList();
+              errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
+              // Override the command to make sure this timeout is handled
+              // by the ProcessCasErrorHandler.
+              errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
+              errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
+            }
+          } else if (AsynchAEMessage.GetMeta == aCommand) {
+            if ( aCasReferenceId != null ) {  // true on GetMeta Ping timeout
+                errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
+                  errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
+            }
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                      "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_meta_timeout_no_reply__WARNING",
+                      new Object[] { delegate.getKey(), timeToWait });
+            }
+          } else if (AsynchAEMessage.CollectionProcessComplete == aCommand) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                      "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_cpc_timeout_no_reply__WARNING",
+                      new Object[] { delegate.getKey(), timeToWait });
+            }
 
+          }
+          errorContext.add(AsynchAEMessage.Endpoint, getEndpoint());
+          handleError(cause, errorContext);
         }
-        errorContext.add(AsynchAEMessage.Endpoint, getEndpoint());
-        handleError(cause, errorContext);
-      }
-    }, timeToRun);
+      }, timeToRun);
+    }
   }
 
   public long getCasProcessTimeout() {
