@@ -483,12 +483,15 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
   public void destroyAE()  {
 	  try {
-		  AnalysisEngine ae = aeInstancePool.checkout();
-		  ae.destroy();
+	    if ( aeInstancePool != null ) {
+	      AnalysisEngine ae = aeInstancePool.checkout();
+	      if ( ae != null ) {
+	        ae.destroy();
+	      }
+	    }
 	  } catch( Exception e) {
 		  e.printStackTrace();
 	  }
-
   }
   /**
    * This is called when a Stop request is received from a client. Add the provided Cas id to the
