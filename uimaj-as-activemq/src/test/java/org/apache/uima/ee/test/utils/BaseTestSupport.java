@@ -601,6 +601,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           boolean sendCasAsynchronously) throws Exception {
     engine = eeUimaEngine;
     for (int i = 0; i < howMany; i++) {
+    	if (isStopping) {
+    		break;
+    	}
       CAS cas = eeUimaEngine.getCAS();
       if (cas == null) {
         if (isStopping) {
