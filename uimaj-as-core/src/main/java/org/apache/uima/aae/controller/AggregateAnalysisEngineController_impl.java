@@ -1269,14 +1269,14 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           CAS cas = cacheEntry.getCas();
           logCasForEndpoint(analysisEngineKey, cas);
         }
-
+        Delegate delegate = lookupDelegate(analysisEngineKey);
+        casStateEntry.setLastDelegate(delegate);
         if (endpoint.isCasMultiplier()) {
-          Delegate delegateCM = lookupDelegate(analysisEngineKey);
-          delegateCM.setGeneratingChildrenFrom(aCasReferenceId, true);
+          delegate.setGeneratingChildrenFrom(aCasReferenceId, true);
           // Record the outgoing CAS. CASes destined for remote CM are recorded
           // in JmsOutputchannel.
           if (!endpoint.isRemote()) {
-            delegateCM.addNewCasToOutstandingList(aCasReferenceId, true);
+            delegate.addNewCasToOutstandingList(aCasReferenceId, true);
           }
         }
 

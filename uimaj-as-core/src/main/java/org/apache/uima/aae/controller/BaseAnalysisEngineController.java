@@ -1781,6 +1781,29 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (!isStopped()) {
       setStopped();
     }
+    /*
+     * Send an exception to the client if this is a top level service
+     */
+    if (cause != null && aCasReferenceId != null && getOutputChannel() != null
+            && isTopLevelComponent()) {
+      Endpoint clientEndpoint = null;
+      if ((clientEndpoint = getClientEndpoint()) != null) {
+        try {
+          getOutputChannel().sendReply(cause, aCasReferenceId, null, clientEndpoint,
+                  clientEndpoint.getCommand());
+        } catch (Exception e) {
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", getComponentName());
+
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "stop",
+                    UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
+                   e);
+          }
+        }
+      }
+    }
 
     if (daemonServiceExecutor != null) {
       daemonServiceExecutor.shutdown();
@@ -1821,35 +1844,20 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
     // Stops internal transport used to communicate with colocated services
     stopTransportLayer();
-    /*
-     * Commented this block. It generates ShutdownException which causes problems The shutdown of
-     * services happens ad hoc and not orderly. This whole logic needs to be revisited.
-     * 
-     * // Send an exception to the client if this is a top level service
-     */
-    if (cause != null && aCasReferenceId != null && getOutputChannel() != null
-            && isTopLevelComponent()) {
-
-      Endpoint clientEndpoint = null;
-      if ((clientEndpoint = getClientEndpoint()) != null) {
-        try {
-          getOutputChannel().sendReply(cause, aCasReferenceId, null, clientEndpoint,
-                  clientEndpoint.getCommand());
-        } catch (Exception e) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                    "stop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_service_exception_WARNING", getComponentName());
-
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "stop",
-                    UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING",
-                   e);
-          }
-        }
-      }
-    }
+    for (Iterator it = getLocalCache().entrySet().iterator(); it.hasNext();) {
+       Map.Entry entry = (Map.Entry) it.next();
+       CasStateEntry casStateEntry = (CasStateEntry) entry.getValue();
+       if ( casStateEntry.isSubordinate() ) {
+         try {
+           getInProcessCache().getCacheEntryForCAS(casStateEntry.getCasReferenceId()).getCas().release();
+         } catch( Exception e) {
+           
+         }
+       }
+    }   
+    
     getInProcessCache().releaseAllCASes();
-
+    getLocalCache().clear();
     releasedAllCASes = true;
     if (!isTopLevelComponent()) {
       adminContext = null;

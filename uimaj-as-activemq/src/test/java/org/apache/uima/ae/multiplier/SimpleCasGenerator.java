@@ -63,6 +63,8 @@ public class SimpleCasGenerator extends CasMultiplier_ImplBase {
   private String text;
 
   long docCount = 0;
+  
+  int failOnDocumentNumber;
 
   /*
    * (non-Javadoc)
@@ -73,6 +75,13 @@ public class SimpleCasGenerator extends CasMultiplier_ImplBase {
   public void initialize(UimaContext aContext) throws ResourceInitializationException {
     super.initialize(aContext);
     this.nToGen = ((Integer) aContext.getConfigParameterValue("NumberToGenerate")).intValue();
+    if ( aContext.getConfigParameterValue("DocumentNumberToFailOn") != null ) {
+      int tmpCount = ((Integer) aContext.getConfigParameterValue("DocumentNumberToFailOn")).intValue();
+      if ( tmpCount > 0 ) {
+        this.failOnDocumentNumber = tmpCount;
+      }
+    }
+    
     FileInputStream fis = null;
     try {
       String filename = ((String) aContext.getConfigParameterValue("InputFile")).trim();
@@ -137,6 +146,13 @@ public class SimpleCasGenerator extends CasMultiplier_ImplBase {
       System.out.println("Initializing CAS with a Document of Size:" + text.length());
     }
     docCount++;
+    
+    if ( this.failOnDocumentNumber == docCount ) {
+      cas.release();
+      //  force CM to finish producing CASes on error
+      this.mCount = this.nToGen;
+      throw new AnalysisEngineProcessException(new Exception("Simulated Exception in Cas Multiplier next() method"));
+    }
     if (UIMAFramework.getLogger().isLoggable(Level.FINE))
       System.out.println("CasMult creating document#" + docCount);
     cas.setDocumentText(this.text);
