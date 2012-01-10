@@ -48,8 +48,14 @@ public class AnalysisEngineInstancePoolWithThreadAffinity implements AnalysisEng
   public void checkin(AnalysisEngine anAnalysisEngine) throws Exception {
 	  try {
 		  lock.acquireUninterruptibly();
-		  aeInstanceMap.put(Thread.currentThread().getId(), anAnalysisEngine);
-	  } catch( Exception e) {
+		  // Call destroy() on AE on checkin if the UIMA AS process is in quiesce mode  
+		  if ( destroyAEInstanceIfFree ) {
+		    System.out.println("........... AnalysisEngineInstancePool.checkin() - Thread:"+Thread.currentThread().getId()+" calling destroy() on AE checkin");
+		    anAnalysisEngine.destroy();
+		  } else {
+	      aeInstanceMap.put(Thread.currentThread().getId(), anAnalysisEngine);
+		  }
+ 	  } catch( Exception e) {
 		  e.printStackTrace();
 		  throw e;
 	  } finally {
@@ -97,6 +103,7 @@ public class AnalysisEngineInstancePoolWithThreadAffinity implements AnalysisEng
    * @see org.apache.uima.aae.controller.AnalysisEngineInstancePool#destroy()
    */
   public void destroy() throws Exception {
+    System.out.println("....... AnalysisEngineInstancePool.destroy() was called");
 	  //	set the flag so that any AE instance returned from PrimitiveController
 	  //    will be destroyed. 
 	  destroyAEInstanceIfFree = true;

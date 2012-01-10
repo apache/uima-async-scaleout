@@ -622,8 +622,8 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       }
       // If the controller has been stopped no need to send messages
       if (controller.isStopped()) {
-        return true;
-      } else {
+        return false;
+       } else {
         if (e instanceof JMSException) {
           handleJmsException((JMSException) e);
           //	whoever called this method is interested in knowing that there was JMS Exception

@@ -489,6 +489,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	        ae.destroy();
 	      }
 	    }
+	  } catch( AsynchAEException e) {
+	    //  No-op. AE instance not found. Most likely, the UIMA AS service is in shutdown state
 	  } catch( Exception e) {
 		  e.printStackTrace();
 	  }
