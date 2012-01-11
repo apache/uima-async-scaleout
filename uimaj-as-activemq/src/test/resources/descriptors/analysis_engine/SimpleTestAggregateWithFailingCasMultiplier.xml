@@ -36,11 +36,87 @@
     </delegateAnalysisEngine>
   
   </delegateAnalysisEngineSpecifiers>
+  
+    <flowController key="FlowController">
+    <import location="../flow/AdvancedFixedFlowController.xml"/>
+  </flowController>
+  
   <analysisEngineMetaData>
     <name>Test Aggregate TAE</name>
     <description>Detects Nothing</description>
-    <configurationParameters/>
-    <configurationParameterSettings/>
+    
+    
+    
+    <configurationParameters>
+      <configurationParameter>
+        <name>Flow</name>
+        <description>Specifies the flow. This is an array of strings where each string is either a single Analysis
+          Engine key or a comma-separated list of Analysis Engine keys that should be executed in parallel.</description>
+        <type>String</type>
+        <multiValued>true</multiValued>
+        <mandatory>true</mandatory>
+        <overrides>
+          <parameter>FlowController/Flow</parameter>
+        </overrides>
+      </configurationParameter>
+      <configurationParameter>
+        <name>AllowContinueOnFailure</name>
+        <description> Specifies for which AnalysisEngines the Flow should continue when an exception occurs. This
+          parameter takes an array of Strings as its value. Each String is the key of AnalysisEngine for which
+          continuing on failure should be allowed. </description>
+        <type>String</type>
+        <multiValued>true</multiValued>
+        <mandatory>false</mandatory>
+        <overrides>
+          <parameter>FlowController/AllowContinueOnFailure</parameter>
+        </overrides>
+      </configurationParameter>
+      <configurationParameter>
+        <name>ExceptionsToIgnore</name>
+        <description>Specifies which exceptions to ignore.</description>
+        <type>String</type>
+        <multiValued>true</multiValued>
+        <mandatory>false</mandatory>
+        <overrides>
+          <parameter>FlowController/ExceptionsToIgnore</parameter>
+        </overrides>
+      </configurationParameter>
+      
+    </configurationParameters>
+
+    <configurationParameterSettings>
+    
+      <nameValuePair>
+        <name>Flow</name>
+        <value>
+          <array>
+            <string>TestMultiplier</string>
+            <string>NoOp</string>
+          </array>
+        </value>
+      </nameValuePair>
+
+    
+      <nameValuePair>
+        <name>AllowContinueOnFailure</name>
+        <value>
+          <array>
+            <string>TestMultiplier</string>
+          </array>
+        </value>
+      </nameValuePair>
+      
+      <nameValuePair>
+        <name>ExceptionsToIgnore</name>
+        <value>
+          <array>
+            <string></string>
+            <string>java.io.FileNotFoundException</string>
+          </array>
+        </value>
+      </nameValuePair>
+            
+    </configurationParameterSettings>
     <flowConstraints>
       <fixedFlow>
       
