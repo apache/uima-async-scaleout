@@ -164,7 +164,7 @@ under the License.
         </listitem>
 
         <listitem>
-          <para><code>void sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList)</code>:
+          <para><code>void sendAndReceiveCAS(CAS aCAS, List&lt;AnalysisEnginePerformanceMetrics> componentMetricsList)</code>:
             Send a CAS, wait for response. On success aCAS contains the analysis results and componentMetricsList
             contains per Analysis Engine performance breakdown. This breakdown shows how much time each Analysis Engine
             took to analyze the CAS. The method throws an exception on error.  Note that this interface cannot be used 
