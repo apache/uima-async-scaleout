@@ -1113,28 +1113,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
                   "UIMAJMS_stop_listener__INFO",
                   new Object[] { mListener.getDestination().toString() });
         }
-        // Spin a thread that will stop the listener and wait for its shutdown
-        Thread stopThread = new Thread("InputChannelStopThread") {
-          public void run() {
-            mListener.stop();
-            // wait until the listener shutsdown
-            while (mListener.isRunning())
-              ;
-            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)
-                    && mListener.getDestination() != null) {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(
-                      Level.INFO,
-                      CLASS_NAME.getName(),
-                      "destroyListener",
-                      JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAJMS_stopped_listener_INFO",
-                      new Object[] { controller.getComponentName(),
-                          mListener.getDestination().toString() });
-            }
-          }
-        };
-        stopThread.start();
-
+        mListener.stop();
         if (getController() != null) {
           Endpoint endpoint = ((AggregateAnalysisEngineController) getController()).lookUpEndpoint(
                   aDelegateKey, false);
@@ -1148,7 +1127,6 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
             }
           }
         }
-        // }
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
