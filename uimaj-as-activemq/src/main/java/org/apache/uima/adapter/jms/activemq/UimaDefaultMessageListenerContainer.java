@@ -956,8 +956,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         try {
           if ( !__listenerRef.awaitingShutdown ) {
         	    awaitingShutdown = true;
-                // delegate stop request to Spring 
-              __listenerRef.delegateStop();
               if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
               	//	Modify task executor to terminate idle threads. While the thread terminates
               	//  it calls destroy() method on the pinned instance of AE
