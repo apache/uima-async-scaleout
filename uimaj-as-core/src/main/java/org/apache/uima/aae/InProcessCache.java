@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.ControllerLifecycle;
@@ -556,6 +557,23 @@ public class InProcessCache implements InProcessCacheMBean {
     // list. The delegates in this list will be called sequentially when
     // all delegates in parallel step respond.
     private List delayedSingleStepList = null;
+		//	shared semaphore that blocks UIMA AS aggregate receiving
+		//  thread after a CAS is handed off to the first delegate.
+		//  This stops the aggregate's receiving thread from taking
+		//  another CAS off the input queue while the current CAS is
+		//  still being processed. This semaphore is shared with a 
+		//  receiving thread which has a reference to the semaphore
+		//  via ThreadLocal var
+    private Semaphore threadCompletionSemaphore;
+    
+    
+    public Semaphore getThreadCompletionSemaphore() {
+      return threadCompletionSemaphore;
+    }
+
+    public void setThreadCompletionSemaphore(Semaphore threadCompletionSemaphore) {
+      this.threadCompletionSemaphore = threadCompletionSemaphore;
+    }
 
     protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
             OutOfTypeSystemData aotsd) {
