@@ -1318,9 +1318,25 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_dropping_cas__FINE",
               new Object[] { aCasReferenceId, getComponentName() });
     }
-    if (inProcessCache.entryExists(aCasReferenceId)) {
+    //	Fetch Cache entry for a given CAS
+    CacheEntry entry = null ;
+    if ( inProcessCache.entryExists(aCasReferenceId)) {
+      try {
+        entry = inProcessCache.getCacheEntryForCAS(aCasReferenceId);
+      } catch( Exception e) {
+      }
+    }
+    if ( entry != null ) {
       CAS cas = inProcessCache.getCasByReference(aCasReferenceId);
       if (deleteCacheEntry) {
+	      // Release semaphore that is shared with a thread that received the CAS
+	      // to unlock the thread. This thread is blocking to prevent it from 
+	      // receiving another CAS.
+        Semaphore threadLocalSemaphore=null;
+        if ( !isPrimitive() && (threadLocalSemaphore = entry.getThreadCompletionSemaphore()) != null ) {
+          threadLocalSemaphore.release();
+        }
+  
         inProcessCache.remove(aCasReferenceId);
         if (localCache.containsKey(aCasReferenceId)) {
           try {
@@ -1950,11 +1966,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         // Stops all input channels of this service, but keep temp reply queue input channels open
         // to process replies.
         stopReceivingCASes();
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
-                  "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_register_onEmpty_callback__INFO", new Object[] { getComponentName() });
-        }
         if ( this instanceof PrimitiveAnalysisEngineController_impl &&
         		((PrimitiveAnalysisEngineController_impl)this).aeInstancePool != null ) {
         	//	Since we are quiescing, destroy all AEs that are in AE pool. Those that
@@ -1977,34 +1988,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                         "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAEE_exception__WARNING", e);
         	}
-        }
-        // Register a callback with the cache. The callback will be made when the cache becomes
-        // empty
-        getInProcessCache().registerCallbackWhenCacheEmpty(this,
-                InProcessCache.NotifyWhenRegistering);
-        // Now wait until the InProcessCache becomes empty
-        while (!callbackReceived) {
-          synchronized (callbackMonitor) {
-            // set global flag to indicate that the controller awaits notification from
-            // the cache. This mechanism is used in the Listener code to determine whether
-            // or not to call stop() on the controller in the event there is an exception.
-            awaitingCacheCallbackNotification = true;
-            try {
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
-                        "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAEE_waiting_for_onEmpty_callback__INFO",
-                        new Object[] { getComponentName() });
-              }
-              callbackMonitor.wait();
-            } catch (Exception e) {
-            }
-          }
-        }
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
-                  "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAEE_onEmpty_callback_received__INFO", new Object[] { getComponentName() });
         }
         stopInputChannels(InputChannel.InputChannels, true);  
         // close JMS connection 
