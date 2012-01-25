@@ -70,6 +70,7 @@ import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.aae.error.ForcedMessageTimeoutException;
 import org.apache.uima.aae.error.MessageTimeoutException;
 import org.apache.uima.aae.error.ServiceShutdownException;
+import org.apache.uima.aae.error.UimaAsUncaughtExceptionHandler;
 import org.apache.uima.aae.error.handler.ProcessCasErrorHandler;
 import org.apache.uima.aae.jmx.JmxManagement;
 import org.apache.uima.aae.jmx.JmxManager;
@@ -294,7 +295,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     aeDescriptor = aDescriptor;
     parentController = aParentController;
     componentCasPoolSize = aComponentCasPoolSize;
-
     if (this instanceof AggregateAnalysisEngineController) {
       // Populate a list of un-registered co-located delegates. A delegate will be taken off the
       // un-registered list
@@ -334,6 +334,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     resourceSpecifier = UimaClassFactory.produceResourceSpecifier(aDescriptor);
 
     if (isTopLevelComponent()) {
+      // ******************************************************************************
+      //  Set a global UncaughtExceptionHandler to handle OOM and other uncaught Throwables
+      // ******************************************************************************
+      //  this adds the handler to every thread
+      Thread.setDefaultUncaughtExceptionHandler(new UimaAsUncaughtExceptionHandler(getComponentName()));
       // Check the version of uimaj that UIMA AS was built with, against the UIMA Core version. If not the same throw Exception
       if (!UimaAsVersion.getUimajFullVersionString().equals(UimaVersion.getFullVersionString())) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(

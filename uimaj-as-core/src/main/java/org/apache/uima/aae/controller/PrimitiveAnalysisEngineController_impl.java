@@ -880,6 +880,13 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         localCache.remove(aCasReferenceId);
       }
     } catch (Throwable e) {
+      
+      if ( e instanceof OutOfMemoryError ) {
+        e.printStackTrace();
+        System.err.println("\n\n\n\t!!!!! UIMA AS Service Caught Java Error While in process() method. Exiting via System.exit(2)\n\n\n");
+        System.err.flush();
+        System.exit(2);
+      }
     	if ( stackDumpTimer != null ) {
     		stackDumpTimer.cancel();
     	}

@@ -709,6 +709,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       }
 
     } catch (Throwable t) {
+      if ( t instanceof Error) {
+        t.printStackTrace();
+        System.err.println("\n\n\n\tUIMA AS Service Caught Java Error. Exiting via System.exit(2)");
+        System.err.flush();
+
+        System.exit(2);
+      }
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
