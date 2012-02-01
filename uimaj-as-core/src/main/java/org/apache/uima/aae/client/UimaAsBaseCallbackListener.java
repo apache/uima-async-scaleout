@@ -90,8 +90,10 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
    *          the CAS.  
    */
   public void entityProcessComplete(CAS aCas, EntityProcessStatus aStatus, List<AnalysisEnginePerformanceMetrics> componentMetricsList) {
-
+	  // If not overridden call the older version as it may have deen.
+    entityProcessComplete(aCas, aStatus);
   }
+  
   /**
    * The callback used to inform the application that the CPC request has completed. On success
    * aStatus will be null; on failure use the EntityProcessStatus class to get the details.
