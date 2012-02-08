@@ -98,6 +98,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   static private Long lastDump = Long.valueOf(0);
   private XStream xstream = new XStream(new DomDriver());
 
+  // 6 args
   public PrimitiveAnalysisEngineController_impl(String anEndpointName,
           String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize)
@@ -106,6 +107,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             aWorkQueueSize, anAnalysisEnginePoolSize, 0);
   }
 
+  // 7 args - adds parentController at beginning
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize)
@@ -114,6 +116,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, 0);
   }
 
+  // 8 args - adds componentCasPoolSize at end
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
@@ -122,6 +125,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, aComponentCasPoolSize, null);
   }
 
+  // 9 args - adds initialCasHeapSize
+  // ************* USED BY DD2SPRING *************
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
@@ -131,6 +136,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             anInitialCasHeapSize, null);
   }
 
+  // 9 args - repl initialCasHeapSize with jmxManagement
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
@@ -140,6 +146,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             aJmxManagement);
   }
 
+  // 10 args - adds initialCasHeapSize back
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
@@ -150,6 +157,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     analysisEnginePoolSize = anAnalysisEnginePoolSize;
   }
 
+  // 8 args - drops componentCasPoolSize and initialCasHeapSize
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
