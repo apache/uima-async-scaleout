@@ -309,38 +309,27 @@ under the License.
             inform the application that a processCas request has completed. On success aCAS object
             will contain result of analysis; on failure the CAS will be in the same state as 
             before it was sent to a service and aStatus will contain the cause of failure. When calling 
-            this method, the UIMA AS passes an object of type <code>UimaASProcessStatus</code> as a second argument. 
-            It extends <code>EntityProcessStatus</code> and provides <code>getCasReferenceId()</code> 
-            method to retrieve a unique 
-            id assigned to a CAS. To access this method the user code should implement the following
-            <programlisting>
-               if ( aStatus instanceof UimaASProcessStatus ) {
-	              casReferenceId = 
-	                ((UimaASProcessStatus)aStatus).getCasReferenceId();
-   	           }
-   	        </programlisting>
-          </para>
-        </listitem>
-
-        <listitem>
-          <para><code>entityProcessComplete(CAS aCas, EntityProcessStatus aStatus, List&lt;AnalysisEnginePerformanceMetrics&gt; componentMetricsList)</code>: 
-          Same as above with an additional <code>componentMetricsList</code> argument. It provides per component performance breakdown as reported by UIMA
-          aggregate. Useful for identifying how much time each component took to analyze the CAS. The <code>AnalysisEnginePerformanceMetrics</code>
-          class provides the following API:
-          <itemizedlist>
-             <listitem>
-              <para><code>public String getName()</code>: identifies component by name</para>
-             </listitem>
-             <listitem>
-              <para><code>public String getUniqueName()</code>: identifies component by unique name</para>
-             </listitem>
-             <listitem>
-              <para><code>public long getAnalysisTime()</code>: time (in millis) compnent spent analyzing the CAS</para>
-             </listitem>
-             <listitem>
-              <para><code>public long getNumProcessed()</code>: total number of CASes processed so far by the component</para>
-             </listitem>
-          </itemizedlist>  
+            this method, UIMA AS passes an object of type <code>UimaASProcessStatus</code> as a second argument. 
+            This class extends <code>EntityProcessStatus</code> and provides 4 additional methods: <code>getCAS(), 
+            getCasReferenceId(), getParentCasReferenceId() &amp; getPerfomanceMetricsList().</code> 
+			The last method provides the per component performance breakdown as reported by the UIMA
+            Analysis Engine which includes the elapsed time each component spent analyzing the CAS. 
+            The <code>AnalysisEnginePerformanceMetrics</code> class provides the following API:
+            <itemizedlist>
+              <listitem>
+                <para><code>public String getName()</code>: identifies component by name</para>
+              </listitem>
+              <listitem>
+                <para><code>public String getUniqueName()</code>: identifies component by unique name</para>
+              </listitem>
+              <listitem>
+                <para><code>public long getAnalysisTime()</code>: time (in millis) component spent analyzing the CAS</para>
+              </listitem>
+              <listitem>
+                <para><code>public long getNumProcessed()</code>: total number of CASes processed so far by the component</para>
+              </listitem>
+            </itemizedlist>
+            See <xref linkend="ugr.ref.async.api.usage_getresults"></xref> for a usage example.
           </para>
         </listitem>
 
@@ -444,24 +433,30 @@ uimaAsEngine.sendCAS(cas);
       Asynchronous events resulting from the process Cas request are passed to the registered listener.
         <programlisting>
 // Callback Listener. Receives event notifications from UIMA-AS.
-class MyStatusCallbackListener implements UimaASStatusCallbackListener {
+class MyStatusCallbackListener extends UimaAsBaseCallbackListener {
 
-// Method called when the processing of a Document is completed.
-public void entityProcessComplete(CAS aCas, EntityProcessStatus aStatus) {
-  if (aStatus != null &amp;&amp; aStatus.isException()) {
-    List exceptions = aStatus.getExceptions();
-    for (int i = 0; i &lt; exceptions.size(); i++) {
-      ((Throwable) exceptions.get(i)).printStackTrace();
+  // Method called when the processing of a Document is completed.
+  public void entityProcessComplete(CAS aCas, EntityProcessStatus aStatus) {
+    if (aStatus != null &amp;&amp; aStatus.isException()) {
+      List exceptions = aStatus.getExceptions();
+      for (int i = 0; i &lt; exceptions.size(); i++) {
+        ((Throwable) exceptions.get(i)).printStackTrace();
       }
-    uimaAsEngine.stop();
-    return;
+      uimaAsEngine.stop();
+      return;
     }
 
-// Process the retrieved Cas here
-// ...
+    // Process the retrieved Cas here
+    if ( aStatus instanceof UimaASProcessStatus ) {
+      String casReferenceId = 
+        ((UimaASProcessStatus)aStatus).getCasReferenceId();
+      List&lt;AnalysisEnginePerformanceMetrics&gt; metrics = 
+        ((UimaASProcessStatus)aStatus).getPerformanceMetricsList();
+    }
+    // ...
   }
 
-// Add other required callback methods below...
+  // Add other required callback methods below...
 }
     </programlisting>
     </para>

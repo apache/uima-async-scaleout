@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.util.ProcessTrace;
 
@@ -52,6 +53,8 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
   private String parentCasId;
 
   transient private CAS cas;
+
+  private List<AnalysisEnginePerformanceMetrics> performanceMetricsList;
   
   public UimaASProcessStatusImpl(ProcessTrace p) {
     this(p, null, null);
@@ -164,6 +167,14 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
     return parentCasId;
   }
 
+  public void setPerformanceMetrics(List<AnalysisEnginePerformanceMetrics> pm) {
+    performanceMetricsList = pm;;
+  }
+  
+  public List<AnalysisEnginePerformanceMetrics> getPerformanceMetricsList() {
+    return performanceMetricsList;
+  }
+  
   /**
    * Show class variable names and their current values. Uses reflection to obtain a list of
    * variables from the class.

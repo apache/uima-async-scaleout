@@ -1096,10 +1096,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   @SuppressWarnings("unchecked")
   protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand, String serializedComponentStats) {
     if ( aCommand == AsynchAEMessage.Process) {
+      ((UimaASProcessStatusImpl)aStatus).setPerformanceMetrics(deserializePerformanceMetrics(serializedComponentStats));
       for (int i = 0; listeners != null && i < listeners.size(); i++) {
         UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
-        statCL.entityProcessComplete(aCAS, aStatus, 
-        		deserializePerformanceMetrics(serializedComponentStats));
+        statCL.entityProcessComplete(aCAS, aStatus);
       }
     }
   }

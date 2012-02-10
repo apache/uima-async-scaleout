@@ -392,26 +392,16 @@
                 ../uimaj-as-core/src/main/java:../uimaj-as-activemq/src/main/java:../uimaj-as-camel/src/main/java:../uima-as-jms/src/main/java
               </sourcepath>
               <subpackages>org.apache.uima</subpackages>
-							<excludePackageNames>
-                *.uima.aae:
-                *.aae.controller:
-                *.aae.deploymentDescriptor:
-                *.aae.error:
-                *.aae.error.handler:
-                *.aae.handler:
-                *.aae.handler.input:
-                *.aae.jmx:
-                *.aae.message:
-                *.aae.monitor:
-                *.aae.monitor.statistics
-              </excludePackageNames>
+							<excludePackageNames>*.aae.*</excludePackageNames>
 							<!-- add a few classes in impl packages that are directly used by user code -->
               <additionalparam>
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/BasicUimaJmxMonitorListener.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/JmxMonitorListener.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/ServiceMetrics.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/SingleLineUimaJmxMonitorListener.java
+                ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/monitor/statistics/AnalysisEnginePerformanceMetrics.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaAsynchronousEngine.java
+                ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaAsBaseCallbackListener.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaASStatusCallbackListener.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaASProcessStatus.java                                                                                     
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResult.java
