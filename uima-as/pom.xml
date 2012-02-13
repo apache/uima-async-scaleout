@@ -408,6 +408,10 @@
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultComponentPath.java
                 ${basedir}/../uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultTDs.java
               </additionalparam>
+              <!--  Link these to the uimaj javadocs on apache.org -->
+              <links>
+                <link>http://uima.apache.org/d/uimaj-${uimajDependencyVersion}/apidocs</link>
+              </links>
 							<doctitle>Apache UIMA Async Scaleout Java SDK ${project.version} User-Level API Documentation</doctitle>
 							<windowtitle>Apache UIMA-AS Java SDK ${project.version} User-Level API Documentation</windowtitle>
 						</configuration>

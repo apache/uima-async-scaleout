@@ -88,7 +88,7 @@ public final class DeploymentDescriptorFactory {
    * Parses provided UIMA AS deployment descriptor InputStream and returns a Java Object representing
    * the descriptor.
    *
-   * @param xmlFileDescriptor - deployment descriptor InputStream
+   * @param descriptorInputStream - deployment descriptor InputStream
    * @return - Java Object representing deployment descriptor
    * @throws ResourceInitializationException the resource initialization exception
    */

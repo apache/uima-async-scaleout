@@ -330,9 +330,8 @@ public interface UimaAsynchronousEngine {
    * no exception, the method also returns per Analysis Engine performance breakdown for the CAS.
    * This breakdown can be used to identify how much time each AE took to process the CAS. 
    * 
-   * @param aCAS
-   *          - a CAS to analyze.
-   * @param   - componentMetricsList - empty list to be filled with per AE performance metrics
+   * @param aCAS - a CAS to analyze.
+   * @param   componentMetricsList - empty list to be filled with per AE performance metrics
    * @return - a unique id assigned to the CAS
    * @throws ResourceProcessException
    */
