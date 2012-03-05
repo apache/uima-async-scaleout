@@ -117,17 +117,20 @@ public class UimaAsThreadFactory implements ThreadFactory {
             // TaskExecutor is terminated.
             r.run();
           } catch (Throwable e) {
-            //   try to log. If this is OOM, logging may not succeed and we
-            //   get another OOM.
-            try {
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                      "UimaAsThreadFactory", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                      "UIMAEE_exception__WARNING", e);
-              System.out.println("Exiting UIMA AS Process Due to Uncaught Exception");
-            } catch( Throwable t ) {
-               // Failed during logging. We are tight on memory. Just exit 
+            if ( !(e instanceof Exception) ) {
+              //   try to log. If this is OOM, logging may not succeed and we
+              //   get another OOM.
+              try {
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                        "UimaAsThreadFactory", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "UIMAEE_exception__WARNING", e);
+                System.out.println(">>>>>>>>>>>>>>>>>>Exiting UIMA AS Process Due to Uncaught Exception");
+              } catch( Throwable t ) {
+                 // Failed during logging. We are tight on memory. Just exit 
+              }
+              System.exit(-1);
+              
             }
-            System.exit(-1);
             return;
           } finally {
               if ( controller instanceof PrimitiveAnalysisEngineController_impl ) {
