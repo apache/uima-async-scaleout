@@ -27,6 +27,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer; //import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
@@ -34,6 +36,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.OutputKeys;
 
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
 import org.apache.uima.cas.TypeSystem;
@@ -51,6 +54,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
+
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomDriver;
 
 public class UimaSerializer {
   private final ThreadLocal<XMLReader> localXmlReader = new ThreadLocal<XMLReader>();
@@ -235,4 +241,16 @@ public class UimaSerializer {
       }
     }
   }
+  @SuppressWarnings("unchecked")
+  public static List<AnalysisEnginePerformanceMetrics> deserializePerformanceMetrics(String serializedComponentStats) {
+    // check if we received components stats. Currently UIMA AS is not supporting per component
+    // stats in asynch aggregates. If the service is asynch, just return an empty list
+    if ( serializedComponentStats == null || serializedComponentStats.trim().length() == 0 ) {
+      // return an empty list
+      return new ArrayList<AnalysisEnginePerformanceMetrics>();
+    }
+    XStream xstream = new XStream(new DomDriver());
+    return (List<AnalysisEnginePerformanceMetrics>)xstream.fromXML(serializedComponentStats);
+  }
+  
 }

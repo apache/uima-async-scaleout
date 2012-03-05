@@ -20,6 +20,8 @@
 package org.apache.uima.aae.handler.input;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.UIMAFramework;
@@ -45,6 +47,7 @@ import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.aae.monitor.Monitor;
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
@@ -186,7 +189,37 @@ public class ProcessResponseHandler extends HandlerBase {
       // during deserialization
       CacheEntry cacheEntry = getController().getInProcessCache().getCacheEntryForCAS(
               casReferenceId);
-
+      if ( aMessageContext.propertyExists(AsynchAEMessage.CASPerComponentMetrics) ) {
+        try {
+          CacheEntry ancestor = 
+                  getController().
+                    getInProcessCache().
+                      getTopAncestorCasEntry(cacheEntry);
+          if ( ancestor != null ) {
+            List<AnalysisEnginePerformanceMetrics> metrics = 
+                    UimaSerializer.deserializePerformanceMetrics(aMessageContext.getMessageStringProperty(AsynchAEMessage.CASPerComponentMetrics));
+            
+            List<AnalysisEnginePerformanceMetrics> adjustedMetrics =
+                    new ArrayList<AnalysisEnginePerformanceMetrics>();
+            for(AnalysisEnginePerformanceMetrics delegateMetric : metrics ) {
+              String tmp =
+                      delegateMetric.getUniqueName().substring(delegateMetric.getUniqueName().indexOf(","));
+              String adjustedUniqueName =
+                ((AggregateAnalysisEngineController) getController()).getJMXDomain()+((AggregateAnalysisEngineController) getController()).getJmxContext()+tmp;
+              AnalysisEnginePerformanceMetrics metric =
+                      new AnalysisEnginePerformanceMetrics(delegateMetric.getName(),adjustedUniqueName,delegateMetric.getAnalysisTime(),delegateMetric.getNumProcessed());
+              adjustedMetrics.add(metric);
+            }
+            ancestor.addDelegateMetrics(delegateKey, adjustedMetrics, true);  // true=remote
+          }
+        } catch (Exception e) {
+          // An exception be be thrown here if the service is being stopped.
+          // The top level controller may have already cleaned up the cache
+          // and the getCacheEntryForCAS() will throw an exception. Ignore it
+          // here, we are shutting down.
+        }
+        
+      }
       CasStateEntry casStateEntry = ((AggregateAnalysisEngineController) getController())
               .getLocalCache().lookupEntry(casReferenceId);
       if (casStateEntry != null) {

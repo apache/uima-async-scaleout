@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +37,7 @@ import org.apache.uima.aae.controller.EventSubscriber;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.monitor.statistics.DelegateStats;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
@@ -471,6 +473,18 @@ public class InProcessCache implements InProcessCacheMBean {
     return getTopAncestorEndpoint(parentEntry);
   }
 
+  public CacheEntry getTopAncestorCasEntry(CacheEntry anEntry) throws Exception {
+    if (anEntry == null) {
+      return null;
+    }
+
+    if (anEntry.getInputCasReferenceId() == null) {
+      return anEntry;
+    }
+    CacheEntry parentEntry = getCacheEntryForCAS(anEntry.getInputCasReferenceId());
+    return getTopAncestorCasEntry(parentEntry);
+  }
+
   public synchronized CacheEntry getCacheEntryForCAS(String aCasReferenceId)
           throws AsynchAEException {
     CacheEntry casRefEntry = getEntry(aCasReferenceId);
@@ -566,6 +580,8 @@ public class InProcessCache implements InProcessCacheMBean {
 		//  via ThreadLocal var
     private Semaphore threadCompletionSemaphore;
     
+    private Map<String,List<AnalysisEnginePerformanceMetrics>> delegateMetrics =
+            new ConcurrentHashMap<String, List<AnalysisEnginePerformanceMetrics>>();
     
     public Semaphore getThreadCompletionSemaphore() {
       return threadCompletionSemaphore;
@@ -866,7 +882,44 @@ public class InProcessCache implements InProcessCacheMBean {
     public void setMarker(Marker mark) {
 			this.marker = mark;
 		}
+    public void addDelegateMetrics(String delegateKey, List<AnalysisEnginePerformanceMetrics> metrics) {
+      addDelegateMetrics(delegateKey, metrics, false);
+    }
 
+    public void addDelegateMetrics(String delegateKey, List<AnalysisEnginePerformanceMetrics> metrics, boolean remote) {
+/*
+      System.out.println("................ Adding metrics for delegate:"+delegateKey+" Metrics Size:"+metrics.size()+" CAS:"+getCasReferenceId());
+      if ( remote && delegateMetrics.containsKey(delegateKey)) {
+//        List<AnalysisEnginePerformanceMetrics> delegateMetrics = 
+//                delegateMetrics.get(delegateKey);
+        List<AnalysisEnginePerformanceMetrics> currentMetrics = 
+            delegateMetrics.get(delegateKey);
+        for( AnalysisEnginePerformanceMetrics rm : metrics) {
+          for( AnalysisEnginePerformanceMetrics cm : currentMetrics ) {
+            if ( cm.getUniqueName().equals(rm.getUniqueName())) {
+              AnalysisEnginePerformanceMetrics apm = 
+                      new AnalysisEnginePerformanceMetrics(rm.getName(),rm.getUniqueName(),rm.getAnalysisTime(),cm.getNumProcessed()+rm.getNumProcessed());
+              currentMetrics.remove(cm);
+              currentMetrics.add(apm);
+              break;
+            }
+          }
+        }
+      } else {
+        delegateMetrics.put(delegateKey, metrics);
+      }
+*/
+      delegateMetrics.put(delegateKey, metrics);
+    }
+    public List<AnalysisEnginePerformanceMetrics> getDelegateMetrics() {
+      List<AnalysisEnginePerformanceMetrics> metrics = new ArrayList<AnalysisEnginePerformanceMetrics>();
+      for( Entry<String,List<AnalysisEnginePerformanceMetrics>> dm : delegateMetrics.entrySet()) {
+        for(AnalysisEnginePerformanceMetrics metric : dm.getValue()) {
+          metrics.add(metric);
+        }
+      }
+      return metrics;
+    }
   }
 
 }

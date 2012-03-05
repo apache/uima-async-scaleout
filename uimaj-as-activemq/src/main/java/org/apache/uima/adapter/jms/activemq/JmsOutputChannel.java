@@ -1209,11 +1209,14 @@ public class JmsOutputChannel implements OutputChannel {
                 anEndpoint.getEndpoint());
       } else {
         try {
-          CasStateEntry entry = 
-            getAnalysisEngineController().getLocalCache().lookupEntry(aCasReferenceId);
-          if ( entry.getAEPerformanceList().size() > 0 ) {
-            aTextMessage.setStringProperty(AsynchAEMessage.CASPerComponentMetrics, 
-                    xstream.toXML(entry.getAEPerformanceList()));
+          if ( getAnalysisEngineController().getInProcessCache().entryExists(aCasReferenceId)) {
+            CacheEntry entry = 
+                    getAnalysisEngineController().getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+            //  getDelegateMetrics returns an empty list if no metrics are found
+            if ( entry.getDelegateMetrics().size() > 0 ) {
+              aTextMessage.setStringProperty(AsynchAEMessage.CASPerComponentMetrics, 
+                      xstream.toXML(entry.getDelegateMetrics()));
+            }
           }
         } catch( Exception ex) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),

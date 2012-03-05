@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -1096,23 +1097,13 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   @SuppressWarnings("unchecked")
   protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand, String serializedComponentStats) {
     if ( aCommand == AsynchAEMessage.Process) {
-      ((UimaASProcessStatusImpl)aStatus).setPerformanceMetrics(deserializePerformanceMetrics(serializedComponentStats));
+      ((UimaASProcessStatusImpl)aStatus).
+        setPerformanceMetrics(UimaSerializer.deserializePerformanceMetrics(serializedComponentStats));
       for (int i = 0; listeners != null && i < listeners.size(); i++) {
         UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
         statCL.entityProcessComplete(aCAS, aStatus);
       }
     }
-  }
-  @SuppressWarnings("unchecked")
-  private List<AnalysisEnginePerformanceMetrics> deserializePerformanceMetrics(String serializedComponentStats) {
-    // check if we received components stats. Currently UIMA AS is not supporting per component
-    // stats in asynch aggregates. If the service is asynch, just return an empty list
-    if ( serializedComponentStats == null || serializedComponentStats.trim().length() == 0 ) {
-      // return an empty list
-      return new ArrayList<AnalysisEnginePerformanceMetrics>();
-    }
-    XStream xstream = new XStream(new DomDriver());
-    return (List<AnalysisEnginePerformanceMetrics>)xstream.fromXML(serializedComponentStats);
   }
   protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand) {
     for (int i = 0; listeners != null && i < listeners.size(); i++) {
@@ -1587,7 +1578,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                 cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
                 if ( cachedRequest != null && cachedRequest.getComponentMetricsList() != null ) {
                 	cachedRequest.getComponentMetricsList().
-                		addAll(deserializePerformanceMetrics(message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics)));
+                		addAll(UimaSerializer.deserializePerformanceMetrics(message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics)));
                 }
             }
         }
