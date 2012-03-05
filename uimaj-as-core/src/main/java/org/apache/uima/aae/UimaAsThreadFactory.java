@@ -117,18 +117,17 @@ public class UimaAsThreadFactory implements ThreadFactory {
             // TaskExecutor is terminated.
             r.run();
           } catch (Throwable e) {
-        	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+            //   try to log. If this is OOM, logging may not succeed and we
+            //   get another OOM.
+            try {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                       "UimaAsThreadFactory", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                       "UIMAEE_exception__WARNING", e);
-        	  if ( controller != null ) {
-              	  Exception ex;
-              	  if ( e instanceof Exception ) {
-              		  ex = (Exception)e;
-              	  } else {
-              		  ex = new Exception(e);
-              	  }
-            	  controller.notifyListenersWithInitializationStatus(ex);
-        	  } 
+              System.out.println("Exiting UIMA AS Process Due to Uncaught Exception");
+            } catch( Throwable t ) {
+               // Failed during logging. We are tight on memory. Just exit 
+            }
+            System.exit(-1);
             return;
           } finally {
               if ( controller instanceof PrimitiveAnalysisEngineController_impl ) {
@@ -140,7 +139,11 @@ public class UimaAsThreadFactory implements ThreadFactory {
          					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
          					"UIMAEE_ae_instance_destroy_called__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
         			  if ( latchToCountNumberOfTerminatedThreads != null ) {
-                  latchToCountNumberOfTerminatedThreads.countDown();
+                  synchronized( latchToCountNumberOfTerminatedThreads ) {
+                    latchToCountNumberOfTerminatedThreads.countDown();
+                    System.out.println(".................... Thread:"+Thread.currentThread().getId()+" CountDownLatch Value:"+latchToCountNumberOfTerminatedThreads.getCount());
+                    System.out.flush();
+                  }
         			  }
               }
           }
