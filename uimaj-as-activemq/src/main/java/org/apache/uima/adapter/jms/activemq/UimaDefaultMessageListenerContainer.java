@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.ExceptionListener;
@@ -61,6 +62,7 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.jms.JmsException;
 import org.springframework.jms.listener.AbstractJmsListeningContainer;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
+import org.springframework.jms.support.JmsUtils;
 import org.springframework.jms.support.destination.DestinationResolver;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -140,9 +142,32 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * want to recover when the service is stopping.
    */
   protected void refreshConnectionUntilSuccessful() {
-	  if ( !terminating ) {
-		  super.refreshConnectionUntilSuccessful();
-	  }
+    boolean doLogFailureMsg = true;
+	    while (isRunning() && !terminating ) {
+	      try {
+	        if (sharedConnectionEnabled()) {
+	          refreshSharedConnection();
+	        }
+	        else {
+	          Connection con = createConnection();
+	          JmsUtils.closeConnection(con);
+	        }
+	        logger.info("Successfully refreshed JMS Connection");
+	        break;
+	      }
+	      catch (Exception ex) {
+	        if ( doLogFailureMsg ) {
+	          StringBuilder msg = new StringBuilder();
+	          msg.append("Could not refresh JMS Connection for destination '");
+	          msg.append(getDestinationDescription()).append("' - silently retrying in ");
+	          msg.append(5).append(" ms. Cause: ");
+	          msg.append(ex instanceof JMSException ? JmsUtils.buildExceptionMessage((JMSException) ex) : ex.getMessage());
+	          logger.warn(msg);
+	          doLogFailureMsg = false;
+	        }
+	      }
+	      sleepInbetweenRecoveryAttempts();
+	    }	    
   }
   protected void recoverAfterListenerSetupFailure() {
 	  if ( !terminating ) {
