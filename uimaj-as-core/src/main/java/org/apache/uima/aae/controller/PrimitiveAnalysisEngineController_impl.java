@@ -857,6 +857,24 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         inputCASReturned = true;
         UimaTransport transport = getTransport(anEndpoint.getEndpoint());
 
+        if (getInProcessCache() != null && getInProcessCache().getSize() > 0
+                && getInProcessCache().entryExists(aCasReferenceId)) {
+          try {
+            CacheEntry ancestor = 
+                      getInProcessCache().
+                        getTopAncestorCasEntry(getInProcessCache().getCacheEntryForCAS(aCasReferenceId));
+            if ( ancestor != null ) {
+                // Set a flag on the input CAS to indicate that the processing was aborted
+               ancestor.addDelegateMetrics(getKey(), performanceList);
+            }
+          } catch (Exception e) {
+            // An exception be be thrown here if the service is being stopped.
+            // The top level controller may have already cleaned up the cache
+            // and the getCacheEntryForCAS() will throw an exception. Ignore it
+            // here, we are shutting down.
+          }
+        }          
+        
         UimaMessage message = transport.produceMessage(AsynchAEMessage.Process,
                 AsynchAEMessage.Response, getName());
         message.addStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -875,6 +893,18 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           dropStats(aCasReferenceId, getName());
         }
       } else {
+        try {
+          
+          CacheEntry entry =
+                  getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+          entry.addDelegateMetrics(getKey(), performanceList);
+        } catch (Exception e) {
+          // An exception be be thrown here if the service is being stopped.
+          // The top level controller may have already cleaned up the cache
+          // and the getCacheEntryForCAS() will throw an exception. Ignore it
+          // here, we are shutting down.
+        }
+
         if (!stopped && !clientUnreachable ) {
             getOutputChannel().sendReply(getInProcessCache().getCacheEntryForCAS(aCasReferenceId), anEndpoint);
         }
