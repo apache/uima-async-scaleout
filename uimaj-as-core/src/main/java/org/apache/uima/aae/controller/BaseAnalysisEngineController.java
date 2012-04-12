@@ -1135,7 +1135,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     return replyTime;
   }
 
-  protected void handleAction(String anAction, String anEndpoint, ErrorContext anErrorContext)
+  protected void handleAction(String anAction, String anEndpoint, final ErrorContext anErrorContext)
           throws Exception {
 
     String casReferenceId = null;
@@ -1144,6 +1144,67 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
 
     if (ErrorHandler.TERMINATE.equalsIgnoreCase(anAction)) {
+      if ( casReferenceId != null ) {
+        CasStateEntry stateEntry = null;
+        String parentCasReferenceId = null;
+        try {
+          stateEntry = getLocalCache().lookupEntry(casReferenceId);
+          if (stateEntry != null && stateEntry.isSubordinate()) {
+            CasStateEntry topParentEntry = getLocalCache().getTopCasAncestor(casReferenceId);
+            parentCasReferenceId = topParentEntry.getCasReferenceId();
+          }
+          if (!isStopped()) {
+            Endpoint endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
+            if ( endpoint != null ) {
+              getOutputChannel().sendReply((Throwable) anErrorContext.get(ErrorContext.THROWABLE_ERROR), 
+                      casReferenceId, parentCasReferenceId,
+                      endpoint, AsynchAEMessage.Process);
+            }
+          }
+        } catch (Exception e) {
+        }
+
+      }
+      //  Extended tests cant be killed, so skip this if dontKill is defined
+      //  in System properties.
+      if ( System.getProperty("dontKill") == null) {
+        // The UIMA AS service error handling says to terminate. Try to terminate
+        // cleanly. If the process is not down after 40 secs, take it down via
+        // System.exit.  
+        Thread reaperThread = new Thread( new Runnable() {
+          public void run() {
+            System.out.println("++++++++++++++++++++++++ Starting Reaper thread");
+            Object sleepLock = new Object();
+            try {
+              synchronized( sleepLock ) {
+                sleepLock.wait(40000); // allow up to 40 sec minute for a clean shutdown.
+              }
+            } catch( Exception exx) {
+              exx.printStackTrace();
+            }
+             
+            // **********************************************************************
+            // **********************************************************************
+            // **********************************************************************
+            // **********************************************************************
+            // **********************************************************************
+            // Per discussion with Eddie on 4/11/12, exit process via System.exit() 
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.SEVERE, CLASS_NAME.getName(),
+                    "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_killing_process__SEVERE", new Object[] { getComponentName() });
+            System.exit(1);
+            // **********************************************************************
+            // **********************************************************************
+            // **********************************************************************
+            // **********************************************************************
+            // **********************************************************************
+          }
+        }
+        );
+        reaperThread.start();        
+        
+      }
+
       // Propagate terminate event to the top controller and begin shutdown of this service along
       // with all collocated delegates (if any)
       if (anErrorContext != null && anErrorContext.containsKey(ErrorContext.THROWABLE_ERROR)
@@ -1153,6 +1214,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       } else {
         terminate();
       }
+
     } else if (ErrorHandler.DISABLE.equalsIgnoreCase(anAction)) {
 
       if (anEndpoint != null) {
