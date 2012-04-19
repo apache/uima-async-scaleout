@@ -110,7 +110,7 @@ public class ClientServiceDelegate extends Delegate {
                   UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                           "handleError", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                           "UIMAJMS_process_timeout_WARNING",
-                          new Object[] { getEndpoint().getEndpoint(), cachedRequest.getHostIpProcessingCAS() });
+                          new Object[] { getEndpoint().getEndpoint(), clientUimaAsEngine.getBrokerURI(), cachedRequest.getHostIpProcessingCAS() });
                 }
                 if (cachedRequest != null && cachedRequest.isRemote()) {
                   cas = cachedRequest.getCAS();

@@ -971,7 +971,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_received_exception_msg_INFO",
                   new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom),
-                      message.getStringProperty(AsynchAEMessage.CasReference), exception });
+                    getBrokerURI(),  
+                    message.getStringProperty(AsynchAEMessage.CasReference), exception });
         }
       } else {
         // After receiving CPC reply there may be cleanup to do. Delegate this
@@ -1045,6 +1046,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_received_exception_msg_INFO",
                   new Object[] { message.getStringProperty(AsynchAEMessage.MessageFrom),
+                      getBrokerURI(),
                       message.getStringProperty(AsynchAEMessage.CasReference), exception });
         }
         abort = true;
@@ -1478,6 +1480,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAJMS_received_exception_msg_INFO",
               new Object[] { serviceDelegate.getComponentName(),
+                getBrokerURI(),
                 casReferenceId, exception });
     }
     try {
@@ -2047,12 +2050,38 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
     // check if timeout exception
     if (cachedRequest.isTimeoutException()) {
-      throw new ResourceProcessException(new UimaASProcessCasTimeout());
+      String qName="";
+      try {
+        qName = getEndPointName();
+      } catch( Exception e) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "sendAndReceiveCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", e);
+      }
+      
+      
+     // Request To Process Cas Has Timed-out.  Service Queue:NoOpAnnotatorQueueLongDelay. Cas Timed-out on host: 9.2.35.127
+      throw new ResourceProcessException(JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "" +
+      		"UIMAJMS_process_timeout_WARNING", 
+      		new Object[]{qName, getBrokerURI(), cachedRequest.getHostIpProcessingCAS()},
+      		new UimaASProcessCasTimeout("UIMA AS Client Timed Out Waiting for Reply From Service:"+qName+" Broker:"+getBrokerURI()));
     }
     // If a reply contains process exception, throw an exception and let the
     // listener decide what happens next
     if (cachedRequest.isProcessException()) {
-      throw new ResourceProcessException(cachedRequest.getException());
+      String qName="";
+      try {
+        qName = getEndPointName();
+      } catch( Exception e) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                  "sendAndReceiveCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_exception__WARNING", e);
+      }
+      throw new ResourceProcessException(
+              JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "" +
+              "UIMAJMS_received_exception_msg_INFO",
+              new Object[]{qName, getBrokerURI(), casReferenceId},
+              cachedRequest.getException());
     }
     try {
       // Process reply in the send thread
@@ -2151,7 +2180,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
     	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
     	                  "notifyOnTimout", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-    	                  "UIMAJMS_process_timeout_WARNING", new Object[] { anEndpoint, cachedRequest.getHostIpProcessingCAS() });
+    	                  "UIMAJMS_process_timeout_WARNING", new Object[] { anEndpoint, getBrokerURI(), cachedRequest.getHostIpProcessingCAS() });
     	          }
     	        } else {
     	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
