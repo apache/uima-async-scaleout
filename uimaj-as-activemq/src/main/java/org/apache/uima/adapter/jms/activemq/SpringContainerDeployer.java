@@ -302,6 +302,9 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       //  success, the service initialized
       startListeners();
     } catch (Exception e) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "initializeContainer",
+              JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_exception__WARNING",
+              e);
       // Query the container for objects that implement
       // ControllerLifecycle interface. These
       // objects are typically of type AnalysisEngineController or
