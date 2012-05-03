@@ -263,6 +263,13 @@ public class UIMA_Service implements ApplicationListener {
       System.out.println(">>> Started JMX Monitor.\n\t>>> MBean Server Port:" + jmxServerPort
               + "\n\t>>> Monitor Sampling Interval:" + samplingFrequency
               + "\n\t>>> Monitor Formatter Class:" + listener.getClass().getName());
+    } else {
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                "startMonitor", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMAJMS_no_jmx_port__WARNING", new Object[]{});
+        System.exit(1);
+      }
     }
 
   }
