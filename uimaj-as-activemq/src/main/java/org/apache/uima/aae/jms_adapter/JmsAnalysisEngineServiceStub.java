@@ -76,6 +76,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
 
   public static final String PARAM_CPC_TIMEOUT = "cpctimeout";
 
+  public static final String PARAM_RETRY = "retry";
+
   public static final String PARAM_BIN_SERIALIZTION = "binary_serialization";
 
   public static final String PARAM_IGNORE_PROCESS_ERRORS = "ignore_process_errors";
@@ -85,6 +87,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
   private boolean cpcReceived;
 
   private boolean ignoreErrors = false;
+
+  private int retry = 0;
 
   private UimaAsynchronousEngine uimaEEEngine;
 
@@ -111,6 +115,9 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
         getMetaTimeout = Integer.parseInt(parameters[i].getValue());
       } else if (PARAM_CPC_TIMEOUT.equalsIgnoreCase(parameters[i].getName())) {
         cpcTimeout = Integer.parseInt(parameters[i].getValue());
+      } else if (PARAM_RETRY.equalsIgnoreCase(parameters[i].getName())) {
+        retry = Integer.parseInt(parameters[i].getValue());
+        retry = (retry < 0) ? 0 : retry;
       } else if (PARAM_IGNORE_PROCESS_ERRORS.equalsIgnoreCase(parameters[i].getName())) {
         ignoreErrors = parameters[i].getValue().equalsIgnoreCase("true");
       }
@@ -170,11 +177,20 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
    * @see org.apache.uima.analysis_engine.service.AnalysisEngineServiceStub#callProcess(CAS)
    */
   public void callProcess(CAS aCAS) throws ResourceServiceException {
-    try {
-      uimaEEEngine.sendAndReceiveCAS(aCAS);
-    } catch (ResourceProcessException e) {
-      if (!ignoreErrors)
-        throw new ResourceServiceException(e);
+    int tries = retry;
+    while (true) {
+      try {
+        uimaEEEngine.sendAndReceiveCAS(aCAS);
+        return;
+      } catch (Throwable e) {
+        if (tries-- > 0) {
+          UIMAFramework.getLogger().log(Level.INFO, "Retrying callProcess on remote AS service...");
+          continue;
+        }
+        if (!ignoreErrors) {
+          throw new ResourceServiceException(e);
+        }
+      }
     }
   }
 
