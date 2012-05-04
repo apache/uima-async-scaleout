@@ -1053,7 +1053,7 @@ under the License.
     <parameter name="getmetatimeout" 
                value="yyy"/>
     <parameter name="cpctimeout" 
-               value="zzz"/>                              
+               value="zzz"/>
   </parameters>
 </customResourceSpecifier>]]></programlisting>
     
@@ -1076,7 +1076,7 @@ under the License.
           <term>binary_serialization</term>
           <listitem>
             <para>Set to true to specify binary serialization (faster, but requires that the service
-              have exactly the same type system as the client).
+              have exactly the same type system as the client). The default is false => XMI serialization.
             </para>
           </listitem>
         </varlistentry>
@@ -1085,7 +1085,15 @@ under the License.
           <listitem>
             <para>Set to true to specify that any processing errors should be ignored.  In order for this
               to be reasonable, your calling environment must be able to continue somehow,
-              if the service fails.
+              if the service fails. The default is false.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>retry</term>
+          <listitem>
+            <para>Set to the number of times to retry the process call in case of errors. The default is
+            0 => no retries.
             </para>
           </listitem>
         </varlistentry>
