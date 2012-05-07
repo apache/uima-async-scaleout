@@ -372,7 +372,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
              if( casProcessRequest ) { 
             	 CAS cas = cacheEntry.getCAS();
                // Add the cas to a list of CASes pending reply. Also start the timer if necessary
-               engine.serviceDelegate.addCasToOutstandingList(cacheEntry.getCasReferenceId());
+               engine.serviceDelegate.addCasToOutstandingList(cacheEntry.getCasReferenceId(), cas.hashCode());
                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
             	   UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
                         "sendCAS", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,

@@ -18,6 +18,8 @@
  */
 package org.apache.uima.adapter.jms.client;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,6 +31,8 @@ import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.MessageTimeoutException;
+import org.apache.uima.aae.error.UimaASPingTimeout;
+import org.apache.uima.aae.error.UimaASProcessCasTimeout;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.ClientRequest;
@@ -150,12 +154,31 @@ public class ClientServiceDelegate extends Delegate {
                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                         "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAJMS_client_ping_timed_out__WARNING", new Object[] { clientUimaAsEngine.getEndPointName()});
+                        "UIMAJMS_client_ping_timed_out__WARNING", new Object[] { clientUimaAsEngine.getEndPointName(),getCasPendingDispatchListSize(),getCasPendingReplyListSize()});
                 }
                 super.resetAwaitingPingReply();
-                // Handling a Ping timeout, treat it as if it was a Process timeout. 
-                clientUimaAsEngine.notifyOnTimout(cas, clientUimaAsEngine.getEndPointName(),
-                		BaseUIMAAsynchronousEngineCommon_impl.ProcessTimeout, casReferenceId);
+                
+                synchronized( super.pendingDispatchList ) {
+                  //  Fail all CASes in the PendingDispatch list
+                  Iterator<Delegate.DelegateEntry> it = getDelegateCasesPendingDispatch().iterator();
+                  while( clientUimaAsEngine.running && it.hasNext() ) {
+                    DelegateEntry de = it.next();
+                    cachedRequest = (ClientRequest) (clientUimaAsEngine.getCache()).get(de.getCasReferenceId());
+                    if ( cachedRequest != null ) {
+                      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                                "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                                "UIMAJMS_client_reject_by_forced_timeout__WARNING", new Object[] { de.getCasReferenceId(), String.valueOf(cachedRequest.getCAS().hashCode())});
+                      }
+
+                      clientUimaAsEngine.handleException(new UimaASProcessCasTimeout("Service Not Responding to Ping - CAS:"+de.getCasReferenceId(), new UimaASPingTimeout("Forced Timeout on CAS in PendingDispatch list. The CAS Has Not Been Dispatched since the Service Appears to be Unavailable")), de.getCasReferenceId(), null,cachedRequest, !cachedRequest.isSynchronousInvocation(), true);
+
+                    }
+                    if ( clientUimaAsEngine.running ) {
+                      it.remove();
+                    }
+                  }
+                }
               } else {
                   if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
                       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),

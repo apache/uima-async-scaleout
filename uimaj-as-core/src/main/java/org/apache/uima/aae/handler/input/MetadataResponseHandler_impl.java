@@ -86,7 +86,7 @@ public class MetadataResponseHandler_impl extends HandlerBase {
             Delegate delegate = ((AggregateAnalysisEngineController) getController())
                     .lookupDelegate(delegateKey);
             if (delegate.getEndpoint().isRemote()) {
-              delegate.cancelDelegateTimer();
+              delegate.cancelDelegateGetMetaTimer();
               delegate.setState(Delegate.OK_STATE);
               delegate.setNotificationEndpoint(((MessageContext) anObjectToHandle).getEndpoint());
 

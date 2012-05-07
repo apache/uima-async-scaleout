@@ -60,6 +60,7 @@ import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel.BrokerConnectionEntry;
+import org.apache.uima.cas.CAS;
 import org.apache.uima.util.Level;
 
 
@@ -493,10 +494,12 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
           // changed to TIMEOUT when a previous CAS timed out.
           if (msgType != AsynchAEMessage.Request && command == AsynchAEMessage.Process) {
             String casReferenceId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
-            if (casReferenceId != null
-                    && ((AggregateAnalysisEngineController) controller)
-                            .delayCasIfDelegateInTimedOutState(casReferenceId, endpointName)) {
-              return true;
+            if (casReferenceId != null ) {
+              CAS cas = ((AggregateAnalysisEngineController) controller).getInProcessCache().getCasByReference(casReferenceId);
+              if ( cas != null && ((AggregateAnalysisEngineController) controller)
+                            .delayCasIfDelegateInTimedOutState(casReferenceId, endpointName, cas.hashCode())) {
+                      return true;
+               }
             }
           }
         }

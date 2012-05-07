@@ -119,7 +119,7 @@ public interface AggregateAnalysisEngineController extends AnalysisEngineControl
 
   public Delegate lookupDelegate(String aDelegateKey);
 
-  public boolean delayCasIfDelegateInTimedOutState(String aCasReferenceId, String aDelegateKey)
+  public boolean delayCasIfDelegateInTimedOutState(String aCasReferenceId, String aDelegateKey, long casHashcode)
           throws AsynchAEException;
 
   public List getChildControllerList();

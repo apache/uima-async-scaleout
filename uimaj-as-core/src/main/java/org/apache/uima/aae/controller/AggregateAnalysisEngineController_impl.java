@@ -1276,7 +1276,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // Record the outgoing CAS. CASes destined for remote CM are recorded
           // in JmsOutputchannel.
           if (!endpoint.isRemote()) {
-            delegate.addNewCasToOutstandingList(aCasReferenceId, true);
+            delegate.addNewCasToOutstandingList(aCasReferenceId, true,cacheEntry.getCas().hashCode());
           }
         }
 
@@ -2401,7 +2401,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // is in this state, delay CASes by placing them on a list of
       // CASes pending dispatch. Once the ping reply is received all
       // delayed CASes will be dispatched to the delegate.
-      if (!delayCasIfDelegateInTimedOutState(entry.getCasReferenceId(), anEndpoint.getDelegateKey())) {
+      if (!delayCasIfDelegateInTimedOutState(entry.getCasReferenceId(), anEndpoint.getDelegateKey(), entry.getCas().hashCode())) {
         // The delegate is in the normal state so send it this CAS
         getOutputChannel().sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), anEndpoint);
       }
@@ -2414,12 +2414,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    * sends a ping message to check delegate's availability. If the delegate responds to the ping,
    * all CASes in the pending dispatch list will be immediately dispatched.
    **/
-  public boolean delayCasIfDelegateInTimedOutState(String aCasReferenceId, String aDelegateKey)
+  public boolean delayCasIfDelegateInTimedOutState(String aCasReferenceId, String aDelegateKey, long casHashcode)
           throws AsynchAEException {
     Delegate delegate = lookupDelegate(aDelegateKey);
     if (delegate != null && delegate.getState() == Delegate.TIMEOUT_STATE) {
       // Add CAS id to the list of delayed CASes.
-      int listSize = delegate.addCasToPendingDispatchList(aCasReferenceId);
+      int listSize = delegate.addCasToPendingDispatchList(aCasReferenceId, casHashcode);
       // If the list was empty (before the add), send the GetMeta request
       // as a PING to see if the delegate service is alive.
       if (listSize == 1) {
@@ -2482,7 +2482,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // Check if the delegate previously timed out. If so, add the CAS
       // Id to the list pending dispatch. This list holds CASes that are
       // delayed until the service responds to a Ping.
-      if (delayCasIfDelegateInTimedOutState(entry.getCasReferenceId(), anEndpointList[i].getEndpoint())) {
+      if (delayCasIfDelegateInTimedOutState(entry.getCasReferenceId(), anEndpointList[i].getEndpoint(), entry.getCas().hashCode())) {
         // The CAS was delayed until the delegate responds to a Ping
         continue;
       } else {

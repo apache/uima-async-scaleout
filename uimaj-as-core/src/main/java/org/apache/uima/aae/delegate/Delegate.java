@@ -58,8 +58,14 @@ public abstract class Delegate {
   // Timer object to time replies
   private DelegateTimer timer;
   
+  // Timer object to time replies
+  private DelegateTimer getMetaTimer;
+  
   private Object timerLock = new Object();
 
+  private Object getMetaTimerLock = new Object();
+  
+  
   // Process Timeout value for this delegate
   private long casProcessTimeout = 0;
 
@@ -74,7 +80,7 @@ public abstract class Delegate {
 
   // List holding CASes that have been delayed due to a delegate timeout. These
   // CASes should be send to the delegate as soon as the getMeta (Ping) is received.
-  private List<DelegateEntry> pendingDispatchList = new ArrayList<DelegateEntry>();
+  protected List<DelegateEntry> pendingDispatchList = new ArrayList<DelegateEntry>();
 
   // Flag that is set when getMeta reply is received
   private volatile boolean awaitingPingReply;
@@ -187,6 +193,7 @@ public abstract class Delegate {
                 new Object[] { getComponentName(), delegateKey, entry.getCasReferenceId(),
                     getCasProcessTimeout() });
       }
+      dumpPendingReplyList();
     }
   }
 
@@ -199,14 +206,15 @@ public abstract class Delegate {
   }
 
   public void addNewCasToOutstandingList(String aCasReferenceId) {
-    addNewCasToOutstandingList(aCasReferenceId, false);
+    addNewCasToOutstandingList(aCasReferenceId, false,0);
   }
 
-  public void addNewCasToOutstandingList(String aCasReferenceId, boolean isCasGeneratingChildren) {
+  public void addNewCasToOutstandingList(String aCasReferenceId, boolean isCasGeneratingChildren, int casHashCode) {
     synchronized (outstandingCasList) {
       DelegateEntry entry = null;
       if ((entry = lookupEntry(aCasReferenceId, outstandingCasList)) == null) {
         entry = new DelegateEntry(aCasReferenceId);
+        entry.setCasHashCode(String.valueOf(casHashCode));
         // Remember the command
         entry.setCommand(AsynchAEMessage.Process);
         if (isCasGeneratingChildren) {
@@ -226,7 +234,7 @@ public abstract class Delegate {
    *          - CAS ID to add to pending list if not already there
    * 
    */
-  public void addCasToOutstandingList(String aCasReferenceId) {
+  public void addCasToOutstandingList(String aCasReferenceId, int casHashcode) {
     synchronized (outstandingCasList) {
       DelegateEntry entry = null;
       // Check if the outstanding list already contains entry for the Cas Id. If it does, retry
@@ -240,6 +248,7 @@ public abstract class Delegate {
         entry = new DelegateEntry(aCasReferenceId);
         // Remember the command
         entry.setCommand(AsynchAEMessage.Process);
+        entry.setCasHashCode(String.valueOf(casHashcode));
         // Start delegate timer if the pending list is empty
         if (outstandingCasList.isEmpty() && getCasProcessTimeout() > 0) {
           startDelegateTimer(aCasReferenceId, AsynchAEMessage.Process);
@@ -269,6 +278,7 @@ public abstract class Delegate {
         //System.out.println("\n\n\t++++++++++++++++++++++++ :::::: Added New CAS to Outstanding List:"+entry.getCasReferenceId()+"\n\tOutstanding:"+toString());
       }
     }
+    dumpPendingReplyList();
   }
 
   /**
@@ -281,27 +291,27 @@ public abstract class Delegate {
    * @param aCasReferenceId
    *          - CAS ID to add to the delayed list
    */
-  public int addCasToPendingDispatchList(String aCasReferenceId) {
+  public int addCasToPendingDispatchList(String aCasReferenceId, long casHashCode) {
     synchronized (pendingDispatchList) {
+      
       DelegateEntry entry = null;
       // Create a new entry to be stored in the list of CASes pending
       // dispatch
       entry = new DelegateEntry(aCasReferenceId);
+      entry.setCasHashCode(String.valueOf(casHashCode));
       // Remember the command
       entry.setCommand(AsynchAEMessage.Process);
+      UIMAFramework.getLogger(CLASS_NAME).logrb(
+              Level.WARNING,
+              this.getClass().getName(),
+              "addCasToPendingDispatchList",
+              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_add_cas_to_delegate_pending_dispatch_WARNING",
+              new Object[] { getComponentName(), aCasReferenceId, String.valueOf(casHashCode), 
+                  delegateKey, pendingDispatchList.size() });
       // Append Cas Entry to the end of the list
       pendingDispatchList.add(entry);
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-        dumpDelayedList();
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.FINE,
-                this.getClass().getName(),
-                "addCasToPendingDispatchList",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_add_cas_to_delegate_pending_dispatch_FINE",
-                new Object[] { getComponentName(), delegateKey, aCasReferenceId,
-                    pendingDispatchList.size() });
-      }
+      dumpDelayedList();
       return pendingDispatchList.size();
     }
   }
@@ -311,28 +321,52 @@ public abstract class Delegate {
    * state of the delegate.
    */
   protected void dumpDelayedList() {
-    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+    StringBuffer sb = new StringBuffer();
+    
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+      sb.append("Current Pending Dispatch List. Delegate:"+delegateKey);
+      
       for (DelegateEntry entry : pendingDispatchList) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, this.getClass().getName(),
-                "dumpDelayedList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_dump_cas_pending_dispatch__FINE",
-                new Object[] { getComponentName(), entry.getCasReferenceId(), delegateKey });
+        sb.append("\n\t----- CAS:"+entry.getCasReferenceId()).
+           append(" CAS hashCode:"+entry.getCasHashCode());
       }
-    }
+      sb.append("\n");
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+              "dumpDelayedList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_dump_cas_pending_dispatch__INFO",
+              new Object[] { sb.toString() });
+    } 
   }
 
   /**
    * Logs CASes sitting in the list of CASes pending reply.
    */
   private void dumpPendingReplyList() {
+    StringBuffer sb = new StringBuffer();
+
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+      sb.append("Current Pending Reply List. Delegate:"+delegateKey);
+      
       for (DelegateEntry entry : outstandingCasList) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, this.getClass().getName(),
-                "dumpPendingReplyList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_dump_cas_pending_reply__FINE",
-                new Object[] { getComponentName(), entry.getCasReferenceId(), delegateKey });
+        sb.append("\n\t----- CAS:"+entry.getCasReferenceId()).
+           append(" CAS hashCode:"+entry.getCasHashCode());
       }
-    }
+      sb.append("\n");
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+              "dumpDelayedList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_dump_cas_pending_reply__INFO",
+              new Object[] { sb.toString() });
+    } 
+
+    
+//    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+//      for (DelegateEntry entry : outstandingCasList) {
+//        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
+//                "dumpPendingReplyList", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+//                "UIMAEE_dump_cas_pending_reply__INFO",
+//                new Object[] { getComponentName(), entry.getCasReferenceId(), delegateKey });
+//      }
+//    }
   }
 
   /**
@@ -529,6 +563,7 @@ public abstract class Delegate {
    */
   public void cleanup() {
     cancelDelegateTimer();
+    cancelDelegateGetMetaTimer();
     synchronized (outstandingCasList) {
       outstandingCasList.clear();
     }
@@ -562,6 +597,17 @@ public abstract class Delegate {
   }
 
   /**
+   * Cancels current timer
+   */
+  public void cancelDelegateGetMetaTimer() {
+   synchronized( getMetaTimerLock ) {
+     if (getMetaTimer != null) {
+       getMetaTimer.cancel();
+       getMetaTimer.purge();
+     }
+   }
+  }
+  /**
    * Returns a timeout value for a given command type. The values are defined in the deployment
    * descriptor
    * 
@@ -587,13 +633,13 @@ public abstract class Delegate {
    * Starts GetMeta Request timer
    */
   public void startGetMetaRequestTimer() {
-    startDelegateTimer(null, AsynchAEMessage.GetMeta);
+    startDelegateGetMetaTimer(null, AsynchAEMessage.GetMeta);
   }
   /**
    * Starts GetMeta Request timer
    */
   public void startGetMetaRequestTimer(String casReferenceId) {
-    startDelegateTimer(casReferenceId, AsynchAEMessage.GetMeta);
+    startDelegateGetMetaTimer(casReferenceId, AsynchAEMessage.GetMeta);
   }
 
   /**
@@ -627,6 +673,7 @@ public abstract class Delegate {
             }
             errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
             errorContext.add(ErrorContext.THROWABLE_ERROR, cause);
+/*  4/24/ Commented out. There is a dedicated timer for Ping timeouts
             //  Check if this is a Ping timeout and associate this with
             //  the oldest CAS from the list of CASes pending reply.
             if (isAwaitingPingReply() && getCasPendingReplyListSize() > 0) {
@@ -637,10 +684,11 @@ public abstract class Delegate {
               errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
               errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
             }
+*/            
           } else if (AsynchAEMessage.GetMeta == aCommand) {
             if ( aCasReferenceId != null ) {  // true on GetMeta Ping timeout
                 errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
-                  errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
+                errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
             }
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
@@ -656,6 +704,44 @@ public abstract class Delegate {
                       new Object[] { delegate.getKey(), timeToWait });
             }
 
+          }
+          errorContext.add(AsynchAEMessage.Endpoint, getEndpoint());
+          handleError(cause, errorContext);
+        }
+      }, timeToRun);
+    }
+  }
+  /**
+   * Starts a timer for a given command
+   * 
+   * @param aCasReferenceId
+   *          - id of a CAS if command = Process, null otherwise
+   * @param aCommand
+   *          - command for which the timer is started
+   */
+  private void startDelegateGetMetaTimer(final String aCasReferenceId, final int aCommand) {
+    synchronized( getMetaTimerLock ) {
+      final long timeToWait = getTimeoutValueForCommand(aCommand);
+      Date timeToRun = new Date(System.currentTimeMillis() + timeToWait);
+      getMetaTimer = new DelegateTimer("Controller:" + getComponentName() + ":GetMeta TimerThread-Endpoint_impl:"
+              + endpoint + ":" + System.nanoTime() + ":Cmd:" + aCommand, true, "",this);
+      final Delegate delegate = this;
+      getMetaTimer.schedule(new TimerTask() {
+        public void run() {
+          delegate.setState(TIMEOUT_STATE);
+          ErrorContext errorContext = new ErrorContext();
+          errorContext.add(AsynchAEMessage.Command, aCommand);
+          String enrichedMessage = enrichProcessCASTimeoutMessage(aCommand, aCasReferenceId,timeToWait,"Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId );
+          Exception cause = new MessageTimeoutException(enrichedMessage);
+          if ( aCasReferenceId != null ) {  // true on GetMeta Ping timeout
+                errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
+                  errorContext.add(AsynchAEMessage.ErrorCause, AsynchAEMessage.PingTimeout);
+          }
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                      "Delegate.TimerTask.run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_meta_timeout_no_reply__WARNING",
+                      new Object[] { delegate.getKey(), timeToWait });
           }
           errorContext.add(AsynchAEMessage.Endpoint, getEndpoint());
           handleError(cause, errorContext);
@@ -750,6 +836,16 @@ public abstract class Delegate {
     private int retryCount = 0;
 
     private volatile boolean generatingChildren = false;
+
+    private String casHashCode;
+    
+    public String getCasHashCode() {
+      return casHashCode;
+    }
+
+    public void setCasHashCode(String casHashCode) {
+      this.casHashCode = casHashCode;
+    }
 
     public DelegateEntry(String aCasReferenceId) {
       casReferenceId = aCasReferenceId;

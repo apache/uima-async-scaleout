@@ -680,7 +680,7 @@ public class JmsOutputChannel implements OutputChannel {
       throw e;
     } catch (Exception e) {
       if (delegate != null && aCommand == AsynchAEMessage.GetMeta) {
-        delegate.cancelDelegateTimer();
+        delegate.cancelDelegateGetMetaTimer();
       }
       // Handle the error
       ErrorContext errorContext = new ErrorContext();
@@ -1644,7 +1644,7 @@ public class JmsOutputChannel implements OutputChannel {
   private void addCasToOutstandingList(CacheEntry entry, boolean isRequest, String aDelegateKey) {
     Delegate delegate = null;
     if (isRequest && (delegate = lookupDelegate(aDelegateKey)) != null) {
-      delegate.addCasToOutstandingList(entry.getCasReferenceId());
+      delegate.addCasToOutstandingList(entry.getCasReferenceId(), entry.getCas().hashCode());
     }
   }
 
