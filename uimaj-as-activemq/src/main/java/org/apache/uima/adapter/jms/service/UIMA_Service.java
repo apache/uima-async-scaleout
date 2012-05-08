@@ -273,7 +273,24 @@ public class UIMA_Service implements ApplicationListener {
     }
 
   }
-
+  /**
+   * Creates an instance of a {@link JmxMonitor}, initializes it with the JMX Server URI and
+   * checkpoint frequency, and finally starts the monitor.
+   * 
+   * @param samplingFrequency
+   *          - how often the JmxMonitor should checkpoint to fetch service metrics
+   * 
+   * @throws Exception
+   *           - error on monitor initialization or startup
+   */
+  public void stopMonitor() throws Exception {
+    if ( monitor != null ) {
+      monitor.doStop();
+    }
+    if ( monitorThread != null ) {
+      monitorThread.interrupt();  // the thread may be in wait()
+    }
+  }
   /**
    * scan args for a particular arg, return the following token or the empty string if not found
    * 
@@ -422,8 +439,10 @@ public class UIMA_Service implements ApplicationListener {
           if (System.in.available() > 0) {
             int c = System.in.read();
             if (c == 's') {
+              service.stopMonitor();
               serviceDeployer.undeploy(SpringContainerDeployer.STOP_NOW);
             } else if (c == 'q') {
+              service.stopMonitor();
               serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
             } else if (Character.isLetter(c) || Character.isDigit(c)) {
               System.out.println(prompt);
