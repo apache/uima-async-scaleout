@@ -728,6 +728,7 @@ public abstract class Delegate {
       final Delegate delegate = this;
       getMetaTimer.schedule(new TimerTask() {
         public void run() {
+          getMetaTimer.cancel();
           delegate.setState(TIMEOUT_STATE);
           ErrorContext errorContext = new ErrorContext();
           errorContext.add(AsynchAEMessage.Command, aCommand);

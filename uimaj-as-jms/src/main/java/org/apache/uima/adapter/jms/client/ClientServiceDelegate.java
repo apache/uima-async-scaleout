@@ -170,9 +170,12 @@ public class ClientServiceDelegate extends Delegate {
                                 "handleError", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                                 "UIMAJMS_client_reject_by_forced_timeout__WARNING", new Object[] { de.getCasReferenceId(), String.valueOf(cachedRequest.getCAS().hashCode())});
                       }
-
-                      clientUimaAsEngine.handleException(new UimaASProcessCasTimeout("Service Not Responding to Ping - CAS:"+de.getCasReferenceId(), new UimaASPingTimeout("Forced Timeout on CAS in PendingDispatch list. The CAS Has Not Been Dispatched since the Service Appears to be Unavailable")), de.getCasReferenceId(), null,cachedRequest, !cachedRequest.isSynchronousInvocation(), true);
-
+                      //dumpDelayedList();
+                      try {
+                        clientUimaAsEngine.handleException(new UimaASProcessCasTimeout("Service Not Responding to Ping - CAS:"+de.getCasReferenceId(), new UimaASPingTimeout("Forced Timeout on CAS in PendingDispatch list. The CAS Has Not Been Dispatched since the Service Appears to be Unavailable")), de.getCasReferenceId(), null,cachedRequest, !cachedRequest.isSynchronousInvocation(), false);
+                      } catch( Exception ex) {
+                        ex.printStackTrace();
+                      }
                     }
                     if ( clientUimaAsEngine.running ) {
                       it.remove();
