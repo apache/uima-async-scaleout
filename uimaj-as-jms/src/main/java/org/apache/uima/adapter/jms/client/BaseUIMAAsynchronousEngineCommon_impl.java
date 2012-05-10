@@ -2884,6 +2884,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //  This loop attempts to recover broker connection every 5 seconds and ends when all clients 
       //  using this shared object terminate or a connection is recovered
       while( !stop ) {
+        if ( clientList.size() == 0 ) {
+          break; // no more active clients - break out of connection recovery
+        }
         try {
           //  Attempt a new connection to a broker
           create();

@@ -44,6 +44,8 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.command.ActiveMQBytesMessage;
+import org.apache.activemq.command.ActiveMQDestination;
+import org.apache.activemq.command.ActiveMQTempDestination;
 import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalArgumentException;
@@ -226,6 +228,16 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if ((sharedConnection = lookupConnection(brokerURI)) != null) {
       // Remove a client from registry
       sharedConnection.unregisterClient(this);
+      ActiveMQConnection amqc = (ActiveMQConnection)sharedConnection.getConnection();
+      // Delete client's temp reply queue from AMQ Broker 
+      if ( amqc != null && consumerDestination != null && 
+           consumerDestination instanceof ActiveMQTempDestination ) {
+        try {
+          amqc.deleteTempDestination((ActiveMQTempDestination)consumerDestination);
+        } catch( Exception e) {
+          e.printStackTrace();
+        }
+      }
       // The destroy method closes the JMS connection when
       // the number of
       // clients becomes 0, otherwise it is a no-op
