@@ -112,7 +112,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   protected static Semaphore sharedConnectionSemaphore = new Semaphore(1);
 
-  private Object connectionMux = new Object();
+  protected static Object connectionMux = new Object();
 
   protected InitialContext jndiContext;
   
