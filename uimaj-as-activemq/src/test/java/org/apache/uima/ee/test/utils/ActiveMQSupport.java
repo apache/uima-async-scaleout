@@ -90,6 +90,9 @@ public class ActiveMQSupport extends TestCase {
       System.clearProperty(DEFAULT_HTTP_BROKER_URL_KEY);
     }
     System.setProperty(DEFAULT_HTTP_BROKER_URL_KEY, httpConnector.getConnectUri().toString());
+    // define property so that UIMA AS error handler doesnt call System.exit() if the
+    // error handler action=terminate.
+    System.setProperty("dontKill","");  
   }
   protected void cleanBroker( BrokerService targetBroker) throws Exception {
     // Remove messages from all queues
