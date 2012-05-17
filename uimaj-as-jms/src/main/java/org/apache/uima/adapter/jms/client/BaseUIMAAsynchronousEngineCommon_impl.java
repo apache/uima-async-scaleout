@@ -1173,11 +1173,18 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   private Exception retrieveExceptionFromMessage(Message message) throws Exception {
     Exception exception = null;
-    if (message instanceof ObjectMessage
-            && ((ObjectMessage) message).getObject() instanceof Exception) {
-      exception = (Exception) ((ObjectMessage) message).getObject();
-    } else if (message instanceof TextMessage) {
-      exception = new UimaEEServiceException(((TextMessage) message).getText());
+    try {
+      if (message instanceof ObjectMessage
+              && ((ObjectMessage) message).getObject() instanceof Exception) {
+        exception = (Exception) ((ObjectMessage) message).getObject();
+      } else if (message instanceof TextMessage) {
+        exception = new UimaEEServiceException(((TextMessage) message).getText());
+      }
+    } catch( Exception e) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+              "retrieveExceptionFromMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+              "UIMAEE_exception__WARNING", e);   
+      exception = new UimaEEServiceException("UIMA AS client is unable to de-serialize Exception from a remote service",e);
     }
     return exception;
   }
