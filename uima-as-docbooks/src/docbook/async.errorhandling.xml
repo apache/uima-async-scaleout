@@ -302,6 +302,8 @@ under the License.
       called.</para>
     <note><para>The termination action applies to the entire aggregate service. Remote delegates are not
     affected.</para></note>
+    <note><para>By default, the service will self-destruct by calling System.exit(0) if the shutdown doesn't finish
+    within 40 seconds. To disable calling System.exit(0) define System property -DdontKill=true.</para></note>
     
     <figure id="ugr.async.eh.fig.terminate">
       <title>Terminate action</title>
