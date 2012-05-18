@@ -691,8 +691,11 @@ under the License.
       aggregate. Warning: there are some conditions in the current implementation where this is not yet being done;
       this is a known issue. </para>
     <warning><para> If maxRetries > 0 or the continueOnRetryFailure attribute is 'true', the CAS will be saved
-    before sending it to remote delegates, to enable the these actions. For co-located delegates, the CAS is
-    <emphasis>not</emphasis> copied, therefore the retry and continue options are not allowed. </para>
+    before sending it to remote delegates, to enable these actions. For co-located delegates, the CAS is
+    <emphasis>not</emphasis> copied and a process failure may cause it to become corrupt. Even though this may
+    be true, the continue option is supported. It is the Flow Controller's responsibility to determine what to do 
+    with a CAS that failed during processing.
+    </para>
     </warning>
     
     <para> The timeout attribute specifies the timeout values used when sending commands to the delegates. The units
