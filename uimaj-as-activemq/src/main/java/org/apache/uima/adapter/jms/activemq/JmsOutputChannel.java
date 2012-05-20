@@ -74,6 +74,7 @@ import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
+import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.util.Level;
 
@@ -1887,16 +1888,19 @@ public class JmsOutputChannel implements OutputChannel {
               if (brokerDestinations.getConnection() != null
                       && !((ActiveMQConnection) brokerDestinations.getConnection()).isClosed()) {
                 try {
-                  brokerDestinations.getConnection().stop();
-                  brokerDestinations.getConnection().close();
-                  brokerDestinations.setConnection(null);
+                  for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerDestinations.endpointMap
+                          .entrySet()) {
+                    endpoints.getValue().close(); // close session and producer
+                  }
                 } catch (Exception e) {
                   // Ignore this for now. Attempting to close connection that has been closed
                   // Ignore we are shutting down
                 } finally {
-                  for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerDestinations.endpointMap
-                          .entrySet()) {
-                    endpoints.getValue().close(); // close session and producer
+                  try {
+                    brokerDestinations.getConnection().stop();
+                    brokerDestinations.getConnection().close();
+                    brokerDestinations.setConnection(null);
+                  } catch( Exception e) {
                   }
                   //  If this is a reply to a client, use the same broker URL that manages this service input queue.
                   //  Otherwise this is a request so use a broker specified in the endpoint object.
