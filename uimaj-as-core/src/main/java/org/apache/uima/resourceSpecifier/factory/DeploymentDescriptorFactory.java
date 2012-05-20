@@ -59,6 +59,7 @@ public final class DeploymentDescriptorFactory {
    * @return - Java Object representing deployment descriptor
    * @throws ResourceInitializationException the resource initialization exception
    */
+  /*
   public static UimaASDeploymentDescriptor createDeploymentDescriptor(String xmlDescriptor) 
   throws ResourceInitializationException {
     try {
@@ -67,6 +68,7 @@ public final class DeploymentDescriptorFactory {
       throw new ResourceInitializationException(e);
     }
   }
+  */
   /**
    * Parses provided UIMA AS deployment descriptor xml file and returns a Java Object representing
    * the descriptor.
@@ -75,6 +77,7 @@ public final class DeploymentDescriptorFactory {
    * @return - Java Object representing deployment descriptor
    * @throws ResourceInitializationException the resource initialization exception
    */
+  /*
   public static UimaASDeploymentDescriptor createDeploymentDescriptor(File xmlFileDescriptor) 
   throws ResourceInitializationException {
     try {
@@ -83,7 +86,7 @@ public final class DeploymentDescriptorFactory {
       throw new ResourceInitializationException(e);
     }
   }
-  
+  */
   /**
    * Parses provided UIMA AS deployment descriptor InputStream and returns a Java Object representing
    * the descriptor.
@@ -92,6 +95,7 @@ public final class DeploymentDescriptorFactory {
    * @return - Java Object representing deployment descriptor
    * @throws ResourceInitializationException the resource initialization exception
    */
+  /*
   public static UimaASDeploymentDescriptor createDeploymentDescriptor(InputStream descriptorInputStream) 
   throws ResourceInitializationException {
     try {
@@ -100,7 +104,7 @@ public final class DeploymentDescriptorFactory {
       throw new ResourceInitializationException(e);
     }
   }
-
+*/
   /**
    * Creates a new DeploymentDescriptor object.
    *
