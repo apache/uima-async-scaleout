@@ -2150,21 +2150,18 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           // Fetch the Delegate object corresponding to the current key
           Delegate delegate = ((AggregateAnalysisEngineController) this)
                   .lookupDelegate((String) entry.getKey());
-
           if (delegate != null) {
             // Get a list of all CASes this aggregate has dispatched to the Cas Multiplier
-            List<DelegateEntry> pendingList = delegate.getDelegateCasesPendingReply();
-            if (pendingList != null) {
-              Iterator<DelegateEntry> it2 = pendingList.iterator();
+            String[] pendingReplyCasIds = delegate.getDelegateCasIdsPendingReply();
+            if (pendingReplyCasIds != null && pendingReplyCasIds.length > 0 ) {
               // For each CAS pending reply send a Stop message to the CM
-              while (it2.hasNext()) {
-                DelegateEntry delegateEntry = it2.next();
+              for(String casReferenceId : pendingReplyCasIds ) {
                 if (endpoint.isRemote()) {
-                  stopCasMultiplier(delegate, delegateEntry.getCasReferenceId());
+                  stopCasMultiplier(delegate, casReferenceId);
                 } else {
                   AnalysisEngineController delegateCasMultiplier = lookupDelegateController(endpoint
                           .getEndpoint());
-                  delegateCasMultiplier.addAbortedCasReferenceId(delegateEntry.getCasReferenceId());
+                  delegateCasMultiplier.addAbortedCasReferenceId(casReferenceId);
                 }
               }
             }

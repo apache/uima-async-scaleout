@@ -197,8 +197,21 @@ public abstract class Delegate {
     }
   }
 
-  public List<DelegateEntry> getDelegateCasesPendingReply() {
-    return outstandingCasList;
+  /**
+   * Returns an array of Cas Reference Ids representing all CASes pending
+   * reply. 
+   * 
+   * @return - String[] - ids of pending CASes
+   */
+  public String[] getDelegateCasIdsPendingReply() {
+    synchronized (outstandingCasList) {
+      String[] casIdsPendingReply  = new String[outstandingCasList.size()];
+      int inx=0;
+      for (DelegateEntry entry : outstandingCasList) {
+        casIdsPendingReply[inx++] = entry.getCasReferenceId();
+      }
+      return casIdsPendingReply;
+    }
   }
 
   public List<DelegateEntry> getDelegateCasesPendingDispatch() {
@@ -481,6 +494,22 @@ public abstract class Delegate {
       DelegateEntry entry = lookupEntry(aCasReferenceId, outstandingCasList);
       if (entry != null) {
         this.removeCasFromOutstandingList(entry);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns true if a given CAS is found in the outstandingCasList. Returns false otherwise
+   * 
+   * @param aCasReferenceId
+   *          - id of a CAS to find in an outstandingCasList
+   */
+  public boolean isCasPendingReply(String aCasReferenceId) {
+    synchronized (outstandingCasList) {
+      DelegateEntry entry = lookupEntry(aCasReferenceId, outstandingCasList);
+      if (entry != null) {
         return true;
       }
     }

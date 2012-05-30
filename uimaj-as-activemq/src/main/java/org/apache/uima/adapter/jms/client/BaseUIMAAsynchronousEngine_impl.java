@@ -1092,15 +1092,18 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * 
    */
   public void stopProducingCases() {
-    List<DelegateEntry> outstandingCasList = serviceDelegate.getDelegateCasesPendingReply();
-    for (DelegateEntry entry : outstandingCasList) {
-      // The Cas is still being processed
-      ClientRequest clientCachedRequest = (ClientRequest) clientCache
-              .get(entry.getCasReferenceId());
-      if (clientCachedRequest != null && !clientCachedRequest.isMetaRequest()
-              && clientCachedRequest.getCasReferenceId() != null) {
-        stopProducingCases(clientCachedRequest);
-      } 
+    
+    String[] casIdsPendingReply = serviceDelegate.getDelegateCasIdsPendingReply();
+    if ( casIdsPendingReply != null && casIdsPendingReply.length > 0 ) {
+      for( String casReferenceId : casIdsPendingReply ) {
+        // The Cas is still being processed
+        ClientRequest clientCachedRequest = (ClientRequest) clientCache
+                .get(casReferenceId);
+        if (clientCachedRequest != null && !clientCachedRequest.isMetaRequest()
+                && clientCachedRequest.getCasReferenceId() != null) {
+          stopProducingCases(casReferenceId, clientCachedRequest.getFreeCasNotificationQueue());
+        } 
+      }
     }
   }
 
@@ -1114,31 +1117,31 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     // The Cas is still being processed
     ClientRequest clientCachedRequest = (ClientRequest) clientCache.get(aCasReferenceId);
     if (clientCachedRequest != null) {
-      stopProducingCases(clientCachedRequest);
+      stopProducingCases(aCasReferenceId, clientCachedRequest.getFreeCasNotificationQueue());
     }
   }
 
-  private void stopProducingCases(ClientRequest clientCachedRequest) {
+//  private void stopProducingCases(ClientRequest clientCachedRequest) {
+  private void stopProducingCases(String casReferenceId, Destination cmFreeCasQueue) {
     try {
-      if (clientCachedRequest.getFreeCasNotificationQueue() != null) {
+//      if (clientCachedRequest.getFreeCasNotificationQueue() != null) {
+      if (cmFreeCasQueue != null) {
         TextMessage msg = createTextMessage();
         msg.setText("");
         msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
-        msg
-                .setStringProperty(AsynchAEMessage.CasReference, clientCachedRequest
-                        .getCasReferenceId());
+//        msg.setStringProperty(AsynchAEMessage.CasReference, clientCachedRequest.getCasReferenceId());
+        msg.setStringProperty(AsynchAEMessage.CasReference, casReferenceId);
         msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
         msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.Stop);
         msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
         try {
-          MessageProducer msgProducer = getMessageProducer(clientCachedRequest
-                  .getFreeCasNotificationQueue());
+          MessageProducer msgProducer = getMessageProducer(cmFreeCasQueue);
           if (msgProducer != null) {
         	  
               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                   UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                           "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                          "UIMAJMS_client_sending_stop_to_service__INFO", new Object[] {clientCachedRequest.getCasReferenceId(),clientCachedRequest.getFreeCasNotificationQueue()});
+                          "UIMAJMS_client_sending_stop_to_service__INFO", new Object[] {casReferenceId,cmFreeCasQueue});
               }
             // Send STOP message to Cas Multiplier Service
             msgProducer.send(msg);

@@ -1263,28 +1263,33 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                               });
                   }
     	     } 
+   	      casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
+   	      if (message.getJMSReplyTo() != null && serviceDelegate.isCasPendingReply(casReferenceId)) {
+   	        casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
+   	      }
     	}
+  /*      
+        List<DelegateEntry> outstandingCasList = serviceDelegate.getDelegateCasesPendingReply();
+        for (DelegateEntry entry : outstandingCasList) {
+          if (entry.getCasReferenceId().equals(casReferenceId)) {
+            // The Cas is still being processed
+            //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+            if (casCachedRequest != null) {
+              casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
+            }
+            return;
+          }
+        }
+   */
+//      }
+//      if ( casReferenceId != null && getCache().containsKey(casReferenceId) ) {
+//        //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
+//        casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
+//      }
     } catch( Exception e) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
               "handleServiceInfo", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAEE_exception__WARNING", e);
-    }
-    if (message.getJMSReplyTo() != null) {
-      List<DelegateEntry> outstandingCasList = serviceDelegate.getDelegateCasesPendingReply();
-      for (DelegateEntry entry : outstandingCasList) {
-        if (entry.getCasReferenceId().equals(casReferenceId)) {
-          // The Cas is still being processed
-          //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-          if (casCachedRequest != null) {
-            casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
-          }
-          return;
-        }
-      }
-    }
-    if ( casReferenceId != null && getCache().containsKey(casReferenceId) ) {
-      //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-      casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
     }
   }
   protected void decrementOutstandingCasCounter() {
