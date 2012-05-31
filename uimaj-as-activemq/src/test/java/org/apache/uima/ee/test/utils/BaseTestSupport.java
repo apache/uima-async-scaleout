@@ -123,9 +123,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
     Map<String, Object> appCtx = new HashMap();
     appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath,
-            "../uima-as/src/main/scripts/dd2spring.xsl".replace('/', FS));
+            "../src/main/scripts/dd2spring.xsl".replace('/', FS));
     appCtx.put(UimaAsynchronousEngine.SaxonClasspath,
-            "file:../uima-as/src/main/saxon/saxon8.jar".replace('/', FS));
+            "file:../src/main/saxon/saxon8.jar".replace('/', FS));
     // appCtx.put(UimaAsynchronousEngine.UimaEeDebug, UimaAsynchronousEngine.UimaEeDebug);
     String containerId = null;
     try {

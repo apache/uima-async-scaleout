@@ -169,8 +169,8 @@ under the License.
       <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
-      <directory>../uimaj-as</directory>
-      <outputDirectory>uimaj-as</outputDirectory>
+      <directory>.</directory>
+      <outputDirectory>.</outputDirectory>
       <includes>
         <include>pom.xml</include>
         <include>eclipse-plugin-superPom/*</include>
