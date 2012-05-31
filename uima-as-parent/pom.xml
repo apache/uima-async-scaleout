@@ -31,7 +31,7 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>parent-pom</artifactId>
-    <version>4-SNAPSHOT</version>
+    <version>4</version>
     <relativePath />
   </parent>
 
@@ -134,7 +134,8 @@
     <uimaScmRoot>uima-as</uimaScmRoot>
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <!-- level of uimaj sdk this release depends on -->
-    <uimajDependencyVersion>2.4.0</uimajDependencyVersion>
+    <uimajDependencyVersion>2.4.1-SNAPSHOT</uimajDependencyVersion>
+    <!-- uimajDependencyVersion>2.4.0</uimajDependencyVersion -->
   </properties>
 
   <profiles>
