@@ -112,6 +112,10 @@ public interface AEDeploymentMetaData
      */
     public void setCasMultiplierPoolSize(int poolSize);
 
+    public boolean getProcessParentCASLast();
+    
+    public void setProcessParentCASLast(boolean value);
+    
     /**
      * @return the parent of this AEDeploymentMetaData
      */

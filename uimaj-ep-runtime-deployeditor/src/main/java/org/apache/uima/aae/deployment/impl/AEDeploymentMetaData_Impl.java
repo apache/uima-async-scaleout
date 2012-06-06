@@ -99,6 +99,8 @@ AEDeploymentConstants, AEDeploymentMetaData {
 
   protected int initialFsHeapSize = DEFAULT_CAS_INITIAL_HEAP_SIZE;
 
+  protected boolean processParentCASLast = false;
+  
   protected AEDelegates_Impl delegates;
 
   protected AsyncAEErrorConfiguration asyncAEErrorConfiguration;
@@ -414,6 +416,20 @@ AEDeploymentConstants, AEDeploymentMetaData {
           }
         }
         
+        // Check for Optional "processParentLast =[false|true]"
+        val = DDParserUtil.checkAndGetAttributeValue(TAG_CAS_MULTIPLIER, TAG_ATTR_PROCESS_PARENT_CAS_LAST, elem, false);
+	    boolean b = false;      
+	    if (val != null && val.trim().length() > 0) {
+	    	try {
+	    		b = Boolean.parseBoolean(val);
+	    	} catch (NumberFormatException e) {
+	    		e.printStackTrace();
+	    		throw new InvalidXMLException(InvalidXMLException.UNKNOWN_ELEMENT,
+	    				new Object[] { TAG_ATTR_PROCESS_PARENT_CAS_LAST }, e);
+	    	}
+	    }
+	    setProcessParentCASLast(b);          
+
       } else if (AEDeploymentConstants.TAG_DELEGATES.equalsIgnoreCase(elem.getTagName())) {
         delegates = new AEDelegates_Impl(this);
         NodeList nodes = elem.getChildNodes();
@@ -499,9 +515,9 @@ AEDeploymentConstants, AEDeploymentMetaData {
           if ( (value=asyncAEErrorConfiguration.getProcessCasErrors().getMaxRetries()) != 0) {
             throw new InvalidXMLException(InvalidXMLException.INVALID_ELEMENT_TEXT,
                     new Object[]{value, TAG_ATTR_MAX_RETRIES});
-          } else if ( (b=asyncAEErrorConfiguration.getProcessCasErrors().isContinueOnRetryFailure()) ) {
-            throw new InvalidXMLException(InvalidXMLException.INVALID_ELEMENT_TEXT,
-                    new Object[]{b, TAG_ATTR_CONTINUE_ON_RETRY_FAILURE});
+//          } else if ( (b=asyncAEErrorConfiguration.getProcessCasErrors().isContinueOnRetryFailure()) ) {
+//            throw new InvalidXMLException(InvalidXMLException.INVALID_ELEMENT_TEXT,
+//                    new Object[]{b, TAG_ATTR_CONTINUE_ON_RETRY_FAILURE});
           }
         }
         
@@ -566,7 +582,7 @@ AEDeploymentConstants, AEDeploymentMetaData {
       attrs.clear();
     }
 
-    // <casMultiplier poolSize="5" initialFsHeapSize="200000" /> <!-- req | omit-->
+    // <casMultiplier poolSize="5" processParentLast="false"initialFsHeapSize="200000" /> <!-- req | omit-->
     // Only for AS primitive CAS Multiplier
     if (!isAsync() && AEDeploymentDescription_Impl.isCASMultiplier(getResourceSpecifier())) {
       if (getCasMultiplierPoolSize() != UNDEFINED_INT) {
@@ -574,6 +590,9 @@ AEDeploymentConstants, AEDeploymentMetaData {
                 AEDeploymentConstants.TAG_ATTR_POOL_SIZE, null, "" + getCasMultiplierPoolSize());
         attrs.addAttribute("", TAG_ATTR_INIT_SIZE_OF_CAS_HEAP, TAG_ATTR_INIT_SIZE_OF_CAS_HEAP,
                 null, ""+initialFsHeapSize);
+
+        attrs.addAttribute("", TAG_ATTR_PROCESS_PARENT_CAS_LAST, TAG_ATTR_PROCESS_PARENT_CAS_LAST,
+                null, ""+getProcessParentCASLast());
 
         aContentHandler.startElement("", AEDeploymentConstants.TAG_CAS_MULTIPLIER,
                 AEDeploymentConstants.TAG_CAS_MULTIPLIER, attrs);
@@ -691,6 +710,14 @@ AEDeploymentConstants, AEDeploymentMetaData {
     }
   }
 
+  public boolean getProcessParentCASLast() {
+	  return processParentCASLast;
+  }
+  
+  public void setProcessParentCASLast(boolean value) {
+	  this.processParentCASLast = value;
+  }
+ 
   /**
    * @return the async
    */

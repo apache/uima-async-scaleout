@@ -35,9 +35,9 @@ public interface ProcessCasErrors
     final static String NAME_DELEGATE_THRESHOLD_COUNT    = "Delegate Threshold Count";
     final static String NAME_DELEGATE_THRESHOLD_WINDOW   = "Delegate Threshold Window";
     final static String NAME_DELEGATE_THRESHOLD_ACTION   = "Delegate Threshold Action";
-    final static String NAME_MAX_RETRIES        = "CAS Max Retries";
-    final static String NAME_TIMEOUT            = "CAS Timeout (in millisec)";    
-    final static String NAME_CONTINUE_ON_RETRY  = "CAS Continue On Failure";
+    final static String NAME_MAX_RETRIES          = "CAS Max Retries";
+    final static String NAME_TIMEOUT              = "CAS Timeout (in millisec)";    
+    final static String NAME_CONTINUE_ON_FAILURE  = "CAS Continue On Failure";
 
 
     public ProcessCasErrors clone(AsyncAEErrorConfiguration parent);

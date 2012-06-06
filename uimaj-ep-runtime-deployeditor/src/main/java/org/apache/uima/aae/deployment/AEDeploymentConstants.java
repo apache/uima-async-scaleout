@@ -128,6 +128,8 @@ public interface AEDeploymentConstants
     final static public String TAG_ATTR_NUMBER_OF_CASES    = "numberOfCASes";
     final static public String TAG_ATTR_INIT_SIZE_OF_CAS_HEAP = "initialFsHeapSize";
 
+    final static public String TAG_ATTR_PROCESS_PARENT_CAS_LAST = "processParentLast";
+
     final static public String TAG_ATTR_KEY                = "key";
     final static public String TAG_ATTR_ASYNC              = "async";
     final static public String TAG_ATTR_NUMBER_OF_INSTANCES = "numberOfInstances";
