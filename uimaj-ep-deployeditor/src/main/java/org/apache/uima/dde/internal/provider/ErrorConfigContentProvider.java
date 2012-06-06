@@ -90,13 +90,13 @@ public class ErrorConfigContentProvider implements IStructuredContentProvider {
                 ProcessCasErrors.NAME_TIMEOUT,
                 processCasErrors.getTimeout(), Integer.class);
         objs[2] = new NameValuePair(processCasErrors, ProcessCasErrors.KIND_CONTINUE_ON_RETRY,
-                ProcessCasErrors.NAME_CONTINUE_ON_RETRY, 
+                ProcessCasErrors.NAME_CONTINUE_ON_FAILURE, 
                 processCasErrors.isContinueOnRetryFailure(),
                 Boolean.class);
         if ( (parentMetaData instanceof AEDeploymentMetaData) 
                 && !((AEDeploymentMetaData) parentMetaData).isAsync() ) {
           ((NameValuePair) objs[0]).setStatusFlags(NameValuePair.STATUS_NON_EDITABLE);
-          ((NameValuePair) objs[2]).setStatusFlags(NameValuePair.STATUS_NON_EDITABLE);
+          // ((NameValuePair) objs[2]).setStatusFlags(NameValuePair.STATUS_NON_EDITABLE);
           
         }
 

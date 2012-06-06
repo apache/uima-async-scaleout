@@ -115,6 +115,10 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
 
   private Spinner initialFsHeapSizeRemote;
   
+  // private Label processParentCASLastLabel;
+
+  protected Button processParentCASLast;
+
   private ErrorConfigDetailsPage errorConfigDetails;
 
   private Button deploymentCoLocated;
@@ -204,6 +208,9 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
       } else if (e.getSource() == casMultiplierRemote) {
         updateCasMultiplierPoolSize(casMultiplierRemote.getSelection());
         
+      } else if (e.getSource() == processParentCASLast) {
+          updateProcessParentCASLast(processParentCASLast.getSelection());
+
       } else if (e.getSource() == initialFsHeapSize) {
           updateInitialFsHeapSize(initialFsHeapSize.getSelection());
 
@@ -465,6 +472,14 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
     initialFsHeapSize.setSelection(0);
     initialFsHeapSize.addSelectionListener(asynAggregateListener);
 
+    // ProcessParentCASLast (default false)
+    processParentCASLast = toolkit.createButton(compositeCoLocatedSetting, Messages.DDE_AEMetaDataDetails_ProcessParentCASLast, SWT.CHECK);
+    gd = new GridData();
+    gd.horizontalSpan = 2;
+    processParentCASLast.setLayoutData(gd);
+    processParentCASLast.addSelectionListener(asynAggregateListener);
+
+    
     // /////////////////////////////////////////////////////////////////////
 
     // Note: Need to add SWT.BORDER style to make the border VISIBLE in Linux
@@ -598,11 +613,14 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
           initialFsHeapSizeLabel.setVisible(true);
           initialFsHeapSize.setVisible(true);
           initialFsHeapSize.setSelection(obj.getInitialFsHeapSize());
+          processParentCASLast.setVisible(true);
+          processParentCASLast.setSelection(obj.getProcessParentCASLast());
         } else {
           casMultiplierLabel.setVisible(false);
           casMultiplier.setVisible(false);
           initialFsHeapSizeLabel.setVisible(false);
           initialFsHeapSize.setVisible(false);
+          processParentCASLast.setVisible(false);
         }
         // Is Primitive ?
         if (aed.isPrimitive()) {
@@ -841,7 +859,7 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
     masterPart.refresh();
     multiPageEditor.setFileDirty();
   }
-
+  
   private void updateCasMultiplierPoolSize(int value) {
     if (currentMetaDataObject instanceof AEDeploymentMetaData) {
       ((AEDeploymentMetaData) currentMetaDataObject).setCasMultiplierPoolSize(value);
@@ -853,16 +871,27 @@ public class AEMetaDataDetailsPage extends AbstractFormPart implements IDetailsP
     multiPageEditor.setFileDirty();
   }
 
-  private void updateInitialFsHeapSize(int value) {
+  private void updateProcessParentCASLast(boolean value) {
     if (currentMetaDataObject instanceof AEDeploymentMetaData) {
-      ((AEDeploymentMetaData) currentMetaDataObject).setInitialFsHeapSize(value);
+      ((AEDeploymentMetaData) currentMetaDataObject).setProcessParentCASLast(value);
 
-    } else if (currentMetaDataObject instanceof RemoteAEDeploymentMetaData) {
-      ((RemoteAEDeploymentMetaData) currentMetaDataObject).setInitialFsHeapSize(value);
-
+//    } else if (currentMetaDataObject instanceof RemoteAEDeploymentMetaData) {
+//      ((RemoteAEDeploymentMetaData) currentMetaDataObject).setProcessParentCASLast(value);
+//
     }
     multiPageEditor.setFileDirty();
   }
+
+  private void updateInitialFsHeapSize(int value) {
+	    if (currentMetaDataObject instanceof AEDeploymentMetaData) {
+	      ((AEDeploymentMetaData) currentMetaDataObject).setInitialFsHeapSize(value);
+
+	    } else if (currentMetaDataObject instanceof RemoteAEDeploymentMetaData) {
+	      ((RemoteAEDeploymentMetaData) currentMetaDataObject).setInitialFsHeapSize(value);
+
+	    }
+	    multiPageEditor.setFileDirty();
+	  }
 
   protected void changeToAsyncAggregate(boolean toAsyncAggreagte) {
     AEDeploymentMetaData metaData = (AEDeploymentMetaData) currentMetaDataObject;

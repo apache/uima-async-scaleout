@@ -76,6 +76,8 @@ public class Messages extends NLS {
 
   static public String DDE_AEMetaDataDetails_InitalSizeOfCASHeap;
   
+  static public String DDE_AEMetaDataDetails_ProcessParentCASLast;
+  
   static public String DDE_AEMetaDataDetails_BrokerURLForRemote;
 
   static public String DDE_AEMetaDataDetails_QueueNameForRemote;
