@@ -37,4 +37,19 @@ public interface Import {
    * @param location the new location
    */
   public void setLocation(String location);
+
+  /**
+   * Gets the name.
+   *
+   * @return the name
+   */
+  public String getByName();
+  
+  /**
+   * Sets the location.
+   *
+   * @param location the new location
+   */
+  public void setByName(String name);
+
 }

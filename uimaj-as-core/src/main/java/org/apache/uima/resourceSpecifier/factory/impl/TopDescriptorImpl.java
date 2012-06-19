@@ -46,8 +46,11 @@ public class TopDescriptorImpl implements TopDescriptor {
    */
   public TopDescriptorImpl(TopDescriptorType tdt, ServiceContext context) {
     this.tdt = tdt;
-    getImport().setLocation(context.getDescriptor());
-    
+    if ( context.getDescriptor().endsWith("xml")) {
+        getImport().setLocation(context.getDescriptor());
+    } else {
+        getImport().setByName(context.getDescriptor());
+    }
   }
   
   /* (non-Javadoc)
@@ -66,7 +69,11 @@ public class TopDescriptorImpl implements TopDescriptor {
    */
   public void setImport(Import imprt) {
     resourceImport = imprt;
-    getImport().setLocation(imprt.getLocation());
+    if ( resourceImport.getLocation() != null && resourceImport.getLocation().endsWith("xml")) {
+        getImport().setLocation(imprt.getLocation());
+    } else {
+        getImport().setByName(imprt.getByName());
+    }
   }
 
 }

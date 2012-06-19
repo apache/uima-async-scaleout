@@ -55,5 +55,16 @@ public class ImportImpl implements Import {
     Assert.notNull(it);
     it.setLocation(location);
   }
+
+public String getByName() {
+    Assert.notNull(it);
+    return it.getName();
+}
+
+public void setByName(String name) {
+    Assert.notNull(it);
+    it.setName(name);
+	
+}
   
 }

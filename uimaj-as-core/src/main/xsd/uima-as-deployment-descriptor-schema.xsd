@@ -46,12 +46,16 @@
     <simpleContent>
       <extension base="string">
         <attribute type="string" name="location"/>
+        <attribute type="string" name="name"/>
       </extension>
     </simpleContent>
   </complexType>
+
   <complexType name="topDescriptorType">
     <sequence>
+	  <choice>
       <element type="res:importType" name="import" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
+	  </choice>
     </sequence>
   </complexType>
   <complexType name="environmentVariableType">
