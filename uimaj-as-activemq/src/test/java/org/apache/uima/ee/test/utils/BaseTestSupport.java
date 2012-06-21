@@ -639,7 +639,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
   public long getNumberOfCASesProcessed() {
     return responseCounter;
   }
-
+  public void resetCASesProcessed() {
+	  responseCounter = 0;
+  }
   protected class UimaAsTestCallbackListener extends UimaAsBaseCallbackListener {
 
     private String casSent = null;

@@ -60,6 +60,7 @@ import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
+import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -78,6 +79,7 @@ import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resourceSpecifier.factory.DeploymentDescriptorFactory;
 import org.apache.uima.resourceSpecifier.factory.UimaASDeploymentDescriptor;
+import org.apache.uima.util.Level;
 import org.apache.uima.util.XMLInputSource;
 import org.josql.expressions.IsNullExpression;
 import org.xml.sax.SAXException;
@@ -1050,17 +1052,68 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       uimaAsEngine.stop();
   }
-  
+  public void testClientCRProcess() throws Exception {
+	    System.out.println("-------------- testClientCRProcess -------------");
+	    super.resetCASesProcessed();
+	    
+	    // Instantiate Uima AS Client
+	    final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+//	    UIMAFramework.getLogger(BaseUIMAAsynchronousEngineCommon_impl.class).setLevel(Level.FINEST);
+//	    UIMAFramework.getLogger(BaseUIMAAsynchronousEngine_impl.class).setLevel(Level.FINEST);
+//	    UIMAFramework.getLogger().setLevel(Level.FINEST);
+//	    UIMAFramework.getLogger().setOutputStream(System.out);
+
+	    // Deploy Uima AS Primitive Service
+	    deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml");
+	    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+	            "NoOpAnnotatorQueueLongDelay");
+	    appCtx.put(UimaAsynchronousEngine.Timeout, 0);
+	    appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+	    appCtx.put(UimaAsynchronousEngine.CasPoolSize,10);
+	    
+	    String collectionReaderDescriptor =
+	    		resourceDirPath + System.getProperty("file.separator") +
+	    		"descriptors"+ System.getProperty("file.separator") +
+	    		"collection_reader"+ System.getProperty("file.separator") +
+	    		"FileSystemCollectionReader.xml";
+	   		  
+         // add Collection Reader if specified
+         try {
+             CollectionReaderDescription collectionReaderDescription = 
+                     UIMAFramework.getXMLParser()
+                             .parseCollectionReaderDescription(new XMLInputSource(collectionReaderDescriptor));
+             collectionReaderDescription.getCollectionReaderMetaData().
+             	getConfigurationParameterSettings().
+             		setParameterValue("InputDirectory", relativeDataPath);
+             CollectionReader collectionReader = UIMAFramework
+                     .produceCollectionReader(collectionReaderDescription);
+             uimaAsEngine.setCollectionReader(collectionReader);	    
+         } catch( Throwable e) {
+        	 e.printStackTrace();
+         }
+	    
+	    initialize(uimaAsEngine, appCtx);
+	    waitUntilInitialized();
+	    
+	    uimaAsEngine.process();
+
+	    Assert.assertEquals(8, getNumberOfCASesProcessed());
+	    System.clearProperty("DefaultBrokerURL");
+	    uimaAsEngine.stop();
+	  }
+
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
+    
     // Instantiate Uima AS Client
-    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+    final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy Uima AS Primitive Service
     deployService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
-            "PersonTitleAnnotatorQueue");
-    appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+			"PersonTitleAnnotatorQueue");
+    appCtx.put(UimaAsynchronousEngine.Timeout, 0);
     appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+    appCtx.put(UimaAsynchronousEngine.CasPoolSize,2);
     initialize(uimaAsEngine, appCtx);
     waitUntilInitialized();
 

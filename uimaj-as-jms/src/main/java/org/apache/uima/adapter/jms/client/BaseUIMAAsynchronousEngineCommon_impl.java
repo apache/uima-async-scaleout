@@ -780,13 +780,26 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
          }
       } catch (Exception e) {
         e.printStackTrace();
-        try {
-        } catch( Exception ex){} 
-        //  throw new ResourceProcessException(e);
+		throw new ResourceProcessException(e);
       }
     }
-    if (hasNext == false) {
-        collectionProcessingComplete();
+    //	If the CR is done, enter a polling loop waiting for outstanding CASes to return
+    //  from a service
+    if (hasNext == false ) {
+    	Object mObject = new Object();
+    	//	if client is running and there are outstanding CASe go sleep for awhile and
+    	//  try again, until all CASes come back from a service
+    	while ( running && serviceDelegate.getCasPendingReplyListSize() > 0 ) {
+    		synchronized(mObject) {
+    			try {
+        			mObject.wait(100);
+    			} catch( Exception e) {
+    		        e.printStackTrace();
+    				throw new ResourceProcessException(e);
+    			}
+    		}
+    	}
+    	collectionProcessingComplete();
     }
   }
 
