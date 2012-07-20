@@ -523,6 +523,59 @@ uimaAsEngine.undeploy(id);
       the application registered with the UIMA AS client.
     </para>    
   </section>  
+  <section id="ref.async.api.descriptor.generation">
+    <title>Generating Deployment Descriptor Programmatically</title>
+    <para>The uima-as includes a Deployment Descriptor Factory to facilitate programmatic creation 
+    of both Primitive and Aggregate Deployment Descriptors. The factory and its supporting classes 
+    provide an API to manipulate all aspects of the Deployment Descriptor, including scaleout, 
+    error handling, etc. The following is a snippet of java code showing how to generate a Primitive
+    Deployment Descriptor, override default scaleout and error handling settings, and deploy a 
+    service.
+    
+  
+  <programlisting>
+// Set up a context object containing basic service deployment information
+ServiceContext context = 
+	new ServiceContextImpl("PersonTitle", 
+				           "PersonTitle Annotator Description",
+				           "c://PersonTitleAnnotator.xml", 
+				           "PersonTitleQueue", "tcp://localhost:61616");
+            
+// create DD with default settings
+UimaASPrimitiveDeploymentDescriptor dd =
+	DeploymentDescriptorFactory.
+		createPrimitiveDeploymentDescriptor(context);
+
+// Get default Error Handler for Process        
+dd.getProcessErrorHandlingSettings().setThresholdCount(4);
+			
+// Two instances of AE in a jvm
+dd.setScaleup(2);
+			
+//	Generate deployment descriptor in xml format
+String ddXML = dd.toXML(); 
+// Write the DD to a temp file
+File tempFile = 
+	File.createTempFile("Deploy_PersonTitle", ".xml");
+BufferedWriter out = 
+	new BufferedWriter(new FileWriter(tempFile));
+out.write(ddXML);
+out.close();			
+            
+// create a Map to hold required parameters
+Map&lt;String,Object&gt; appCtx = 
+	new HashMap&lt;String,Object&gt;();
+appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath, 
+	System.getenv("UIMA_HOME") + "/bin/dd2spring.xsl");
+appCtx.put(UimaAsynchronousEngine.SaxonClasspath, 
+	"file:" + System.getenv("UIMA_HOME") + "/saxon/saxon8.jar");
+            
+// Deploy service 
+uimaAsEngine.deploy(tempFile.getAbsolutePath(), appCtx);			
+			
+       </programlisting>
+       </para>
+       </section> 
     <!--======================================================-->    
     <!--                  Sample Code                         -->    
     <!--======================================================-->    
