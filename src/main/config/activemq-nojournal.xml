@@ -28,7 +28,7 @@
         </property>      
     </bean>
 
-    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" persistent="false" cacheTempDestinations="true" dedicatedTaskRunner="false" schedulerSupport="false">
+    <broker xmlns="http://activemq.apache.org/schema/core" persistent="false" dedicatedTaskRunner="false" schedulerSupport="false">
  
         <!--
 			For better performances use VM cursor and small memory limit.
@@ -52,12 +52,34 @@
         <destinationPolicy>
             <policyMap>
               <policyEntries>
+			  <!-- 
+                     produceFlowControl="false" - don't block a fast producer.   
+
+                     optimizedDispatch="true" - reduces number of broker threads. By default, the broker uses a dedicated 
+                                                thread (for each Queue) to page messages from a message store into the 
+                                                Queue to be dispatched to Message Consumers. When set to "true", the broker
+                                                uses a thread pool to service all Queues.
+			   -->
                 <policyEntry topic=">" producerFlowControl="false" optimizedDispatch="true">
                   <pendingSubscriberPolicy>
                     <vmCursor />
                   </pendingSubscriberPolicy>
                 </policyEntry>
-                <policyEntry queue=">" producerFlowControl="false" optimizedDispatch="true">
+                <!-- 
+                     produceFlowControl="false" - don't block a fast producer.   
+
+                     optimizedDispatch="true" - reduces number of broker threads. By default, the broker uses a dedicated 
+                                                thread (for each Queue) to page messages from a message store into the 
+                                                Queue to be dispatched to Message Consumers. When set to "true", the broker
+                                                uses a thread pool to service all Queues.
+
+                     maxPageSize="2000" - size of the dispatch buffer (default=200). The broker applies jms selectors
+                                          to messages in this buffer only. If a consumer blocks, the producer may fill
+                                          up the queue exceeding the size of the dispatch buffer. In such case, a GetMeta
+                                          request will not be delivered to the consumer since it will not be in the dispatch
+                                          buffer. This can cause GetMeta timeout in the application.                                          
+                 -->
+                <policyEntry queue=">" producerFlowControl="false" optimizedDispatch="true" maxPageSize="1000">
                   <pendingQueuePolicy>
                     <vmQueueCursor/>
                   </pendingQueuePolicy>
