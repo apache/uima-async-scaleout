@@ -231,7 +231,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       sharedConnection.unregisterClient(this);
       ActiveMQConnection amqc = (ActiveMQConnection)sharedConnection.getConnection();
       // Delete client's temp reply queue from AMQ Broker 
-      if ( amqc != null && !amqc.isClosed() && consumerDestination != null && 
+      if ( amqc != null && !amqc.isClosed() && !amqc.isClosing() && consumerDestination != null && 
            consumerDestination instanceof ActiveMQTempDestination ) {
         try {
           amqc.deleteTempDestination((ActiveMQTempDestination)consumerDestination);
@@ -290,7 +290,17 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 								JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 								"UIMAJMS_client_interrupted_while_acquiring_semaphore__WARNING");
 					}
-				} finally {
+				} catch( Exception ex ) {
+					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+							Level.WARNING)) {
+						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
+								CLASS_NAME.getName(), "stop",
+								JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+								"UIMAJMS_exception__WARNING",ex);
+					}
+					
+				}
+				finally {
 					sharedConnectionSemaphore.release();
 				}
 				// Undeploy all containers
