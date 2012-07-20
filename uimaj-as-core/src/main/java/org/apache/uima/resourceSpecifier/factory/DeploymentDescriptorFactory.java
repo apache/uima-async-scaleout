@@ -18,11 +18,6 @@
  */
 package org.apache.uima.resourceSpecifier.factory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.List;
-
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
 import org.apache.uima.resourceSpecifier.factory.impl.CollectionProcessCompleteErrorHandlingSettingsImpl;
@@ -31,21 +26,19 @@ import org.apache.uima.resourceSpecifier.factory.impl.DelegateConfigurationImpl;
 import org.apache.uima.resourceSpecifier.factory.impl.GetMetaErrorHandlingSettingsImpl;
 import org.apache.uima.resourceSpecifier.factory.impl.ProcessErrorHandlingSettingsImpl;
 import org.apache.uima.resourceSpecifier.factory.impl.RemoteDelegateConfigurationImpl;
-import org.apache.uima.resourceSpecifier.factory.impl.ServiceContextImpl;
 import org.apache.uima.resourceSpecifier.factory.impl.UimaASAggregateDeploymentDescriptorImpl;
-import org.apache.uima.resourceSpecifier.factory.impl.UimaASDeploymentDescriptorImpl;
 import org.apache.uima.resourceSpecifier.factory.impl.UimaASPrimitiveDeploymentDescriptorImpl;
-import org.apache.xmlbeans.XmlException;
 
 /**
- * Factory class providing static API to create UIMA AS Deployment Descriptor.
+ * Factory class providing static API to generate UIMA AS Deployment Descriptor. Supports
+ * creation of both Primitive and Aggregate Deployment Descriptors.
  * <p>
  *  
  */
 public final class DeploymentDescriptorFactory {
 
   /**
-   * Instantiates a new deployment descriptor factory.
+   * Prevent instantiation of this class. Only static access allowed.
    */
   private DeploymentDescriptorFactory() {
     //  Forbid instantiation. This class is meant for static access only.
@@ -106,11 +99,11 @@ public final class DeploymentDescriptorFactory {
   }
 */
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates new Aggregate UIMA-AS DeploymentDescriptor object.
    *
-   * @param context the context
-   * @param delegateConfigurations the delegate configurations
-   * @return the uima as aggregate deployment descriptor
+   * @param context - context
+   * @param delegateConfigurations - delegate configurations
+   * @return UIMA-AS aggregate deployment descriptor
    * @throws ResourceInitializationException the resource initialization exception
    */
   public static UimaASAggregateDeploymentDescriptor createAggregateDeploymentDescriptor(ServiceContext context, DelegateConfiguration ... delegateConfigurations) 
@@ -119,10 +112,10 @@ public final class DeploymentDescriptorFactory {
   }
   
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates new Primitive UIMA-AS DeploymentDescriptor object.
    *
-   * @param context the context
-   * @return the uima as primitive deployment descriptor
+   * @param context - context
+   * @return UIMA-AS primitive deployment descriptor
    * @throws ResourceInitializationException the resource initialization exception
    */
   public static UimaASPrimitiveDeploymentDescriptor createPrimitiveDeploymentDescriptor(ServiceContext context) 
@@ -130,9 +123,9 @@ public final class DeploymentDescriptorFactory {
     return new UimaASPrimitiveDeploymentDescriptorImpl(AnalysisEngineDeploymentDescriptionDocument.Factory.newInstance(),context);
   }
   /**
- * Creates a new DeploymentDescriptor object.
+ * Creates Delegate Configuration for a Primitive delegate.
  *
- * @param key the key
+ * @param key - unique delegate key
  * @param errorHandlingSettings the error handling settings
  * @return the delegate configuration
  */
@@ -142,9 +135,9 @@ public static DelegateConfiguration createPrimitiveDelegateConfiguration(String 
   
   
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates Delegate Configuration for a co-located delegate.
    *
-   * @param key the key
+   * @param key - unique delegate key
    * @param delegateConfiguration the delegate configuration
    * @return the colocated delegate configuration
    */
@@ -154,34 +147,34 @@ public static DelegateConfiguration createPrimitiveDelegateConfiguration(String 
   
   
   /**
- * Creates a new DeploymentDescriptor object.
+ * Creates Delegate Configuration for a remote delegate.
  *
- * @param key the key
- * @param brokerURL the broker url
- * @param endpoint the endpoint
- * @param serialization the serialization
- * @param errorHandlingSettings the error handling settings
- * @return the remote delegate configuration
+ * @param key - unique delegate key
+ * @param brokerURL - broker url
+ * @param endpoint - delegate remote endpoint
+ * @param serialization - serialization strategy (xmi or binary)
+ * @param errorHandlingSettings - error handling settings for this delegate
+ * @return remote delegate configuration
  */
 public static RemoteDelegateConfiguration createRemoteDelegateConfiguration(String key, String brokerURL, String endpoint, SerializationStrategy serialization, ErrorHandlingSettings ...errorHandlingSettings) {
     return new RemoteDelegateConfigurationImpl(key,brokerURL,endpoint,serialization,errorHandlingSettings);
   }
   
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates Default Error Handling Settings for GetMeta
    *
-   * @return the gets the meta error handling settings
+   * @return default GetMeta error handling settings
    */
   public static GetMetaErrorHandlingSettings createGetMetaErrorHandlingSettings() {
     return new GetMetaErrorHandlingSettingsImpl();
   }
 
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates Error Handling Configuration for GetMeta with provided settings
    *
-   * @param retryCount the retry count
-   * @param timeout the timeout
-   * @param action the action
+   * @param retryCount - retry count for GetMeta
+   * @param timeout - GetMeta timeout in millis
+   * @param action - action to take on error
    * @return the gets the meta error handling settings
    */
   public static GetMetaErrorHandlingSettings createGetMetaErrorHandlingSettings(int retryCount, int timeout, Action action) {
@@ -189,23 +182,23 @@ public static RemoteDelegateConfiguration createRemoteDelegateConfiguration(Stri
   }
   
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates Default Error Handling Configuration for Process
    *
-   * @return the process error handling settings
+   * @return default Process error handling settings
    */
   public static ProcessErrorHandlingSettings createProcessErrorHandlingSettings() {
     return new ProcessErrorHandlingSettingsImpl();
   }
   
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates Error Handling Configuration for Process using provided settings
    *
-   * @param retryCount the retry count
-   * @param timeout the timeout
-   * @param action the action
-   * @param continueOnRetryFailure the continue on retry failure
-   * @param thresholdCount the threshold count
-   * @param thresholdWindow the threshold window
+   * @param retryCount - number of retries
+   * @param timeout - Process timeout in millis
+   * @param action - action to take on error
+   * @param continueOnRetryFailure - continue on retry failure (true/false)
+   * @param thresholdCount - threshold limit triggering action to be taken
+   * @param thresholdWindow - error threshold window
    * @return the process error handling settings
    */
   public static ProcessErrorHandlingSettings createProcessErrorHandlingSettings(int retryCount, int timeout, Action action, boolean continueOnRetryFailure,int thresholdCount, int thresholdWindow) {
@@ -213,10 +206,10 @@ public static RemoteDelegateConfiguration createRemoteDelegateConfiguration(Stri
   }
   
   /**
-   * Creates a new DeploymentDescriptor object.
+   * Creates Error Handling Configuration for CPC using provided settings
    *
-   * @param timeout the timeout
-   * @param action the action
+   * @param timeout - CPC timeout
+   * @param action - action to take on error
    * @return the collection process complete error handling settings
    */
   public static CollectionProcessCompleteErrorHandlingSettings createCollectionProcessCompleteErrorHandlingSettings(int timeout, Action action) {
