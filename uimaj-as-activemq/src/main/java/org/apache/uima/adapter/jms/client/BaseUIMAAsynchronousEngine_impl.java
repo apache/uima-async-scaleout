@@ -124,6 +124,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   
   public BaseUIMAAsynchronousEngine_impl() {
+	  super();
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
             "UIMA-AS version " + UIMAFramework.getVersionString());
   }
@@ -230,7 +231,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       sharedConnection.unregisterClient(this);
       ActiveMQConnection amqc = (ActiveMQConnection)sharedConnection.getConnection();
       // Delete client's temp reply queue from AMQ Broker 
-      if ( amqc != null && consumerDestination != null && 
+      if ( amqc != null && !amqc.isClosed() && consumerDestination != null && 
            consumerDestination instanceof ActiveMQTempDestination ) {
         try {
           amqc.deleteTempDestination((ActiveMQTempDestination)consumerDestination);
