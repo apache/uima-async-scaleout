@@ -20,9 +20,12 @@
 package org.apache.uima.ee.test;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,7 +49,6 @@ import junit.framework.Assert;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.command.ActiveMQDestination;
-import org.apache.commons.collections.functors.NotNullPredicate;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.UimaClassFactory;
@@ -54,13 +56,11 @@ import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.Endpoint;
-import org.apache.uima.aae.error.MessageTimeoutException;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
-import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -78,10 +78,11 @@ import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resourceSpecifier.factory.DeploymentDescriptorFactory;
-import org.apache.uima.resourceSpecifier.factory.UimaASDeploymentDescriptor;
+import org.apache.uima.resourceSpecifier.factory.ServiceContext;
+import org.apache.uima.resourceSpecifier.factory.UimaASPrimitiveDeploymentDescriptor;
+import org.apache.uima.resourceSpecifier.factory.impl.ServiceContextImpl;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.XMLInputSource;
-import org.josql.expressions.IsNullExpression;
 import org.xml.sax.SAXException;
 
 public class TestUimaASExtended extends BaseTestSupport {
@@ -108,7 +109,60 @@ public class TestUimaASExtended extends BaseTestSupport {
             + System.getProperty("file.separator") + "bin" + System.getProperty("file.separator")
             + "dd2spring.xsl");
   }
-  
+  /**
+   * Tests programmatic generation of DD for deployment
+   * 
+   * @throws Exception
+   */
+  public void testGenerateAndDeployPrimitiveDD() throws Exception {
+	    System.out.println("-------------- testGenerateAndDeployPrimitiveDD -------------");
+	  File directory = new File (".");
+	  // Set up a context object containing basic service deployment
+	  // information
+	  ServiceContext context = new ServiceContextImpl("PersonTitle",
+			  "PersonTitle Annotator Description",
+			  directory.getCanonicalPath() + 
+			  System.getProperty("file.separator")+
+			  resourceDirPath+
+			  System.getProperty("file.separator")+
+			  "descriptors" +
+			  System.getProperty("file.separator")+
+			  "analysis_engine" +
+			  System.getProperty("file.separator")+
+			  "PersonTitleAnnotator.xml", 
+			  "PersonTitleAnnotatorQueue",
+			  broker.getMasterConnectorURI());
+	  context.setCasPoolSize(2);
+	  // create DD with default settings
+	  UimaASPrimitiveDeploymentDescriptor dd = DeploymentDescriptorFactory
+			  .createPrimitiveDeploymentDescriptor(context);
+
+	  // Get default Error Handler for process and change error threshold
+	  dd.getProcessErrorHandlingSettings().setThresholdCount(4);
+
+	  // Two instances of AE in a jvm
+	  dd.setScaleup(2);
+
+	  // Generate deployment descriptor in xml format
+	  String ddXML = dd.toXML();
+	  System.out.println(ddXML);
+	  
+	  File tempFile = File.createTempFile("Deploy_PersonTitle", ".xml");
+	  BufferedWriter out = new BufferedWriter(new FileWriter(tempFile));
+	  out.write(ddXML);
+	  out.close();
+	// create Map to hold required parameters
+	  Map<String,Object> appCtx = new HashMap<String,Object>();
+	  appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath, 
+	             System.getenv("UIMA_HOME") + "/bin/dd2spring.xsl");
+	  appCtx.put(UimaAsynchronousEngine.SaxonClasspath, 
+	             "file:" + System.getenv("UIMA_HOME") + "/saxon/saxon8.jar");
+	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	  eeUimaEngine.deploy(tempFile.getAbsolutePath(), appCtx);
+	  
+	  
+	  
+  }
   public void testDeployAggregateServiceWithFailingCollocatedCM() throws Exception {
     System.out.println("-------------- testDeployAggregateServiceWithFailingCollocatedCM -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
