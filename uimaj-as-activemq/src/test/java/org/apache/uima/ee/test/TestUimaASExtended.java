@@ -151,15 +151,21 @@ public class TestUimaASExtended extends BaseTestSupport {
 	  BufferedWriter out = new BufferedWriter(new FileWriter(tempFile));
 	  out.write(ddXML);
 	  out.close();
+	  char FS = System.getProperty("file.separator").charAt(0);
+	  
 	// create Map to hold required parameters
 	  Map<String,Object> appCtx = new HashMap<String,Object>();
-	  appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath, 
-	             System.getenv("UIMA_HOME") + "/bin/dd2spring.xsl");
-	  appCtx.put(UimaAsynchronousEngine.SaxonClasspath, 
-	             "file:" + System.getenv("UIMA_HOME") + "/saxon/saxon8.jar");
-	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	  eeUimaEngine.deploy(tempFile.getAbsolutePath(), appCtx);
+	  appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath,
+	            "../src/main/scripts/dd2spring.xsl".replace('/', FS));
+	  appCtx.put(UimaAsynchronousEngine.SaxonClasspath,
+	            "file:../src/main/saxon/saxon8.jar".replace('/', FS));	  
 	  
+	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	  String aSpringContainerId =
+	      eeUimaEngine.deploy(tempFile.getAbsolutePath(), appCtx);
+	  
+	  eeUimaEngine.undeploy(aSpringContainerId);
+	  eeUimaEngine.stop();
 	  
 	  
   }
