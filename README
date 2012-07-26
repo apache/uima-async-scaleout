@@ -1,4 +1,4 @@
-     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.3.1 README
+     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.4.0 README
      ----------------------------------------------------------------
      
 0. Building from the Source Distribution
@@ -21,22 +21,23 @@ Look for the result in the two artifacts:
 
 For more details, please see http://uima.apache.org/building-uima.html   
 
-1. What's New in 2.3.1
+1. What's New in 2.4.0
 ====================== 
-  - UIMA-AS repackaged - includes base UIMA
-  - New ActiveMQ version - includes ActiveMQ 5.4.1 with its dependencies
-  - Each thread uses dedicated Serializer/Deserializer instance, removing a bottleneck 
+  - Added support for programmatic generation of deployment descriptors (from java) 
+  - Fixed UIMA-AS client to work with user supplied CR
+  - Modified UIMA-AS to self-destruct via System.exit() if exceeding error threshold
+  - Fixed UIMA-AS Aggregate to block listener thread until a CAS is processed
+  - Supports securing ActiveMQ connection with application provided crudentials
+  - Modified UIMA-AS client to handle InterruptedException while blocking in sendAndReceive()
+  - Added support to collect AE performance breakdown and return it along with a reply 
+  - Fixed bug to prevent a parent CAS from accessing its Flow object until all child CASes 
+    obtain their Flow objects.
+  - Expanded UIMA-AS client API to include a callback containing information where a CAS
+    is being processed (host IP, PID and thread ID)
+  - Fixed missing dependency on activemq-optional to enable http tunelling
   - Many bug fixes 
-  - Multiple improvements to increase performance
+  - Improvements to increase performance
   - Improved error handling and stability
-  - Fixed CDE slow startup with an aggregate containing a remote delegate
-  - Improves and fixes bugs related to XMI delta serialization   
-  - Fixes a bug preventing shutdown of C++ services
-  - Improved debugging with optional dumping of JVM stack if process() takes too long
-  - Added detection of failed client before processing a CAS
-  - Fixed bugs in JMX Monitor integrated with UIMA AS service 
-  - Improved performance by increasing prefetch size on reply queue
-  - Fixed processParentLast logic
   
 
 1.1 Contents of Apache UIMA-AS binary distribution
@@ -46,7 +47,7 @@ The Apache UIMA-AS binary distribution includes
   - Apache UIMA Java SDK 
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
-  - Apache ActiveMQ
+  - Apache ActiveMQ version 5.4.1
   - Spring Framework
 
 It includes the base UIMA binary distribution which it depends on.
@@ -394,7 +395,7 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.3.1
+5. Known problems/limitations with Release 2.4.0
 ================================================
 
   1. No automatic refresh for broken connections with temp reply queues.
@@ -413,7 +414,7 @@ An example of this kind of migration is embodied by the sample descriptors:
   5. Handling of timeouts on Cas Multiplier delegates not working 
   
 For up-to-date information on UIMA-AS issues, see our issue tracker:
-http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12310570
+http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12316312
 
 Crypto Notice
 -------------
