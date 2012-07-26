@@ -1189,9 +1189,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             // **********************************************************************
             // **********************************************************************
             // Per discussion with Eddie on 4/11/12, exit process via System.exit() 
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.SEVERE, CLASS_NAME.getName(),
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                     "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_killing_process__SEVERE", new Object[] { getComponentName() });
+                    "UIMAEE_killing_process__INFO", new Object[] { getComponentName() });
             System.exit(1);
             // **********************************************************************
             // **********************************************************************
