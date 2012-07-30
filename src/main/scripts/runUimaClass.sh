@@ -38,7 +38,7 @@ fi
 
 #Set jar search order of: UIMA_CLASSPATH uima activemq(optional) tomcat(optional) CLASSPATH
 UIMA_CLASSPATH=$UIMA_CLASSPATH:$UIMA_HOME/examples/resources
-UIMA_CLASSPATH=$UIMA_CLASSPATH:$UIMA_HOME/lib
+UIMA_CLASSPATH=$UIMA_CLASSPATH:$UIMA_HOME/lib::$UIMA_HOME/lib/xmlbeans
 if [ -e "$ACTIVEMQ_HOME" ] 
 then
 	UIMA_CLASSPATH=$UIMA_CLASSPATH:$ACTIVEMQ_HOME:$ACTIVEMQ_HOME/lib:$ACTIVEMQ_HOME/lib/optional

@@ -30,7 +30,7 @@
 
 @rem Set jar search order of: UIMA_CLASSPATH uima activemq(optional) tomcat(optional) CLASSPATH
 @set UIMA_CLASSPATH=%UIMA_CLASSPATH%;%UIMA_HOME%\examples\resources
-@set UIMA_CLASSPATH=%UIMA_CLASSPATH%;%UIMA_HOME%\lib
+@set UIMA_CLASSPATH=%UIMA_CLASSPATH%;%UIMA_HOME%\lib;%UIMA_HOME%\lib\xmlbeans;
 @if EXIST "%ACTIVEMQ_HOME%" (set "UIMA_CLASSPATH=%UIMA_CLASSPATH%;%ACTIVEMQ_HOME%;%ACTIVEMQ_HOME%\lib;%ACTIVEMQ_HOME%\lib\optional")
 @if NOT "%CATALINA_HOME%"=="" (set "UIMA_CLASSPATH=%UIMA_CLASSPATH%;%CATALINA_HOME%\webapps\axis\WEB-INF\lib;%CATALINA_HOME%\webapps\axis\WEB-INF\classes")
 @set UIMA_CLASSPATH=%UIMA_CLASSPATH%;%CLASSPATH%
