@@ -216,17 +216,18 @@ under the License.
     
      
     <!-- Copy binary license / notice to top level --> 
-    <fileSet>
-      <directory>src/main/readme</directory>
       <!-- to get things into the base dir, use this form
            If you use <outputDirectory>.</outputDirectory> - 
            it also puts into the base dir, but creates an
            extra (empty) version of the base dir - probably 
            a bug. -->
+
+    <!--fileSet>
+      <directory>src/main/readme</directory>
       <outputDirectory/>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>
-    </fileSet>
+    </fileSet -->
     
     <!-- files that should be copied from the top level project to the top of the archive -->
     <fileSet>
@@ -236,9 +237,14 @@ under the License.
       <directoryMode>755</directoryMode>
       <excludes>
         <exclude>LicNoticeAnalysisActiveMQ.txt</exclude>
+        <exclude>NOTICE.prev</exclude>
+        <exclude>LICENSE.prev</exclude>
+      
       </excludes>
       
       <includes>
+        <include>NOTICE</include>
+        <include>LICENSE</include>
         <include>README*</include>
         <include>readme*</include>
         <include>RELEASE_NOTES*</include>
