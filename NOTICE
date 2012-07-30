@@ -32,3 +32,19 @@ of the Saxon documentation.
 This product contains icons developed by the SVG Icons project 
 (http://sourceforge.net/projects/svgicons), licensed under the 
 BSD license (see LICENSE file).
+
+This product includes Apache XMLBeans software, developed at the Apache Software 
+Foundation (http://www.apache.org/). From binary distribution of XMLBeans NOTICE 
+file:
+Portions of this software were originally based on the following:
+     - software copyright (c) 2000-2003, BEA Systems, <http://www.bea.com/>.
+
+   Aside from contributions to the Apache XMLBeans project, this
+   software also includes:
+
+    - one or more source files from the Apache Xerces-J and Apache Axis
+      products, Copyright (c) 1999-2003 Apache Software Foundation
+
+    - W3C XML Schema documents Copyright 2001-2003 (c) World Wide Web
+      Consortium (Massachusetts Institute of Technology, European Research
+      Consortium for Informatics and Mathematics, Keio University)
