@@ -407,10 +407,10 @@
                 ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResult.java
                 ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultComponentPath.java
                 ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultTDs.java
-                ${basedir}/uimaj-as-core/src/main/java/org.apache.uima.resourceSpecifier.factory.DeploymentDescriptorFactory.java
-                ${basedir}/uimaj-as-core/src/main/java/org.apache.uima.resourceSpecifier.factory.UimaASPrimitiveDeploymentDescriptor.java
-                ${basedir}/uimaj-as-core/src/main/java/org.apache.uima.resourceSpecifier.factory.UimaASAggregateDeploymentDescriptor.java
-                ${basedir}/uimaj-as-core/src/main/java/org.apache.uima.resourceSpecifier.factory.ServiceContext.java
+                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/DeploymentDescriptorFactory.java
+                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/UimaASPrimitiveDeploymentDescriptor.java
+                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/UimaASAggregateDeploymentDescriptor.java
+                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/ServiceContext.java
                 
                 
               </additionalparam>
