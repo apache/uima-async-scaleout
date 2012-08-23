@@ -630,9 +630,16 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       //  System properties
       brokerURI = replacePlaceholder(brokerURI); 
     }
-    
-    
     String endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.Endpoint);
+    //  Check if a placeholder is passed in instead of actual service endpoint. The placeholder
+    //  has this syntax ${placeholderName}. A system property with placeholderName
+    //  must exist for successful placeholder resolution.
+    if ( endpoint.startsWith("${")) {
+      //  resolve placeholder
+      //  throws ResourceInitializationException if placeholder is not defined in
+      //  System properties
+      endpoint = replacePlaceholder(endpoint); 
+    }
     clientSideJmxStats.setEndpointName(endpoint);
     int casPoolSize = 1;
 

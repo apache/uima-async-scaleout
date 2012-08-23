@@ -1240,6 +1240,30 @@ public class TestUimaASExtended extends BaseTestSupport {
     
   }
 
+  public void testClientEndpointPlaceholderSubstitution() throws Exception {
+	    System.out.println("-------------- testClientEndpointPlaceholderSubstitution -------------");
+	    // Instantiate Uima AS Client
+	    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	    // Deploy Uima AS Primitive Service
+	    deployService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
+
+	    System.setProperty( "defaultBrokerURL", broker.getMasterConnectorURI());
+	    System.setProperty( "PersonTitleEndpoint", "PersonTitleAnnotatorQueue");
+	    Map<String, Object> appCtx = buildContext("${defaultBrokerURL}","${PersonTitleEndpoint}");//PersonTitleAnnotatorQueue");
+
+	    initialize(uimaAsEngine, appCtx);
+	    waitUntilInitialized();
+	    for (int i = 0; i < 10; i++) {
+	      CAS cas = uimaAsEngine.getCAS();
+	      cas.setDocumentText("Some Text");
+	      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+	      uimaAsEngine.sendCAS(cas);
+	    }
+	    uimaAsEngine.collectionProcessingComplete();
+	    uimaAsEngine.stop();
+	    
+	  }
+  
   public void testClientCpcTimeout() throws Exception {
     System.out.println("-------------- testClientCpcTimeout -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
