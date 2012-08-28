@@ -126,7 +126,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   public BaseUIMAAsynchronousEngine_impl() {
 	  super();
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
-            "UIMA-AS version " + UIMAFramework.getVersionString());
+            "UIMA Version " + UIMAFramework.getVersionString() +
+    " UIMA-AS Version " + UimaAsVersion.getVersionString());
   }
 
 
