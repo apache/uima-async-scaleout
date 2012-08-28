@@ -49,12 +49,14 @@ import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.spi.transport.UimaMessage;
 import org.apache.uima.aae.spi.transport.UimaTransport;
 import org.apache.uima.analysis_engine.AnalysisEngine;
+import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineManagement;
 import org.apache.uima.analysis_engine.CasIterator;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.CASImpl;
 import org.apache.uima.cas.impl.OutOfTypeSystemData;
+import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ConfigurationParameter;
@@ -382,9 +384,16 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     // MBeans to register during initialization of the service. For a Cas Multiplier
     // force creation of the Cas Pool and registration of a Cas Pool with the JMX Server.
     // Just get the CAS and release it back to the component's Cas Pool.
-    if (isCasMultiplier() && !isTopLevelComponent()) {
-      CAS cas = (CAS) getUimaContext().getEmptyCas(CAS.class);
-      cas.release();
+    if (isCasMultiplier() && !isTopLevelComponent() ) {
+    	boolean isUimaAggregate = false;
+    	if ( !(resourceSpecifier instanceof CollectionReaderDescription) ) {
+            //  determine if this AE is a UIMA aggregate
+            isUimaAggregate = ((AnalysisEngineDescription) resourceSpecifier).isPrimitive() == false ? true : false;
+        }
+    	if ( !isUimaAggregate ) {  // !uima core aggregate CM
+   	        CAS cas = (CAS) getUimaContext().getEmptyCas(CAS.class);
+    	    cas.release();
+    	}
     }
   }
 

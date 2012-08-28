@@ -1923,6 +1923,14 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
   }
+  public void testAggregateWithInnerSynchAggregateCM() throws Exception {
+	    System.out.println("-------------- testAggregateWithInnerSynchAggregateCM() -------------");
+	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
+	    deployService(eeUimaEngine, relativePath + "/Deploy_ComplexAggregateWithInnerUimaAggregateCM.xml");
+	    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+	            10, PROCESS_LATCH);
+	  }
 
   /**
    * Tests exception thrown in the Uima EE Client when the Collection Reader is added after the uima
