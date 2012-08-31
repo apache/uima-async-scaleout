@@ -44,7 +44,6 @@ under the License.
         <include>org.apache.uima:uimaj-as-core</include>
         <include>org.apache.uima:uimaj-as-jms</include>
         <include>org.apache.uima:uimaj-as-camel</include>
-        <include>org.apache.uima:</include>
         <include>org.apache.xmlbeans:xmlbeans</include>
       </includes>      
       <outputFileNameMapping>${artifact.artifactId}.jar</outputFileNameMapping>
@@ -141,6 +140,13 @@ under the License.
       <directoryMode>755</directoryMode>
       <excludes>
         <exclude>uimaj-examples.jar</exclude>
+        <exclude>uimaj-core.jar</exclude>
+        <exclude>uimaj-tools.jar</exclude>
+        <exclude>uimaj-cpe.jar</exclude>
+        <exclude>uimaj-adapter-soap.jar</exclude>
+        <exclude>uimaj-adapter-vinci.jar</exclude>
+        <exclude>uimaj-document-annotation.jar</exclude>
+        
       </excludes> 
     </fileSet>
     
@@ -354,12 +360,12 @@ under the License.
     </fileSet>
         
     <!-- xmlbeans 2.4.0 -->    
-    <fileSet>
+    <!--fileSet>
       <directory>src/main/xmlbeans</directory>
       <outputDirectory>lib/xmlbeans</outputDirectory>
       <fileMode>644</fileMode>
       <directoryMode>755</directoryMode>        
-    </fileSet>
+    </fileSet -->
 
   </fileSets>
   
