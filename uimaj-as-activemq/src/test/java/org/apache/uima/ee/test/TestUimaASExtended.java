@@ -109,6 +109,17 @@ public class TestUimaASExtended extends BaseTestSupport {
             + System.getProperty("file.separator") + "bin" + System.getProperty("file.separator")
             + "dd2spring.xsl");
   }
+  public void testForHang() throws Exception {
+		System.out
+		            .println("-------------- testForHang -------------");
+		System.setProperty("BrokerURL", broker.getMasterConnectorURI());
+
+		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployService(eeUimaEngine, relativePath + "/Deploy_ComplexAggregateMultiplier.xml");
+		runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+		            100, PROCESS_LATCH);
+  }
+
   /**
    * Tests programmatic generation of DD for deployment
    * 
