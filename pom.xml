@@ -502,10 +502,74 @@
             		<id>default-cli</id>
             		<configuration>
               			<excludes>
+              			    <exclude>target/**</exclude>
+              			    <exclude>aggregate-uima-as-eclipse-plugins/.project</exclude>
+              			    <exclude>aggregate-uima-as-eclipse-plugins/.settings/**</exclude>
+              			    <exclude>aggregate-uima-as-eclipse-plugins/target/**</exclude>
+              			    <exclude>aggregate-uima-as-eclipse-plugins/target/**</exclude>
+              			    <exclude>uima-as-docbooks/target/**</exclude>
+              			    <exclude>uima-as-docbooks/.project</exclude>
+              			    <exclude>uima-as-docbooks/.settings/**</exclude>
+              			    <exclude>uima-as-docbooks/target/**</exclude>
+              			    <exclude>uimaj-as-activemq/.classpath</exclude>
+              			    <exclude>uimaj-as-activemq/.project</exclude>
+              			    <exclude>uimaj-as-activemq/.settings/**</exclude>
+              			    <exclude>uimaj-as-activemq/src/test/resources/data/DoubleByteText.txt</exclude>
+              			    <exclude>uimaj-as-activemq/target/**</exclude>
+
+              			    <exclude>uimaj-as-camel/.classpath</exclude>
+              			    <exclude>uimaj-as-camel/.project</exclude>
+              			    <exclude>uimaj-as-camel/.settings/**</exclude>
+              			    <exclude>uimaj-as-camel/target/**</exclude>
+
+              			    <exclude>uimaj-as-core/.classpath</exclude>
+              			    <exclude>uimaj-as-core/.project</exclude>
+              			    <exclude>uimaj-as-core/.settings/**</exclude>
+              			    <exclude>uimaj-as-core/target/**</exclude>
+
+              			    <exclude>uimaj-as-jms/.classpath</exclude>
+              			    <exclude>uimaj-as-jms/.project</exclude>
+              			    <exclude>uimaj-as-jms/.settings/**</exclude>
+              			    <exclude>uimaj-as-jms/target/**</exclude>
+              			    <exclude>uimaj-as-jms/.settings/**</exclude>
+
+              			    <exclude>uimaj-as-camel/marker-file-identifying-eclipse-plugin</exclude>
+              			    <exclude>uimaj-as-jms/.settings/**</exclude>
+              			    <exclude>uimaj-as-jms/.settings/**</exclude>
+  
+              			    <exclude>uimaj-eclipse-feature-deployeditor/.classpath</exclude>
+              			    <exclude>uimaj-eclipse-feature-deployeditor/.project</exclude>
+              			    <exclude>uimaj-eclipse-feature-deployeditor/.settings/**</exclude>
+              			    <exclude>uimaj-eclipse-feature-deployeditor/target/**</exclude>
+              			    <exclude>uimaj-eclipse-feature-deployeditor/marker-file-identifying-eclipse-feature</exclude>
+
+              			    <exclude>uimaj-ep-deployeditor/.classpath</exclude>
+              			    <exclude>uimaj-ep-deployeditor/.project</exclude>
+              			    <exclude>uimaj-ep-deployeditor/.settings/**</exclude>
+              			    <exclude>uimaj-ep-deployeditor/target/**</exclude>
+              			    <exclude>uimaj-ep-deployeditor/uimaj-ep-deployeditor/marker-file-identifying-eclipse-plugin</exclude>
+              			    <exclude>uimaj-ep-deployeditor/marker-file-identifying-eclipse-plugin</exclude>
+
+              			    <exclude>uimaj-ep-runtime-deployeditor/.classpath</exclude>
+              			    <exclude>uimaj-ep-runtime-deployeditor/.project</exclude>
+              			    <exclude>uimaj-ep-runtime-deployeditor/.settings/**</exclude>
+              			    <exclude>uimaj-ep-runtime-deployeditor/target/**</exclude>
+              			    <exclude>uimaj-ep-runtime-deployeditor/marker-file-identifying-eclipse-feature</exclude>
+              			    <exclude>uimaj-ep-runtime-deployeditor/marker-file-identifying-eclipse-plugin</exclude>
+                                     
+              			    <exclude>uimaj-as-osgi-runtime/.classpath</exclude>
+              			    <exclude>uimaj-as-osgi-runtime/.project</exclude>
+              			    <exclude>uimaj-as-osgi-runtime/.settings/**</exclude>
+              			    <exclude>uimaj-as-osgi-runtime/target/**</exclude>
+              			    <exclude>uimaj-as-osgi-runtime/marker-file-identifying-eclipse-plugin</exclude>
+  
+              			    <exclude>sources/xmlbeans/**</exclude>
+
                 			<exclude>src/test/resources/deploy/expected/*.*</exclude> <!-- test data -->
                 			<exclude>src/test/resources/deploy/expected/envVar/*.*</exclude> <!-- test data -->
                 			<exclude>src/main/examples/run_configuration/*.launch</exclude> <!-- eclipse launch configurations -->
                 			<exclude>release.properties</exclude>
+              			    <exclude>LICENSE.prev</exclude>
                 			<exclude>README*</exclude>
                 			<exclude>RELEASE_NOTES*</exclude>
                 			<exclude>issuesFixed/**</exclude>
