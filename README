@@ -44,7 +44,7 @@ For more details, please see http://uima.apache.org/building-uima.html
 --------------------------------------------------
 
 The Apache UIMA-AS binary distribution includes
-  - Apache UIMA Java SDK 
+  - Apache UIMA Java SDK version 2.4.0
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
   - Apache ActiveMQ version 5.4.1
