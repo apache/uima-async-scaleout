@@ -49,6 +49,7 @@ The Apache UIMA-AS binary distribution includes
   - Saxon
   - Apache ActiveMQ version 5.4.1
   - Spring Framework
+  - XMLBeans
 
 It includes the base UIMA binary distribution which it depends on.
 
