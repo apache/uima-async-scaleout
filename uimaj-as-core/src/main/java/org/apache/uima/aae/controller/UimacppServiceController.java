@@ -28,10 +28,9 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +41,6 @@ import org.apache.uima.UIMAException;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.jmx.JmxManagement;
-import org.apache.uima.aae.jmx.JmxManager;
 import org.apache.uima.internal.util.JmxMBeanAgent;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
@@ -112,6 +110,8 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   private Exception InitializedStatus = null;
   
   private Boolean isStopped = false;
+
+  private String uimacppHome;
 
   /**
    * Configure and start a Uima C++ service that connects to an ActiveMQ queue broker. This class
@@ -349,7 +349,8 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   private void buildCommandArgs(ArrayList<String> commandArgs, Map<String, String> envVarMap,
           String exeName) throws ResourceInitializationException {
 
-    String uimacppHome = (String) envVarMap.get("UIMACPP_HOME");
+    // Get the UIMACPP_HOME value and save for use by setEnvironmentVariables
+    uimacppHome = (String) envVarMap.get("UIMACPP_HOME");
     if (uimacppHome == null) {
       uimacppHome = System.getenv("UIMACPP_HOME");
       if (uimacppHome == null) {
@@ -473,65 +474,68 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   }
 
   private void setEnvironmentVariables(Map<String, String> envVarMap) {
-    /* setup environment variables */
-    String uimacppHome = (String) envVarMap.get("UIMACPP_HOME");
-    String uimacppLibDir = uimacppHome + System.getProperty("file.separator") + "lib"
-            + System.getProperty("path.separator") + uimacppHome
-            + System.getProperty("file.separator") + "lib" + System.getProperty("file.separator")
-            + "xms";
 
+    // In case the standard UIMA launching scripts were not used, add the uimacpp library to
+    // the appropriate path variables
+    // Since Windows is case-insensitive but the ProcessBuilder environment map is not,
+    // must search for the actual PATH key that is in the environment.
+    String pathKey = "PATH";    // Other OS's have a sensible value!
     Map<String, String> environment = builder.environment();
-
-    // add uimacpp lib dir to the path
-    String value = environment.get("PATH");
-    if (value != null && value.length() > 0) {
-      value = uimacppLibDir + System.getProperty("path.separator") + value;
+    if (System.getProperty("os.name").startsWith("Windows")) {
+      for ( String key : environment.keySet()) {
+        if (key.equalsIgnoreCase("PATH")) {
+          pathKey = key;
+          break;
+        }
+      }
+      // Windows DLLs are in the bin directory
+      String uimacppLibDir = uimacppHome + System.getProperty("file.separator") + "bin";
+      String value = environment.get(pathKey);
+      if (value != null && value.length() > 0) {
+        value = uimacppLibDir + System.getProperty("path.separator") + value;
+      } else {
+        value = uimacppLibDir;
+      }
+      environment.put(pathKey, value);
+      
     } else {
-      value = uimacppLibDir;
+      // Add the uimacpp lib directory to the Linux & Mac library paths
+      String uimacppLibDir = uimacppHome + System.getProperty("file.separator") + "lib";
+      String value = environment.get("LD_LIBRARY_PATH");
+      if (value != null && value.length() > 0) {
+        value = uimacppLibDir + System.getProperty("path.separator") + value;
+      } else {
+        value = uimacppLibDir;
+      }
+      environment.put("LD_LIBRARY_PATH", value);
+
+      value = environment.get("DYLD_LIBRARY_PATH");
+      if (value != null && value.length() > 0) {
+        value = uimacppLibDir + System.getProperty("path.separator") + value;
+      } else {
+        value = uimacppLibDir;
+      }
+      environment.put("DYLD_LIBRARY_PATH", value);
     }
-    environment.put("PATH", value);
 
-    value = environment.get("LD_LIBRARY_PATH");
-    if (value != null && value.length() > 0) {
-      value = uimacppLibDir + System.getProperty("path.separator") + value;
-    } else {
-      value = uimacppLibDir;
-    }
-    environment.put("LD_LIBRARY_PATH", value);
-
-    value = environment.get("DYLD_LIBRARY_PATH");
-
-    value = environment.get("LD_LIBRARY_PATH");
-    if (value != null && value.length() > 0) {
-      value = uimacppLibDir + System.getProperty("path.separator") + value;
-    } else {
-      value = uimacppLibDir;
-    }
-    environment.put("DYLD_LIBRARY_PATH", value);
-
-    // set user specified environment variables
-    Set set = envVarMap.entrySet();
-
-    for (Iterator it = set.iterator(); it.hasNext();) {
-      Map.Entry entry = (Map.Entry) it.next();
-      String key = (String) entry.getKey();
-      value = (String) entry.getValue();
+    // Copy user specified environment variables from the deployment descriptor
+    for ( Entry<String,String> entry : envVarMap.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
 
       if (value != null && value.length() > 0) {
-        // special handling for PATH and LD_LIBRARY_PATH
-        // and DYLD_LIBRARY_PATH
-        // for these we prepend the values to the
-        // existing values.
-        if (key.equalsIgnoreCase("PATH") || key.equalsIgnoreCase("LD_LIBRARY_PATH")
-                || key.equalsIgnoreCase("DYLD_LIBRARY_PATH")) {
+        // special handling for PATH and LD_LIBRARY_PATH and DYLD_LIBRARY_PATH
+        // for these we prepend the values to the existing values.
+        // Since all are uppercase in Linux assume the same for the deployment descriptor.
+        if (key.equals("PATH") || key.equals("LD_LIBRARY_PATH") || key.equals("DYLD_LIBRARY_PATH")) {
+          if (key.equals("PATH")) {
+            key = pathKey;
+          }
           String origValue = environment.get(key);
           if (origValue != null) {
-            value = value + System.getProperty("path.separator") + uimacppLibDir
-                    + System.getProperty("path.separator") + origValue;
+            value = value + System.getProperty("path.separator") + origValue;
           }
-
         }
-        // System.out.println(key+" "+value);
         environment.put(key, value);
       }
     }
