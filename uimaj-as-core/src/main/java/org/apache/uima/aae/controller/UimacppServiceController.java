@@ -526,9 +526,9 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
       if (value != null && value.length() > 0) {
         // special handling for PATH and LD_LIBRARY_PATH and DYLD_LIBRARY_PATH
         // for these we prepend the values to the existing values.
-        // Since all are uppercase in Linux assume the same for the deployment descriptor.
-        if (key.equals("PATH") || key.equals("LD_LIBRARY_PATH") || key.equals("DYLD_LIBRARY_PATH")) {
-          if (key.equals("PATH")) {
+        // For backward compatibility accept any casing for the Windows PATH
+        if (key.equalsIgnoreCase("PATH") || key.equals("LD_LIBRARY_PATH") || key.equals("DYLD_LIBRARY_PATH")) {
+          if (key.equalsIgnoreCase("PATH")) {
             key = pathKey;
           }
           String origValue = environment.get(key);
