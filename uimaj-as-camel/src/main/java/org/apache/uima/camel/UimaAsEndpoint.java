@@ -22,7 +22,6 @@ package org.apache.uima.camel;
 import java.util.Map;
 
 import org.apache.camel.Consumer;
-import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.Producer;
 import org.apache.camel.impl.DefaultEndpoint;
@@ -31,7 +30,8 @@ import org.apache.uima.aae.client.UimaAsynchronousEngine;
 /**
  * Represent the UIMA-AS camel driver endpoint.
  */
-public class UimaAsEndpoint extends DefaultEndpoint<Exchange> {
+@SuppressWarnings("rawtypes")
+public class UimaAsEndpoint extends DefaultEndpoint {
 
 	private String brokerAddress;
 	private String queue;
@@ -81,11 +81,12 @@ public class UimaAsEndpoint extends DefaultEndpoint<Exchange> {
 		
     }
     
-	public Consumer<Exchange> createConsumer(Processor arg0) throws Exception {
+    
+	public Consumer createConsumer(Processor arg0) throws Exception {
 		return null;
 	}
 
-	public Producer<Exchange> createProducer() throws Exception {
+	public Producer createProducer() throws Exception {
 		return new UimaAsProducer(brokerAddress, queue, casPoolSize, timeout, this);
 	}
 

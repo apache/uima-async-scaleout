@@ -23,17 +23,17 @@ import java.net.URI;
 import java.util.Map;
 
 import org.apache.camel.Endpoint;
-import org.apache.camel.Exchange;
 import org.apache.camel.RuntimeCamelException;
 import org.apache.camel.impl.DefaultComponent;
 
 /**
  * Defines the UIMA-AS camel driver component.
  */
-public class UimaAsComponent extends DefaultComponent<Exchange> {
+@SuppressWarnings("rawtypes")
+public class UimaAsComponent extends DefaultComponent {
 
 	@Override
-	protected Endpoint<Exchange> createEndpoint(String uri, String remaining,
+	protected Endpoint createEndpoint(String uri, String remaining,
     		Map parameters) throws Exception {
 		
     	URI hbaseURI = UriUtils.create(uri);

@@ -48,7 +48,8 @@ import org.apache.uima.resource.ResourceInitializationException;
  * For example:
  * uimadriver:tcp://localhost:61616?queue=TextAnalysisQueue
  */
-public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncProcessor {
+@SuppressWarnings("rawtypes")
+public class UimaAsProducer extends DefaultProducer implements AsyncProcessor {
 
   private static final Log LOG = LogFactory.getLog(UimaAsProducer.class);
 
@@ -141,7 +142,8 @@ public class UimaAsProducer extends DefaultProducer<Exchange> implements AsyncPr
    */
   private final Map<String, ExchangeAsyncCallbackPair> intermediateMap;
 
-  public UimaAsProducer(String brokerAddress, String queue, Integer casPoolSize, Integer timeout, Endpoint<Exchange> endpoint)
+  @SuppressWarnings("unchecked")
+public UimaAsProducer(String brokerAddress, String queue, Integer casPoolSize, Integer timeout, Endpoint endpoint)
           throws Exception {
     super(endpoint);
 
