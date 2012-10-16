@@ -170,8 +170,8 @@ public class ProcessResponseHandler extends HandlerBase {
       // in the message matches an entry in the delegate's outstanding list. This list stores
       // ids of CASes sent to the remote delegate pending reply.
       if (!casRemovedFromOutstandingList) {
-        handleUnexpectedMessage(casReferenceId, aMessageContext.getEndpoint());
-        return;
+        //handleUnexpectedMessage(casReferenceId, aMessageContext.getEndpoint());
+        return;   // out of band reply. Most likely the CAS previously timedout
       }
 
       // Increment number of CASes processed by this delegate
