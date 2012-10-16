@@ -7,7 +7,7 @@
 We use Maven 3.0 for building; download this if needed, 
 and set the environment variable MAVEN_OPTS to -Xmx800m -XX:MaxPerSize-256m.
 
-Then do the build by going into the .../uima-as directory, and issuing the command
+Then build from the directory containing this README by issuing the command
    mvn clean install.
    
 This builds everything except the ...source-release.zip file. If you want that,
@@ -16,8 +16,8 @@ change the command to
    mvn clean install -Papache-release
    
 Look for the result in the two artifacts: 
-   ../uima-as/target/uima-as-[version]-source-release.zip if run with -Papache-release) and
-   ../uima-as/target/uima-as-[version]-bin.zip (or  ...tar.gz) 
+   target/uima-as-[version]-source-release.zip (if run with -Papache-release) and
+   target/uima-as-[version]-bin.zip (or  ...tar.gz) 
 
 For more details, please see http://uima.apache.org/building-uima.html   
 
@@ -413,6 +413,12 @@ An example of this kind of migration is embodied by the sample descriptors:
      JMX port (see section 3.8).
 
   5. Handling of timeouts on Cas Multiplier delegates not working 
+  
+  6. When building uima-as from sources using newer versions of IBM JDK (1.7, 1.6 Refresh 10) maven's build 
+     fails with OutOfMemory error while running javadoc plugin. This has been identified as IBM JDK problem and 
+     reported to IBM JDK development team as a bug with a problem number (PMR) 90063,001,866. The 
+     known workaround is to use Sun SDK or older versions of IBM SDK like 1.6 Refresh 8 FP1. 
+     
   
 For up-to-date information on UIMA-AS issues, see our issue tracker:
 http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12316312
