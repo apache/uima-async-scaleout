@@ -1012,7 +1012,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         resolver.setConnectionFactory(f);
         resolver.setListener(newListener);
         newListener.setDestinationResolver(resolver);
-
+        newListener.setAcceptMessagesWhileStopping(true);
         org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor executor = new org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor();
         executor.setCorePoolSize(delegate.getEndpoint().getConcurrentReplyConsumers());
         executor.setMaxPoolSize(delegate.getEndpoint().getConcurrentReplyConsumers());

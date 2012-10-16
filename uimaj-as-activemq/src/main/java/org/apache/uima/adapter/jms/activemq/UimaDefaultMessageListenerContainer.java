@@ -127,7 +127,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     UIMAFramework.getLogger(CLASS_NAME).setLevel(Level.WARNING);
     __listenerRef = this;
     setRecoveryInterval(30000);  // increase connection recovery to 30 sec
-    setAcceptMessagesWhileStopping(false);
+    setAcceptMessagesWhileStopping(true);
     setExceptionListener(this);
     threadGroup = new ThreadGroup("ListenerThreadGroup_"
             + Thread.currentThread().getThreadGroup().getName());
