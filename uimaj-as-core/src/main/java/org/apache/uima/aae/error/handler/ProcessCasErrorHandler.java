@@ -212,6 +212,10 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
             aController, casReferenceId);
 
     if (ignoreError(t, anErrorContext, isEndpointTheClient)) {
+      if ( t instanceof Error ) {
+    	UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "handleError",
+    	              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", t);
+      }
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "handleError",
                 UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_ignore_error__INFO",
