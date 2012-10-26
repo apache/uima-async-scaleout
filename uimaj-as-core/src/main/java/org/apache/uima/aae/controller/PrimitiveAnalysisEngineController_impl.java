@@ -479,25 +479,27 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 	  return null;
   }
-  private AnalysisEngineManagement deepCopy(AnalysisEngineManagement aem) {
-    String xml = xstream.toXML(aem); // serialize to XML
-    return (AnalysisEngineManagement)xstream.fromXML(xml);
+  private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem) {
+	  return new AnalysisEnginePerformanceMetrics(aem.getName(),
+                      aem.getUniqueMBeanName(),
+                      aem.getAnalysisTime(),
+                      aem.getNumberOfCASesProcessed());
   }
-  private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEngineManagement> result, boolean deepCopy) {
-    if (aem.getComponents().isEmpty()) {
-      if (!aem.getName().equals("Fixed Flow Controller")) {
-        if ( deepCopy ) {
-          result.add(deepCopy(aem)); // deep copy
-        } else {
-          result.add(aem); // reference
-        }
-      }
-    } else {
-      for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
-        getLeafManagementObjects(child, result, deepCopy);
-      }
-    }
-  }
+
+  private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result) {
+	    if (aem.getComponents().isEmpty()) {
+	      if (!aem.getName().equals("Fixed Flow Controller")) {
+	    	  result.add(deepCopyMetrics(aem));
+	      }
+	    } else {
+	      for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
+		        getLeafManagementObjects(child, result);
+	      }
+	    }
+	  }
+
+  
+  
   public void destroyAE()  {
 	  try {
 	    if ( aeInstancePool != null ) {
@@ -529,8 +531,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (stopped) {
       return;
     }
-    List<AnalysisEngineManagement> beforeAnalysisManagementObjects = new ArrayList<AnalysisEngineManagement>();
-    List<AnalysisEngineManagement> afterAnalysisManagementObjects = new ArrayList<AnalysisEngineManagement>();
+    
+    List<AnalysisEnginePerformanceMetrics> beforeAnalysisManagementObjects = new ArrayList<AnalysisEnginePerformanceMetrics>();
+    List<AnalysisEnginePerformanceMetrics> afterAnalysisManagementObjects = new ArrayList<AnalysisEnginePerformanceMetrics>();
     CasStateEntry parentCasStateEntry = null;
     //	If enabled, keep a reference to a timer which
     //  when it expires, will cause a JVM to dump a stack
@@ -573,9 +576,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       
       AnalysisEngineManagement rootAem = ae.getManagementInterface();
       if ( rootAem.getComponents().size() > 0 ) {
-          getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects, true);
+          getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects);
       } else {
-          beforeAnalysisManagementObjects.add(deepCopy(rootAem));   
+          beforeAnalysisManagementObjects.add(deepCopyMetrics(rootAem));   
       }
       
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
@@ -834,10 +837,10 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           //  Flatten the hierarchy by recursively (if this AE is an aggregate) extracting  
           //  primitive AE's AnalysisEngineManagement instance and placing it in 
           //  afterAnalysisManagementObjects List.
-          getLeafManagementObjects(aem, afterAnalysisManagementObjects, false);
+          getLeafManagementObjects(aem, afterAnalysisManagementObjects);
       } else {
           //  Add the top level AnalysisEngineManagement instance.
-          afterAnalysisManagementObjects.add(aem);    
+          afterAnalysisManagementObjects.add(deepCopyMetrics(aem));    
       }
 
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
@@ -846,14 +849,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         new ArrayList<AnalysisEnginePerformanceMetrics>();
       //  Diff the before process() performance metrics with post process performance
       //  metrics
-      for (AnalysisEngineManagement after : afterAnalysisManagementObjects) {
-        for( AnalysisEngineManagement before: beforeAnalysisManagementObjects) {
-          if ( before.getUniqueMBeanName().equals(after.getUniqueMBeanName())) {
+      for (AnalysisEnginePerformanceMetrics after : afterAnalysisManagementObjects) {
+        for( AnalysisEnginePerformanceMetrics before: beforeAnalysisManagementObjects) {
+          if ( before.getUniqueName().equals(after.getUniqueName())) {
             AnalysisEnginePerformanceMetrics metrics = 
               new AnalysisEnginePerformanceMetrics(after.getName(),
-                      after.getUniqueMBeanName(),
+                      after.getUniqueName(),
                       after.getAnalysisTime()- before.getAnalysisTime(),
-                      after.getNumberOfCASesProcessed());
+                      after.getNumProcessed());
             performanceList.add(metrics);
             break;
           }
