@@ -143,31 +143,45 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    */
   protected void refreshConnectionUntilSuccessful() {
     boolean doLogFailureMsg = true;
-	    while (isRunning() && !terminating ) {
-	      try {
-	        if (sharedConnectionEnabled()) {
-	          refreshSharedConnection();
-	        }
-	        else {
-	          Connection con = createConnection();
-	          JmsUtils.closeConnection(con);
-	        }
-	        logger.info("Successfully refreshed JMS Connection");
-	        break;
-	      }
-	      catch (Exception ex) {
-	        if ( doLogFailureMsg ) {
-	          StringBuilder msg = new StringBuilder();
-	          msg.append("Could not refresh JMS Connection for destination '");
-	          msg.append(getDestinationDescription()).append("' - silently retrying in ");
-	          msg.append(5).append(" ms. Cause: ");
-	          msg.append(ex instanceof JMSException ? JmsUtils.buildExceptionMessage((JMSException) ex) : ex.getMessage());
-	          logger.warn(msg);
-	          doLogFailureMsg = false;
-	        }
-	      }
-	      sleepInbetweenRecoveryAttempts();
-	    }	    
+    try {
+    	// Only one listener thread should enter to recover lost connection.
+    	// Seems like spring recovery api is not reentrant. If multiple listeners
+    	// are allowed to attempt recovery, some of them are closed. This is based
+    	// on observing jconsole attached to uima-as service with multiple listeners
+    	// on an endpoint.  
+    	synchronized(UimaDefaultMessageListenerContainer.class ) {
+            ActiveMQConnection con = (ActiveMQConnection)super.getSharedConnection();
+        	if ( con != null && con.isStarted() && !con.isTransportFailed() ) {
+        		return;
+        	}
+    	    while (isRunning() && !terminating ) {
+    		      try {
+    		        if (sharedConnectionEnabled()) {
+    		          refreshSharedConnection();
+    		        }
+    		        else {
+    		          Connection tcon = createConnection();
+    		          JmsUtils.closeConnection(tcon);
+    		        }
+    		        logger.info("Successfully refreshed JMS Connection");
+    		        break;
+    		      }
+    		      catch (Exception ex) {
+    		        if ( doLogFailureMsg ) {
+    		          StringBuilder msg = new StringBuilder();
+    		          msg.append("Could not refresh JMS Connection for destination '");
+    		          msg.append(getDestinationDescription()).append("' - silently retrying in ");
+    		          msg.append(5).append(" ms. Cause: ");
+    		          msg.append(ex instanceof JMSException ? JmsUtils.buildExceptionMessage((JMSException) ex) : ex.getMessage());
+    		          logger.warn(msg);
+    		          doLogFailureMsg = false;
+    		        }
+    		      }
+    		      sleepInbetweenRecoveryAttempts();
+    		    }	    
+    	}
+    } catch( IllegalStateException e ) {
+    }
   }
   protected void recoverAfterListenerSetupFailure() {
 	  if ( !terminating ) {
