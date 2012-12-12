@@ -359,10 +359,11 @@ public abstract class Delegate {
 
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
       sb.append("Current Pending Reply List. Delegate:"+delegateKey);
-      
-      for (DelegateEntry entry : outstandingCasList) {
-        sb.append("\n\t----- CAS:"+entry.getCasReferenceId()).
-           append(" CAS hashCode:"+entry.getCasHashCode());
+      synchronized (outstandingCasList) {
+          for (DelegateEntry entry : outstandingCasList) {
+              sb.append("\n\t----- CAS:"+entry.getCasReferenceId()).
+                 append(" CAS hashCode:"+entry.getCasHashCode());
+            }
       }
       sb.append("\n");
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, this.getClass().getName(),
