@@ -135,7 +135,7 @@
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <!-- level of uimaj sdk this release depends on -->
     <!-- uimajDependencyVersion>2.4.0-SNAPSHOT</uimajDependencyVersion -->
-    <uimajDependencyVersion>2.4.0</uimajDependencyVersion>
+    <uimajDependencyVersion>2.4.1-SNAPSHOT</uimajDependencyVersion>
   </properties>
 
   <profiles>
