@@ -780,6 +780,9 @@ public class TestUimaASExtended extends BaseTestSupport {
               } finally {
                 cas.release();
               }
+              synchronized(uimaAsEngine) {
+            	  uimaAsEngine.wait(100);
+              }
             }
             System.out.println("Thread:"+Thread.currentThread().getId()+" Completed run()");
             uimaAsEngine.stop();
