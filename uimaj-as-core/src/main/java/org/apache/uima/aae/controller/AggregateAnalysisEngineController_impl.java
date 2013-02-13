@@ -1794,8 +1794,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       "finalStep",
                       UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                       "UIMAEE_cas_decremented_child_count__FINE",
-                      new Object[] { getComponentName(), casStateEntry.getCasReferenceId(),
-                          casStateEntry.getSubordinateCasInPlayCount() });
+                      new Object[] { getComponentName(), parentCasStateEntry.getCasReferenceId(),
+                    	  parentCasStateEntry.getSubordinateCasInPlayCount() });
             }
           }
         }
@@ -2125,9 +2125,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // Modify the parent of this CAS.
         if (inputCasId != null ) {
           if ( !inputCasId.equals(casStateEntry.getInputCasReferenceId())) {
-            casStateEntry.setInputCasReferenceId(inputCasId);
             cacheEntry.setInputCasReferenceId(inputCasId);
           }
+          // Update counters in the parents controller local cache. 
           CasStateEntry parentCasStateEntry = 
             parentController.getLocalCache().lookupEntry(inputCasId);
           if ( parentCasStateEntry != null ) {
