@@ -2006,23 +2006,29 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // Fetch the top ancestor CAS of this CAS.
       CasStateEntry topAncestorCasStateEntry = getLocalCache().getTopCasAncestor(
               casStateEntry.getInputCasReferenceId());
-      // check the state
-      if (topAncestorCasStateEntry.isFailed() && casHasExceptions(casStateEntry)
-              && topAncestorCasStateEntry.getSubordinateCasInPlayCount() == 0) {
-        return true;
-      } else {
-        // Add the id of the generated CAS to the map holding outstanding CASes. This
-        // map will be referenced when a client sends Free CAS Notification. The map
-        // stores the id of the CAS both as a key and a value. Map is used to facilitate
-        // quick lookup
-        cmOutstandingCASes
-                .put(casStateEntry.getCasReferenceId(), casStateEntry.getCasReferenceId());
+      if ( topAncestorCasStateEntry != null ) {
+    	// check the state
+          if (topAncestorCasStateEntry.isFailed() && casHasExceptions(casStateEntry)
+                  && topAncestorCasStateEntry.getSubordinateCasInPlayCount() == 0) {
+            return true;
+          } else {
+            // Add the id of the generated CAS to the map holding outstanding CASes. This
+            // map will be referenced when a client sends Free CAS Notification. The map
+            // stores the id of the CAS both as a key and a value. Map is used to facilitate
+            // quick lookup
+            cmOutstandingCASes
+                    .put(casStateEntry.getCasReferenceId(), casStateEntry.getCasReferenceId());
+          }
+        } else if (casStateEntry.isFailed() && casHasExceptions(casStateEntry)) {
+          return true;
+        }
+      } else  if (casStateEntry.isFailed() && casHasExceptions(casStateEntry)) {
+         return true;
       }
-    } else if (casStateEntry.isFailed() && casHasExceptions(casStateEntry)) {
-      return true;
-    }
+      
     return false;
-  }
+  }  
+  
 
   private void sendReplyToRemoteClient(CacheEntry cacheEntry, CasStateEntry casStateEntry,
           Endpoint replyEndpoint) throws Exception {
