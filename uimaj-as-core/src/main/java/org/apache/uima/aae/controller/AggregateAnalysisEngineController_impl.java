@@ -3066,6 +3066,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   public void stop() {
     super.stop(true);  // shutdown now
     this.cleanUp();
+        // dont kill jUnit tests
+    if (isTopLevelComponent() &&  System.getProperty("dontKill") == null) {
+    	System.exit(0);
+    }
+    
   }
 
   public List getChildControllerList() {

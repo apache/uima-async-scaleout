@@ -1163,6 +1163,10 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_stopped__INFO",
                   new Object[] { getComponentName()});
     }
+    // Only top-level service may call exit. Dont exit if running jUnit tests.
+    if (isTopLevelComponent() &&  System.getProperty("dontKill") == null) {
+    	System.exit(0);
+    }
   }
   /**
    This method forces a heap and java dump. It only works with IBM jvm. 
