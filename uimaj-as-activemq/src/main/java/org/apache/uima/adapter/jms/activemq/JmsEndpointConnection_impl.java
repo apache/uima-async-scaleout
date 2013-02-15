@@ -30,6 +30,7 @@ import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
+import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
@@ -599,6 +600,23 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       // Succeeded sending the CAS
       return true;
     } catch (Exception e) {
+    	
+    	 // if a client terminates with an outstanding request, the service will not
+        // be able to deliver a reply. Just log the fact that the reply queue is
+        // no longer available.
+      if ( e instanceof InvalidDestinationException && "Client".equals(target) ) {
+          if ( delegateEndpoint != null ) {
+            endpointName = ((ActiveMQDestination) delegateEndpoint.getDestination())
+            		.getPhysicalName();
+          }
+    	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "send", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_invalid_destination__INFO",
+                  new Object[] { controller.getComponentName(),endpointName });
+    	  return true;  // expect the client can go away at any time. Not an error
+      }    	
+    	
+    	
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         
         String key = "";
