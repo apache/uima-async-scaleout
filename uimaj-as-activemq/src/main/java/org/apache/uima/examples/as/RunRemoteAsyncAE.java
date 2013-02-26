@@ -57,14 +57,14 @@ import org.apache.uima.util.XMLInputSource;
  * processing begin, and the service will be undeployed after processing completes. Multiple -d
  * entries can be given.</li>
  * <li>-c Specifies a CollectionReader descriptor. The client will read CASes from the
- * CollectionReader and send them to the service for processing. If this option is ommitted, one
+ * CollectionReader and send them to the service for processing. If this option is omitted, one
  * empty CAS will be sent to the service (useful for services containing a CAS Multiplier acting as
  * a collection reader).</li>
  * <li>-p Specifies CAS pool size, which determines the maximum number of requests that can be
  * outstanding.</li>
  * <li>-f Specifies the initial FS heap size in bytes of each CAS in the pool.</li>
  * <li>-o Specifies an Output Directory. All CASes received by the client's CallbackListener will be
- * serialized to XMI in the specified OutputDir. If ommitted, no XMI files will be output.</li>
+ * serialized to XMI in the specified OutputDir. If omitted, no XMI files will be output.</li>
  * <li>-t Specifies a timeout period in seconds. If a CAS does not return within this time period it
  * is considered an error. By default there is no timeout, so the client will wait forever.</li>
  * <li>-i Causes the client to ignore errors returned from the service. If not specified, the client
@@ -274,13 +274,13 @@ public class RunRemoteAsyncAE {
                     + "-d  Specifies a deployment descriptor. The specified service will be deployed before processing begins."
                     + " Multiple -d entries can be given.\n"
                     + "-c  Specifies a CollectionReader descriptor.  The client will read CASes from the CollectionReader"
-                    + " and send them to the service for processing.  If this option is ommitted, one empty CAS will be"
+                    + " and send them to the service for processing.  If this option is omitted, one empty CAS will be"
                     + " sent to the service (useful for services containing a CAS Multiplier acting as a collection reader).\n"
                     + "-b  Use binary serialization (default is xmi)\n"
                     + "-p  Specifies CAS pool size, which determines the maximum number of requests that can be outstanding.\n"
                     + "-f  Specifies the initial FS heap size in bytes of each CAS in the pool.\n"
                     + "-o  Specifies an Output Directory.  All CASes received by the client's CallbackListener will be serialized to XMI"
-                    + " in the specified OutputDir.  If ommitted, no XMI files will be output.\n"
+                    + " in the specified OutputDir.  If omitted, no XMI files will be output.\n"
                     + "-t  Specifies a timeout period in seconds.  If a CAS does not return within this time period it"
                     + " is considered an error.  By default there is no timeout, so the client will wait forever.\n"
                     + "-it  Specifies a timeout period in seconds.  If the initialization request does not return within this time period it"
@@ -431,7 +431,7 @@ public class RunRemoteAsyncAE {
 
       // if output dir specified, dump CAS to XMI
       if (outputDir != null) {
-        // try to retreive the filename of the input file from the CAS
+        // try to retrieve the filename of the input file from the CAS
         File outFile = null;
         Type srcDocInfoType = aCas.getTypeSystem().getType(
                 "org.apache.uima.examples.SourceDocumentInformation");
