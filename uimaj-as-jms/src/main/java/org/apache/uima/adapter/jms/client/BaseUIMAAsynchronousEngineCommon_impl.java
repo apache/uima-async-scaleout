@@ -1396,7 +1396,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         deserializeAndCompleteProcessingReply(casReferenceId, message, cachedRequest, pt, doNotify);
       }
     } else if (message.propertyExists(AsynchAEMessage.InputCasReference)) {
-      handleProcessReplyFromCasMultiplier(message, casReferenceId, payload);
+    	int command = message.getIntProperty(AsynchAEMessage.Command);
+    	if (AsynchAEMessage.ServiceInfo != command) {
+    	      handleProcessReplyFromCasMultiplier(message, casReferenceId, payload);
+    	}
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         // Most likely expired message. Already handled as timeout. Discard the message and move on
@@ -1472,7 +1475,13 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       return;
     }
     if (inputCasCachedRequest.isSynchronousInvocation()) {
-      handleProcessReplyFromSynchronousCall(inputCasCachedRequest, message);
+    	// with synchronous invocation, child CASes are thrown away. With sync API, the UIMA-AS client
+    	// is not using callbacks. 
+    	if ( casReferenceId.equals(inputCasCachedRequest)) {
+    	      handleProcessReplyFromSynchronousCall(inputCasCachedRequest, message);
+    	} else {
+    		return;
+    	}
     }
     CAS cas = null;
     if (message instanceof TextMessage) {
