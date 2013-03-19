@@ -554,18 +554,25 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * @throws ResourceInitializationException
    */
   private String replacePlaceholder(String aPlaceholder) throws ResourceInitializationException {
-    //  find placeholder starting and endpoint positions
-    int startPos = aPlaceholder.indexOf("{");
-    int endPos = aPlaceholder.indexOf("}");
+    //  find placeholder starting and ending positions
+    // If no '${' or following '}' leave as-is
+    int startPos = aPlaceholder.indexOf("${");
+    if (startPos < 0) {
+      return aPlaceholder;
+    }
+    int endPos = aPlaceholder.indexOf("}", startPos);
+    if (endPos < 0) {
+      return aPlaceholder;
+    }
     //  extract the name
-    String placeholder = aPlaceholder.substring(startPos+1, endPos);
+    String placeholder = aPlaceholder.substring(startPos+2, endPos);
     //  using the name, find the broker URL. This property must exist or exception is thrown
     String url = System.getProperty(placeholder);
     //  the property is missing 
     if ( url == null ) {
-      throw new ResourceInitializationException(new Exception("UIMA AS Client Initialization Exception. Value for placeholder:"+placeholder+" is not defined in the environment. Set System property:"+placeholder+" to the broker URL."));
+      throw new ResourceInitializationException(new Exception("UIMA AS Client Initialization Exception. Value for placeholder:"+placeholder+" is not defined in the system properties."));
     }
-    return url;
+    return aPlaceholder.substring(0, startPos) + url + aPlaceholder.substring(endPos+1);
   }
   /**
    * Initialize the uima ee client. Takes initialization parameters from the
@@ -621,26 +628,15 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     asynchManager = new AsynchAECasManager_impl(rm);
 
     brokerURI = (String) anApplicationContext.get(UimaAsynchronousEngine.ServerUri);
-    
-    //  Check if a placeholder is passed in instead of actual Broker URL. The placeholder
-    //  has this syntax ${placeholderName}. A system property with placeholderName
-    //  must exist for successful placeholder resolution.
-    if ( brokerURI.startsWith("${")) {
-      //  resolve placeholder
-      //  throws ResourceInitializationException if placeholder is not defined in
-      //  System properties
-      brokerURI = replacePlaceholder(brokerURI); 
-    }
     String endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.Endpoint);
-    //  Check if a placeholder is passed in instead of actual service endpoint. The placeholder
-    //  has this syntax ${placeholderName}. A system property with placeholderName
-    //  must exist for successful placeholder resolution.
-    if ( endpoint.startsWith("${")) {
-      //  resolve placeholder
-      //  throws ResourceInitializationException if placeholder is not defined in
-      //  System properties
-      endpoint = replacePlaceholder(endpoint); 
-    }
+    
+    //  Check if a placeholder is passed in instead of actual broker URL or endpoint. 
+    //  The placeholder has the syntax ${placeholderName} and may be imbedded in text.
+    //  A system property with placeholderName must exist for successful placeholder resolution.
+    //  Throws ResourceInitializationException if placeholder is not in the System properties.
+    brokerURI = replacePlaceholder(brokerURI); 
+    endpoint = replacePlaceholder(endpoint); 
+
     clientSideJmxStats.setEndpointName(endpoint);
     int casPoolSize = 1;
 
