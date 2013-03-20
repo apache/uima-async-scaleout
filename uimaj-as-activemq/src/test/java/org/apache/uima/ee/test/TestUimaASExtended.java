@@ -1261,9 +1261,13 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    // Deploy Uima AS Primitive Service
 	    deployService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
 
-	    System.setProperty( "defaultBrokerURL", broker.getMasterConnectorURI());
-	    System.setProperty( "PersonTitleEndpoint", "PersonTitleAnnotatorQueue");
-	    Map<String, Object> appCtx = buildContext("${defaultBrokerURL}","${PersonTitleEndpoint}");//PersonTitleAnnotatorQueue");
+	    // Nest the placeholders in the broker & endpoint strings
+	    String url = broker.getMasterConnectorURI();
+	    System.setProperty( "defaultBrokerURL", url.substring(2,url.length()-2));
+	    String brokerUrl = url.substring(0,2) + "${defaultBrokerURL}" + url.substring(url.length()-2);	    
+	    System.setProperty( "PersonTitleEndpoint", "TitleAnnotator");
+	    String endpoint = "Person${PersonTitleEndpoint}Queue";  // "PersonTitleAnnotatorQueue"
+	    Map<String, Object> appCtx = buildContext(brokerUrl, endpoint);
 
 	    initialize(uimaAsEngine, appCtx);
 	    waitUntilInitialized();
