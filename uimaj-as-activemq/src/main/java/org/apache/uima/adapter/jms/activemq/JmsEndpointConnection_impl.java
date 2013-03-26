@@ -53,6 +53,7 @@ import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
+import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.DelegateConnectionLostException;
@@ -516,10 +517,11 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   public boolean send(final Message aMessage, long msgSize, boolean startTimer, boolean failOnJMSException) {
     String destinationName = "";
     String target = "Delegate";
-
+    int msgType = 0;
+    int command = 0;
     try {
-      int msgType = aMessage.getIntProperty(AsynchAEMessage.MessageType);
-      int command = aMessage.getIntProperty(AsynchAEMessage.Command);
+      msgType = aMessage.getIntProperty(AsynchAEMessage.MessageType);
+      command = aMessage.getIntProperty(AsynchAEMessage.Command);
       boolean newCAS = false;
       if ( aMessage.propertyExists(AsynchAEMessage.CasSequence) &&
               aMessage.getLongProperty(AsynchAEMessage.CasSequence) > 0 ) {
@@ -613,6 +615,30 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
                   "send", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_invalid_destination__INFO",
                   new Object[] { controller.getComponentName(),endpointName });
+    	  if ( command == AsynchAEMessage.ServiceInfo ) {
+    		  return false;
+    	  }
+    	  if ( (msgType == AsynchAEMessage.Response || msgType == AsynchAEMessage.Request ) &&
+    			  command == AsynchAEMessage.Process ) {
+    		  String casReferenceId="";
+    		  try {
+    		     casReferenceId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
+    		  } catch( Exception exx ) {
+    		        String key = "";
+    		        String endpointName = "";
+    		        if ( delegateEndpoint != null ) {
+    		          delegateEndpoint.getDelegateKey();
+    		          endpointName = ((ActiveMQDestination) delegateEndpoint.getDestination())
+    		          .getPhysicalName();
+    		        }
+    	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+    	                  "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+    	                  "UIMAEE_service_delivery_exception__WARNING",new Object[] { controller.getComponentName(), key, endpointName});
+    		  }
+   		      CasStateEntry casStateEntry = controller.getLocalCache().lookupEntry(casReferenceId);
+   		      // Mark the CAS as failed so that the CAS is released and cache cleaned up
+    		  casStateEntry.setDeliveryToClientFailed();
+    	  }
     	  return true;  // expect the client can go away at any time. Not an error
       }    	
     	
