@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
@@ -69,7 +70,13 @@ import org.apache.uima.util.Level;
 public class JmsEndpointConnection_impl implements ConsumerListener {
   private static final Class CLASS_NAME = JmsEndpointConnection_impl.class;
 
-  private Destination destination;
+  // timestamp containing time when the last message was dispatched from this dispatcher to 
+  // jms destination. This is updated every time a message is dispatched to a queue. 
+  // At fixed intervals a cleanup thread wakes up and checks for unused dispatchers by
+  // comparing value in lastDispatchTimestamp to a max allowed which by default is 5 minutes.
+  protected AtomicLong lastDispatchTimestamp = new AtomicLong(0);
+
+  protected Destination destination;
 
   protected Session producerSession;
 
@@ -83,7 +90,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 
   private String endpointName;
 
-  private Endpoint delegateEndpoint;
+  protected Endpoint delegateEndpoint;
 
   private volatile boolean retryEnabled;
 
@@ -95,7 +102,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 
   private Object semaphore = new Object();
 
-  private boolean isReplyEndpoint;
+  protected boolean isReplyEndpoint;
 
   private volatile boolean failed = false;
 
@@ -183,7 +190,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                    "open",
 		                    JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 		                    "UIMAJMS_override_connection_to_endpoint__FINE",
-		                    new Object[] { aComponentName, getEndpoint(),
+		                    new Object[] {  aComponentName, getEndpoint(),
 		                      ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() });
 		          }
 		        }
@@ -193,6 +200,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		          //  Check connection status and create a new one (if necessary) as an atomic operation
 		          try {
 		            connectionSemaphore.acquire();
+		            
 		            if (connectionClosedOrFailed(brokerDestinations)) {
 		              // Create one shared connection per unique brokerURL.
 		              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -209,6 +217,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                  //  Ignore exceptions on a close of a bad connection
 		                }
 		              }
+		              System.out.println("---------- Opening New Broker Connection ---------------");
 		              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
 		              //  Create shared jms connection to a broker
 		              conn = factory.createConnection();
@@ -240,6 +249,8 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		          
 		          connectionCreationTimestamp = System.nanoTime();
 		          failed = false;
+		        } else {
+		        	System.out.println("...... Reusing Existing Broker Connetion");
 		        }
 		        Connection conn = brokerDestinations.getConnection();
 		        if (failed) {
@@ -595,9 +606,12 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       // restarted. The main purpose of the timer is to close connections
       // that are not used.
       if (startTimer) {
-        brokerDestinations.getConnectionTimer().startTimer(connectionCreationTimestamp,
-                delegateEndpoint);
+//        brokerDestinations.getConnectionTimer().startTimer(connectionCreationTimestamp,
+//                delegateEndpoint);
       }
+      // record the time when this dispatches sent a message. This time will be used
+      // to find inactive sessions.
+	  lastDispatchTimestamp.set(System.currentTimeMillis());
       
       // Succeeded sending the CAS
       return true;
