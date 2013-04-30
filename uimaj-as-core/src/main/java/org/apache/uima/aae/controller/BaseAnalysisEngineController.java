@@ -22,7 +22,6 @@ package org.apache.uima.aae.controller;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
@@ -35,14 +34,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
@@ -52,6 +49,7 @@ import org.apache.uima.UimaContextAdmin;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.EECasManager_impl;
 import org.apache.uima.aae.InProcessCache;
+import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
@@ -59,16 +57,13 @@ import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.UimaEEAdminContext;
-import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
-import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.aae.error.ForcedMessageTimeoutException;
-import org.apache.uima.aae.error.MessageTimeoutException;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.error.UimaAsUncaughtExceptionHandler;
 import org.apache.uima.aae.error.handler.ProcessCasErrorHandler;
@@ -95,7 +90,7 @@ import org.apache.uima.analysis_engine.metadata.SofaMapping;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.impl.UimaVersion;
-import org.apache.uima.jcas.cas.StringArray;
+import org.apache.uima.resource.PearSpecifier;
 import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceCreationSpecifier;
 import org.apache.uima.resource.ResourceInitializationException;
@@ -332,7 +327,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       endpointName = endpoint.getEndpoint();
     }
     resourceSpecifier = UimaClassFactory.produceResourceSpecifier(aDescriptor);
-
+    if (resourceSpecifier instanceof PearSpecifier ) {
+    	serviceName = ((PearSpecifier)resourceSpecifier).getPearPath();
+    	int pos=0;
+    	if ( (pos = serviceName.lastIndexOf(".") ) > -1 ) {
+    		serviceName = serviceName.substring(pos+1);
+    	}
+    }
     if (isTopLevelComponent()) {
       // ******************************************************************************
       //  Set a global UncaughtExceptionHandler to handle OOM and other uncaught Throwables
