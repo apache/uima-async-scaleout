@@ -65,7 +65,7 @@ public class SingleLineUimaJmxMonitorListener implements JmxMonitorListener {
 
     if (firsttime) {
       firsttime = false;
-      items = "\t Timestamp";
+      items = "\tTimestamp";
       for (ServiceMetrics serviceMetrics : metrics) {
         String srvName = serviceMetrics.getServiceName();
         srvName = srvName.substring(0, srvName.indexOf("_Service Performance"));
