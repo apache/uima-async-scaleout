@@ -169,7 +169,8 @@ public class GetMetaRequest {
       System.out.println("Waiting for getMeta reply...");
       ActiveMQTextMessage reply = (ActiveMQTextMessage) consumer.receive();
       long waitTime = (System.nanoTime() - startTime)/1000000;
-      System.out.println("Reply received in " + waitTime + " ms");
+      
+      System.out.println("Reply from "+reply.getStringProperty("ServerIP")+" received in " + waitTime + " ms");
       if (printReply) {
         System.out.println("Reply MessageText: " + reply.getText());
       }
