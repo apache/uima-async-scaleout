@@ -62,7 +62,7 @@ public class UimaSerializer {
   private final ThreadLocal<XMLReader> localXmlReader = new ThreadLocal<XMLReader>();
 
   /**
-   * Serializes XCas into CAS
+   * deserializes XCas into CAS
    * 
    * @param anXcas
    * @param aCas
@@ -85,7 +85,7 @@ public class UimaSerializer {
   }
 
   /**
-   * Serializes CAS into a given OutputStream
+   * Serializes CAS into a given OutputStream in XCAS format
    * 
    * @param stream
    * @param aCAS
@@ -107,7 +107,7 @@ public class UimaSerializer {
   }
 
   /**
-   * Serializes CAS into a given OutputStream
+   * Serializes CAS into a given OutputStream in Xmi format
    * 
    * @param stream
    * @param aCAS
@@ -163,7 +163,11 @@ public class UimaSerializer {
     }
   }
 
-  /** Utility method for deserializing a CAS from an XMI String */
+  /** 
+   * Utility method for deserializing a CAS from an XMI String
+   * Does both processing of requests arriving to this service
+   *   and responses returning to this service, or to a client. 
+   */
   public void deserializeCasFromXmi(String anXmlStr, CAS aCAS,
           XmiSerializationSharedData aSharedData, boolean aLenient, int aMergePoint)
           throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
@@ -180,6 +184,17 @@ public class UimaSerializer {
     xmlReader.parse(new InputSource(reader));
   }
 
+  /**
+   * Only does the processing of responses (not requests) returning from remotes.
+   * Has extra param: AllowPreexistingFS which can be allow, disallow, and ignore
+   *   This is for parallel dispatch of remotes, normally configured to disallow
+   *     modifications below the delta-cas point
+   *     3 cases: allow - for non parallel
+   *              disallow - for parallel, with delta cas being returned
+   *              ignore - for parallel, with no delta cas being returned
+   *                       because earlier version of client wasn't supporting delta cas
+   * See above method for requests and responses
+   */
   public void deserializeCasFromXmi(String anXmlStr, CAS aCAS,
           XmiSerializationSharedData aSharedData, boolean aLenient, int aMergePoint,
           AllowPreexistingFS allow) throws FactoryConfigurationError, ParserConfigurationException,
