@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
-import org.apache.uima.aae.controller.ControllerLifecycle;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.EventSubscriber;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -43,8 +42,6 @@ import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
 import org.apache.uima.cas.impl.OutOfTypeSystemData;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
-import org.apache.uima.flow.FinalStep;
-import org.apache.uima.flow.Step;
 import org.apache.uima.util.Level;
 
 public class InProcessCache implements InProcessCacheMBean {
@@ -59,11 +56,11 @@ public class InProcessCache implements InProcessCacheMBean {
 
   private transient UIDGenerator idGenerator = new UIDGenerator();
 
-  private ConcurrentHashMap cache = new ConcurrentHashMap();
+  private ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<String, CacheEntry>();
 
   private String name = "InProcessCache";
 
-  private List callbackListeners = new ArrayList();
+  private List<EventSubscriber> callbackListeners = new ArrayList<EventSubscriber>();
 
   int size = 0;
 
@@ -73,7 +70,7 @@ public class InProcessCache implements InProcessCacheMBean {
 
   public void registerCallbackWhenCacheEmpty(EventSubscriber aController, int notification) {
     if (!callbackListeners.isEmpty()) {
-      Iterator it = callbackListeners.iterator();
+      Iterator<EventSubscriber> it = callbackListeners.iterator();
       while (it.hasNext()) {
         EventSubscriber es = (EventSubscriber) it.next();
         if (es == aController) {
@@ -94,9 +91,9 @@ public class InProcessCache implements InProcessCacheMBean {
 
   public void destroy() {
     callbackListeners.clear();
-    Set set = cache.entrySet();
-    for (Iterator it = set.iterator(); it.hasNext();) {
-      Map.Entry entry = (Map.Entry) it.next();
+    Set<Entry<String, CacheEntry>> set = cache.entrySet();
+    for (Iterator<Entry<String, CacheEntry>> it = set.iterator(); it.hasNext();) {
+      Map.Entry<String, CacheEntry> entry = (Map.Entry<String, CacheEntry>) it.next();
       CacheEntry cacheEntry = (CacheEntry) entry.getValue();
       if (cacheEntry != null && cacheEntry.getCas() != null) {
         try {
@@ -129,7 +126,7 @@ public class InProcessCache implements InProcessCacheMBean {
 
   public boolean producedCASesStillInPlay(String anInputCASReferenceId,
           String aSubordinateCASReferenceId) throws Exception {
-    Iterator it = cache.keySet().iterator();
+    Iterator<String> it = cache.keySet().iterator();
     while (it.hasNext()) {
       String key = (String) it.next();
       CacheEntry entry = (CacheEntry) cache.get(key);
@@ -148,7 +145,7 @@ public class InProcessCache implements InProcessCacheMBean {
     if (anInputCASReferenceId == null) {
       return;
     }
-    Iterator it = cache.keySet().iterator();
+    Iterator<String> it = cache.keySet().iterator();
     while (it.hasNext()) {
       String key = (String) it.next();
       CacheEntry entry = (CacheEntry) cache.get(key);
@@ -165,7 +162,7 @@ public class InProcessCache implements InProcessCacheMBean {
   }
 
   public void releaseAllCASes() {
-    Iterator it = cache.keySet().iterator();
+    Iterator<String> it = cache.keySet().iterator();
     while (it.hasNext()) {
       String key = (String) it.next();
       CacheEntry entry = (CacheEntry) cache.get(key);
@@ -208,7 +205,7 @@ public class InProcessCache implements InProcessCacheMBean {
   }
 
   public synchronized void dumpContents(String aControllerName) {
-    int count = 0;
+//    int count = 0;
     /*
      * if ( UIMAFramework.getLogger().isLoggable(Level.FINEST) ) { Iterator it =
      * cache.keySet().iterator(); StringBuffer sb = new StringBuffer("\n");
@@ -287,8 +284,8 @@ public class InProcessCache implements InProcessCacheMBean {
 
   public synchronized CacheEntry[] getCacheEntriesForEndpoint(String anEndpointName) {
     CacheEntry[] entries;
-    ArrayList list = new ArrayList();
-    Iterator it = cache.keySet().iterator();
+    ArrayList<CacheEntry> list = new ArrayList<CacheEntry>();
+    Iterator<String> it = cache.keySet().iterator();
     while (it.hasNext()) {
       String key = (String) it.next();
       CacheEntry entry = (CacheEntry) cache.get(key);
@@ -443,7 +440,7 @@ public class InProcessCache implements InProcessCacheMBean {
   }
 
   public boolean hasNoSubordinates(String aCasReferenceId) {
-    Iterator it = cache.keySet().iterator();
+    Iterator<String> it = cache.keySet().iterator();
     while (it.hasNext()) {
       String key = (String) it.next();
       CacheEntry entry = (CacheEntry) cache.get(key);
@@ -522,13 +519,13 @@ public class InProcessCache implements InProcessCacheMBean {
 
     private String casProducerKey;
 
-    private Map endpointMap = new HashMap();
+    private Map<String, Endpoint> endpointMap = new HashMap<String, Endpoint>();
 
     private final long timeIn = System.nanoTime();
 
     private Endpoint messageOrigin;
 
-    private Stack originStack = new Stack();
+    private Stack<Endpoint> originStack = new Stack<Endpoint>();
 
     private int highWaterMark;
 
@@ -636,7 +633,7 @@ public class InProcessCache implements InProcessCacheMBean {
       return casReferenceId;
     }
 
-    public Map getEndpointMap() {
+    public Map<String, Endpoint> getEndpointMap() {
       return endpointMap;
     }
 
