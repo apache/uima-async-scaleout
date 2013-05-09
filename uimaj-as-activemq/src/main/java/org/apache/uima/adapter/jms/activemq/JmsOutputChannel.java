@@ -230,7 +230,7 @@ public class JmsOutputChannel implements OutputChannel {
           serializedCas = serializer.serializeCasToXmi(aCAS, serSharedData);
           cacheEntry.setSentDeltaCas(false);
         }
-        // if market is invalid, create a fresh marker.
+        // if marker is invalid, create a fresh marker.
         if (cacheEntry.getMarker() != null && !cacheEntry.getMarker().isValid()) {
           cacheEntry.setMarker(aCAS.createMarker());
         }
