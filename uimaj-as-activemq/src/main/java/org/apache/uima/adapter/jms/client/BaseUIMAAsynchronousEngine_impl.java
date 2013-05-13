@@ -22,7 +22,6 @@ package org.apache.uima.adapter.jms.client;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
@@ -44,7 +43,6 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.command.ActiveMQBytesMessage;
-import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.command.ActiveMQTempDestination;
 import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.uima.UIMAFramework;
@@ -60,7 +58,6 @@ import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.ControllerLifecycle;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.UimacppServiceController;
-import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.UimaASMetaRequestTimeout;
 import org.apache.uima.aae.jmx.JmxManager;
@@ -72,6 +69,7 @@ import org.apache.uima.adapter.jms.activemq.UimaEEAdminSpringContext;
 import org.apache.uima.adapter.jms.service.Dd2spring;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.impl.UimaVersion;
 import org.apache.uima.internal.util.UUIDGenerator;
 import org.apache.uima.resource.Resource;
@@ -174,7 +172,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected void setCASMessage(String aCasReferenceId, CAS aCAS, Message msg)
           throws ResourceProcessException {
     try {
-      setCommonProperties(aCasReferenceId, msg, "xmi");
+      setCommonProperties(aCasReferenceId, msg, SerialFormat.XMI);
       ((TextMessage) msg).setText(serializeCAS(aCAS));
     } catch (Exception e) {
       throw new ResourceProcessException(e);
@@ -184,7 +182,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected void setCASMessage(String aCasReferenceId, String aSerializedCAS, Message msg)
           throws ResourceProcessException {
     try {
-      setCommonProperties(aCasReferenceId, msg, "xmi");
+      setCommonProperties(aCasReferenceId, msg, SerialFormat.XMI);
       ((TextMessage) msg).setText(aSerializedCAS);
     } catch (Exception e) {
       throw new ResourceProcessException(e);
@@ -194,7 +192,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected void setCASMessage(String aCasReferenceId, byte[] aSerializedCAS, Message msg)
           throws ResourceProcessException {
     try {
-      setCommonProperties(aCasReferenceId, msg, "binary");
+      setCommonProperties(aCasReferenceId, msg, SerialFormat.BINARY);
       ((BytesMessage) msg).writeBytes(aSerializedCAS);
     } catch (Exception e) {
       throw new ResourceProcessException(e);
@@ -202,7 +200,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 
   protected void setCommonProperties(String aCasReferenceId, Message msg,
-          String aSerializationStrategy) throws ResourceProcessException {
+          SerialFormat serialFormat) throws ResourceProcessException {
     try {
       msg.setStringProperty(AsynchAEMessage.MessageFrom, consumerDestination.getQueueName());
 
@@ -210,13 +208,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
       msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.Process);
       msg.setStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
-
-      if (aSerializationStrategy.equals("binary")) {
-        msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.BinaryPayload);
-      } else if (aSerializationStrategy.equals("xmi")) {
-        msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.XMIPayload);
-      }
-
+      msg.setIntProperty(AsynchAEMessage.Payload, (serialFormat == SerialFormat.XMI) ? AsynchAEMessage.XMIPayload : AsynchAEMessage.BinaryPayload);
       msg.setBooleanProperty(AsynchAEMessage.AcceptsDeltaCas, true);
       msg.setJMSReplyTo(consumerDestination);
 
@@ -663,10 +655,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if (anApplicationContext.containsKey(UimaAsynchronousEngine.ApplicationName)) {
       applicationName = (String) anApplicationContext.get(UimaAsynchronousEngine.ApplicationName);
     }
-    if (anApplicationContext.containsKey(UimaAsynchronousEngine.SerializationStrategy)) {
-      super.serializationStrategy = (String) anApplicationContext
-              .get(UimaAsynchronousEngine.SerializationStrategy);
-      clientSideJmxStats.setSerialization(super.serializationStrategy);
+    if (anApplicationContext.containsKey(UimaAsynchronousEngine.SERIALIZATION_STRATEGY)) {
+      final String serializationStrategy = (String) anApplicationContext.get(UimaAsynchronousEngine.SERIALIZATION_STRATEGY);
+      setSerialFormat((serializationStrategy.equalsIgnoreCase("xmi")) ? SerialFormat.XMI : SerialFormat.BINARY);
+      clientSideJmxStats.setSerialization(getSerialFormat());
     }
     if (anApplicationContext.containsKey(UimaAsynchronousEngine.userName)) {
         amqUser = (String) anApplicationContext
@@ -792,7 +784,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "initialize",
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_as_initialized__INFO",
-              new Object[] { super.serializationStrategy });
+              new Object[] { UimaAsynchronousEngine.SERIALIZATION_STRATEGY });
     }
     // Acquire cpcReady semaphore to block sending CPC request until
     // ALL outstanding CASes are received.

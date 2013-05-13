@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.resource.ResourceInitializationException;
@@ -166,11 +167,11 @@ public interface UimaAsynchronousEngine {
   public static final String UimaEeDebug = "-uimaEeDebug";
 
   /**
-   * Type of serialization to use when serializing CASes to remote Uima AS service. Valid serialization types are: xmi or
-   * binary. If this setting is omitted, the Uima AS client uses xmi as a default. The application provides it to the Uima AS client 
+   * Type of serialization to use when serializing CASes to remote Uima AS service. Valid serialization types are: XMI or
+   * BINARY or COMPRESSED_BINARY_6. If this setting is omitted, the Uima AS client uses XMI as a default. The application provides it to the Uima AS client
    * in a Map which is an argument in {@link #initialize(Map)}
    */
-  public static final String SerializationStrategy = "SerializationStrategy";
+  public static final String SERIALIZATION_STRATEGY = "SerializationStrategy";
   
   /**
    * The userName for Message queuing connection if needed 
@@ -401,12 +402,12 @@ public interface UimaAsynchronousEngine {
 
   /**
    * Returns serialization strategy for the remote service. All CASes will be serialized according
-   * to the specified serialization. Either xmi or binary
+   * to the specified serialization. Either XMI or BINARY or COMPRESSED_BINARY_6
    * 
    * 
    * @return String type of serialization for CASes
    */
-  public String getSerializationStrategy();
+  public SerialFormat getSerialFormat();
 
   /**
    * Request Uima AS client to initiate sending Stop requests to a service for all outstanding CASes

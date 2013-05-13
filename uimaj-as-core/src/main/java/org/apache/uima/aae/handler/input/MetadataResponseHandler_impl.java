@@ -22,15 +22,13 @@ package org.apache.uima.aae.handler.input;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
-import org.apache.uima.aae.controller.AnalysisEngineController;
-import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
+import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.delegate.Delegate;
-import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.handler.HandlerBase;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
-import org.apache.uima.aae.message.UIMAMessage;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.util.Level;
 
 public class MetadataResponseHandler_impl extends HandlerBase {
@@ -71,17 +69,22 @@ public class MetadataResponseHandler_impl extends HandlerBase {
             // make sure that it matches "xmi". If the configuration says "binary" there
             // is a mis-configuration which we handle by overriding the endpoint setting using
             // "xmi" as a value for serialization strategy.
-            if (!((MessageContext) anObjectToHandle).propertyExists(AsynchAEMessage.Serialization)) {
+            int serializationSupportedByRemote;
+            if (!((MessageContext) anObjectToHandle).propertyExists(AsynchAEMessage.SERIALIZATION)) {
+              serializationSupportedByRemote = AsynchAEMessage.XMI_SERIALIZATION;
               Endpoint masterEndpoint = ((AggregateAnalysisEngineController) getController())
                       .lookUpEndpoint(delegateKey, false);
-              if (masterEndpoint.getSerializer().equals("binary")) {
+              if (masterEndpoint.getSerialFormat() != SerialFormat.XMI) {
                 // Override configured serialization
-                masterEndpoint.setSerializer("xmi");
+                masterEndpoint.setSerialFormat(SerialFormat.XMI);
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                         "handle", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAEE_override_serialization__WARNING",
                         new Object[] { getController().getComponentName(), delegateKey });
               }
+            } else {
+              // record the version of compressed binary serialization supported (if any)
+              serializationSupportedByRemote = ((MessageContext) anObjectToHandle).getMessageIntProperty(AsynchAEMessage.SERIALIZATION);
             }
             Delegate delegate = ((AggregateAnalysisEngineController) getController())
                     .lookupDelegate(delegateKey);
@@ -138,6 +141,7 @@ public class MetadataResponseHandler_impl extends HandlerBase {
             // tcp://localhost:61616
             ((AggregateAnalysisEngineController) getController()).mergeTypeSystem(
                     analysisEngineMetadata, fromEndpoint, fromServer);
+            ((AggregateAnalysisEngineController) getController()).setRemoteSerializationSupported(serializationSupportedByRemote, fromEndpoint, fromServer);
           }
         } else {
 

@@ -25,7 +25,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -78,6 +77,7 @@ import org.apache.uima.adapter.jms.ConnectionValidator;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.message.PendingMessage;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.collection.CollectionReader;
@@ -86,13 +86,11 @@ import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
+import org.apache.uima.resourceSpecifier.factory.SerializationStrategy;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.ProcessTrace;
 import org.apache.uima.util.XMLInputSource;
 import org.apache.uima.util.impl.ProcessTrace_impl;
-
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.DomDriver;
 
 public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsynchronousEngine,
         MessageListener {
@@ -127,7 +125,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   protected volatile boolean running = false;
 
   protected ProcessingResourceMetaData resourceMetadata;
-
+  
   protected CAS sendAndReceiveCAS = null;
 
   protected UIDGenerator idGenerator = new UIDGenerator();
@@ -163,7 +161,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   protected MessageConsumer consumer = null;
 
-  protected String serializationStrategy = "xmi";
+  protected SerialFormat serialFormat = SerialFormat.XMI;
 
   protected UimaASClientInfoMBean clientSideJmxStats = new UimaASClientInfo();
 
@@ -262,12 +260,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     listeners.add(aListener);
   }
 
-  public String getSerializationStrategy() {
-    return serializationStrategy;
+  public SerialFormat getSerialFormat() {
+    return serialFormat;
   }
 
-  protected void setSerializationStrategy(String aSerializationStrategy) {
-    serializationStrategy = aSerializationStrategy;
+  protected void setSerialFormat(SerialFormat aSerialFormat) {
+    serialFormat = aSerialFormat;
   }
 
   /**
@@ -830,7 +828,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         clientCache.put(casReferenceId, requestToCache);
         PendingMessage msg = new PendingMessage(AsynchAEMessage.Process);
         long t1 = System.nanoTime();
-        if (serializationStrategy.equals("xmi")) {
+        if (serialFormat == SerialFormat.XMI) {
           XmiSerializationSharedData serSharedData = new XmiSerializationSharedData();
           String serializedCAS = serializeCAS(aCAS, serSharedData);
           msg.put(AsynchAEMessage.CAS, serializedCAS);
@@ -1013,7 +1011,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
     serviceDelegate.cancelDelegateGetMetaTimer();
     serviceDelegate.setState(Delegate.OK_STATE);
-    // check if the reply msg contains replyTo destination. I will be
+    // check if the reply msg contains replyTo destination. It will be
     // added by the Cas Multiplier to the getMeta reply
     if (message.getJMSReplyTo() != null) {
       serviceDelegate.setFreeCasDestination(message.getJMSReplyTo());
@@ -1090,19 +1088,25 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         // If the client is configured to use Binary serialization *but* the service
         // doesnt support it, change the client serialization to xmi. Old services will
         // not return in a reply the type of serialization supported which implies "xmi".
-        // New services *always* return "binary" as a default serialization. The client
+        // New services *always* return "binary" or "compressedBinaryXXX" 
+        // as a default serialization. The client
         // however may still want to serialize messages using xmi though.
-        if (!message.propertyExists(AsynchAEMessage.Serialization)) {
+        if (!message.propertyExists(AsynchAEMessage.SERIALIZATION)) {
           // Dealing with an old service here, check if there is a mismatch with the
           // client configuration. If the client is configured with binary serialization
           // override this and change serialization to "xmi".
-          if (getSerializationStrategy().equalsIgnoreCase("binary")) {
+          if (getSerialFormat() != SerialFormat.XMI) {
             // Override configured serialization
-            setSerializationStrategy("xmi");
+            setSerialFormat(SerialFormat.XMI);
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                     "handleMetadataReply", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAJMS_client_serialization_ovveride__WARNING", new Object[] {});
           }
+        } else {
+          final int c = message.getIntProperty(AsynchAEMessage.SERIALIZATION);
+          setSerialFormat((c == AsynchAEMessage.XMI_SERIALIZATION) ? SerialFormat.XMI :
+                                   (c == AsynchAEMessage.BINARY_SERIALIZATION) ? SerialFormat.BINARY :
+                                     SerialFormat.COMPRESSED_FILTERED);
         }
         String meta = ((TextMessage) message).getText();
         ByteArrayInputStream bis = new ByteArrayInputStream(meta.getBytes());

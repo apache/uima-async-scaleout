@@ -19,20 +19,19 @@
 
 package org.apache.uima.aae.handler.input;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.SerializerCache;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
-import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
-import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
+import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
@@ -45,9 +44,9 @@ import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.DelegateStats;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.aae.monitor.statistics.TimerStats;
-import org.apache.uima.analysis_engine.asb.impl.FlowContainer;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.util.Level;
 
@@ -196,23 +195,33 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // Deserialize CAS from the message
       // *************************************************************************
       t1 = getController().getCpuTime();
-      String serializationStrategy = endpoint.getSerializer();
+      SerialFormat serialFormat = endpoint.getSerialFormat();
       XmiSerializationSharedData deserSharedData = null;
       
       UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
-      if (serializationStrategy.equals("xmi")) {
+      switch (serialFormat) {
+      case XMI:
         // Fetch serialized CAS from the message
         String xmi = aMessageContext.getStringMessage();
         deserSharedData = new XmiSerializationSharedData();
         uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
-      } else if (serializationStrategy.equals("binary")) {
+        break;
+      case BINARY:
+      case COMPRESSED:
+      case COMPRESSED_FILTERED:
         // *************************************************************************
         // Register the CAS with a local cache
         // *************************************************************************
         // CacheEntry entry = getController().getInProcessCache().register(cas, aMessageContext,
         // deserSharedData, casReferenceId);
         byte[] binarySource = aMessageContext.getByteMessage();
-        uimaSerializer.deserializeCasFromBinary(binarySource, cas);
+        // BINARY format may be COMPRESSED etc, so update it upon reading
+        serialFormat = uimaSerializer.deserializeCasFromBinary(binarySource, cas);
+        // BINARY format may be COMPRESSED etc, so update it upon reading
+        endpoint.setSerialFormat(serialFormat);
+        break;
+      default:
+        throw new RuntimeException("Never Happen");
       }
 
       // *************************************************************************

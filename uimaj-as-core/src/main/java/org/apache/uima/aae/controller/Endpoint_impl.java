@@ -19,20 +19,13 @@
 
 package org.apache.uima.aae.controller;
 
-import java.util.Date;
 import java.util.Timer;
-import java.util.TimerTask;
 
-import org.apache.uima.UIMAFramework;
-import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.error.AsynchAEException;
-import org.apache.uima.aae.error.ErrorContext;
-import org.apache.uima.aae.error.MessageTimeoutException;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.AsynchAEMessage;
-import org.apache.uima.analysis_engine.AnalysisEngine;
-import org.apache.uima.util.Level;
+import org.apache.uima.cas.SerialFormat;
 
 public class Endpoint_impl implements Endpoint, Cloneable {
   private static final Class CLASS_NAME = Endpoint_impl.class;
@@ -61,7 +54,9 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   private String descriptor;
 
-  private String serializer = "xmi";
+  private SerialFormat serialFormat = null;
+  
+  private String serializer = "xmi";  // spring bean interface
 
   private volatile boolean finalEndpoint;
 
@@ -241,10 +236,21 @@ public class Endpoint_impl implements Endpoint, Cloneable {
   }
 
   public void setSerializer(String serializer) {
-    if (serializer != null && serializer.trim().length() > 0) {
-      this.serializer = serializer;
-    }
+    this.serializer = serializer;
   }
+  
+  public SerialFormat getSerialFormat() {
+    if (serialFormat == null) {
+      serialFormat = (serializer.equalsIgnoreCase("xmi")) ? SerialFormat.XMI : SerialFormat.BINARY;
+    }
+    return serialFormat;
+  }
+  
+  public void setSerialFormat(SerialFormat serialFormat) {
+    this.serialFormat = serialFormat;
+    this.serializer = (serialFormat == SerialFormat.XMI) ? "xmi" : "binary";  // for error messages
+  }
+ 
 
   public int getMetadataRequestTimeout() {
     return metadataRequestTimeout;

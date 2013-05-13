@@ -73,8 +73,8 @@ import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
-import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.util.Level;
 
@@ -200,7 +200,7 @@ public class JmsOutputChannel implements OutputChannel {
    * @throws Exception
    */
   public String serializeCAS(boolean isReply, CAS aCAS, String aCasReferenceId,
-          String aSerializerKey) throws Exception {
+          SerialFormat aSerializerKey) throws Exception {
 
     long start = getAnalysisEngineController().getCpuTime();
 
@@ -208,7 +208,7 @@ public class JmsOutputChannel implements OutputChannel {
     //  Fetch dedicated Serializer associated with this thread
     UimaSerializer serializer = SerializerCache.lookupSerializerByThreadId();
 
-    if (isReply || "xmi".equalsIgnoreCase(aSerializerKey)) {
+    if (isReply || (aSerializerKey == SerialFormat.XMI)) {
       CacheEntry cacheEntry = getAnalysisEngineController().getInProcessCache()
               .getCacheEntryForCAS(aCasReferenceId);
 
@@ -254,18 +254,19 @@ public class JmsOutputChannel implements OutputChannel {
                 .setHighWaterMark(maxOutgoingXmiId);
       }
 
-    } else if ("xcas".equalsIgnoreCase(aSerializerKey)) {
-      // Default is XCAS
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      try {
-        serializer.serializeToXCAS(bos, aCAS, null, null, null);
-        serializedCas = bos.toString();
-      } catch (Exception e) {
-        throw e;
-      } finally {
-        bos.close();
-      }
-    }
+    } 
+//      else if ("xcas".equalsIgnoreCase(aSerializerKey)) {
+//      // Default is XCAS
+//      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//      try {
+//        serializer.serializeToXCAS(bos, aCAS, null, null, null);
+//        serializedCas = bos.toString();
+//      } catch (Exception e) {
+//        throw e;
+//      } finally {
+//        bos.close();
+//      }
+//    }
 
     LongNumericStatistic statistic;
     if ((statistic = getAnalysisEngineController().getMonitor().getLongNumericStatistic("",
@@ -715,7 +716,7 @@ public class JmsOutputChannel implements OutputChannel {
     }
   }
   private void serializeCasAndSend(CacheEntry entry, Endpoint anEndpoint) throws Exception {
-    if (anEndpoint.getSerializer().equals("xmi")) {
+    if (anEndpoint.getSerialFormat() == SerialFormat.XMI) {
       String serializedCAS = getSerializedCasAndReleaseIt(false, entry.getCasReferenceId(), anEndpoint,
               anEndpoint.isRetryEnabled());
       if (UIMAFramework.getLogger().isLoggable(Level.FINEST)) {
@@ -756,7 +757,7 @@ public class JmsOutputChannel implements OutputChannel {
     try {
       anEndpoint.setReplyEndpoint(true);
       if (anEndpoint.isRemote()) {
-        if (anEndpoint.getSerializer().equals("xmi")) {
+        if (anEndpoint.getSerialFormat() == SerialFormat.XMI) {
           // Serializes CAS and releases it back to CAS Pool
           String serializedCAS = getSerializedCas(true, entry.getCasReferenceId(), anEndpoint,
                   anEndpoint.isRetryEnabled());
@@ -1017,7 +1018,8 @@ public class JmsOutputChannel implements OutputChannel {
 
       tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.Metadata);
       // This service supports Binary Serialization
-      tm.setIntProperty(AsynchAEMessage.Serialization, AsynchAEMessage.BinarySerialization);
+//      tm.setIntProperty(AsynchAEMessage.Serialization, AsynchAEMessage.BinarySerialization);
+      tm.setIntProperty(AsynchAEMessage.SERIALIZATION, AsynchAEMessage.BINARY_SERIALIZATION);
 
       populateHeaderWithResponseContext(tm, anEndpoint, AsynchAEMessage.GetMeta);
       if (freeCASTempQueue != null) {
@@ -1091,14 +1093,14 @@ public class JmsOutputChannel implements OutputChannel {
               aCasReferenceId);
       long t1 = getAnalysisEngineController().getCpuTime();
       // Serialize CAS for remote Delegates
-      String serializerType = anEndpoint.getSerializer();
+      SerialFormat serializerType = anEndpoint.getSerialFormat();
       if (cas == null || entry == null) {
         return null;
       }
       //  Fetch dedicated Serializer associated with this thread
       UimaSerializer serializer = SerializerCache.lookupSerializerByThreadId();
 
-      if (serializerType.equals("binary")) {
+      if (serializerType == SerialFormat.BINARY) {
         
         if (entry.acceptsDeltaCas() && isReply) {
           if (entry.getMarker() != null && entry.getMarker().isValid()) {
@@ -1169,9 +1171,9 @@ public class JmsOutputChannel implements OutputChannel {
                 aCasReferenceId);
         long t1 = getAnalysisEngineController().getCpuTime();
         // Serialize CAS for remote Delegates
-        String serializer = anEndpoint.getSerializer();
-        if (serializer == null || serializer.trim().length() == 0) {
-          serializer = "xmi";
+        SerialFormat serializer = anEndpoint.getSerialFormat();
+        if (serializer == null) {
+          serializer = SerialFormat.XMI;
         }
         serializedCAS = serializeCAS(isReply, cas, aCasReferenceId, serializer);
         long timeToSerializeCas = getAnalysisEngineController().getCpuTime() - t1;
@@ -1569,7 +1571,7 @@ public class JmsOutputChannel implements OutputChannel {
       }
       Message tm = null;
       try {
-        if ( anEndpoint.getSerializer().equals("xmi")) {
+        if (anEndpoint.getSerialFormat() == SerialFormat.XMI) {
           tm = endpointConnection.produceTextMessage((String)aSerializedCAS);
           if (aSerializedCAS != null) {
             msgSize = ((String)aSerializedCAS).length();

@@ -138,7 +138,7 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
       appCtxt.put(UimaAsynchronousEngine.CpcTimeout, cpcTimeout);
     }
     if (binary_serialization != null && binary_serialization.equalsIgnoreCase("true")) {
-      appCtxt.put(UimaAsynchronousEngine.SerializationStrategy, "binary");
+      appCtxt.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "binary");
     }
     uimaEEEngine = new BaseUIMAAsynchronousEngine_impl();
     uimaEEEngine.addStatusCallbackListener(this);

@@ -19,7 +19,7 @@
 
 package org.apache.uima.aae.jmx;
 
-import java.util.Formatter;
+import org.apache.uima.cas.SerialFormat;
 
 /**
  * This class exposes client side statistics via JMX
@@ -75,7 +75,7 @@ public class UimaASClientInfo implements UimaASClientInfoMBean {
 
   private long _metaErrorCount;
 
-  private String serializationStrategy="xmi";  // default
+  private SerialFormat serialFormat = SerialFormat.XMI;  // default
   public synchronized void reset() {
     idleTime = 0;
     serializationTime = 0;
@@ -344,11 +344,11 @@ public class UimaASClientInfo implements UimaASClientInfoMBean {
     totalTimeWaitingForCas += aTimeWaitingForCas;
   }
 
-  public String getSerialization() {
-    return serializationStrategy;
+  public SerialFormat getSerialization() {
+    return serialFormat;
   }
 
-  public void setSerialization(String serializationStrategy) {
-    this.serializationStrategy = serializationStrategy;
+  public void setSerialization(SerialFormat serialFormat) {
+    this.serialFormat = serialFormat;
   }
 }

@@ -40,6 +40,7 @@ import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.SharedConnection;
 import org.apache.uima.adapter.jms.message.PendingMessage;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.impl.ProcessTrace_impl;
@@ -291,7 +292,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
              // Determine if this a CAS Process Request
              boolean casProcessRequest = isProcessRequest(pm);
              // Only Process request can be serialized as binary
-             if (casProcessRequest && engine.getSerializationStrategy().equals("binary")) {
+             if (casProcessRequest && (engine.getSerialFormat() != SerialFormat.XMI)) {
                message = createBytesMessage();
              } else {
                message = createTextMessage();
@@ -417,7 +418,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
 
       case AsynchAEMessage.Process:
         String casReferenceId = (String) aPm.get(AsynchAEMessage.CasReference);
-        if (engine.getSerializationStrategy().equals("xmi")) {
+        if (engine.getSerialFormat() == SerialFormat.XMI) {
           String serializedCAS = (String) aPm.get(AsynchAEMessage.CAS);
           engine.setCASMessage(casReferenceId, serializedCAS, anOutgoingMessage);
         } else {

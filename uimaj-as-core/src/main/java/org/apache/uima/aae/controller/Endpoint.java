@@ -21,6 +21,7 @@ package org.apache.uima.aae.controller;
 
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.ServiceInfo;
+import org.apache.uima.cas.SerialFormat;
 
 public interface Endpoint {
   public static final int OK = 1;
@@ -162,6 +163,10 @@ public interface Endpoint {
   public int getConcurrentReplyConsumers();
 
   public void setSerializer(String aSerializer);
+  
+  public SerialFormat getSerialFormat();
+  
+  public void setSerialFormat(SerialFormat serialFormat);
 
   public void setStatus(int aStatus);
 

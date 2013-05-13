@@ -131,7 +131,7 @@ public class RunRemoteAsyncAE {
         if (args[i].equals("-log")) {
           logCas = true;
         } else if (args[i].equals("-b")) {
-          appCtx.put(UimaAsynchronousEngine.SerializationStrategy, "binary");
+          appCtx.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "binary");
         } else if (args[i].equals("-i")) {
           ignoreErrors = true;
         } else {

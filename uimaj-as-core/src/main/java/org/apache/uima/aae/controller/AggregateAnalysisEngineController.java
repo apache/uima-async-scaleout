@@ -42,6 +42,8 @@ public interface AggregateAnalysisEngineController extends AnalysisEngineControl
   public void mergeTypeSystem(String aTypeSystem, String fromDestination, String fromServer)
           throws AsynchAEException;
 
+  public void setRemoteSerializationSupported(int code, String fromDestination, String fromServer);
+  
   public void sendRequestForMetadataToRemoteDelegates() throws AsynchAEException;
 
   public void addMessageOrigin(String aCasReferenceId, Endpoint anEndpoint);

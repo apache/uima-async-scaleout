@@ -19,6 +19,8 @@
 
 package org.apache.uima.aae.jmx;
 
+import org.apache.uima.cas.SerialFormat;
+
 public interface UimaASClientInfoMBean {
 
   public void setApplicationName(String anApplicationName);
@@ -113,7 +115,7 @@ public interface UimaASClientInfoMBean {
 
   public void reset();
 
-  public void setSerialization(String serializationStrategy);
+  public void setSerialization(SerialFormat serialFormat);
   
-  public String getSerialization();
+  public SerialFormat getSerialization();
 }

@@ -19,21 +19,18 @@
 
 package org.apache.uima.aae.handler.input;
 
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.uima.UIMAException;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.SerializerCache;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
-import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
-import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -50,6 +47,7 @@ import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.util.Level;
@@ -285,18 +283,25 @@ public class ProcessResponseHandler extends HandlerBase {
           casStateEntry.incrementHowManyDelegatesResponded();
         }
       } else { // Processing a reply from a non-parallel delegate (binary or delta xmi or xmi)
-        String serializationStrategy = endpointWithTimer.getSerializer();
-        if (serializationStrategy.equals("binary")) {
+        SerialFormat serialFormat = endpointWithTimer.getSerialFormat();
+        switch (serialFormat) {
+        case BINARY:
+        case COMPRESSED:
+        case COMPRESSED_FILTERED:
           UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
           byte[] binaryData = aMessageContext.getByteMessage();
           uimaSerializer.deserializeCasFromBinary(binaryData, cas);
-        } else {
+          break;
+        case XMI:
           if (aMessageContext.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas)) {
             int highWaterMark = cacheEntry.getHighWaterMark();
             deserialize(xmi, cas, casReferenceId, highWaterMark, AllowPreexistingFS.allow);
           } else {
             deserialize(xmi, cas, casReferenceId);
           }
+          break;
+        default:
+          throw new RuntimeException("Never happen");
         }
       }
       long timeToDeserializeCAS = getController().getCpuTime() - t1;

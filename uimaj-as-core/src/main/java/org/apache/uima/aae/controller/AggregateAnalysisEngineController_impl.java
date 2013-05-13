@@ -36,11 +36,10 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMARuntimeException;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.InProcessCache;
+import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
-import org.apache.uima.aae.InProcessCache.CacheEntry;
-import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.ControllerDelegate;
 import org.apache.uima.aae.delegate.Delegate;
@@ -70,7 +69,9 @@ import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Feature;
 import org.apache.uima.cas.FeatureStructure;
+import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.Type;
+import org.apache.uima.cas.impl.XmiCasSerializer;
 import org.apache.uima.flow.FinalStep;
 import org.apache.uima.flow.ParallelStep;
 import org.apache.uima.flow.SimpleStep;
@@ -82,7 +83,6 @@ import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.TypeSystemUtil;
 import org.apache.uima.util.XMLInputSource;
-import org.apache.uima.cas.impl.XmiCasSerializer;
 
 public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineController implements
         AggregateAnalysisEngineController, AggregateAnalysisEngineController_implMBean {
@@ -100,18 +100,18 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private static final int SERVICE_ERROR_INDX = 2;
 
-  private ConcurrentHashMap flowMap = new ConcurrentHashMap();
+  private ConcurrentHashMap<String, FlowContainer> flowMap = new ConcurrentHashMap<String, FlowContainer>();
 
-  private ConcurrentHashMap destinationMap;
+  private ConcurrentHashMap<String, Endpoint> destinationMap;
 
-  private Map destinationToKeyMap;
+  private Map<String, String> destinationToKeyMap;
 
   private volatile boolean typeSystemsMerged = false;
 
   private AnalysisEngineMetaData aggregateMetadata;
 
-  private HashMap analysisEngineMetaDataMap = new HashMap();
-
+  private HashMap<String, ProcessingResourceMetaData> analysisEngineMetaDataMap = new HashMap<String, ProcessingResourceMetaData>();
+  
   private List disabledDelegateList = new ArrayList();
 
   private List remoteCasMultiplierList = new ArrayList();
@@ -122,7 +122,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private String flowControllerDescriptor;
 
-  private ConcurrentHashMap originMap = new ConcurrentHashMap();
+  private ConcurrentHashMap<String, Endpoint> originMap = new ConcurrentHashMap<String, Endpoint>();
 
   private String controllerBeanName = null;
 
@@ -2515,8 +2515,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     endpointList.toArray(endpoints);
     for (Endpoint endpoint : endpoints) {
       if (endpoint.isRemote()) {
-        //  In Parallel Step serialization must be xmi.Binary serialization doesnt support merge.
-        endpoint.setSerializer("xmi");
+        //  In Parallel Step serialization must be xmi or CompressedBinary. Plain Binary serialization doesnt support merge.
+        if (endpoint.getSerialFormat() == SerialFormat.BINARY) {
+          endpoint.setSerialFormat(SerialFormat.XMI);  
+        }
         getOutputChannel().sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), endpoint);
       }    
     }
@@ -2616,6 +2618,17 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     return null;
   }
 
+  public void setRemoteSerializationSupported(int remoteAEserializationSupported, String fromDestination, String fromServer) {
+    String key = lookUpDelegateKey(fromDestination, fromServer);
+    Endpoint_impl endpoint = (key != null) ?  (Endpoint_impl) destinationMap.get(key) : null;    
+    if (endpoint == null) {
+      return;
+    }
+    endpoint.setSerialFormat((remoteAEserializationSupported == AsynchAEMessage.XMI_SERIALIZATION)    ? SerialFormat.XMI :
+                           (remoteAEserializationSupported == AsynchAEMessage.BINARY_SERIALIZATION) ? SerialFormat.BINARY :
+                                                                                                     SerialFormat.COMPRESSED_FILTERED);
+  }
+  
   public void mergeTypeSystem(String aTypeSystem, String fromDestination) throws AsynchAEException {
     mergeTypeSystem(aTypeSystem, fromDestination, null);
   }

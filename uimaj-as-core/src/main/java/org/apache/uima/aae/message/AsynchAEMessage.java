@@ -122,11 +122,13 @@ public interface AsynchAEMessage {
 
   public static final String SentDeltaCas = "SentDeltaCas";
 
-  public static final String Serialization = "Serialization";
+  public static final String SERIALIZATION = "Serialization";
 
-  public static final int XmiSerialization = 4000;
+  public static final int XMI_SERIALIZATION = 4000;  
 
-  public static final int BinarySerialization = 4001;
+  public static final int BINARY_SERIALIZATION = 4001; // supports uncompressed binary serialization, but not compressed binary serialization
+  
+  public static final int BINARY_COMPRESSED_FILTERED_SERIALIZATION = 4002;  // supports use of BinaryCasSerDes6
 
   public static final String ErrorCause = "Cause";
 

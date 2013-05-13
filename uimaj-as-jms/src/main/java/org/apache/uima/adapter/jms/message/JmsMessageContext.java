@@ -19,22 +19,18 @@
 
 package org.apache.uima.adapter.jms.message;
 
-import java.util.StringTokenizer;
-
 import javax.jms.BytesMessage;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
 
-import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.aae.message.UIMAMessage;
-import org.apache.uima.adapter.jms.JmsConstants;
-import org.apache.uima.util.Level;
+import org.apache.uima.cas.SerialFormat;
 
 public class JmsMessageContext implements MessageContext {
   private static final Class CLASS_NAME = JmsMessageContext.class;
@@ -52,15 +48,22 @@ public class JmsMessageContext implements MessageContext {
 
   }
 
+  /**
+   * Each new message could arrive from a new endpoint (e.g., a new client connecting to a service).
+   * The constructor constructs a new endpoint to represent this.
+   * @param aMessage
+   * @param anEndpointName
+   * @throws AsynchAEException
+   */
   public JmsMessageContext(Message aMessage, String anEndpointName) throws AsynchAEException {
     this();
     endpointName = anEndpointName;
     message = aMessage;
     try {
       if (aMessage instanceof BytesMessage) {
-        endpoint.setSerializer("binary");
+        endpoint.setSerialFormat(SerialFormat.BINARY);  // may be inaccurate - will fix after deserializing
       } else if (aMessage instanceof TextMessage) {
-        endpoint.setSerializer("xmi");
+        endpoint.setSerialFormat(SerialFormat.XMI);
       }
 
       String msgFrom = (String) aMessage.getStringProperty(AsynchAEMessage.MessageFrom);
