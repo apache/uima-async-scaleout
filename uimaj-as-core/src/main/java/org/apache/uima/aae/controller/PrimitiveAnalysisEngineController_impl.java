@@ -479,26 +479,34 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 	  return null;
   }
-  private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem) {
+  private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem, String uimaFullyQualifiedAEContext) {
 	  return new AnalysisEnginePerformanceMetrics(aem.getName(),
-                      aem.getUniqueMBeanName(),
+	                    uimaFullyQualifiedAEContext,
                       aem.getAnalysisTime(),
                       aem.getNumberOfCASesProcessed());
   }
 
   private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result) {
-	    if (aem.getComponents().isEmpty()) {
-	      if (!aem.getName().equals("Fixed Flow Controller")) {
-	    	  result.add(deepCopyMetrics(aem));
-	      }
-	    } else {
-	      for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
-		        getLeafManagementObjects(child, result);
-	      }
-	    }
+    getLeafManagementObjects(aem, result, "");
+
 	  }
 
-  
+  private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result, String uimaFullyQualifiedAEContext) {
+    if (aem.getComponents().isEmpty()) {
+      if (!aem.getName().equals("Fixed Flow Controller")) {
+        result.add(deepCopyMetrics(aem, uimaFullyQualifiedAEContext));
+      }
+    } else {
+      for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
+        if ( uimaFullyQualifiedAEContext.trim().length() > 0 ) {
+          getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext+"/"+aem.getName());
+        } else {
+          getLeafManagementObjects(child, result, aem.getName());
+        }
+      }
+    }
+  }
+
   
   public void destroyAE()  {
 	  try {
@@ -577,8 +585,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       AnalysisEngineManagement rootAem = ae.getManagementInterface();
       if ( rootAem.getComponents().size() > 0 ) {
           getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects);
+          
       } else {
-          beforeAnalysisManagementObjects.add(deepCopyMetrics(rootAem));   
+          beforeAnalysisManagementObjects.add(deepCopyMetrics(rootAem, ""));   
       }
       
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
@@ -840,7 +849,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           getLeafManagementObjects(aem, afterAnalysisManagementObjects);
       } else {
           //  Add the top level AnalysisEngineManagement instance.
-          afterAnalysisManagementObjects.add(deepCopyMetrics(aem));    
+          afterAnalysisManagementObjects.add(deepCopyMetrics(aem,""));    
       }
 
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
