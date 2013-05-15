@@ -444,8 +444,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
           return "Metadata";
         case AsynchAEMessage.Exception:
           return "Exception";
-        case AsynchAEMessage.XCASPayload:
-          return "XCASPayload";
+          // 5/2013 xcas not used
+//        case AsynchAEMessage.XCASPayload:
+//          return "XCASPayload";
         case AsynchAEMessage.None:
           return "None";
       }

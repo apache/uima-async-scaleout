@@ -40,7 +40,7 @@ import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.monitor.statistics.DelegateStats;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
-import org.apache.uima.cas.impl.OutOfTypeSystemData;
+import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.util.Level;
 
@@ -50,7 +50,7 @@ public class InProcessCache implements InProcessCacheMBean {
 	 */
   private static final long serialVersionUID = 1L;
 
-  private static final Class CLASS_NAME = InProcessCache.class;
+  private static final Class<InProcessCache> CLASS_NAME = InProcessCache.class;
 
   public static final int NotifyWhenRegistering = 1;
 
@@ -274,13 +274,14 @@ public class InProcessCache implements InProcessCacheMBean {
 
   }
 
-  public void removeCas(String aCasReferenceId) {
-    if (!cache.containsKey(aCasReferenceId)) {
-      return;
-    }
-    CacheEntry casRefEntry = getEntry(aCasReferenceId);
-    casRefEntry.deleteCAS();
-  }
+  // never called 5/2013
+//  public void removeCas(String aCasReferenceId) {
+//    if (!cache.containsKey(aCasReferenceId)) {
+//      return;
+//    }
+//    CacheEntry casRefEntry = getEntry(aCasReferenceId);
+//    casRefEntry.deleteCAS();
+//  }
 
   public synchronized CacheEntry[] getCacheEntriesForEndpoint(String anEndpointName) {
     CacheEntry[] entries;
@@ -349,13 +350,15 @@ public class InProcessCache implements InProcessCacheMBean {
     return casRefEntry.getMessageAccessor();
   }
 
-  public OutOfTypeSystemData getOutOfTypeSystemData(String aCasReferenceId) {
-    if (!cache.containsKey(aCasReferenceId)) {
-      return null;
-    }
-    CacheEntry casRefEntry = getEntry(aCasReferenceId);
-    return casRefEntry.getOtsd();
-  }
+
+  // not used 5/2013
+//  public OutOfTypeSystemData getOutOfTypeSystemData(String aCasReferenceId) {
+//    if (!cache.containsKey(aCasReferenceId)) {
+//      return null;
+//    }
+//    CacheEntry casRefEntry = getEntry(aCasReferenceId);
+//    return casRefEntry.getOtsd();
+//  }
 
   private synchronized CacheEntry getEntry(String aCasReferenceId) {
     if (!cache.containsKey(aCasReferenceId)) {
@@ -405,33 +408,42 @@ public class InProcessCache implements InProcessCacheMBean {
     return true;
   }
 
-  public CacheEntry register(CAS aCAS, MessageContext aMessageContext, OutOfTypeSystemData otsd)
+  public CacheEntry register(CAS aCAS, MessageContext aMessageContext /*, OutOfTypeSystemData otsd*/)
           throws AsynchAEException {
-    return register(aCAS, aMessageContext, otsd, idGenerator.nextId());
+    return register(aCAS, aMessageContext, /*otsd, */ idGenerator.nextId());
   }
 
-  public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
-          XmiSerializationSharedData sharedData) throws AsynchAEException {
-    return register(aCAS, aMessageContext, sharedData, idGenerator.nextId());
-  }
+  // not used 5/2013
+//  public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
+//          XmiSerializationSharedData sharedData) throws AsynchAEException {
+//    return register(aCAS, aMessageContext, sharedData, idGenerator.nextId());
+//  }
 
-  public CacheEntry register(CAS aCAS, MessageContext aMessageContext, OutOfTypeSystemData otsd,
+  public CacheEntry register(CAS aCAS, MessageContext aMessageContext, /* OutOfTypeSystemData otsd,*/
           String aCasReferenceId) throws AsynchAEException {
     return registerCacheEntry(aCasReferenceId, new CacheEntry(aCAS, aCasReferenceId,
-            aMessageContext, otsd));
+            aMessageContext /*, otsd*/));
   }
 
-  public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
-          XmiSerializationSharedData sharedData, String aCasReferenceId) throws AsynchAEException {
-    return registerCacheEntry(aCasReferenceId, new CacheEntry(aCAS, aCasReferenceId,
-            aMessageContext, sharedData));
-  }
+  // not used 5/2013
+//  public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
+//          XmiSerializationSharedData sharedData, String aCasReferenceId) throws AsynchAEException {
+//    return registerCacheEntry(aCasReferenceId, new CacheEntry(aCAS, aCasReferenceId,
+//            aMessageContext, sharedData));
+//  }
 
   public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
           XmiSerializationSharedData sharedData, String aCasReferenceId, Marker marker,
           boolean acceptsDeltaCas) throws AsynchAEException {
     return registerCacheEntry(aCasReferenceId, new CacheEntry(aCAS, aCasReferenceId,
             aMessageContext, sharedData, marker, acceptsDeltaCas));
+  }
+  
+  public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
+      ReuseInfo compress6ReuseInfo, String aCasReferenceId, Marker marker, boolean acceptsDeltaCas)
+      throws AsynchAEException {
+    return registerCacheEntry(aCasReferenceId, new CacheEntry(aCAS, aCasReferenceId,
+        aMessageContext, compress6ReuseInfo, marker, acceptsDeltaCas));
   }
 
   private synchronized CacheEntry registerCacheEntry(String aCasReferenceId, CacheEntry entry) {
@@ -513,8 +525,8 @@ public class InProcessCache implements InProcessCacheMBean {
 
     private MessageContext messageAccessor;
 
-    private OutOfTypeSystemData otsd = null;
-
+//    private OutOfTypeSystemData otsd = null;
+    
     private String serializedCas;
 
     private String casProducerKey;
@@ -530,6 +542,8 @@ public class InProcessCache implements InProcessCacheMBean {
     private int highWaterMark;
 
     private XmiSerializationSharedData deserSharedData;
+
+    private ReuseInfo compress6ReuseInfo;
 
     private String aggregateProducingTheCas;
 
@@ -587,23 +601,32 @@ public class InProcessCache implements InProcessCacheMBean {
     public void setThreadCompletionSemaphore(Semaphore threadCompletionSemaphore) {
       this.threadCompletionSemaphore = threadCompletionSemaphore;
     }
+    // never called 5/2013  was for XCAS
+//    protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
+//            OutOfTypeSystemData aotsd) {
+//      this(aCas, aCasReferenceId, aMessageAccessor);
+//      messageAccessor = aMessageAccessor;
+//    }
 
-    protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
-            OutOfTypeSystemData aotsd) {
-      this(aCas, aCasReferenceId, aMessageAccessor);
-      messageAccessor = aMessageAccessor;
-    }
-
-    protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
-            XmiSerializationSharedData sdata) {
-      this(aCas, aCasReferenceId, aMessageAccessor);
-      deserSharedData = sdata;
-    }
+    // never called 5/2013  
+//    protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
+//            XmiSerializationSharedData sdata) {
+//      this(aCas, aCasReferenceId, aMessageAccessor);
+//      deserSharedData = sdata;
+//    }
 
     protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
             XmiSerializationSharedData sdata, Marker aMarker, boolean acceptsDeltaCas) {
       this(aCas, aCasReferenceId, aMessageAccessor);
       deserSharedData = sdata;
+      this.marker = aMarker;
+      this.acceptsDeltaCas = acceptsDeltaCas;
+    }
+
+    protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
+        ReuseInfo compress6ReuseInfo, Marker aMarker, boolean acceptsDeltaCas) {
+      this(aCas, aCasReferenceId, aMessageAccessor);
+      this.compress6ReuseInfo = compress6ReuseInfo;
       this.marker = aMarker;
       this.acceptsDeltaCas = acceptsDeltaCas;
     }
@@ -716,23 +739,25 @@ public class InProcessCache implements InProcessCacheMBean {
       }
     }
 
-    protected void deleteCAS() {
-      cas = null;
-      otsd = null;
-    }
+    // never called 5/2013
+//    protected void deleteCAS() {
+//      cas = null;
+////      otsd = null;
+//      compress6ReuseInfo = null;
+//    }
 
     public CAS getCas() {
       return cas;
     }
 
-    protected void setCas(CAS aCAS, OutOfTypeSystemData aotsd) {
-      cas = aCAS;
-      otsd = aotsd;
-    }
+//    protected void setCas(CAS aCAS, OutOfTypeSystemData aotsd) {
+//      cas = aCAS;
+//      otsd = aotsd;
+//    }
 
-    protected void setCas(CAS aCAS) {
-      cas = aCAS;
-    }
+//    protected void setCas(CAS aCAS) {
+//      cas = aCAS;
+//    }
 
     protected void setSerializedCas(String aSerializedCas) {
       serializedCas = aSerializedCas;
@@ -746,9 +771,10 @@ public class InProcessCache implements InProcessCacheMBean {
       return messageAccessor;
     }
 
-    public OutOfTypeSystemData getOtsd() {
-      return otsd;
-    }
+    // not used 5/2013
+//    public OutOfTypeSystemData getOtsd() {
+//      return otsd;
+//    }
 
     public int getHighWaterMark() {
       return highWaterMark;
@@ -773,6 +799,14 @@ public class InProcessCache implements InProcessCacheMBean {
 
     public void setXmiSerializationData(XmiSerializationSharedData anXmiSerializationData) {
       deserSharedData = anXmiSerializationData;
+    }
+    
+    public ReuseInfo getCompress6ReuseInfo() {
+      return compress6ReuseInfo;
+    }
+    
+    public void setCompress6ReuseInfo(ReuseInfo compress6ReuseInfo) {
+      this.compress6ReuseInfo = compress6ReuseInfo;
     }
 
     public String getCasProducerAggregateName() {

@@ -36,9 +36,10 @@ public interface AsynchAEMessage {
 
   public static final String MessageFrom = "MessageFrom";
 
-  public static final String XCASREFId = "XCASRefId";
+  // 5/2013 xcas not used as a serialization form
+//  public static final String XCASREFId = "XCASRefId";
 
-  public static final String XCas = "XCas";
+//  public static final String XCas = "XCas";
 
   public static final String AEMetadata = "Metadata";
 
@@ -86,7 +87,8 @@ public interface AsynchAEMessage {
 
   public static final int Exception = 1003;
 
-  public static final int XCASPayload = 1004;
+  // 5/2013 xcas not used as a serialization form
+//  public static final int XCASPayload = 1004;
 
   public static final int None = 1005;
 

@@ -713,10 +713,10 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             return;
           }
         }
-        OutOfTypeSystemData otsd = getInProcessCache().getOutOfTypeSystemData(aCasReferenceId);
+//        OutOfTypeSystemData otsd = getInProcessCache().getOutOfTypeSystemData(aCasReferenceId);
         MessageContext mContext = getInProcessCache()
                 .getMessageAccessorByReference(aCasReferenceId);
-        CacheEntry newEntry = getInProcessCache().register(casProduced, mContext, otsd);
+        CacheEntry newEntry = getInProcessCache().register(casProduced, mContext /*, otsd*/);
         // if this Cas Multiplier is not Top Level service, add new Cas Id to the private
         // cache of the parent aggregate controller. The Aggregate needs to know about
         // all CASes it has in play that were generated from the input CAS.
