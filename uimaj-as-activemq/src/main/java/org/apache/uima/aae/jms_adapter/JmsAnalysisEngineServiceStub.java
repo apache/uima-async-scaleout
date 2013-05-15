@@ -126,7 +126,7 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     // initialize UIMA EE Engine
     Map appCtxt = new HashMap();
     appCtxt.put(UimaAsynchronousEngine.ServerUri, brokerUrl);
-    appCtxt.put(UimaAsynchronousEngine.Endpoint, endpoint);
+    appCtxt.put(UimaAsynchronousEngine.ENDPOINT, endpoint);
     appCtxt.put(UimaAsynchronousEngine.CasPoolSize, 0);
     if (timeout > 0) {
       appCtxt.put(UimaAsynchronousEngine.Timeout, timeout);

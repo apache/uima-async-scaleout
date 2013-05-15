@@ -192,7 +192,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           int timeout) throws Exception {
     Map<String, Object> appCtx = new HashMap();
     appCtx.put(UimaAsynchronousEngine.ServerUri, aTopLevelServiceBrokerURI);
-    appCtx.put(UimaAsynchronousEngine.Endpoint, aTopLevelServiceQueueName);
+    appCtx.put(UimaAsynchronousEngine.ENDPOINT, aTopLevelServiceQueueName);
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, Integer.valueOf(4));
     appCtx.put(UimaAsynchronousEngine.ReplyWindow, 15);
     appCtx.put(UimaAsynchronousEngine.Timeout, timeout);

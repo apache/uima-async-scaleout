@@ -26,6 +26,7 @@ import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.cas.SerialFormat;
+import org.apache.uima.cas.impl.TypeSystemImpl;
 
 public class Endpoint_impl implements Endpoint, Cloneable {
   private static final Class CLASS_NAME = Endpoint_impl.class;
@@ -116,10 +117,21 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   private volatile boolean freeCasEndpoint = false;
   
+  private volatile TypeSystemImpl typeSystemImpl;
+  
   
   public Endpoint_impl() {
     status = Endpoint.OK;
   }
+  
+  public void setTypeSystemImpl(TypeSystemImpl typeSystemImpl) {
+    this.typeSystemImpl = typeSystemImpl;
+  }
+  
+  public TypeSystemImpl getTypeSystemImpl() {
+    return typeSystemImpl;
+  }
+  
   public void setFreeCasEndpoint(boolean trueOrFalse) {
     freeCasEndpoint = trueOrFalse;
   }

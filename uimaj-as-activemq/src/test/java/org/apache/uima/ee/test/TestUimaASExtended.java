@@ -2553,7 +2553,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     
     Map<String, Object> appCtx = new HashMap();
     appCtx.put(UimaAsynchronousEngine.ServerUri, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
-    appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.ENDPOINT, "TopLevelTaeQueue");
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
     runTest(appCtx, eeUimaEngine, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(),
             "TopLevelTaeQueue", 1, PROCESS_LATCH);    
@@ -2996,7 +2996,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       // Initialize and run the Test. Wait for a completion and cleanup resources.
       Map<String, Object> appCtx = new HashMap();
       appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(broker.getMasterConnectorURI()));
-      appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
+      appCtx.put(UimaAsynchronousEngine.ENDPOINT, "TopLevelTaeQueue");
       appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
       runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
               "TopLevelTaeQueue", 1, EXCEPTION_LATCH);
@@ -3069,7 +3069,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       // Initialize and run the Test. Wait for a completion and cleanup resources.
       Map<String, Object> appCtx = new HashMap();
       appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(broker.getMasterConnectorURI()));
-      appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
+      appCtx.put(UimaAsynchronousEngine.ENDPOINT, "TopLevelTaeQueue");
       appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
       runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
               "TopLevelTaeQueue", 1, PROCESS_LATCH);
@@ -3285,7 +3285,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     Map<String, Object> appCtx = new HashMap();
     appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(broker.getMasterConnectorURI()));
-    appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.ENDPOINT, "TopLevelTaeQueue");
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, Integer.valueOf(4));
     appCtx.put(UimaAsynchronousEngine.ReplyWindow, 15);
     appCtx.put(UimaAsynchronousEngine.Timeout, 0);

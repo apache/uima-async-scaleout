@@ -71,6 +71,10 @@ import org.apache.uima.cas.Feature;
 import org.apache.uima.cas.FeatureStructure;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.Type;
+import org.apache.uima.cas.admin.CASFactory;
+import org.apache.uima.cas.admin.CASMgr;
+import org.apache.uima.cas.impl.CASImpl;
+import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.cas.impl.XmiCasSerializer;
 import org.apache.uima.flow.FinalStep;
 import org.apache.uima.flow.ParallelStep;
@@ -80,6 +84,7 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
+import org.apache.uima.util.CasCreationUtils;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.TypeSystemUtil;
 import org.apache.uima.util.XMLInputSource;
@@ -2624,9 +2629,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (endpoint == null) {
       return;
     }
-    endpoint.setSerialFormat((remoteAEserializationSupported == AsynchAEMessage.XMI_SERIALIZATION)    ? SerialFormat.XMI :
-                           (remoteAEserializationSupported == AsynchAEMessage.BINARY_SERIALIZATION) ? SerialFormat.BINARY :
+    if (endpoint.getSerialFormat() != SerialFormat.XMI) {
+      // only set if xmi not specified.  Otherwise, leave alone
+      endpoint.setSerialFormat((remoteAEserializationSupported == AsynchAEMessage.XMI_SERIALIZATION)    ? SerialFormat.XMI :
+                               (remoteAEserializationSupported == AsynchAEMessage.BINARY_SERIALIZATION) ? SerialFormat.BINARY :
                                                                                                      SerialFormat.COMPRESSED_FILTERED);
+    }
   }
   
   public void mergeTypeSystem(String aTypeSystem, String fromDestination) throws AsynchAEException {
@@ -2683,6 +2691,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           resource = UIMAFramework.getXMLParser().parseResourceMetaData(in1);
           if (isStopped()) {
             return;
+          }
+          // for remote serialization with type filtering, create and save the type system impl
+          if (endpoint.isRemote()) {
+            endpoint.setTypeSystemImpl(getTypeSystemImpl((ProcessingResourceMetaData) resource));
           }
           getCasManagerWrapper().addMetadata((ProcessingResourceMetaData) resource);
           analysisEngineMetaDataMap.put(key, (ProcessingResourceMetaData) resource);
@@ -2757,6 +2769,20 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     } catch (Exception e) {
       throw new AsynchAEException(e);
     }
+  }
+  
+  public static TypeSystemImpl getTypeSystemImpl(ProcessingResourceMetaData resource) throws ResourceInitializationException {
+    CASMgr casMgr = CASFactory.createCAS(8, false);
+    try {
+      CasCreationUtils.setupTypeSystem(casMgr, resource.getTypeSystem());
+      ((CASImpl) casMgr).commitTypeSystem();
+    } catch (ResourceInitializationException e) {
+      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, "AggregateAnalysisEngineController_impl",
+          "getTypeSystemImpl", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+          "UIMAEE_exception__WARNING", e);
+      throw e;
+    }
+    return ((CASImpl) casMgr).getTypeSystemImpl();
   }
 
   private synchronized void completeInitialization() throws Exception {

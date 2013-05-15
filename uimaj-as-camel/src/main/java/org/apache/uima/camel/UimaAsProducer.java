@@ -155,7 +155,7 @@ public UimaAsProducer(String brokerAddress, String queue, Integer casPoolSize, I
 
     Map<String, Object> appCtx = new HashMap<String, Object>();
     appCtx.put(UimaAsynchronousEngine.ServerUri, brokerAddress);
-    appCtx.put(UimaAsynchronousEngine.Endpoint, queue);
+    appCtx.put(UimaAsynchronousEngine.ENDPOINT, queue);
     
     if (casPoolSize != null) 
     	appCtx.put(UimaAsynchronousEngine.CasPoolSize, casPoolSize.intValue());

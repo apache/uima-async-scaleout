@@ -96,7 +96,7 @@ public interface UimaAsynchronousEngine {
    * to the Uima AS client in a Map which is an argument in {@link #initialize(Map)}. Required. If omitted, the
    * Uima AS client throws {@link ResourceInitializationException}
    */
-  public final String Endpoint = "Endpoint";
+  public final String ENDPOINT = "Endpoint";
 
   /**
    * Size of Cas pool to create. This parameter determines how many CASes can be processed concurrently.

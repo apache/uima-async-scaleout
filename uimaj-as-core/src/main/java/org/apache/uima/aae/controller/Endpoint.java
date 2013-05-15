@@ -22,6 +22,7 @@ package org.apache.uima.aae.controller;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.cas.SerialFormat;
+import org.apache.uima.cas.impl.TypeSystemImpl;
 
 public interface Endpoint {
   public static final int OK = 1;
@@ -183,4 +184,8 @@ public interface Endpoint {
   public void setFreeCasEndpoint(boolean trueOrFalse);
   
   public boolean isFreeCasEndpoint();
+  
+  public void setTypeSystemImpl(TypeSystemImpl typeSystemImpl);
+  
+  public TypeSystemImpl getTypeSystemImpl();
 }

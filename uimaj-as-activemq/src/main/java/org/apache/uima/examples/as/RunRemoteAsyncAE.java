@@ -226,7 +226,7 @@ public class RunRemoteAsyncAE {
     // Add Broker URI
     appCtx.put(UimaAsynchronousEngine.ServerUri, brokerUrl);
     // Add Queue Name
-    appCtx.put(UimaAsynchronousEngine.Endpoint, endpoint);
+    appCtx.put(UimaAsynchronousEngine.ENDPOINT, endpoint);
     // Add timeouts (UIMA EE expects it in milliseconds, but we use seconds on the command line)
     appCtx.put(UimaAsynchronousEngine.Timeout, timeout * 1000);
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, getmeta_timeout * 1000);

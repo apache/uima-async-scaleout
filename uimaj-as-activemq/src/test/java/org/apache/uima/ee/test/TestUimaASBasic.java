@@ -192,7 +192,7 @@ public class TestUimaASBasic extends BaseTestSupport {
 
     Map<String, Object> appCtx = new HashMap();
     appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(broker.getMasterConnectorURI()));
-    appCtx.put(UimaAsynchronousEngine.Endpoint, "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.ENDPOINT, "TopLevelTaeQueue");
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, Integer.valueOf(4));
     appCtx.put(UimaAsynchronousEngine.ReplyWindow, 15);
     appCtx.put(UimaAsynchronousEngine.Timeout, 0);

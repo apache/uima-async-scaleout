@@ -602,7 +602,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if (!anApplicationContext.containsKey(UimaAsynchronousEngine.ServerUri)) {
       throw new ResourceInitializationException();
     }
-    if (!anApplicationContext.containsKey(UimaAsynchronousEngine.Endpoint)) {
+    if (!anApplicationContext.containsKey(UimaAsynchronousEngine.ENDPOINT)) {
       throw new ResourceInitializationException();
     }
     ResourceManager rm = null;
@@ -620,7 +620,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     asynchManager = new AsynchAECasManager_impl(rm);
 
     brokerURI = (String) anApplicationContext.get(UimaAsynchronousEngine.ServerUri);
-    String endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.Endpoint);
+    String endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.ENDPOINT);
     
     //  Check if a placeholder is passed in instead of actual broker URL or endpoint. 
     //  The placeholder has the syntax ${placeholderName} and may be imbedded in text.

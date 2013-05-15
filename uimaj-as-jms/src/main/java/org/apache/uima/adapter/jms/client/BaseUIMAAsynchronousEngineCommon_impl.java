@@ -58,6 +58,8 @@ import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaASStatusCallbackListener;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
+import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -79,6 +81,7 @@ import org.apache.uima.adapter.jms.message.PendingMessage;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
+import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.EntityProcessStatus;
@@ -162,6 +165,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   protected MessageConsumer consumer = null;
 
   protected SerialFormat serialFormat = SerialFormat.XMI;
+  
+  protected TypeSystemImpl typeSystemImpl; // of the remote service, for filtered binary compression
 
   protected UimaASClientInfoMBean clientSideJmxStats = new UimaASClientInfo();
 
@@ -267,7 +272,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   protected void setSerialFormat(SerialFormat aSerialFormat) {
     serialFormat = aSerialFormat;
   }
+  
+  public TypeSystemImpl getTypeSystemImpl() {
+    return typeSystemImpl;
+  }
 
+  protected void setTypeSystemImpl(TypeSystemImpl typeSystemImpl) {
+    this.typeSystemImpl = typeSystemImpl;
+  }
   /**
    * Serializes a given CAS.
    * 
@@ -1104,9 +1116,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           }
         } else {
           final int c = message.getIntProperty(AsynchAEMessage.SERIALIZATION);
-          setSerialFormat((c == AsynchAEMessage.XMI_SERIALIZATION) ? SerialFormat.XMI :
-                                   (c == AsynchAEMessage.BINARY_SERIALIZATION) ? SerialFormat.BINARY :
-                                     SerialFormat.COMPRESSED_FILTERED);
+          if (getSerialFormat() != SerialFormat.XMI) {
+            // don't override if XMI - because the remote may have different type system
+              setSerialFormat((c == AsynchAEMessage.XMI_SERIALIZATION)    ? SerialFormat.XMI :
+                              (c == AsynchAEMessage.BINARY_SERIALIZATION) ? SerialFormat.BINARY :
+                                                                            SerialFormat.COMPRESSED_FILTERED);
+          }
         }
         String meta = ((TextMessage) message).getText();
         ByteArrayInputStream bis = new ByteArrayInputStream(meta.getBytes());
@@ -1114,6 +1129,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         // Adam - store ResouceMetaData in field so we can return it from getMetaData().
         resourceMetadata = (ProcessingResourceMetaData) UIMAFramework.getXMLParser()
                 .parseResourceMetaData(in1);
+        // if remote delegate, save type system 
+        if (!brokerURI.startsWith("vm:")) { // test if remote
+          setTypeSystemImpl(AggregateAnalysisEngineController_impl.getTypeSystemImpl(resourceMetadata));
+        }
         casMultiplierDelegate = resourceMetadata.getOperationalProperties().getOutputsNewCASes();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
