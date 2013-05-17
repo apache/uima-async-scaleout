@@ -696,7 +696,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         if ( i == 5 ) {
           broker2.stop();
           synchronized(this) {
-            wait(3000);   // allow broker some time to stop 
+            wait(9000);   // allow broker some time to stop. changed from 3 seconds to 9 to make test work on a laptop 5/2013
           }
         } else if ( i == 10 ) {
           //  restart the broker 
@@ -705,7 +705,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           
           broker2.start();
           synchronized(this) {
-            wait(3000);   // allow broker some time to start  
+            wait(9000);   // allow broker some time to start. changed from 3 seconds to 9 to make test work on a laptop  5/2013
           }
         }
         CAS cas = uimaAsEngine.getCAS();
