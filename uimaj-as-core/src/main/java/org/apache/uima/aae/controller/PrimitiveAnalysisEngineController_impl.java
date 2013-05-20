@@ -522,6 +522,19 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 		  e.printStackTrace();
 	  }
   }
+  private String produceUniqueName(AnalysisEngineManagement aem) {
+	  String[] parts = aem.getUniqueMBeanName().split(",");
+	  StringBuffer sb = new StringBuffer();
+	  for( String part : parts) {
+		  int pos;
+		  if ( (pos = part.indexOf("=") )> -1 && part.startsWith("p")) {
+			  String n = part.substring(pos+1, part.indexOf(" Components"));
+			  sb.append("/").append(n.trim());
+		  }
+	  }
+	  return sb.toString();
+  }
+  
   /**
    * This is called when a Stop request is received from a client. Add the provided Cas id to the
    * list of aborted CASes. The process() method checks this list to determine if it should continue
@@ -585,9 +598,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       AnalysisEngineManagement rootAem = ae.getManagementInterface();
       if ( rootAem.getComponents().size() > 0 ) {
           getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects);
-          
       } else {
-          beforeAnalysisManagementObjects.add(deepCopyMetrics(rootAem, ""));   
+    	  String path=produceUniqueName(rootAem);
+          beforeAnalysisManagementObjects.add(deepCopyMetrics(rootAem, path));   
       }
       
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
@@ -848,8 +861,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           //  afterAnalysisManagementObjects List.
           getLeafManagementObjects(aem, afterAnalysisManagementObjects);
       } else {
-          //  Add the top level AnalysisEngineManagement instance.
-          afterAnalysisManagementObjects.add(deepCopyMetrics(aem,""));    
+    	  String path=produceUniqueName(aem);
+          afterAnalysisManagementObjects.add(deepCopyMetrics(aem, path));   
       }
 
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
