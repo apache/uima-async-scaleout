@@ -78,13 +78,19 @@ import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.util.Level;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.apache.uima.resource.ResourceProcessException;
+
+
 import com.thoughtworks.xstream.XStream;
 
 public class JmsOutputChannel implements OutputChannel {
 
   private static final Class CLASS_NAME = JmsOutputChannel.class;
 
-  private static final long INACTIVITY_TIMEOUT = 300000; // 5 minutes in term of millis
+  private static final long INACTIVITY_TIMEOUT = 600000; // 10 minutes in term of millis
 
   private CountDownLatch controllerLatch = new CountDownLatch(1);
 
@@ -1879,188 +1885,77 @@ public class JmsOutputChannel implements OutputChannel {
       connectionCreationTimestamp = aConnectionCreationTimestamp;
     }
 
-//    public void startTimer(long aConnectionCreationTimestamp, final Endpoint endpoint) {
-//      startTimer(aConnectionCreationTimestamp, endpoint, inactivityTimeout, componentName);
-//    }
-
+    /**
+     * Schedules regular cleanup of JMS sessions. A session is cleaned up (closed) if it has not
+     * been used in an interval defined by value in inactivityTimeout.
+     * 
+     * @param aComponentName
+     */
     public synchronized void startSessionReaperTimer( String aComponentName) {
-      //Date timeToRun = new Date(System.currentTimeMillis() + inactivityTimeout);
-      if (timer != null) {
-        timer.cancel();
-      }
-      if (controller != null) {
-        timer = new Timer("Controller:" + aComponentName + ":Session Reaper TimerThread-:"
-                + System.nanoTime());
-      } else {
-        timer = new Timer("Session Reaper TimerThread-:" + System.nanoTime());
-      }
-	  System.out.println("Controller:"+controller.getComponentName()+" Starting Session Cleanup Thread with Expiration Time:"+(inactivityTimeout/1000) +" secs"+" Broker:"+brokerDestinations.getBrokerURL());
-      timer.scheduleAtFixedRate(new TimerTask() {
-          public void run() {
-        	 // System.out.println("Hashcode:"+hashCode()+" Controller:"+controller.getComponentName()+" Session Cleanup Thread Woke Up After "+(inactivityTimeout/1000) +" secs of Sleep to Clean Up Unused JMS Sessions");
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-                UIMAFramework.getLogger(CLASS_NAME).logrb(
-                        Level.FINE,
-                        CLASS_NAME.getName(),
-                        "startTimer",
-                        JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAJMS_inactivity_timer_expired__FINE",
-                        new Object[] { Thread.currentThread().getId(), componentName,
-                            inactivityTimeout, brokerDestinations.getBrokerURL() });
-              }
-              try {
-                  if (brokerDestinations.getConnection() != null
-                          && !((ActiveMQConnection) brokerDestinations.getConnection()).isClosed()) {
-                    try {
-                    	Iterator<Entry<Object, JmsEndpointConnection_impl>> it = 
-                    			brokerDestinations.endpointMap.entrySet().iterator();
-                    	while( it.hasNext() ) {
-                    		Entry<Object, JmsEndpointConnection_impl> value = it.next();
-                    		long lastDispatchTime = value.getValue().lastDispatchTimestamp.get();
-                        	String dest = (value.getValue().isReplyEndpoint )? 
-                        			value.getValue().delegateEndpoint.getDestination().toString(): 
-                        			value.getValue().destination.toString();
-                    	//	System.out.println("\t\tController:"+controller.getComponentName()+" Session Iterator: Session:"+dest);
-                    		if ( (System.currentTimeMillis() - lastDispatchTime) >= inactivityTimeout ) {
-                    			value.getValue().close();
-                    			System.out.println("Controller:"+controller.getComponentName()+" Closing Session for Destination:"+dest);
-
-                    			if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        //	Fire the runnable at fixed intervals equal to inactivityTimeout value
+        scheduler.scheduleAtFixedRate(new Runnable(){
+            public void run() {
+          	   System.out.println("Hashcode:"+hashCode()+" Controller:"+controller.getComponentName()+" Session Cleanup Thread Woke Up After "+(inactivityTimeout/1000) +" secs of Sleep to Clean Up Unused JMS Sessions");
+                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(
+                          Level.INFO,
+                          CLASS_NAME.getName(),
+                          "startSessionReaperTimer.run",
+                          JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAJMS_inactivity_timer_expired__INFO",
+                          new Object[] { Thread.currentThread().getId(), componentName,
+                              inactivityTimeout, brokerDestinations.getBrokerURL() });
+                }
+                try {
+                    if (brokerDestinations.getConnection() != null
+                            && !((ActiveMQConnection) brokerDestinations.getConnection()).isClosed()) {
+                      try {
+                      	Iterator<Entry<Object, JmsEndpointConnection_impl>> it = 
+                      			brokerDestinations.endpointMap.entrySet().iterator();
+                      	//	loop through all endpoint wrappers (JmsEndpointConnection_impl) and
+                      	//  close sessions which have not been used for a defined (inactivity_timeout)
+                      	//  amount of time. 
+                      	while( it.hasNext() ) {
+                      		Entry<Object, JmsEndpointConnection_impl> value = it.next();
+                      		long lastDispatchTime = value.getValue().lastDispatchTimestamp.get();
+                      		if ( (System.currentTimeMillis() - lastDispatchTime) >= inactivityTimeout ) {
+                      			value.getValue().close();  // close the jms session
+                      			it.remove();
+                      		}
+                      	}
+                      } catch (Exception e) {
+                      	e.printStackTrace();
+                      } finally {
+                        try {
+                      	  if ( brokerDestinations.endpointMap.isEmpty() ) {
+                          	  brokerDestinations.getConnection().stop();
+                                brokerDestinations.getConnection().close();
+                                brokerDestinations.setConnection(null);
+                                brokerDestinations.endpointMap.clear();
+                                connectionMap.remove(brokerDestinations);
+                                
+                                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
                                     UIMAFramework.getLogger(CLASS_NAME).logrb(
                                             Level.FINE,
                                             CLASS_NAME.getName(),
                                             "startTimer",
                                             JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                                            "UIMAJMS_removed_expired_session__FINE",
+                                            "UIMAJMS_closing_broker_connection__FINE",
                                             new Object[] { Thread.currentThread().getId(), componentName,
-                                                inactivityTimeout, brokerDestinations.getBrokerURL(),dest });
+                                                brokerDestinations.getBrokerURL(),inactivityTimeout  });
                                   }
-                    			it.remove();
-                    		}
-                    	}
-                    } catch (Exception e) {
-                    	e.printStackTrace();
-                      // Ignore this for now. Attempting to close connection that has been closed
-                      // Ignore we are shutting down
-                    } finally {
-                      try {
-                    	  if ( brokerDestinations.endpointMap.isEmpty() ) {
-                        	  brokerDestinations.getConnection().stop();
-                              brokerDestinations.getConnection().close();
-                              brokerDestinations.setConnection(null);
-                              brokerDestinations.endpointMap.clear();
-                              connectionMap.remove(brokerDestinations);
-                              
-                              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-                                  UIMAFramework.getLogger(CLASS_NAME).logrb(
-                                          Level.FINE,
-                                          CLASS_NAME.getName(),
-                                          "startTimer",
-                                          JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                                          "UIMAJMS_closing_broker_connection__FINE",
-                                          new Object[] { Thread.currentThread().getId(), componentName,
-                                              brokerDestinations.getBrokerURL(),inactivityTimeout  });
-                                }
-                    	  }
-                      } catch( Exception e) {
+                      	  }
+                        } catch( Exception e) {
+                        }
                       }
                     }
-                  }
-//                  brokerDestinations.setConnection(null);
-                } catch (Exception e) {
-                } 
-//              finally {
-//                  removeDestinationFromManagedList(brokerDestinations, endpoint);
-//                }
-          }
-      }, inactivityTimeout, inactivityTimeout);
-      
-    }
-
-    public synchronized void startTimer(long aConnectionCreationTimestamp, final Endpoint endpoint,
-            final long currentInactivityTimeout, String aComponentName) {
-      final long cachedConnectionCreationTimestamp = aConnectionCreationTimestamp;
-      Date timeToRun = new Date(System.currentTimeMillis() + currentInactivityTimeout);
-      if (timer != null) {
-        timer.cancel();
-      }
-      if (controller != null) {
-        timer = new Timer("Controller:" + aComponentName + ":Reply TimerThread-:" + endpoint + ":"
-                + System.nanoTime());
-      } else {
-        timer = new Timer("Reply TimerThread-:" + endpoint + ":" + System.nanoTime());
-      }
-     
-      timer.schedule(new TimerTask() {
-        public void run() {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(
-                    Level.INFO,
-                    CLASS_NAME.getName(),
-                    "startTimer",
-                    JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_inactivity_timer_expired__INFO",
-                    new Object[] { Thread.currentThread().getName(), componentName,
-                        inactivityTimeout, endpoint });
-          }
-          if (connectionCreationTimestamp <= cachedConnectionCreationTimestamp) {
-            try {
-              if (brokerDestinations.getConnection() != null
-                      && !((ActiveMQConnection) brokerDestinations.getConnection()).isClosed()) {
-                try {
-                  for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerDestinations.endpointMap
-                          .entrySet()) {
-                    endpoints.getValue().close(); // close session and producer
-                  }
-                } catch (Exception e) {
-                  // Ignore this for now. Attempting to close connection that has been closed
-                  // Ignore we are shutting down
-                } finally {
-                  try {
-                    brokerDestinations.getConnection().stop();
-                    brokerDestinations.getConnection().close();
-                    brokerDestinations.setConnection(null);
-                  } catch( Exception e) {
-                  }
-                  //  If this is a reply to a client, use the same broker URL that manages this service input queue.
-                  //  Otherwise this is a request so use a broker specified in the endpoint object.
-                  String brokerConnectionURL = (endpoint.isReplyEndpoint()) ? serverURI : endpoint.getServerURI();
-
-                  brokerDestinations.endpointMap.clear();
-                  connectionMap.remove(brokerConnectionURL);
-                  
-                }
-              }
-              brokerDestinations.setConnection(null);
-            } catch (Exception e) {
-            } finally {
-              removeDestinationFromManagedList(brokerDestinations, endpoint);
+                  } catch (Exception e) {
+                  } 
             }
-          }
-          cancelTimer();
-        }
-      }, timeToRun);
-
-    }
-    private void removeDestinationFromManagedList(BrokerConnectionEntry brokerDestinations,
-            Endpoint endpoint) {
-      //  If this is a reply to a client, use the same broker URL that manages this service input queue.
-      //  Otherwise this is a request so use a broker specified in the endpoint object.
-      String brokerConnectionURL = (endpoint.isReplyEndpoint()) ? serverURI : endpoint.getServerURI();
-
-      String key = endpoint.getEndpoint() + brokerConnectionURL;
-      String destination = endpoint.getEndpoint();
-      if (endpoint.getDestination() != null
-              && endpoint.getDestination() instanceof ActiveMQDestination) {
-        destination = ((ActiveMQDestination) endpoint.getDestination()).getPhysicalName();
-        key = destination;
+        }, 0, inactivityTimeout,TimeUnit.MILLISECONDS);
+        
       }
-      if (brokerDestinations.endpointExists(key)) {
-        brokerDestinations.removeEndpoint(key);
-      }
-
-    }
-
     private void cancelTimer() {
       if (timer != null) {
         timer.cancel();
