@@ -29,11 +29,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.jms.Message;
 
-import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
@@ -49,7 +47,6 @@ import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
-import org.apache.uima.util.Level;
 import org.apache.uima.util.ProcessTrace;
 import org.apache.uima.util.ProcessTraceEvent;
 import org.apache.uima.util.impl.ProcessTrace_impl;
@@ -183,14 +180,14 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     return (url == null ? null : url.getPath());
   }
 
-  protected Map buildContext(String aTopLevelServiceBrokerURI, String aTopLevelServiceQueueName)
+  protected Map<String, Object> buildContext(String aTopLevelServiceBrokerURI, String aTopLevelServiceQueueName)
           throws Exception {
     return buildContext(aTopLevelServiceBrokerURI, aTopLevelServiceQueueName, 0);
   }
 
-  protected Map buildContext(String aTopLevelServiceBrokerURI, String aTopLevelServiceQueueName,
+  protected Map<String, Object> buildContext(String aTopLevelServiceBrokerURI, String aTopLevelServiceQueueName,
           int timeout) throws Exception {
-    Map<String, Object> appCtx = new HashMap();
+    Map<String, Object> appCtx = new HashMap<String, Object>();
     appCtx.put(UimaAsynchronousEngine.ServerUri, aTopLevelServiceBrokerURI);
     appCtx.put(UimaAsynchronousEngine.ENDPOINT, aTopLevelServiceQueueName);
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, Integer.valueOf(4));
