@@ -1919,9 +1919,18 @@ public class JmsOutputChannel implements OutputChannel {
                       	while( it.hasNext() ) {
                       		Entry<Object, JmsEndpointConnection_impl> value = it.next();
                       		long lastDispatchTime = value.getValue().lastDispatchTimestamp.get();
-                      		if ( (System.currentTimeMillis() - lastDispatchTime) >= inactivityTimeout ) {
+                      		if ( lastDispatchTime > 0 && (System.currentTimeMillis() - lastDispatchTime) >= inactivityTimeout ) {
                       			value.getValue().close();  // close the jms session
                       			it.remove();
+                      			System.out.println("-------- Closing Session for Destination:"+value.getValue().delegateEndpoint.getDestination());
+                                UIMAFramework.getLogger(CLASS_NAME).logrb(
+                                        Level.INFO,
+                                        CLASS_NAME.getName(),
+                                        "startTimer",
+                                        JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                                        "UIMAJMS_removed_expired_session__INFO",
+                                        new Object[] { Thread.currentThread().getId(), componentName,
+                                            inactivityTimeout, value.getValue().delegateEndpoint.getDestination(), brokerDestinations.getBrokerURL()  });
                       		}
                       	}
                       } catch (Exception e) {
