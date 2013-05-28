@@ -99,6 +99,11 @@ public interface UimaAsynchronousEngine {
   public final String ENDPOINT = "Endpoint";
 
   /**
+   * @deprecated use ENDPOINT instead
+   */
+  public final String Endpoint = "Endpoint";
+
+  /**
    * Size of Cas pool to create. This parameter determines how many CASes can be processed concurrently.
    * The application provides it to the Uima AS client in a Map which is an argument in {@link #initialize(Map)}. Optional. 
    * If omitted, the Uima AS client will use 1 as a default. 
@@ -173,6 +178,11 @@ public interface UimaAsynchronousEngine {
    */
   public static final String SERIALIZATION_STRATEGY = "SerializationStrategy";
   
+  /**
+   * @deprecated
+   */
+  public static final String SerializationStrategy = "SerializationStrategy";
+
   /**
    * The userName for Message queuing connection if needed 
    */
