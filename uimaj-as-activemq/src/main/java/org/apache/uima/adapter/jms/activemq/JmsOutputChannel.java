@@ -1922,6 +1922,7 @@ public class JmsOutputChannel implements OutputChannel {
                       		if ( lastDispatchTime > 0 && (System.currentTimeMillis() - lastDispatchTime) >= inactivityTimeout ) {
                       			value.getValue().close();  // close the jms session
                       			it.remove();
+/*
                       			System.out.println("-------- Closing Session for Destination:"+value.getValue().delegateEndpoint.getDestination());
                                 UIMAFramework.getLogger(CLASS_NAME).logrb(
                                         Level.INFO,
@@ -1931,6 +1932,7 @@ public class JmsOutputChannel implements OutputChannel {
                                         "UIMAJMS_removed_expired_session__INFO",
                                         new Object[] { Thread.currentThread().getId(), componentName,
                                             inactivityTimeout, value.getValue().delegateEndpoint.getDestination(), brokerDestinations.getBrokerURL()  });
+*/
                       		}
                       	}
                       } catch (Exception e) {
