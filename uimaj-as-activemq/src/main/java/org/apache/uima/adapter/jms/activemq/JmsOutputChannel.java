@@ -1854,8 +1854,6 @@ public class JmsOutputChannel implements OutputChannel {
   protected class ConnectionTimer {
     private final Class CLASS_NAME = ConnectionTimer.class;
 
-    private Timer timer;
-
     private long inactivityTimeout;
 
     private AnalysisEngineController controller;
@@ -1866,6 +1864,8 @@ public class JmsOutputChannel implements OutputChannel {
 
     private String componentName = "";
 
+    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    
     public ConnectionTimer(BrokerConnectionEntry aBrokerDestinations) {
       brokerDestinations = aBrokerDestinations;
     }
@@ -1885,6 +1885,11 @@ public class JmsOutputChannel implements OutputChannel {
       connectionCreationTimestamp = aConnectionCreationTimestamp;
     }
 
+    public void stopSessionReaperTimer() {
+      if ( scheduler != null ) {
+        scheduler.shutdownNow();
+      }
+    }
     /**
      * Schedules regular cleanup of JMS sessions. A session is cleaned up (closed) if it has not
      * been used in an interval defined by value in inactivityTimeout.
@@ -1892,7 +1897,7 @@ public class JmsOutputChannel implements OutputChannel {
      * @param aComponentName
      */
     public synchronized void startSessionReaperTimer( String aComponentName) {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        
         //	Fire the runnable at fixed intervals equal to inactivityTimeout value
         scheduler.scheduleAtFixedRate(new Runnable(){
             public void run() {
@@ -1968,15 +1973,14 @@ public class JmsOutputChannel implements OutputChannel {
         
       }
     private void cancelTimer() {
-      if (timer != null) {
-        timer.cancel();
-        timer.purge();
+      
+      if ( scheduler != null ) {
+        scheduler.shutdownNow();
       }
     }
 
     public synchronized void stopTimer() {
       cancelTimer();
-      timer = null;
     }
   }
 
