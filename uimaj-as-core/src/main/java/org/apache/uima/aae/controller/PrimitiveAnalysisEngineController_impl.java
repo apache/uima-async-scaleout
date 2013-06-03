@@ -480,8 +480,16 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  return null;
   }
   private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem, String uimaFullyQualifiedAEContext) {
+    String index = "";
+    int pos = aem.getUniqueMBeanName().lastIndexOf(" Components");
+    if ( pos > -1 ) {
+      String tmp = aem.getUniqueMBeanName().substring(0, pos);
+      int last = tmp.lastIndexOf(" ");
+      index = tmp.substring(last);
+    }
+
 	  return new AnalysisEnginePerformanceMetrics(aem.getName(),
-	                    uimaFullyQualifiedAEContext,
+	                    index +" Components "+uimaFullyQualifiedAEContext,
                       aem.getAnalysisTime(),
                       aem.getNumberOfCASesProcessed());
   }
@@ -861,8 +869,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           //  afterAnalysisManagementObjects List.
           getLeafManagementObjects(aem, afterAnalysisManagementObjects);
       } else {
-    	  String path=produceUniqueName(aem);
+    	    String path=produceUniqueName(aem);
           afterAnalysisManagementObjects.add(deepCopyMetrics(aem, path));   
+          
       }
 
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
@@ -874,6 +883,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       for (AnalysisEnginePerformanceMetrics after : afterAnalysisManagementObjects) {
         for( AnalysisEnginePerformanceMetrics before: beforeAnalysisManagementObjects) {
           if ( before.getUniqueName().equals(after.getUniqueName())) {
+            
             AnalysisEnginePerformanceMetrics metrics = 
               new AnalysisEnginePerformanceMetrics(after.getName(),
                       after.getUniqueName(),
