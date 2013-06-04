@@ -479,6 +479,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 	  return null;
   }
+  /*
   private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem, String uimaFullyQualifiedAEContext) {
     String index = "";
     int pos = aem.getUniqueMBeanName().lastIndexOf(" Components");
@@ -487,30 +488,37 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       int last = tmp.lastIndexOf(" ");
       index = tmp.substring(last);
     }
-
-	  return new AnalysisEnginePerformanceMetrics(aem.getName(),
-	                    index +" Components "+uimaFullyQualifiedAEContext,
-                      aem.getAnalysisTime(),
-                      aem.getNumberOfCASesProcessed());
+    return new AnalysisEnginePerformanceMetrics(aem.getName(),
+            index +" Components "+uimaFullyQualifiedAEContext,
+            aem.getAnalysisTime(),
+            aem.getNumberOfCASesProcessed());
   }
-
+*/
   private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result) {
     getLeafManagementObjects(aem, result, "");
-
-	  }
+	}
 
   private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result, String uimaFullyQualifiedAEContext) {
     if (aem.getComponents().isEmpty()) {
       if (!aem.getName().equals("Fixed Flow Controller")) {
         result.add(deepCopyMetrics(aem, uimaFullyQualifiedAEContext));
-      }
+      } 
     } else {
       for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
+        if ( uimaFullyQualifiedAEContext.trim().length() > 0) {
+          getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext);
+        } else {
+          getLeafManagementObjects(child, result, produceUniqueName(aem));
+        }
+        
+/*
         if ( uimaFullyQualifiedAEContext.trim().length() > 0 ) {
           getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext+"/"+aem.getName());
+          getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext);
         } else {
           getLeafManagementObjects(child, result, aem.getName());
         }
+        */
       }
     }
   }
@@ -530,6 +538,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 		  e.printStackTrace();
 	  }
   }
+  /*
   private String produceUniqueName(AnalysisEngineManagement aem) {
 	  String[] parts = aem.getUniqueMBeanName().split(",");
 	  StringBuffer sb = new StringBuffer();
@@ -541,6 +550,42 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 		  }
 	  }
 	  return sb.toString();
+  }
+*/  
+  
+  private String produceUniqueName(AnalysisEngineManagement aem) {
+    String[] parts = aem.getUniqueMBeanName().split(",");
+    StringBuffer sb = new StringBuffer();
+    for( String part : parts) {
+      int pos;
+      if ( (pos = part.indexOf("=") )> -1 && part.startsWith("p")) {
+        String n = part.substring(pos+1, part.indexOf(" Components"));
+        sb.append("/").append(n.trim());
+      } else if ( part.trim().startsWith("name=")) {
+        sb.append("/").append(part.substring(part.trim().indexOf("=")+1));
+      }
+    }
+    return sb.toString();
+  }
+
+  private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem, String uimaFullyQualifiedAEContext) {
+    String index = "";
+    int pos = aem.getUniqueMBeanName().lastIndexOf("name=");
+    if ( pos > -1 ) {
+      String tmp = aem.getUniqueMBeanName().substring(pos+5);
+      int last = tmp.lastIndexOf(" ");
+      if ( last > -1 ) {
+        index = tmp.substring(last);
+      } else {
+        if ( !uimaFullyQualifiedAEContext.endsWith(tmp)) {
+          uimaFullyQualifiedAEContext += "/"+tmp;
+        }
+      }
+    }
+    return new AnalysisEnginePerformanceMetrics(aem.getName(),
+            index +" Components "+uimaFullyQualifiedAEContext,
+            aem.getAnalysisTime(),
+            aem.getNumberOfCASesProcessed());
   }
   
   /**
@@ -868,8 +913,12 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           //  primitive AE's AnalysisEngineManagement instance and placing it in 
           //  afterAnalysisManagementObjects List.
           getLeafManagementObjects(aem, afterAnalysisManagementObjects);
+//          System.out.println("-----------------Unique1:"+aem.getUniqueMBeanName());
+//          System.out.println("-----------------Simple1:"+aem.getName());
       } else {
     	    String path=produceUniqueName(aem);
+//    	    System.out.println("-----------------Unique2:"+aem.getUniqueMBeanName());
+//          System.out.println("-----------------Simple2:"+aem.getName());
           afterAnalysisManagementObjects.add(deepCopyMetrics(aem, path));   
           
       }
@@ -889,6 +938,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       after.getUniqueName(),
                       after.getAnalysisTime()- before.getAnalysisTime(),
                       after.getNumProcessed());
+            //System.out.println("********************"+metrics.getUniqueName());
             performanceList.add(metrics);
             break;
           }
