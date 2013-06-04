@@ -277,7 +277,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     spinShutdownThread(eeUimaEngine, 5000, containers, SpringContainerDeployer.QUIESCE_AND_STOP);
     
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
-            "TopLevelTaeQueue", 1000, EXCEPTION_LATCH);
+            "TopLevelTaeQueue", 5000, EXCEPTION_LATCH);
     //eeUimaEngine.stop();
   }
 /*
@@ -2662,6 +2662,16 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_TopAggregateWithInnerAggregateCM.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
+  }
+  public void testProcessAggregateWithInnerAggregateDelegateInitFailure() throws Exception {
+    System.out.println("-------------- testProcessAggregateWithInnerAggregateDelegateInitFailure -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    try {
+      deployService(eeUimaEngine, relativePath + "/Deploy_TopAggregateWithInnerAggregateDelegateInitFailure.xml");
+      fail("Expected ResourceInitializationException But The Deployment Succeeded Instead");
+    } catch( ResourceInitializationException e) {
+      eeUimaEngine.stop();
+    }
   }
 
   public void testBlueJDeployment() throws Exception {

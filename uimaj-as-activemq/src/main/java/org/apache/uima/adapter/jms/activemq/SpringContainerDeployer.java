@@ -60,7 +60,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
 
   private volatile boolean serviceInitializationException;
   
-  private Semaphore serviceInitializationSemaphore = new Semaphore(1);
+  private Semaphore serviceInitializationSemaphore = new Semaphore(0);
 
   private ConcurrentHashMap springContainerRegistry = null;
 
@@ -275,8 +275,9 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
             .getBeanNamesForType(org.apache.uima.aae.controller.AnalysisEngineController.class);
     for (int i = 0; controllers != null && i < controllers.length; i++) {
       AnalysisEngineController cntlr = (AnalysisEngineController) ctx.getBean(controllers[i]);
+      cntlr.addControllerCallbackListener(this);
       if (cntlr instanceof org.apache.uima.aae.controller.UimacppServiceController) {
-        cntlr.addControllerCallbackListener(this);
+        //cntlr.addControllerCallbackListener(this);
         topLevelController = cntlr;
       } else {
         // Pass a reference to the context to each of the Controllers
@@ -517,7 +518,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     	} else {
     	  throw new ResourceInitializationException(new Exception("Details of failure(s) written to UIMA log"));
     	}
-    }
+    } 
   }
 
   public void notifyOnInitializationFailure(AnalysisEngineController aController, Exception e) {
