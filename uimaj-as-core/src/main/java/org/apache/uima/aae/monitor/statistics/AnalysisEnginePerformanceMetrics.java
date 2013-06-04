@@ -59,10 +59,10 @@ public class AnalysisEnginePerformanceMetrics implements Serializable {
    * @return the unique name
    */
   public String getUniqueName() {
-    if ( uimaContextPath != null && uimaContextPath.trim().length() > 0 ) {
-    	if ( !uimaContextPath.endsWith(getName())) {
-    		return uimaContextPath+"/"+getName();
-    	}
+    if ( uimaContextPath != null && uimaContextPath.trim().length() > 0 && !uimaContextPath.trim().equals("Components")) {
+//    	if ( !uimaContextPath.endsWith(getName())) {
+//    		return uimaContextPath+"/"+getName();
+//    	}
       return uimaContextPath;
     } else {
       return getName();
