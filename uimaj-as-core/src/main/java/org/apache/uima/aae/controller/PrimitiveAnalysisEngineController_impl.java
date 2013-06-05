@@ -621,8 +621,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       }
     }
+    // Primitive AE will not have Components, but it is required 
+    // by the DUCC JD to be there. Prepend it to the unique name.
+    if ( uimaFullyQualifiedAEContext.indexOf(" Components ") == -1) {
+      uimaFullyQualifiedAEContext = index + " Components "+uimaFullyQualifiedAEContext;
+    }
     return new AnalysisEnginePerformanceMetrics(aem.getName(),
-            index +" Components "+uimaFullyQualifiedAEContext,
+//            index +" Components "+uimaFullyQualifiedAEContext,
+            uimaFullyQualifiedAEContext,
             aem.getAnalysisTime(),
             aem.getNumberOfCASesProcessed());
   }
@@ -977,7 +983,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       after.getUniqueName(),
                       after.getAnalysisTime()- before.getAnalysisTime(),
                       after.getNumProcessed());
-   //         System.out.println("********************"+metrics.getUniqueName());
+//            System.out.println("********************"+metrics.getUniqueName());
            // System.out.println("********************"+metrics.getName());
             performanceList.add(metrics);
             break;
