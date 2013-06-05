@@ -505,12 +505,16 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       } 
     } else {
       for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
+        /*
         if ( uimaFullyQualifiedAEContext.trim().length() > 0) {
+          System.out.println(">>>>>>>>>>>>"+child.getUniqueMBeanName());
           getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext);
         } else {
           getLeafManagementObjects(child, result, produceUniqueName(aem));
-        }
-        
+          System.out.println("<<<<<<<<<<<<"+child.getUniqueMBeanName());
+        }*/
+        getLeafManagementObjects(child, result, produceUniqueName(aem));
+        System.out.println("<<<<<<<<<<<<"+child.getUniqueMBeanName());
 /*
         if ( uimaFullyQualifiedAEContext.trim().length() > 0 ) {
           getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext+"/"+aem.getName());
@@ -913,12 +917,12 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           //  primitive AE's AnalysisEngineManagement instance and placing it in 
           //  afterAnalysisManagementObjects List.
           getLeafManagementObjects(aem, afterAnalysisManagementObjects);
-//          System.out.println("-----------------Unique1:"+aem.getUniqueMBeanName());
-//          System.out.println("-----------------Simple1:"+aem.getName());
+          System.out.println("-----------------Unique1:"+aem.getUniqueMBeanName());
+          //System.out.println("-----------------Simple1:"+aem.getName());
       } else {
     	    String path=produceUniqueName(aem);
-//    	    System.out.println("-----------------Unique2:"+aem.getUniqueMBeanName());
-//          System.out.println("-----------------Simple2:"+aem.getName());
+    	    System.out.println("-----------------Unique2:"+aem.getUniqueMBeanName());
+         // System.out.println("-----------------Simple2:"+aem.getName());
           afterAnalysisManagementObjects.add(deepCopyMetrics(aem, path));   
           
       }
@@ -938,7 +942,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       after.getUniqueName(),
                       after.getAnalysisTime()- before.getAnalysisTime(),
                       after.getNumProcessed());
-            //System.out.println("********************"+metrics.getUniqueName());
+            System.out.println("********************"+metrics.getUniqueName());
+           // System.out.println("********************"+metrics.getName());
             performanceList.add(metrics);
             break;
           }
