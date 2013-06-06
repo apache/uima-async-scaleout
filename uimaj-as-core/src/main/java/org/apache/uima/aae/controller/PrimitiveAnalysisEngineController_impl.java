@@ -480,35 +480,34 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 	  return null;
   }
-  /*
-  private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem, String uimaFullyQualifiedAEContext) {
-    String index = "";
-    int pos = aem.getUniqueMBeanName().lastIndexOf(" Components");
-    if ( pos > -1 ) {
-      String tmp = aem.getUniqueMBeanName().substring(0, pos);
-      int last = tmp.lastIndexOf(" ");
-      index = tmp.substring(last);
-    }
-    return new AnalysisEnginePerformanceMetrics(aem.getName(),
-            index +" Components "+uimaFullyQualifiedAEContext,
-            aem.getAnalysisTime(),
-            aem.getNumberOfCASesProcessed());
-  }
-*/
+  
   private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result) {
     getLeafManagementObjects(aem, result, "");
 	}
-
+  /** 
+   * Recursively 
+   * 
+   * @param aem
+   * @param result
+   * @param uimaFullyQualifiedAEContext
+   */
   private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result, String uimaFullyQualifiedAEContext) {
+   
     if (aem.getComponents().isEmpty()) {
+      // skip Flow Controller
       if (!aem.getName().equals("Fixed Flow Controller")) {
+        // is this primitive AE delegate in an aggregate. If so the mbean unique name will have "p0=" string. An examples mbean
+        // name looks like this:
+        // org.apache.uima:type=ee.jms.services,s=Top Level Aggregate TAE Uima EE Service,p0=Top Level Aggregate TAE Components,p1=SecondLevelAggregateCM Components,p2=ThirdLevelAggregateCM Components,name=Multiplier1
         if ( aem.getUniqueMBeanName().indexOf("p0=") > -1 ) {
+          // check id the parent aggregate has been scaled up by looking at the last char in its name. If it is a number strip it from the name
           if ( Character.isDigit(uimaFullyQualifiedAEContext.charAt(uimaFullyQualifiedAEContext.length()-1) )) {
             String indx = uimaFullyQualifiedAEContext.substring(uimaFullyQualifiedAEContext.lastIndexOf(" "));
             if ( indx != null ) {
               int value = -1;
               try {
                 value = Integer.parseInt(indx.trim());
+                // Prepend "X Components" to the unique name with X stripped.
                 uimaFullyQualifiedAEContext = value+" Components "+ uimaFullyQualifiedAEContext.substring(0,uimaFullyQualifiedAEContext.lastIndexOf(" "));
               } catch( NumberFormatException ex) {
                 
@@ -520,25 +519,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       } 
     } else {
       for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
-        /*
-        if ( uimaFullyQualifiedAEContext.trim().length() > 0) {
-          System.out.println(">>>>>>>>>>>>"+child.getUniqueMBeanName());
-          getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext);
-        } else {
-          getLeafManagementObjects(child, result, produceUniqueName(aem));
-          System.out.println("<<<<<<<<<<<<"+child.getUniqueMBeanName());
-        }*/
         getLeafManagementObjects(child, result, produceUniqueName(aem));
-        /*
-         System.out.println("<<<<<<<<<<<<"+child.getUniqueMBeanName());
-
-        if ( uimaFullyQualifiedAEContext.trim().length() > 0 ) {
-          getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext+"/"+aem.getName());
-          getLeafManagementObjects(child, result, uimaFullyQualifiedAEContext);
-        } else {
-          getLeafManagementObjects(child, result, aem.getName());
-        }
-        */
       }
     }
   }
@@ -558,21 +539,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 		  e.printStackTrace();
 	  }
   }
-  /*
-  private String produceUniqueName(AnalysisEngineManagement aem) {
-	  String[] parts = aem.getUniqueMBeanName().split(",");
-	  StringBuffer sb = new StringBuffer();
-	  for( String part : parts) {
-		  int pos;
-		  if ( (pos = part.indexOf("=") )> -1 && part.startsWith("p")) {
-			  String n = part.substring(pos+1, part.indexOf(" Components"));
-			  sb.append("/").append(n.trim());
-		  }
-	  }
-	  return sb.toString();
-  }
-*/  
-  
+   
   private String produceUniqueName(AnalysisEngineManagement aem) {
     String[] parts = aem.getUniqueMBeanName().split(",");
     StringBuffer sb = new StringBuffer();
@@ -602,32 +569,43 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private AnalysisEnginePerformanceMetrics deepCopyMetrics(AnalysisEngineManagement aem, String uimaFullyQualifiedAEContext) {
     String index = "";
+    // Create a unique name with each AE name is separated with "/". Prepend "X Components" where
+    // X is a instance number of a scaled AE. Also, strip the X from the AE name. The instance number 
+    // is added to each scaled up component during initialization of the uima-as. We need to prepend 
+    // "X Components" to allow DUCC JD to parse the unique name correctly ( basically for backwards 
+    //  compatibility.
     int pos = aem.getUniqueMBeanName().lastIndexOf("name=");
     if ( pos > -1 ) {
+      // get the name of the component. In case of nested component this will be the KEY from AE descriptor
       String tmp = aem.getUniqueMBeanName().substring(pos+5);
+      // in case this is the top level AE, check if it has been scaled up by extracting its instance number.For example,
+      // NoOpAnnotator 2.
       int last = tmp.lastIndexOf(" ");
       if ( last > -1 ) {
+        // extract instance number
         index = tmp.substring(last);
         
         try {
+          // check if the instance number is a number. If not silently handle the exception.
           Integer.parseInt(index.trim());
+          // strip the instance number from the AE name
           uimaFullyQualifiedAEContext = uimaFullyQualifiedAEContext.substring(0, last+1);
         } catch( NumberFormatException nfe) {
           
         }
       } else {
+        
         if ( !uimaFullyQualifiedAEContext.endsWith(tmp)) {
           uimaFullyQualifiedAEContext += "/"+tmp;
         }
       }
     }
-    // Primitive AE will not have Components, but it is required 
+    // Primitive AE will not have "X Components" prefix, but it is required 
     // by the DUCC JD to be there. Prepend it to the unique name.
     if ( uimaFullyQualifiedAEContext.indexOf(" Components ") == -1) {
       uimaFullyQualifiedAEContext = index + " Components "+uimaFullyQualifiedAEContext;
     }
     return new AnalysisEnginePerformanceMetrics(aem.getName(),
-//            index +" Components "+uimaFullyQualifiedAEContext,
             uimaFullyQualifiedAEContext,
             aem.getAnalysisTime(),
             aem.getNumberOfCASesProcessed());
