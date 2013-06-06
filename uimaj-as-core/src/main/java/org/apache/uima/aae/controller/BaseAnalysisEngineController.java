@@ -2414,8 +2414,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    *          - application listener object to register
    */
   public void addControllerCallbackListener(ControllerCallbackListener aListener) {
-
-    controllerListeners.add(aListener);
+    if ( !controllerListeners.contains(aListener)) {
+      controllerListeners.add(aListener);
+    }
     if (initException != null) {
       notifyListenersWithInitializationStatus(initException);
     } else if (serviceInitialized) {
