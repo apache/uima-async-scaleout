@@ -2443,7 +2443,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       if (e != null) {
         ((ControllerCallbackListener) controllerListeners.get(i)).notifyOnInitializationFailure(
                 this, e);
-      } else {
+      } else if ( this.isTopLevelComponent() ) {
         ((ControllerCallbackListener) controllerListeners.get(i))
                 .notifyOnInitializationSuccess(this);
       }
