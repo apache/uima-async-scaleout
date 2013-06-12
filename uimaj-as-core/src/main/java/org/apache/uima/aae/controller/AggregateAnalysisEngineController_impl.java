@@ -2013,7 +2013,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private boolean sendExceptionToClient(CacheEntry cacheEntry, CasStateEntry casStateEntry,
           Endpoint replyEndpoint) throws Exception {
-    // Dont send CASes to the client if the input CAS is in failed state. One
+
+	if ( casStateEntry == null ) {
+		return false;
+	}
+	  // Dont send CASes to the client if the input CAS is in failed state. One
     // of the descendant CASes may have failed in one of the delegates. Any
     // exception on descendant CAS causes the input CAS to be returned to the
     // client with an exception but only when all its descendant CASes are
