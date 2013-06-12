@@ -29,7 +29,7 @@ public class AnalysisEnginePerformanceMetrics implements Serializable {
   
   private static final long serialVersionUID = 2355340461481671501L;
   private String name;
-  private String uimaContextPath;
+  private String uniqueName;
   private long analysisTime;
   private long numProcessed;
   
@@ -39,7 +39,7 @@ public class AnalysisEnginePerformanceMetrics implements Serializable {
    */
   public AnalysisEnginePerformanceMetrics(String name, String uimaContextPath, long analysisTime, long numProcessed ) {
     this.name = name;
-    this.uimaContextPath = uimaContextPath;
+    this.uniqueName = uimaContextPath;
     this.analysisTime = analysisTime;
     this.numProcessed = numProcessed;
   }
@@ -59,11 +59,11 @@ public class AnalysisEnginePerformanceMetrics implements Serializable {
    * @return the unique name
    */
   public String getUniqueName() {
-    if ( uimaContextPath != null && uimaContextPath.trim().length() > 0 && !uimaContextPath.trim().equals("Components")) {
+    if ( uniqueName != null && uniqueName.trim().length() > 0 && !uniqueName.trim().equals("Components")) {
 //    	if ( !uimaContextPath.endsWith(getName())) {
 //    		return uimaContextPath+"/"+getName();
 //    	}
-      return uimaContextPath;
+      return uniqueName;
     } else {
       return getName();
     }
