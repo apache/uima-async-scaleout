@@ -90,8 +90,8 @@ public class JmsOutputChannel implements OutputChannel {
 
   private static final Class CLASS_NAME = JmsOutputChannel.class;
 
-  private static final long INACTIVITY_TIMEOUT = 600000; // 10 minutes in term of millis
-
+  private static final long INACTIVITY_TIMEOUT = 60; // MINUTES
+  
   private CountDownLatch controllerLatch = new CountDownLatch(1);
 
   private ActiveMQConnectionFactory connectionFactory;
@@ -1969,7 +1969,7 @@ public class JmsOutputChannel implements OutputChannel {
                   } catch (Exception e) {
                   } 
             }
-        }, 0, inactivityTimeout,TimeUnit.MILLISECONDS);
+        }, 0, inactivityTimeout,TimeUnit.MINUTES);
         
       }
     private void cancelTimer() {
