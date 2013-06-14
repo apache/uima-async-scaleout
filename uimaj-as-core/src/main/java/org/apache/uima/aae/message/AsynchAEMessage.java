@@ -125,12 +125,26 @@ public interface AsynchAEMessage {
   public static final String SentDeltaCas = "SentDeltaCas";
 
   public static final String SERIALIZATION = "Serialization";
-
-  public static final int XMI_SERIALIZATION = 4000;  
-
-  public static final int BINARY_SERIALIZATION = 4001; // supports uncompressed binary serialization, but not compressed binary serialization
   
-  public static final int BINARY_COMPRESSED_FILTERED_SERIALIZATION = 4002;  // supports use of BinaryCasSerDes6
+  /*
+   * Serialization codes are done as a bit position, to allow 
+   * future expansion - 
+   *   Implementations will be able to turn on bits to indicate what they support
+   *   Code:
+   *   0x 01 bb bb bb
+   *   where the bb bb bb represent 24 bits of alternatives being supported
+   *   
+   *   XMI is always supported, and has a code of 01 00 00 00
+   *     or for old services, 4000 (but wasn't used in old code)
+   *     (Binary was 4001 but that wasn't used in old code)
+   *     
+   */
+
+  public static final int XMI_SERIALIZATION = 0x01000000;  
+
+  public static final int BINARY_SERIALIZATION = 0x01000001; // supports uncompressed binary serialization, identical ts required, but not compressed binary serialization
+  
+  public static final int BINARY_COMPRESSED_FILTERED_SERIALIZATION = 0x01000002;  // supports use of BinaryCasSerDes6
 
   public static final String ErrorCause = "Cause";
 

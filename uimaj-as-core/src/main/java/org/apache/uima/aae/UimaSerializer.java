@@ -34,14 +34,19 @@ import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 
+import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.TypeSystem;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
+import org.apache.uima.cas.impl.BinaryCasSerDes6;
+import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
+import org.apache.uima.cas.impl.MarkerImpl;
 import org.apache.uima.cas.impl.OutOfTypeSystemData;
 import org.apache.uima.cas.impl.Serialization;
+import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.cas.impl.XmiCasDeserializer;
 import org.apache.uima.cas.impl.XmiCasSerializer;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
@@ -254,6 +259,34 @@ public class UimaSerializer {
       }
     }
   }
+  
+  // used to return non-delta cas's (used if delta cas disallowed, for instance by having a CPP delegate)
+  public byte[] serializeCasToBinary6(CAS aCAS) throws Exception {
+    ByteArrayOutputStream fos = null;
+    fos = new ByteArrayOutputStream();
+    BinaryCasSerDes6 bcs = new BinaryCasSerDes6(aCAS);
+    bcs.serialize(fos);
+    return fos.toByteArray();
+  }
+
+  // used to send CASes to remotes
+  public byte[] serializeCasToBinary6(CAS aCAS, CacheEntry entry, TypeSystemImpl tgtTs) throws Exception {
+    ByteArrayOutputStream fos = null;
+    fos = new ByteArrayOutputStream();
+    BinaryCasSerDes6 bcs = new BinaryCasSerDes6(aCAS, tgtTs);
+    bcs.serialize(fos);
+    entry.setCompress6ReuseInfo(bcs.getReuseInfo());
+    return fos.toByteArray();
+  }
+  
+  public byte[] serializeCasToBinary6(CAS aCAS, Marker aMark, ReuseInfo reuseInfo) throws Exception {
+    ByteArrayOutputStream fos = null;
+    fos = new ByteArrayOutputStream();
+    BinaryCasSerDes6 bcs = new BinaryCasSerDes6(aCAS, (MarkerImpl) aMark, null, reuseInfo);
+    bcs.serialize(fos);
+    return fos.toByteArray();
+  }
+  
   @SuppressWarnings("unchecked")
   public static List<AnalysisEnginePerformanceMetrics> deserializePerformanceMetrics(String serializedComponentStats) {
     // check if we received components stats. Currently UIMA AS is not supporting per component

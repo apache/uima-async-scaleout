@@ -20,6 +20,7 @@
 package org.apache.uima.adapter.jms.client;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -48,6 +49,7 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.UIMARuntimeException;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.UIDGenerator;
@@ -81,8 +83,12 @@ import org.apache.uima.adapter.jms.message.PendingMessage;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
+import org.apache.uima.cas.impl.BinaryCasSerDes6;
+import org.apache.uima.cas.impl.CASImpl;
+import org.apache.uima.cas.impl.Serialization;
 import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
+import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
@@ -166,7 +172,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   protected SerialFormat serialFormat = SerialFormat.XMI;
   
-  protected TypeSystemImpl typeSystemImpl; // of the remote service, for filtered binary compression
+  protected TypeSystemImpl remoteTypeSystem; // of the remote service, for filtered binary compression
 
   protected UimaASClientInfoMBean clientSideJmxStats = new UimaASClientInfo();
 
@@ -273,13 +279,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     serialFormat = aSerialFormat;
   }
   
-  public TypeSystemImpl getTypeSystemImpl() {
-    return typeSystemImpl;
+  public TypeSystemImpl getRemoteTypeSystem() {
+    return remoteTypeSystem;
   }
 
-  protected void setTypeSystemImpl(TypeSystemImpl typeSystemImpl) {
-    this.typeSystemImpl = typeSystemImpl;
+  protected void setRemoteTypeSystem(TypeSystemImpl remoteTypeSystem) {
+    this.remoteTypeSystem = remoteTypeSystem;
   }
+  
   /**
    * Serializes a given CAS.
    * 
@@ -840,24 +847,36 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         clientCache.put(casReferenceId, requestToCache);
         PendingMessage msg = new PendingMessage(AsynchAEMessage.Process);
         long t1 = System.nanoTime();
-        if (serialFormat == SerialFormat.XMI) {
+        switch (serialFormat) {
+        case XMI:
           XmiSerializationSharedData serSharedData = new XmiSerializationSharedData();
           String serializedCAS = serializeCAS(aCAS, serSharedData);
           msg.put(AsynchAEMessage.CAS, serializedCAS);
-          if (remoteService) {
-            requestToCache.setCAS(aCAS);
+          if (remoteService) {  // always true 5/2013
             // Store the serialized CAS in case the timeout occurs and need to send the
             // the offending CAS to listeners for reporting
             requestToCache.setCAS(serializedCAS);
             requestToCache.setXmiSerializationSharedData(serSharedData);
           }
-        } else {
-          byte[] serializedCAS = uimaSerializer.serializeCasToBinary(aCAS);
-          msg.put(AsynchAEMessage.CAS, serializedCAS);
-          if (remoteService) {
-            requestToCache.setCAS(aCAS);
-          }
+          break;
+        case BINARY:
+          byte[] serializedBinaryCAS = uimaSerializer.serializeCasToBinary(aCAS);
+          msg.put(AsynchAEMessage.CAS, serializedBinaryCAS);
+          break;
+        case COMPRESSED_FILTERED:
+          // can't use uimaserializer directly - project doesn't have ref to this one
+          // for storing the reuse info
+          BinaryCasSerDes6 bcs = new BinaryCasSerDes6(aCAS, this.getRemoteTypeSystem());
+          ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+          bcs.serialize(baos);
+          requestToCache.setCompress6ReuseInfo(bcs.getReuseInfo());           
+          msg.put(AsynchAEMessage.CAS, baos.toByteArray());
+          break;
+        default:
+          throw new UIMARuntimeException(new Exception("Internal Error"));    
         }
+        
+        requestToCache.setCAS(aCAS);
 
         requestToCache.setSerializationTime(System.nanoTime() - t1);
         msg.put(AsynchAEMessage.CasReference, casReferenceId);
@@ -1131,7 +1150,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                 .parseResourceMetaData(in1);
         // if remote delegate, save type system 
         if (!brokerURI.startsWith("vm:")) { // test if remote
-          setTypeSystemImpl(AggregateAnalysisEngineController_impl.getTypeSystemImpl(resourceMetadata));
+          setRemoteTypeSystem(AggregateAnalysisEngineController_impl.getTypeSystemImpl(resourceMetadata));
         }
         casMultiplierDelegate = resourceMetadata.getOperationalProperties().getOutputsNewCASes();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
@@ -1868,12 +1887,27 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     return deserialize(aSerializedCAS, cas);
   }
 
+  /**
+   * handle both ordinary binary and compressed6 binary
+   * @param aSerializedCAS
+   * @param cachedRequest
+   * @return
+   * @throws Exception
+   */
   protected CAS deserializeCAS(byte[] aSerializedCAS, ClientRequest cachedRequest) throws Exception {
     CAS cas = cachedRequest.getCAS();
-    uimaSerializer.deserializeCasFromBinary(aSerializedCAS, cas);
+    ReuseInfo reuseInfo = cachedRequest.getCompress6ReuseInfo();
+    ByteArrayInputStream bais = new ByteArrayInputStream(aSerializedCAS);
+    if (reuseInfo != null) {
+      Serialization.deserializeCAS(cas, bais, null, reuseInfo);
+    } else {
+      ((CASImpl)cas).reinit(bais);
+    }
+//    uimaSerializer.deserializeCasFromBinary(aSerializedCAS, cas);
     return cas;
   }
 
+  // never called 5/2013 ??
   protected CAS deserializeCAS(byte[] aSerializedCAS, CAS aCas) throws Exception {
     uimaSerializer.deserializeCasFromBinary(aSerializedCAS, aCas);
     return aCas;
@@ -2351,6 +2385,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     return null;
   }
 
+  /**
+   * has some cache values for CAS, similar to class CacheEntry 
+   *
+   */
   public class ClientRequest {
     private Timer timer = null;
 
@@ -2400,6 +2438,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     private long processErrorCount;
 
     private XmiSerializationSharedData sharedData;
+    
+    private ReuseInfo compress6ReuseInfo;
 
     private byte[] binaryCas = null;
 
@@ -2739,6 +2779,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
     public void setXmiSerializationSharedData(XmiSerializationSharedData data) {
       this.sharedData = data;
+    }
+    
+    public ReuseInfo getCompress6ReuseInfo() {
+      return compress6ReuseInfo;
+    }
+    
+    public void setCompress6ReuseInfo(ReuseInfo compress6ReuseInfo) {
+      this.compress6ReuseInfo = compress6ReuseInfo;
     }
   }
 

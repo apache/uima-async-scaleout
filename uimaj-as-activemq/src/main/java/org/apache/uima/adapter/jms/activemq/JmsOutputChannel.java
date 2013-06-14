@@ -91,7 +91,7 @@ public class JmsOutputChannel implements OutputChannel {
   private static final Class CLASS_NAME = JmsOutputChannel.class;
 
   private static final long INACTIVITY_TIMEOUT = 60; // MINUTES
-  
+
   private CountDownLatch controllerLatch = new CountDownLatch(1);
 
   private ActiveMQConnectionFactory connectionFactory;
@@ -721,6 +721,7 @@ public class JmsOutputChannel implements OutputChannel {
               getAnalysisEngineController());
     }
   }
+  
   private void serializeCasAndSend(CacheEntry entry, Endpoint anEndpoint) throws Exception {
     if (anEndpoint.getSerialFormat() == SerialFormat.XMI) {
       String serializedCAS = getSerializedCasAndReleaseIt(false, entry.getCasReferenceId(), anEndpoint,
@@ -1024,8 +1025,9 @@ public class JmsOutputChannel implements OutputChannel {
 
       tm.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.Metadata);
       // This service supports Binary Serialization
-//      tm.setIntProperty(AsynchAEMessage.Serialization, AsynchAEMessage.BinarySerialization);
+      // change comment on next 2 lines to install compressed serialization as the capability
       tm.setIntProperty(AsynchAEMessage.SERIALIZATION, AsynchAEMessage.BINARY_SERIALIZATION);
+//      tm.setIntProperty(AsynchAEMessage.SERIALIZATION, AsynchAEMessage.BINARY_COMPRESSED_FILTERED_SERIALIZATION);
 
       populateHeaderWithResponseContext(tm, anEndpoint, AsynchAEMessage.GetMeta);
       if (freeCASTempQueue != null) {
@@ -1106,18 +1108,36 @@ public class JmsOutputChannel implements OutputChannel {
       //  Fetch dedicated Serializer associated with this thread
       UimaSerializer serializer = SerializerCache.lookupSerializerByThreadId();
 
-      if (serializerType == SerialFormat.BINARY) {
+      if (serializerType == SerialFormat.BINARY || serializerType == SerialFormat.COMPRESSED_FILTERED) {
         
         if (entry.acceptsDeltaCas() && isReply) {
           if (entry.getMarker() != null && entry.getMarker().isValid()) {
-            serializedCAS = serializer.serializeCasToBinary(cas, entry.getMarker());
+            if (serializerType == SerialFormat.COMPRESSED_FILTERED) {
+              serializedCAS = serializer.serializeCasToBinary6(cas, entry.getMarker(), entry.getCompress6ReuseInfo());  
+            } else {
+              serializedCAS = serializer.serializeCasToBinary(cas, entry.getMarker());
+            }
             entry.setSentDeltaCas(true);
           } else {
-            serializedCAS = serializer.serializeCasToBinary(cas);
+            if (serializerType == SerialFormat.COMPRESSED_FILTERED) {
+              serializedCAS = serializer.serializeCasToBinary6(cas); 
+            } else {
+              serializedCAS = serializer.serializeCasToBinary(cas);
+            }
             entry.setSentDeltaCas(false);
           }
         } else {
-          serializedCAS = serializer.serializeCasToBinary(cas);
+          // either is a reply to a caller not accepting delta, or
+          //        is not a reply
+          if (serializerType == SerialFormat.COMPRESSED_FILTERED) {
+            if (isReply) {
+              serializedCAS = serializer.serializeCasToBinary6(cas);  // never called? 
+            } else {
+              serializedCAS = serializer.serializeCasToBinary6(cas, entry, anEndpoint.getTypeSystemImpl());
+            }
+          } else {
+            serializedCAS = serializer.serializeCasToBinary(cas);
+          }
           entry.setSentDeltaCas(false);
           if (isReply) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
@@ -1928,7 +1948,7 @@ public class JmsOutputChannel implements OutputChannel {
                       			value.getValue().close();  // close the jms session
                       			it.remove();
 /*
-                      			System.out.println("-------- Closing Session for Destination:"+value.getValue().delegateEndpoint.getDestination());
+                    			System.out.println("-------- Closing Session for Destination:"+value.getValue().delegateEndpoint.getDestination());
                                 UIMAFramework.getLogger(CLASS_NAME).logrb(
                                         Level.INFO,
                                         CLASS_NAME.getName(),
@@ -1938,7 +1958,7 @@ public class JmsOutputChannel implements OutputChannel {
                                         new Object[] { Thread.currentThread().getId(), componentName,
                                             inactivityTimeout, value.getValue().delegateEndpoint.getDestination(), brokerDestinations.getBrokerURL()  });
 */
-                      		}
+                    		}
                       	}
                       } catch (Exception e) {
                       	e.printStackTrace();
@@ -1969,7 +1989,7 @@ public class JmsOutputChannel implements OutputChannel {
                   } catch (Exception e) {
                   } 
             }
-        }, 0, inactivityTimeout,TimeUnit.MINUTES);
+        }, 0, inactivityTimeout * 60,TimeUnit.SECONDS);
         
       }
     private void cancelTimer() {

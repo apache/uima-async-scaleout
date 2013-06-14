@@ -99,6 +99,34 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public BaseTestSupport superRef = null;
 
+  /**
+   * bring up testing for compressed binary serialization
+   */
+  
+  /**
+   * Test binary compressed serialization between client and svc, and between 
+   * service and remote delegate
+   * 
+   * @throws Exception
+   */
+  public void testCompressedTypeFiltering() throws Exception {
+    System.out.println("-------------- testCompressedTypeFiltering -------------");
+    // Instantiate Uima-AS Client
+    final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Deploy Uima-AS Primitive Service
+    deployService(uimaAsEngine, relativePath + "/Deploy_RoomNumberAnnotator.xml");
+    deployService(uimaAsEngine, relativePath + "/Deploy_MeetingDetectorTAE_RemoteRoomNumberBinary.xml");
+    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()), "MeetingDetectorTaeQueue");
+    // Set an explicit getMeta (Ping)timeout
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 2000);
+    // Set an explicit process timeout so to test the ping on timeout
+    appCtx.put(UimaAsynchronousEngine.Timeout, 1000);
+    appCtx.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "binary");
+
+    runTest(null, uimaAsEngine, String.valueOf(broker.getMasterConnectorURI()),
+            "MeetingDetectorTaeQueue", 3, PROCESS_LATCH);
+  }
+
   
   /**
    * Tests Broker startup and shutdown
@@ -433,7 +461,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   
   public void testAggregateHttpTunnelling() throws Exception {
     System.out.println("-------------- testAggregateHttpTunnelling -------------");
-    // Create Uima EE Client
+    // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -448,7 +476,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
     // Add HTTP Connector to the broker. 
     String httpURI = getHttpURI();
-    // Create Uima EE Client
+    // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -460,7 +488,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testClientHttpTunnelling() throws Exception {
     System.out.println("-------------- testClientHttpTunnelling -------------");
     String httpURI = getHttpURI();
-    // Create Uima EE Client
+    // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -491,7 +519,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         System.out.println(" ***   in the apache-uima-as source distribution.");
 
         String httpURI = getHttpURI();
-      // Create Uima EE Client
+      // Create Uima-AS Client
         BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
         // Deploy remote service
         deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -1305,7 +1333,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testInvalidInitializeCall() throws Exception {
     System.out.println("-------------- testInvalidInitializeCall -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
@@ -1335,8 +1363,8 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
   /**
-   * Tests deployment of a primitive Uima EE Service (PersontTitleAnnotator). Deploys the primitive
-   * in the same jvm using Uima EE Client API and blocks on a monitor until the Uima Client calls
+   * Tests deployment of a primitive Uima-AS Service (PersontTitleAnnotator). Deploys the primitive
+   * in the same jvm using Uima-AS Client API and blocks on a monitor until the Uima Client calls
    * initializationComplete() method. Once the primitive service starts it is expected to send its
    * metadata to the Uima client which in turn notifies this object with a call to
    * initializationComplete() where the monitor is signaled to unblock the thread. This code will
@@ -1346,18 +1374,18 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testDeployPrimitiveService() throws Exception {
     System.out.println("-------------- testDeployPrimitiveService -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
   }
   public void testDeployPrimitiveServiceWithInitFailure() throws Exception {
 	    System.out.println("-------------- testDeployPrimitiveServiceWithInitFailure -------------");
-	    // Instantiate Uima EE Client
+	    // Instantiate Uima-AS Client
 	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    // Deploy Uima EE Primitive Service
+	    // Deploy Uima-AS Primitive Service
 	    try {
 		    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithInitException.xml");
 	    } catch( ResourceInitializationException e) {
@@ -1369,9 +1397,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   
   public void testTypeSystemMerge() throws Exception {
     System.out.println("-------------- testTypeSystemMerge -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath+ "/Deploy_GovernmentOfficialRecognizer.xml");
     deployService(eeUimaEngine, relativePath+ "/Deploy_NamesAndPersonTitlesRecognizer.xml");
     deployService(eeUimaEngine, relativePath+ "/Deploy_TokenSentenceRecognizer.xml");
@@ -1421,10 +1449,10 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testMultiInstanceDeployFailureInPrimitiveService() throws Exception {
     System.out.println("-------------- testMultiInstanceDeployFailureInPrimitiveService -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     try {
-      // Deploy Uima EE Primitive Service
+      // Deploy Uima-AS Primitive Service
       deployService(eeUimaEngine, relativePath + "/Deploy_ScaledPersonTitleAnnotator.xml");
       fail("Expected ResourceInitializationException Due to Misconfiguration but instead the service initialized successfully");
     } catch ( ResourceInitializationException e) {
@@ -1438,9 +1466,9 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testDeployAggregateWithDelegateCpCException() throws Exception {
     System.out.println("-------------- testDeployAggregateWithDelegateCpCException -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithCpCException.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
     addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class);
@@ -1474,9 +1502,9 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public void testDeployPrimitiveServiceWithCpCException() throws Exception {
     System.out.println("-------------- testDeployPrimitiveServiceWithCpCException -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithCpCException.xml");
     // Add expected exception so that we release CPC Latch
     addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class);
@@ -1492,9 +1520,9 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testCpCWithNoCASesSent() throws Exception {
     System.out.println("-------------- testCpCWithNoCASesSent -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
             "PersonTitleAnnotatorQueue");
@@ -1641,9 +1669,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   
   public void testScaledSyncAggregateProcess() throws Exception {
     System.out.println("-------------- testScaledSyncAggregateProcess -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_ScaledPrimitiveAggregateAnnotator.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             5, PROCESS_LATCH);
@@ -1951,7 +1979,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	  }
 
   /**
-   * Tests exception thrown in the Uima EE Client when the Collection Reader is added after the uima
+   * Tests exception thrown in the Uima-AS Client when the Collection Reader is added after the uima
    * ee client is initialized
    * 
    * @throws Exception
@@ -1959,7 +1987,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testExceptionOnPostInitializeCollectionReaderInjection() throws Exception {
     System.out
             .println("-------------- testExceptionOnPostInitializeCollectionReaderInjection -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
@@ -2056,48 +2084,48 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
   /**
-   * Deploys a Primitive Uima EE service and sends 5 CASes to it.
+   * Deploys a Primitive Uima-AS service and sends 5 CASes to it.
    * 
    * @throws Exception
    */
 
   public void testPrimitiveServiceProcess() throws Exception {
     System.out.println("-------------- testPrimitiveServiceProcess -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "PersonTitleAnnotatorQueue", 5, PROCESS_LATCH);
   }
 
   /**
-   * Deploys a Primitive Uima EE service and sends 5 CASes to it.
+   * Deploys a Primitive Uima-AS service and sends 5 CASes to it.
    * 
    * @throws Exception
    */
 
   public void testSyncAggregateProcess() throws Exception {
     System.out.println("-------------- testSyncAggregateProcess -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_MeetingDetectorAggregate.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "MeetingDetectorQueue", 5, PROCESS_LATCH);
   }
 
   /**
-   * Deploys a Primitive Uima EE service and sends 5 CASes to it.
+   * Deploys a Primitive Uima-AS service and sends 5 CASes to it.
    * 
    * @throws Exception
    */
 
   public void testPrimitiveServiceProcessPingFailure() throws Exception {
     System.out.println("-------------- testPrimitiveServiceProcessPingFailure -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     final String containerID = deployService(eeUimaEngine, relativePath
             + "/Deploy_PersonTitleAnnotator.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
@@ -2148,9 +2176,9 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testDelegateTimeoutAndDisable() throws Exception {
     System.out.println("-------------- testDelegateTimeoutAndDisable -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     final String containerID = deployService(eeUimaEngine, relativePath
             + "/Deploy_RoomNumberAnnotator.xml");
     deployService(eeUimaEngine, relativePath
@@ -2196,9 +2224,9 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testDisableDelegateOnTimeoutWithCM() throws Exception {
     System.out.println("-------------- testDisableDelegateOnTimeoutWithCM -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     final String containerID = deployService(eeUimaEngine, relativePath
             + "/Deploy_RoomNumberAnnotator.xml");
     deployService(eeUimaEngine, relativePath
@@ -2234,8 +2262,8 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
   /**
-   * Tests Uima EE client ability to test sendAndReceive in multiple/concurrent threads It spawns 4
-   * thread each sending 100 CASes to a Primitive Uima EE service
+   * Tests Uima-AS client ability to test sendAndReceive in multiple/concurrent threads It spawns 4
+   * thread each sending 100 CASes to a Primitive Uima-AS service
    * 
    * @throws Exception
    */
@@ -2254,7 +2282,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testPrimitiveProcessCallWithLongDelay() throws Exception {
     System.out.println("-------------- testPrimitiveProcessCallWithLongDelay -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml");
     // We expect 18000ms to be spent in process method
     super.setExpectedProcessTime(6000);
@@ -2280,7 +2308,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     System.out.println("-------------- testAggregateProcessCallWithLongDelay -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Services each with 6000ms delay in process()
+    // Deploy Uima-AS Primitive Services each with 6000ms delay in process()
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorAWithLongDelay.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorBWithLongDelay.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorCWithLongDelay.xml");
@@ -2305,7 +2333,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testAggregateProcessCallWithLastCM() throws Exception {
     System.out.println("-------------- testAggregateProcessCallWithLastCM -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Services each with 6000ms delay in process()
+    // Deploy Uima-AS Primitive Services each with 6000ms delay in process()
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateWithLastCM.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             1, PROCESS_LATCH, true);
@@ -2350,7 +2378,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
   /**
-   * Tests a parallel flow in the Uima EE aggregate.
+   * Tests a parallel flow in the Uima-AS aggregate.
    * 
    * @throws Exception
    */
@@ -2749,11 +2777,11 @@ public class TestUimaASExtended extends BaseTestSupport {
    */
   public void testPrimitiveServiceResponseOnException() throws Exception {
     System.out.println("-------------- testPrimitiveServiceResponseOnException -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
-    // Deploy Uima EE Primitive Service
+    // Deploy Uima-AS Primitive Service
     // Initialize and run the Test. Wait for a completion and cleanup resources.
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "NoOpAnnotatorQueue", 1, EXCEPTION_LATCH);
@@ -2761,7 +2789,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public void testProcessParallelFlowWithDelegateFailure() throws Exception {
     System.out.println("-------------- testProcessParallelFlowWithDelegateFailure -------------");
-    // Create Uima EE Client
+    // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
@@ -2800,7 +2828,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public void testProcessParallelFlowWithDelegateDisable() throws Exception {
     System.out.println("-------------- testProcessParallelFlowWithDelegateDisable -------------");
-    // Create Uima EE Client
+    // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_SimpleAnnotator.xml");
@@ -2812,7 +2840,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public void testPrimitiveShutdownOnTooManyErrors() throws Exception {
     System.out.println("-------------- testPrimitiveShutdownOnTooManyErrors -------------");
-    // Create Uima EE Client
+    // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -2825,7 +2853,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
 
   /**
-   * Tests exception thrown in the Uima EE Client when the Collection Reader is added after the uima
+   * Tests exception thrown in the Uima-AS Client when the Collection Reader is added after the uima
    * ee client is initialized
    * 
    * @throws Exception
@@ -2833,7 +2861,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   public void testCollectionReader() throws Exception {
     System.out.println("-------------- testCollectionReader -------------");
-    // Instantiate Uima EE Client
+    // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
@@ -3217,7 +3245,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
 
-  
+  public void testCatchExtraThreads() throws Exception {
+    Thread.sleep(24 * 60 * 60 * 1000);  // sleep for one day
+  }
   
   public void testDeployAgainAndAgain() throws Exception {
     System.out.println("-------------- testDeployAgainAndAgain -------------");

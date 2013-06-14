@@ -298,6 +298,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 				}
 				// Undeploy all containers
 				undeploy();
+				clientCache.clear();
 				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 						Level.INFO)) {
 					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
@@ -657,7 +658,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     }
     if (anApplicationContext.containsKey(UimaAsynchronousEngine.SERIALIZATION_STRATEGY)) {
       final String serializationStrategy = (String) anApplicationContext.get(UimaAsynchronousEngine.SERIALIZATION_STRATEGY);
+      // change this to support compressed filitered as the default
       setSerialFormat((serializationStrategy.equalsIgnoreCase("xmi")) ? SerialFormat.XMI : SerialFormat.BINARY);
+//      setSerialFormat((serializationStrategy.equalsIgnoreCase("xmi")) ? SerialFormat.XMI : SerialFormat.COMPRESSED_FILTERED);
       clientSideJmxStats.setSerialization(getSerialFormat());
     }
     if (anApplicationContext.containsKey(UimaAsynchronousEngine.userName)) {

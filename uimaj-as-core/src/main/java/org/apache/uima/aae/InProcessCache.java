@@ -433,10 +433,12 @@ public class InProcessCache implements InProcessCacheMBean {
 //  }
 
   public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
-          XmiSerializationSharedData sharedData, String aCasReferenceId, Marker marker,
+          XmiSerializationSharedData sharedData, 
+          ReuseInfo compress6ReuseInfo, 
+          String aCasReferenceId, Marker marker,
           boolean acceptsDeltaCas) throws AsynchAEException {
     return registerCacheEntry(aCasReferenceId, new CacheEntry(aCAS, aCasReferenceId,
-            aMessageContext, sharedData, marker, acceptsDeltaCas));
+            aMessageContext, sharedData, compress6ReuseInfo, marker, acceptsDeltaCas));
   }
   
   public CacheEntry register(CAS aCAS, MessageContext aMessageContext,
@@ -617,15 +619,20 @@ public class InProcessCache implements InProcessCacheMBean {
 
     protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
             XmiSerializationSharedData sdata, Marker aMarker, boolean acceptsDeltaCas) {
-      this(aCas, aCasReferenceId, aMessageAccessor);
-      deserSharedData = sdata;
-      this.marker = aMarker;
-      this.acceptsDeltaCas = acceptsDeltaCas;
+      this(aCas, aCasReferenceId, aMessageAccessor, sdata, null, aMarker, acceptsDeltaCas);
     }
 
     protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
         ReuseInfo compress6ReuseInfo, Marker aMarker, boolean acceptsDeltaCas) {
+      this(aCas, aCasReferenceId, aMessageAccessor, null, compress6ReuseInfo, aMarker, acceptsDeltaCas);
+    }
+
+    protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
+        XmiSerializationSharedData sdata,
+        ReuseInfo compress6ReuseInfo, 
+        Marker aMarker, boolean acceptsDeltaCas) {
       this(aCas, aCasReferenceId, aMessageAccessor);
+      this.deserSharedData = sdata;
       this.compress6ReuseInfo = compress6ReuseInfo;
       this.marker = aMarker;
       this.acceptsDeltaCas = acceptsDeltaCas;

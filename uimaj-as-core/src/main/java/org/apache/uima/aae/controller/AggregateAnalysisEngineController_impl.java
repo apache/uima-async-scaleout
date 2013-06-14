@@ -3129,6 +3129,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       delegateStatMap.clear();
     }
 
+    InProcessCache cache = getInProcessCache();
+    if (cache != null) {
+      cache.destroy();
+    }
   }
 
   public void stop() {

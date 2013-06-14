@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae.handler.input;
 
+import java.io.ByteArrayInputStream;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
@@ -47,6 +48,8 @@ import org.apache.uima.aae.monitor.statistics.TimerStats;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
 import org.apache.uima.cas.SerialFormat;
+import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
+import org.apache.uima.cas.impl.Serialization;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.util.Level;
 
@@ -197,8 +200,11 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       t1 = getController().getCpuTime();
       SerialFormat serialFormat = endpoint.getSerialFormat();
       XmiSerializationSharedData deserSharedData = null;
+      ReuseInfo reuseInfo = null;
       
       UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
+      byte[] binarySource = aMessageContext.getByteMessage();
+
       switch (serialFormat) {
       case XMI:
         // Fetch serialized CAS from the message
@@ -207,18 +213,19 @@ public class ProcessRequestHandler_impl extends HandlerBase {
         uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
         break;
       case BINARY:
-      case COMPRESSED:
-      case COMPRESSED_FILTERED:
         // *************************************************************************
         // Register the CAS with a local cache
         // *************************************************************************
         // CacheEntry entry = getController().getInProcessCache().register(cas, aMessageContext,
         // deserSharedData, casReferenceId);
-        byte[] binarySource = aMessageContext.getByteMessage();
         // BINARY format may be COMPRESSED etc, so update it upon reading
         serialFormat = uimaSerializer.deserializeCasFromBinary(binarySource, cas);
         // BINARY format may be COMPRESSED etc, so update it upon reading
         endpoint.setSerialFormat(serialFormat);
+        break;
+      case COMPRESSED_FILTERED:
+        ByteArrayInputStream bais = new ByteArrayInputStream(binarySource);
+        reuseInfo = Serialization.deserializeCAS(cas, bais, endpoint.getTypeSystemImpl(), null).getReuseInfo();
         break;
       default:
         throw new RuntimeException("Never Happen");
@@ -240,7 +247,7 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // *************************************************************************
       // CacheEntry entry = getController().getInProcessCache().register(cas, aMessageContext,
       // deserSharedData, casReferenceId);
-      entry = getController().getInProcessCache().register(cas, aMessageContext, deserSharedData,
+      entry = getController().getInProcessCache().register(cas, aMessageContext, deserSharedData, reuseInfo,
               casReferenceId, marker, acceptsDeltaCas);
       
       /*

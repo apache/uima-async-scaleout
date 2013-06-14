@@ -33,7 +33,7 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   private volatile Object destination = null;
 
-  private String endpoint;
+  private String endpoint;  // is the queue name (only)
 
   private String serverURI;
 

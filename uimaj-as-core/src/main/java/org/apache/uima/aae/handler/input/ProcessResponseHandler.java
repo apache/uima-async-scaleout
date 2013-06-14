@@ -19,10 +19,12 @@
 
 package org.apache.uima.aae.handler.input;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.UIMARuntimeException;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.SerializerCache;
 import org.apache.uima.aae.UIMAEE_Constants;
@@ -49,7 +51,13 @@ import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
+import org.apache.uima.cas.impl.BinaryCasSerDes6;
+import org.apache.uima.cas.impl.CASImpl;
+import org.apache.uima.cas.impl.MarkerImpl;
+import org.apache.uima.cas.impl.Serialization;
+import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
+import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
 import org.apache.uima.util.Level;
 
 public class ProcessResponseHandler extends HandlerBase {
@@ -145,6 +153,7 @@ public class ProcessResponseHandler extends HandlerBase {
     String casReferenceId = null;
     Endpoint endpointWithTimer = null;
     try {
+      final int payload = aMessageContext.getMessageIntProperty(AsynchAEMessage.Payload);
       casReferenceId = aMessageContext.getMessageStringProperty(AsynchAEMessage.CasReference);
       endpointWithTimer = lookupEndpoint(aMessageContext.getEndpoint().getEndpoint(),
               casReferenceId);
@@ -255,7 +264,8 @@ public class ProcessResponseHandler extends HandlerBase {
       if ( !aMessageContext.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas))  {
     	cacheEntry.setAcceptsDeltaCas(false);
       }
-     
+
+      SerialFormat serialFormat = endpointWithTimer.getSerialFormat();
       // check if the CAS is part of the Parallel Step
       if (totalNumberOfParallelDelegatesProcessingCas > 1) {
         // Synchronized because replies are merged into the same CAS.
@@ -268,11 +278,21 @@ public class ProcessResponseHandler extends HandlerBase {
           }
           // If a delta CAS, merge it while checking that no pre-existing FSs are modified.
           if (aMessageContext.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas)) {
-            int highWaterMark = cacheEntry.getHighWaterMark();
-            deserialize(xmi, cas, casReferenceId, highWaterMark, AllowPreexistingFS.disallow);
+            switch (serialFormat) {
+            case XMI:
+              int highWaterMark = cacheEntry.getHighWaterMark();
+              deserialize(xmi, cas, casReferenceId, highWaterMark, AllowPreexistingFS.disallow);
+              break;
+            case COMPRESSED_FILTERED:
+              deserialize(aMessageContext.getByteMessage(), cas, cacheEntry, endpointWithTimer.getTypeSystemImpl(), AllowPreexistingFS.disallow);
+              break;
+            default:
+              throw new UIMARuntimeException(new Exception("Internal error"));
+            }
           } else {
             // If not a delta CAS (old service), take all of first reply, and merge in the new
             // entries in the later replies. Ignoring pre-existing FS for 2.2.2 compatibility
+            // Note: can't be a compressed binary - that would have returned a delta
             if (casStateEntry.howManyDelegatesResponded() == 0) {
               deserialize(xmi, cas, casReferenceId);
             } else { // process secondary reply from a parallel step
@@ -283,14 +303,15 @@ public class ProcessResponseHandler extends HandlerBase {
           casStateEntry.incrementHowManyDelegatesResponded();
         }
       } else { // Processing a reply from a non-parallel delegate (binary or delta xmi or xmi)
-        SerialFormat serialFormat = endpointWithTimer.getSerialFormat();
+        byte[] binaryData = aMessageContext.getByteMessage();
+        ByteArrayInputStream istream = new ByteArrayInputStream(binaryData);
         switch (serialFormat) {
         case BINARY:
-        case COMPRESSED:
+          ((CASImpl)cas).reinit(istream);
+          break;
         case COMPRESSED_FILTERED:
-          UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
-          byte[] binaryData = aMessageContext.getByteMessage();
-          uimaSerializer.deserializeCasFromBinary(binaryData, cas);
+          BinaryCasSerDes6 bcs = new BinaryCasSerDes6(cas, (MarkerImpl) cacheEntry.getMarker(), endpointWithTimer.getTypeSystemImpl(), cacheEntry.getCompress6ReuseInfo());          
+          bcs.deserialize(istream, AllowPreexistingFS.allow);
           break;
         case XMI:
           if (aMessageContext.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas)) {
@@ -301,7 +322,7 @@ public class ProcessResponseHandler extends HandlerBase {
           }
           break;
         default:
-          throw new RuntimeException("Never happen");
+          throw new UIMARuntimeException(new Exception("Internal error"));
         }
       }
       long timeToDeserializeCAS = getController().getCpuTime() - t1;
@@ -385,6 +406,14 @@ public class ProcessResponseHandler extends HandlerBase {
             .getDeserSharedData();
     UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
     uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, highWaterMark, allow);
+  }
+  
+  private void deserialize(byte[] bytes, CAS cas, CacheEntry cacheEntry, TypeSystemImpl remoteTs,
+          AllowPreexistingFS allow) throws Exception {
+    ByteArrayInputStream istream = new ByteArrayInputStream(bytes);
+    ReuseInfo reuseInfo = cacheEntry.getCompress6ReuseInfo();
+
+    Serialization.deserializeCAS(cas, istream, remoteTs, reuseInfo, allow);
   }
 
   private void deserialize(String xmi, CAS cas, String casReferenceId) throws Exception {

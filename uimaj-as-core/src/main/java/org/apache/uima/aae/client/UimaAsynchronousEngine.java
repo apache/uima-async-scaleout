@@ -172,9 +172,10 @@ public interface UimaAsynchronousEngine {
   public static final String UimaEeDebug = "-uimaEeDebug";
 
   /**
-   * Type of serialization to use when serializing CASes to remote Uima AS service. Valid serialization types are: XMI or
-   * BINARY or COMPRESSED_BINARY_6. If this setting is omitted, the Uima AS client uses XMI as a default. The application provides it to the Uima AS client
-   * in a Map which is an argument in {@link #initialize(Map)}
+   * Type of serialization to use when serializing CASes to remote Uima AS service. 
+   * Valid serialization types are the string "xmi" (any case) or other (taken to be binary).
+   * If this setting is omitted, the Uima AS client uses XMI as a default. 
+   * The application provides it to the Uima AS client in a Map which is an argument in {@link #initialize(Map)}
    */
   public static final String SERIALIZATION_STRATEGY = "SerializationStrategy";
   
