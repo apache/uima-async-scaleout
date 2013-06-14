@@ -290,16 +290,18 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     }
     // grab the semaphore so that waitForServiceInitialization() blocks until the
     // semaphore is released.
-    try {
-      serviceInitializationSemaphore.acquire();
-    } catch (InterruptedException e) {
-    }
+//    try {
+//      serviceInitializationSemaphore.acquire();
+//    } catch (InterruptedException e) {
+//    }
     try {
       // blocks until the top level controller sends a notification.
       // Notification is send
       // when either the controller successfully initialized or it failed
       // during initialization
       waitForServiceNotification();
+      
+      System.out.println("----------------- Everybody Initialized - Lets GO!");
       //  success, the service initialized
       startListeners();
     } catch (Exception e) {
