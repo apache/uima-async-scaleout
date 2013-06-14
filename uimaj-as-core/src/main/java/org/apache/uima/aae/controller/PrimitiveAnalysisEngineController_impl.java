@@ -501,7 +501,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // org.apache.uima:type=ee.jms.services,s=Top Level Aggregate TAE Uima EE Service,p0=Top Level Aggregate TAE Components,p1=SecondLevelAggregateCM Components,p2=ThirdLevelAggregateCM Components,name=Multiplier1
         if ( aem.getUniqueMBeanName().indexOf("p0=") > -1 ) {
           // check id the parent aggregate has been scaled up by looking at the last char in its name. If it is a number strip it from the name
-          if ( Character.isDigit(uimaFullyQualifiedAEContext.charAt(uimaFullyQualifiedAEContext.length()-1) )) {
+          if ( Character.isDigit(uimaFullyQualifiedAEContext.charAt(uimaFullyQualifiedAEContext.length()-1) )  &&
+        	   uimaFullyQualifiedAEContext.lastIndexOf(" ") > -1 ) {
             String indx = uimaFullyQualifiedAEContext.substring(uimaFullyQualifiedAEContext.lastIndexOf(" "));
             if ( indx != null ) {
               int value = -1;
@@ -961,7 +962,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       after.getUniqueName(),
                       after.getAnalysisTime()- before.getAnalysisTime(),
                       after.getNumProcessed());
-//            System.out.println("********************"+metrics.getUniqueName());
+            //System.out.println("********************"+metrics.getUniqueName());
            // System.out.println("********************"+metrics.getName());
             performanceList.add(metrics);
             break;
