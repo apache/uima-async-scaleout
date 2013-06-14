@@ -1701,6 +1701,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         if (!getInProcessCache().entryExists(aCasReferenceId)) {
           return;
         }
+        
+  	 // System.out.println(" ---- Controller::"+getComponentName()+" CAS:"+casStateEntry.getCasReferenceId()+ " Has Children:"+casHasChildrenInPlay(casStateEntry)+" Parent::"+casStateEntry.getInputCasReferenceId());
+
         // Check if this CAS has children that are still being processed in this aggregate
         if (casHasChildrenInPlay(casStateEntry)) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -1715,8 +1718,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
 
           replySentToClient = false;
+          casStateEntry.waitingForChildrenToFinish(true);
           return;
         }
+        casStateEntry.waitingForChildrenToFinish(false);
         if (UIMAFramework.getLogger().isLoggable(Level.FINEST)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
                   "finalStep", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1825,7 +1830,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
         // For subordinate CAS, check if its parent needs to be put in play. This should happen if
         // this CAS was the last of the children in play
-        if (isSubordinate && releaseParentCas(casDropped, clientIsCollocated, parentCasStateEntry)) {
+        if (isSubordinate && releaseParentCas(casDropped, clientIsCollocated, parentCasStateEntry)  ) {
+//        	parentCasStateEntry.waitingForChildrenToFinish(false);
+//        if (isSubordinate && releaseParentCas(casDropped, clientIsCollocated, parentCasStateEntry) ) {
           // Put the parent CAS in play. The parent CAS can be in one of two places now depending
           // on the configuration. The parent CAS could have been suspended in the final step, or it
           // could have
@@ -1835,9 +1842,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // Otherwise, the CAS is in a final state and simply needs to resume there.
           Endpoint lastDelegateEndpoint = parentCasStateEntry.getLastDelegate().getEndpoint();
           if (lastDelegateEndpoint.processParentLast()) {
+        	  
             // The parent was suspended in the process call. Resume processing the CAS
             process(parentCASCacheEntry.getCas(), parentCasStateEntry.getCasReferenceId());
-          } else {
+          } else if ( parentCasStateEntry.waitingForChildrenToFinish()){
+        	  
             // The parent was suspended in the final step. Resume processing the CAS
             finalStep(parentCasStateEntry.getFinalStep(), parentCasStateEntry.getCasReferenceId());
           }

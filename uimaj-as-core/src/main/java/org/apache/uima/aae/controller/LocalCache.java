@@ -187,6 +187,8 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 
     private String casReferenceId;
 
+    private volatile boolean waitingForChildren; // true if in FinalState and still has children in play
+    
     private volatile boolean waitingForRealease;
 
     private volatile boolean pendingReply;
@@ -238,6 +240,12 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     
     private Object monitor = new Object();
     
+    public boolean waitingForChildrenToFinish() {
+    	return waitingForChildren;
+    }
+    public void waitingForChildrenToFinish(boolean waiting) {
+    	waitingForChildren = waiting;
+    }
     public String getHostIpProcessingCAS() {
       return hostIpProcessingCAS;
     }
