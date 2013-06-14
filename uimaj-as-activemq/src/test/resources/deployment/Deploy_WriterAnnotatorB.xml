@@ -25,7 +25,7 @@
   <version/>
   <vendor/>
   <deployment protocol="jms" provider="activemq">
-    <casPool numberOfCASes="5"/>
+    <casPool numberOfCASes="5" initialFsHeapSize="500"/>
     <service>
       <inputQueue endpoint="WriterAnnotatorB" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>

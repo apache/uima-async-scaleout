@@ -28,7 +28,7 @@
   <description>Deploys the Simple Cas Merger</description>
   
   <deployment protocol="jms" provider="activemq">
-    <casPool numberOfCASes="5"/> 
+    <casPool numberOfCASes="5" initialFsHeapSize="500"/> 
     <service>
       <inputQueue endpoint="TestMergerQueue" brokerURL="${DefaultBrokerURL}" prefetch="0"/>
       <topDescriptor>

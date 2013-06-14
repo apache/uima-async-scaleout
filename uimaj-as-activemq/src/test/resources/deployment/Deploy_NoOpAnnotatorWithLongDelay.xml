@@ -28,7 +28,7 @@
   <description>Deploys NoOp Annotator Primitive AE</description>
   
   <deployment protocol="jms" provider="activemq">
-    <casPool numberOfCASes="5"/> 
+    <casPool numberOfCASes="5" initialFsHeapSize="500"/> 
     <service>
       <inputQueue endpoint="NoOpAnnotatorQueueLongDelay" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>

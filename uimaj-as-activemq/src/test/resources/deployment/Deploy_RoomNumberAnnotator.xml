@@ -28,7 +28,7 @@
   <description>Deploys the Room Number Annotator Primitive AE</description>
   
   <deployment protocol="jms" provider="activemq">
-    <casPool numberOfCASes="5"/> 
+    <casPool numberOfCASes="5" initialFsHeapSize="500"/> 
     <service>
       <inputQueue endpoint="RoomNumberAnnotatorQueue" brokerURL="${DefaultBrokerURL}"/>
       <topDescriptor>

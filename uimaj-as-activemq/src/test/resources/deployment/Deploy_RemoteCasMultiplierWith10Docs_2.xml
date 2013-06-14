@@ -28,7 +28,7 @@
   <description>Deploys the Second Simple Cas Multiplier</description>
   
   <deployment protocol="jms" provider="activemq">
-    <casPool numberOfCASes="5"/> 
+    <casPool numberOfCASes="5" initialFsHeapSize="500"/> 
     <service>
       <inputQueue endpoint="TestMultiplierQueue2" brokerURL="${DefaultBrokerURL}" prefetch="0"/>
       <topDescriptor>

@@ -23,32 +23,28 @@
 
 <analysisEngineDeploymentDescription xmlns="http://uima.apache.org/resourceSpecifier">
   
-  <name>Top Level TAE</name>
-  <description></description>
+  <name>Meeting Detector TAE</name>
+  <description>Deploys Meeting Detector Aggregate AE that uses remotely deployed RoomNumberAnnotator.</description>
   
   <deployment protocol="jms" provider="activemq">
     <casPool numberOfCASes="5" initialFsHeapSize="500"/>
     <service>
-      <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
+      <inputQueue endpoint="MeetingDetectorTaeQueue" brokerURL="${DefaultBrokerURL}"/>
       <topDescriptor>
-        <import location="../descriptors/analysis_engine/SimpleTestAggregateWithFailingCasMultiplier.xml"/>
+        <import location="../descriptors/tutorial/ex4/MeetingDetectorTAEContinueOnError.xml"/>
       </topDescriptor>
       <analysisEngine>
         <delegates>
-        
-          <analysisEngine key="TestMultiplier">
-	        <casMultiplier poolSize="5"/> 
-          </analysisEngine>
-
-          <remoteAnalysisEngine key="NoOp" remoteReplyQueueScaleout="3">
-	                  <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="${DefaultBrokerURL}"/>
-	                  <serializer method="xmi"/>
-                      <asyncAggregateErrorConfiguration>
-                            <getMetadataErrors maxRetries="3" timeout="0" errorAction="continue" />
-                            <processCasErrors maxRetries="0" timeout="0" thresholdCount="0" thresholdAction="continue" />
-                      </asyncAggregateErrorConfiguration>
+          <remoteAnalysisEngine key="RoomNumber">
+            <inputQueue endpoint="RoomNumberAnnotatorQueue" brokerURL="${DefaultBrokerURL}"/>
+            <serializer method="binary"/>
+            <asyncAggregateErrorConfiguration>
+              <getMetadataErrors maxRetries="0" timeout="1000" errorAction="disable"/>
+              <processCasErrors maxRetries="0" timeout="1000" continueOnRetryFailure="true" thresholdCount="1" thresholdWindow="0" thresholdAction="disable"/>
+              <collectionProcessCompleteErrors timeout="0" additionalErrorAction="terminate"/>
+            </asyncAggregateErrorConfiguration>
+            
           </remoteAnalysisEngine>
-
         </delegates>
       </analysisEngine>
     </service>

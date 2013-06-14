@@ -27,7 +27,7 @@
   <description>Deploys Meeting Detector Aggregate AE that uses remotely deployed RoomNumberAnnotator.</description>
   
   <deployment protocol="jms" provider="activemq">
-    <casPool numberOfCASes="5"/>
+    <casPool numberOfCASes="5" initialFsHeapSize="500"/>
     <service>
       <inputQueue endpoint="MeetingDetectorTaeQueue" brokerURL="${DefaultBrokerURL}"/>
       <topDescriptor>
