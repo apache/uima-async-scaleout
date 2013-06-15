@@ -3245,9 +3245,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
 
-  public void testCatchExtraThreads() throws Exception {
-    Thread.sleep(24 * 60 * 60 * 1000);  // sleep for one day
-  }
+//  public void testCatchExtraThreads() throws Exception {
+//    Thread.sleep(24 * 60 * 60 * 1000);  // sleep for one day
+//  }
   
   public void testDeployAgainAndAgain() throws Exception {
     System.out.println("-------------- testDeployAgainAndAgain -------------");
