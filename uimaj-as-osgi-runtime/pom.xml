@@ -169,7 +169,7 @@
     
                 <Import-Package>org.apache.log4j;resolution:=optional,*
                 </Import-Package>
-                <Embed-Dependency>*;scope=compile;inline=true</Embed-Dependency>
+                <Embed-Dependency>*;scope=compile</Embed-Dependency>
                 <Bundle-SymbolicName>org.apache.uima.runtime.fragments.uimaas;singleton:=true</Bundle-SymbolicName>
                 <Fragment-Host>org.apache.uima.runtime</Fragment-Host>
                 <Eclipse-RegisterBuddy>org.apache.uima.runtime</Eclipse-RegisterBuddy>
@@ -184,7 +184,7 @@
         <executions>
           <execution>
             <id>unpackDependentJars</id>
-            <goals><goal>unpack-dependencies</goal></goals>
+            <goals><goal>copy-dependencies</goal></goals>
             <configuration>
               <outputDirectory>${project.build.outputDirectory}</outputDirectory>
               <excludeTransitive>true</excludeTransitive>
