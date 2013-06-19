@@ -102,8 +102,7 @@
             <!-- Uncomment Line below for the actual release -->
             <!-- Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host -->
             <!-- Remove below line for the actual release -->
-            <!--Fragment-Host>org.apache.uima.runtime;bundle-version="2.4.0.SNAPSHOT"</Fragment-Host -->
-            <Fragment-Host>org.apache.uima.runtime;bundle-version="2.4.0"</Fragment-Host>
+            <Fragment-Host>org.apache.uima.runtime;bundle-version="2.4.1.SNAPSHOT"</Fragment-Host>
           </instructions>
         </configuration>
       </plugin>
