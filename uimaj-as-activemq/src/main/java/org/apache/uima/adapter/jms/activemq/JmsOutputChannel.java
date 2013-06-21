@@ -90,7 +90,7 @@ public class JmsOutputChannel implements OutputChannel {
 
   private static final Class CLASS_NAME = JmsOutputChannel.class;
 
-  private static final long INACTIVITY_TIMEOUT = 60; // MINUTES
+  private static final long INACTIVITY_TIMEOUT = 5; // MINUTES
 
   private CountDownLatch controllerLatch = new CountDownLatch(1);
 
