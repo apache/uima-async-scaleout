@@ -1921,7 +1921,7 @@ public class JmsOutputChannel implements OutputChannel {
         //	Fire the runnable at fixed intervals equal to inactivityTimeout value
         scheduler.scheduleAtFixedRate(new Runnable(){
             public void run() {
-          	   System.out.println("Hashcode:"+hashCode()+" Controller:"+controller.getComponentName()+" Session Cleanup Thread Woke Up After "+inactivityTimeout +" minutes of Sleep to Clean Up Unused JMS Sessions");
+          	   //System.out.println("Hashcode:"+hashCode()+" Controller:"+controller.getComponentName()+" Session Cleanup Thread Woke Up After "+inactivityTimeout +" minutes of Sleep to Clean Up Unused JMS Sessions");
                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                   UIMAFramework.getLogger(CLASS_NAME).logrb(
                           Level.INFO,
