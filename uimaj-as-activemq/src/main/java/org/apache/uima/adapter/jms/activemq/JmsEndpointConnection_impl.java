@@ -823,7 +823,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
   }
 
   protected synchronized void finalize() throws Throwable {
-    brokerDestinations.getConnectionTimer().stopTimer();
+//    brokerDestinations.getConnectionTimer().stopTimer();
   }
 
 }
