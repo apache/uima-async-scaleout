@@ -24,27 +24,27 @@
   <primitive>false</primitive>
   <delegateAnalysisEngineSpecifiers>
 	  
-    <delegateAnalysisEngine key="BlueJTestMultiplier1">
+    <delegateAnalysisEngine key="TestMultiplier1">
       <import location="../multiplier/SimpleCasGenerator.xml"/>
     </delegateAnalysisEngine>
 
-    <delegateAnalysisEngine key="BlueJTestMultiplier2">
+    <delegateAnalysisEngine key="TestMultiplier2">
       <import location="../multiplier/SimpleCasGenerator.xml"/>
     </delegateAnalysisEngine>
 	  
 
-	<delegateAnalysisEngine key="BlueJInnerRemoteCMAggregate">
+	<delegateAnalysisEngine key="InnerRemoteCMAggregate">
       <import location="SimpleTestCMAggregateWithCollocatedCM.xml"/>
     </delegateAnalysisEngine>
 	  
 	  
-	<delegateAnalysisEngine key="BlueJNoOpCandidateAnswerCM">
-      <!-- <import location="BlueJNoOpCandidateAnswer.xml"/> -->
+	<delegateAnalysisEngine key="NoOpCandidateAnswerCM">
+      <!-- <import location="NoOpCandidateAnswer.xml"/> -->
       <import location="../multiplier/SimpleCasGenerator.xml"/>
     </delegateAnalysisEngine>
 	  
-    <delegateAnalysisEngine key="BlueJNoOpCC">
-      <import location="BlueJNoOpCC.xml"/>
+    <delegateAnalysisEngine key="NoOpCC">
+      <import location="NoOpCC.xml"/>
     </delegateAnalysisEngine>
 	  
   </delegateAnalysisEngineSpecifiers>
@@ -59,8 +59,8 @@
         <multiValued>false</multiValued>
         <mandatory>true</mandatory>
         <overrides>
-          <parameter>BlueJTestMultiplier1/NumberToGenerate</parameter>
-          <parameter>BlueJTestMultiplier2/NumberToGenerate</parameter>
+          <parameter>TestMultiplier1/NumberToGenerate</parameter>
+          <parameter>TestMultiplier2/NumberToGenerate</parameter>
         </overrides>
       </configurationParameter>
     </configurationParameters>
@@ -75,11 +75,11 @@
 
     <flowConstraints>
       <fixedFlow>
-        <node>BlueJTestMultiplier1</node>
-        <node>BlueJTestMultiplier2</node>
-        <node>BlueJInnerRemoteCMAggregate</node>
-        <node>BlueJNoOpCandidateAnswerCM</node>
-        <node>BlueJNoOpCC</node>
+        <node>TestMultiplier1</node>
+        <node>TestMultiplier2</node>
+        <node>InnerRemoteCMAggregate</node>
+        <node>NoOpCandidateAnswerCM</node>
+        <node>NoOpCC</node>
       </fixedFlow>
     </flowConstraints>
     <capabilities>

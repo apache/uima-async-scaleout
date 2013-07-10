@@ -2702,8 +2702,8 @@ public class TestUimaASExtended extends BaseTestSupport {
     }
   }
 
-  public void testBlueJDeployment() throws Exception {
-    System.out.println("-------------- testBlueJDeployment -------------");
+  public void testComplexDeployment() throws Exception {
+    System.out.println("-------------- testComplexDeployment -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy replicated services for the inner remote aggregate CM
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -2715,7 +2715,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_CMAggregateWithCollocatedCM.xml");
     // Deploy top level Aggregate Cas Multiplier with 2 collocated Cas Multipliers
     // CM1 --> CM2 --> Remote AggregateCM --> Candidate Answer --> CC
-    deployService(eeUimaEngine, relativePath + "/Deploy_TopLevelBlueJAggregateCM.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_TopLevelComplexAggregateCM.xml");
 
     runTest2(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "TopLevelTaeQueue", 10, PROCESS_LATCH);

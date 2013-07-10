@@ -34,13 +34,16 @@
         <import location="../descriptors/analysis_engine/ComplexAggregate_TAE.xml"/>
       </topDescriptor>
       <analysisEngine>
-        <delegates>
+      <scaleout numberOfInstances="5"/> 
+      
+        <!--delegates>
         
           <analysisEngine key="TestMultiplier">
 	        <casMultiplier poolSize="5"/> 
           </analysisEngine>
 
           <analysisEngine key="MeetingDetector">
+               
               <delegates>
 	              <remoteAnalysisEngine key="NoOp">
 	                  <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="${DefaultBrokerURL}"/>
@@ -52,7 +55,7 @@
 	              </remoteAnalysisEngine>
 	          </delegates>
           </analysisEngine>
-        </delegates>
+        </delegates-->
       </analysisEngine>
     </service>
   </deployment>
