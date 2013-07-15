@@ -193,6 +193,8 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                    new Object[] {  aComponentName, getEndpoint(),
 		                      ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() });
 		          }
+		        } else if ( !brokerUri.startsWith("http") && !brokerUri.startsWith("failover")){
+		              brokerUri += "?wireFormat.maxInactivityDuration=0";
 		        }
 
 		        if (!isOpen()) {
@@ -217,10 +219,11 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                  //  Ignore exceptions on a close of a bad connection
 		                }
 		              }
-		              System.out.println("---------- Opening New Broker Connection ---------------");
+		              System.out.println("---------- Opening New Broker Connection ---------------"+brokerUri);
 		              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
 		              //  Create shared jms connection to a broker
 		              conn = factory.createConnection();
+		              
 		              factory.setDispatchAsync(true);
 		              factory.setUseAsyncSend(true);
 		              factory.setCopyMessageOnSend(false);
