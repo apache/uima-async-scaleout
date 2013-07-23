@@ -1322,6 +1322,17 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    	      if (message.getJMSReplyTo() != null && serviceDelegate.isCasPendingReply(casReferenceId)) {
    	        casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
    	      }
+    	} else {
+    		
+    		String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
+    	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
+    	      if ( pid != null && nodeIP != null ) {
+        	      UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),null,
+        	              casReferenceId);
+        	      // notify client that the last request (GetMeta or CPC) has been received by a service.
+        	      onBeforeProcessCAS(status,nodeIP, pid);
+    	      }
+    		
     	}
   /*      
         List<DelegateEntry> outstandingCasList = serviceDelegate.getDelegateCasesPendingReply();
