@@ -1530,7 +1530,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     if (inputCasCachedRequest.isSynchronousInvocation()) {
     	// with synchronous invocation, child CASes are thrown away. With sync API, the UIMA-AS client
     	// is not using callbacks. 
-    	if ( casReferenceId.equals(inputCasCachedRequest)) {
+    	if ( casReferenceId.equals(inputCasCachedRequest.getCasReferenceId())) {
     	      handleProcessReplyFromSynchronousCall(inputCasCachedRequest, message);
     	} else {
     		return;
