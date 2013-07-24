@@ -1895,7 +1895,7 @@ public class JmsOutputChannel implements OutputChannel {
       brokerDestinations = aBrokerDestinations;
     }
 
-    public void setInactivityTimeout(long anInactivityTimeout) {
+    public synchronized void setInactivityTimeout(long anInactivityTimeout) {
       inactivityTimeout = anInactivityTimeout;
     }
 
