@@ -356,6 +356,15 @@ under the License.
             thread in UIMA AS service analyzes a CAS.
 		  </para>
         </listitem>
+        
+        <listitem>
+          <para><code>onBeforeProcessMeta( String nodeIP, String pid)</code>: The callback 
+            used to inform the application that a GetMeta request has been delivered to UIMA AS service and is about to be processed. 
+            The nodeIP contains IP address of a machine where UIMA AS service is running. The pid contains
+            UIMA AS service PID and a thread id. Its syntax is:&lt;PID&gt;:&lt;thread id&gt;. The thread id identifies which 
+            thread in UIMA AS service will process GetMeta request.
+		  </para>
+        </listitem>
       </itemizedlist>
       </para>
   </section>
