@@ -49,6 +49,17 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
     // to be overridden
   }
   /**
+   * Called by Uima AS client API before GetMeta processing begins at the remote
+   * UIMA AS service
+   * 
+   * @param nodeIP - Node IP where GetMeta request is handled
+   * @param pid - Remote Service PID where GetMeta request is handled. The
+   *     has the following syntax: <PID:THREADID>
+   */
+  public void onBeforeProcessMeta(String nodeIP, String pid) {
+    // to be overridden
+  }
+  /**
    * The callback used to inform the application that the initialization request has completed. On
    * success aStatus will be null; on failure use the EntityProcessStatus class to get the details.
    * 

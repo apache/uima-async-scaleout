@@ -337,6 +337,20 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
   }
 
+  public void onBeforeProcessMeta(String nodeIP, String pid) {
+	  for (int i = 0; listeners != null && i < listeners.size(); i++) {
+		  UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners
+				  .get(i);
+		  try {
+			  statCL.onBeforeProcessMeta(nodeIP, pid);
+		  } catch (Throwable t) {
+			  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
+					  getClass().getName(), "onBeforeProcessMeta",
+					  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+					  "UIMAEE_exception__WARNING", t);
+		  }
+	  }
+  }
   public synchronized void setCollectionReader(CollectionReader aCollectionReader)
           throws ResourceInitializationException {
     if (initialized) {
@@ -1324,34 +1338,22 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    	      }
     	} else {
     		
-    		String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
-    	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
-    	      if ( pid != null && nodeIP != null ) {
-        	      UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),null,
-        	              casReferenceId);
-        	      // notify client that the last request (GetMeta or CPC) has been received by a service.
-        	      onBeforeProcessCAS(status,nodeIP, pid);
-    	      }
+    		
+    		ClientRequest requestToCache = (ClientRequest) clientCache.get(uniqueIdentifier);
+    		if ( requestToCache != null && requestToCache.isMetaRequest()) {
+        	  String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
+      	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
+      	      if ( pid != null && nodeIP != null ) {
+          	     UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),null,
+          	              casReferenceId);
+          	      // notify client that the last request (GetMeta ) has been received by a service.
+          	     onBeforeProcessMeta(nodeIP, pid);
+      	      }
+    			
+    		}
     		
     	}
-  /*      
-        List<DelegateEntry> outstandingCasList = serviceDelegate.getDelegateCasesPendingReply();
-        for (DelegateEntry entry : outstandingCasList) {
-          if (entry.getCasReferenceId().equals(casReferenceId)) {
-            // The Cas is still being processed
-            //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-            if (casCachedRequest != null) {
-              casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
-            }
-            return;
-          }
-        }
-   */
-//      }
-//      if ( casReferenceId != null && getCache().containsKey(casReferenceId) ) {
-//        //ClientRequest casCachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-//        casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
-//      }
+
     } catch( Exception e) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
               "handleServiceInfo", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
