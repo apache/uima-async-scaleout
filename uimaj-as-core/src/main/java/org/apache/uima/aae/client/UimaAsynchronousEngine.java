@@ -199,6 +199,13 @@ public interface UimaAsynchronousEngine {
   public static final String SharedConnection = "SharedConnection";
 
   /**
+   * Flag to indicate whether or not the uima-as client should use
+   * timer per CAS. The default is single timer for all outstanding
+   * CASes.
+   */
+  public static final String TimerPerCAS = "TimerPerCAS";
+  
+  /**
    * Initializes UIMA asynchronous client using configuration parameters provided in a Map object.
    * It creates a connection to a service queue managed by a Broker as specified in the parameters.
    * A temporary reply queue is also created with a JMS listener attached to it. Once the
