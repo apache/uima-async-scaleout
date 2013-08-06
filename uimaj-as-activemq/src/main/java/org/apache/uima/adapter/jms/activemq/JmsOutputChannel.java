@@ -1725,7 +1725,7 @@ public class JmsOutputChannel implements OutputChannel {
   private void addCasToOutstandingList(CacheEntry entry, boolean isRequest, String aDelegateKey) {
     Delegate delegate = null;
     if (isRequest && (delegate = lookupDelegate(aDelegateKey)) != null) {
-      delegate.addCasToOutstandingList(entry.getCasReferenceId(), entry.getCas().hashCode());//, false);  // false=dont start timer thread per CAS
+      delegate.addCasToOutstandingList(entry.getCasReferenceId(), entry.getCas().hashCode(), false);  // false=dont start timer thread per CAS
     }
   }
 
