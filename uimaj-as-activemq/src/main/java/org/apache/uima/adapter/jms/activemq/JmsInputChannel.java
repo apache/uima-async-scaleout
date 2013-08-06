@@ -638,6 +638,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         			getController().getOutputChannel().sendReply(AsynchAEMessage.ServiceInfo,
                             messageContext.getEndpoint(), aMessage.getStringProperty(AsynchAEMessage.CasReference), true);
         		} catch( Exception ex) {
+        			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+		                    "produceTextMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+		                    "UIMAJMS_exception__WARNING", ex);
        		        //	The exception has already been logged in sendReply() method
        		        return;  // DONT PROCESS
         		}
