@@ -1281,7 +1281,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // Record the outgoing CAS. CASes destined for remote CM are recorded
           // in JmsOutputchannel.
           if (!endpoint.isRemote()) {
-            delegate.addNewCasToOutstandingList(aCasReferenceId, true,cacheEntry.getCas().hashCode());
+            delegate.addNewCasToOutstandingList(aCasReferenceId, true,cacheEntry.getCas().hashCode(), false);
           }
         }
 
@@ -2453,7 +2453,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     Delegate delegate = lookupDelegate(aDelegateKey);
     if (delegate != null && delegate.getState() == Delegate.TIMEOUT_STATE) {
       // Add CAS id to the list of delayed CASes.
-      int listSize = delegate.addCasToPendingDispatchList(aCasReferenceId, casHashcode);
+      int listSize = delegate.addCasToPendingDispatchList(aCasReferenceId, casHashcode, false); // false=no timer thread per CAS
       // If the list was empty (before the add), send the GetMeta request
       // as a PING to see if the delegate service is alive.
       if (listSize == 1) {
