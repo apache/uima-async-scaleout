@@ -50,8 +50,10 @@ import org.apache.uima.UIMA_IllegalArgumentException;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.UIMAEE_Constants;
+// 08/06/2013 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.client.UimaASStatusCallbackListener;
+//08/06/2013 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.ControllerCallbackListener;
@@ -79,10 +81,12 @@ import org.apache.uima.resource.ResourceManager;
 import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.util.Level;
 import org.springframework.context.ApplicationContext;
+// 08/06/2013 import org.springframework.context.ApplicationEvent;
+//08/06/2013 import org.springframework.context.ApplicationListener;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineCommon_impl
-        implements UimaAsynchronousEngine, MessageListener, ControllerCallbackListener {
+        implements UimaAsynchronousEngine, MessageListener, ControllerCallbackListener { //08/06/2013 , ApplicationListener<ApplicationEvent>{
   private static final Class CLASS_NAME = BaseUIMAAsynchronousEngine_impl.class;
 
   private MessageSender sender = null;
@@ -672,6 +676,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     	.get(UimaAsynchronousEngine.password);
     }
 
+    if (anApplicationContext.containsKey(UimaAsynchronousEngine.TimerPerCAS)) {
+        timerPerCAS = ((Boolean) anApplicationContext.get(UimaAsynchronousEngine.TimerPerCAS))
+                .booleanValue();
+      }
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
       UIMAFramework.getLogger(CLASS_NAME)
               .logrb(
@@ -681,7 +689,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
                       JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                       "UIMAJMS_init_uimaee_client__CONFIG",
                       new Object[] { brokerURI, 0, casPoolSize, processTimeout, metadataTimeout,
-                          cpcTimeout });
+                          cpcTimeout,timerPerCAS });
     }
     super.serviceDelegate = new ClientServiceDelegate(endpoint, applicationName, this);
     super.serviceDelegate.setCasProcessTimeout(processTimeout);
@@ -810,7 +818,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   public String deploy(String aDeploymentDescriptor, Map anApplicationContext) throws Exception {
     String springContext = generateSpringContext(aDeploymentDescriptor, anApplicationContext);
 
-    SpringContainerDeployer springDeployer = new SpringContainerDeployer(springContainerRegistry);
+    SpringContainerDeployer springDeployer = new SpringContainerDeployer(springContainerRegistry);//08/06/2013 , this);
     try {
       String id = springDeployer.deploy(springContext);
       if ( springDeployer.isInitialized() ) {
@@ -994,7 +1002,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected String deploySpringContainer(String[] springContextFiles)
           throws ResourceInitializationException {
 
-    SpringContainerDeployer springDeployer = new SpringContainerDeployer();
+    SpringContainerDeployer springDeployer = new SpringContainerDeployer();// 08/06/2013 this);
     try {
       return springDeployer.deploy(springContextFiles);
     } catch (ResourceInitializationException e) {
@@ -1088,6 +1096,14 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   public void notifyOnTermination(String aServiceName) {
     notifyOnTermination(aServiceName, null, null);
   }
+/* 08/06/2013
+  public void notifyOnTermination(String aServiceName, EventTrigger cause) {
+    for (int i = 0; listeners != null && i < listeners.size(); i++) {
+        UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
+        statCL.onUimaAsServiceExit(cause);
+    }
+  }
+*/
   public void notifyOnTermination(String aServiceName, String aCasReferenceId, Exception cause) {
 //    super.n
   }
@@ -1190,4 +1206,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   public void notifyOnReconnectionSuccess() {
     
   }
+
+/* 08/06/2013
+  public void onApplicationEvent(ApplicationEvent event) {
+	System.out.println("BaseUIMAAsynchronousEngine received onApplicationEvent  -Class:"+event.getClass().getName());
+  }
+*/
 }
