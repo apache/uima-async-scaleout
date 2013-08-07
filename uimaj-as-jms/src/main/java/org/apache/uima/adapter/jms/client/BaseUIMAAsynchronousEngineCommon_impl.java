@@ -255,6 +255,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   
   abstract protected void initializeConsumer(String aBrokerURI, Connection connection) throws Exception;
 
+  // enables/disable timer per CAS. Defaul is to use single timer for
+  // all outstanding CASes
+  protected volatile boolean timerPerCAS=false;
+  
   //abstract protected  String getBrokerURI();
 
   protected void setBrokeryURI(String brokerURI ) {
@@ -912,7 +916,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         	  // since the service is in time out state, we dont send CASes to it just yet. Instead, place
         	  // a CAS in a pending dispatch list. CASes from this list will be sent once a response to PING
         	  // arrives.
-            serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId(), aCAS.hashCode());
+            serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId(), aCAS.hashCode(), timerPerCAS); 
             if ( cpcReadySemaphore.availablePermits() > 0 ) {
               acquireCpcReadySemaphore();
             }
@@ -943,7 +947,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         	  // since the service is in time out state, we dont send CASes to it just yet. Instead, place
         	  // a CAS in a pending dispatch list. CASes from this list will be sent once a response to PING
         	  // arrives.
-              serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId(), aCAS.hashCode());
+              serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId(), aCAS.hashCode(), timerPerCAS);
               return casReferenceId;
             }
           }
@@ -983,7 +987,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   public boolean delayCasIfDelegateInTimedOutState(String aCasReferenceId, long casHashcode) throws AsynchAEException {
     if (serviceDelegate != null && serviceDelegate.getState() == Delegate.TIMEOUT_STATE) {
       // Add CAS id to the list of delayed CASes.
-      serviceDelegate.addCasToPendingDispatchList(aCasReferenceId, casHashcode);
+      serviceDelegate.addCasToPendingDispatchList(aCasReferenceId, casHashcode, timerPerCAS); 
       return true;
     }
     return false; // Cas Not Delayed
@@ -1081,7 +1085,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	  serviceDelegate.restartTimerForOldestCasInOutstandingList();
           //	We got a reply to GetMeta ping. Send all CASes that have been
           //    placed on the pending dispatch queue to a service.
-    	  while( (casReferenceId = serviceDelegate.removeOldestFromPendingDispatchList()) != null ) {
+    	  while( serviceDelegate.getState()==Delegate.OK_STATE && (casReferenceId = serviceDelegate.removeOldestFromPendingDispatchList()) != null ) {
     	        ClientRequest cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
     	        if (cachedRequest != null) {
     	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
