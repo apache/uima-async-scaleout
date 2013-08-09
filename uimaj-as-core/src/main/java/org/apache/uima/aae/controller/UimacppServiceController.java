@@ -40,6 +40,7 @@ import javax.management.ObjectName;
 import org.apache.uima.UIMAException;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.jmx.JmxManagement;
 import org.apache.uima.internal.util.JmxMBeanAgent;
 import org.apache.uima.resource.ResourceInitializationException;
@@ -651,7 +652,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
       for (int i = 0; i < listeners.size(); i++) {
         ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
         if (listener != null) {
-          listener.notifyOnTermination("Uima C++ service shutdown.");
+          listener.notifyOnTermination("Uima C++ service shutdown.", EventTrigger.ExceededErrorThreshold);
         }
       }
       listeners.clear();
@@ -1049,7 +1050,7 @@ class WaitThread implements Runnable {
         for (int i = 0; i < listeners.size(); i++) {
           ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
           if (listener != null) {
-            listener.notifyOnTermination(message);
+            listener.notifyOnTermination(message, EventTrigger.ExceededErrorThreshold);
           }
         }
         listeners.clear();
@@ -1061,7 +1062,7 @@ class WaitThread implements Runnable {
         for (int i = 0; i < listeners.size(); i++) {
           ControllerCallbackListener listener = (ControllerCallbackListener) listeners.get(i);
           if (listener != null) {
-            listener.notifyOnTermination(message);
+            listener.notifyOnTermination(message, EventTrigger.ExceededErrorThreshold);
           }
         }
         listeners.clear();

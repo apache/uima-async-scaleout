@@ -23,7 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.UimaEEAdminContext;
+import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.util.Level;
 import org.springframework.context.ApplicationContext;
@@ -42,8 +44,11 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
 
   private ConcurrentHashMap<String, ListenerEntry> listenerMap = new ConcurrentHashMap<String, ListenerEntry>();
 
-  public UimaEEAdminSpringContext(FileSystemXmlApplicationContext aSpringContainer) {
+  private ControllerCallbackListener cl;
+  
+  public UimaEEAdminSpringContext(FileSystemXmlApplicationContext aSpringContainer, ControllerCallbackListener listener) {
     springContainer = aSpringContainer;
+    this.cl = listener;
     String beanNames[] = springContainer
             .getBeanNamesForType(org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer.class);
     for (int i = 0; beanNames != null && i < beanNames.length; i++) {
@@ -63,6 +68,11 @@ public class UimaEEAdminSpringContext implements UimaEEAdminContext, Application
     }
   }
 
+  public void onTerminate(String reason, EventTrigger cause) {
+	  if ( cl != null ) {
+		  cl.notifyOnTermination(reason, cause);
+	  }
+  }
   public void setBroker(BrokerService aBrokerService) {
     service = aBrokerService;
   }

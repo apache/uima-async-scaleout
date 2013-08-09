@@ -19,15 +19,18 @@
 
 package org.apache.uima.aae;
 
-import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
+public class UimaASApplicationExitEvent extends UimaASApplicationEvent {
 
-public interface UimaEEAdminContext {
-  public void shutdown();
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  public void onTerminate(String reason, EventTrigger cause);
-  
-  public void stopListener(String anEndpoint);
-
-  public int getConcurrentConsumerCount(String anEndpointName);
-
+	public UimaASApplicationExitEvent(Object source, EventTrigger cause) {
+		super(source, cause);
+		// TODO Auto-generated constructor stub
+	}
+    public EventTrigger getEventTrigger() {
+    	return super.gettrigger();
+    }
 }

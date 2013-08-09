@@ -19,8 +19,10 @@
 
 package org.apache.uima.aae.controller;
 
+import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
+
 public interface ControllerCallbackListener {
-  public void notifyOnTermination(String aMessage);
+  public void notifyOnTermination(String aMessage, EventTrigger cause);
 
   public void notifyOnInitializationFailure(AnalysisEngineController aController, Exception e);
 

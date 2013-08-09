@@ -28,6 +28,8 @@ import java.net.Socket;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UimaContext;
 import org.apache.uima.UimaContextAdmin;
+import org.apache.uima.aae.UimaASApplicationEvent;
+import org.apache.uima.aae.UimaASApplicationExitEvent;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.jmx.monitor.BasicUimaJmxMonitorListener;
@@ -153,7 +155,39 @@ public class UIMA_Service implements ApplicationListener {
     return springConfigFileArray;
 
   }
-
+  public SpringContainerDeployer deploy(String[] springContextFiles, ApplicationListener<ApplicationEvent> listener) throws Exception {
+	    SpringContainerDeployer springDeployer;
+	    
+	    if ( listener == null ) {
+	    	springDeployer = new SpringContainerDeployer(this);
+        } else {
+	        springDeployer = new SpringContainerDeployer(listener);
+	        
+        }
+  
+	    // now try to deploy the array of spring context files
+	    springDeployer.deploy(springContextFiles);
+	    // Poll the deployer for the initialization status. Wait for either successful
+	    // initialization or failure.
+	    while (!springDeployer.isInitialized() ) { 
+	      if ( springDeployer.initializationFailed()) {
+	        throw new ResourceInitializationException();
+	      }
+	      synchronized (springDeployer) {
+	        springDeployer.wait(100);
+	      }
+	    }
+	    // Check if the deployer failed
+	    // Register this class to receive Spring container notifications. Specifically, looking
+	    // for an even signaling the container termination. This is done so that we can stop
+	    // the monitor thread
+	    FileSystemXmlApplicationContext context = springDeployer.getSpringContext();
+	    context.addApplicationListener(this);
+	    springDeployer.startListeners();
+	    
+	    return springDeployer;
+	  
+  }
   /**
    * Deploy Spring context files in a Spring Container.
    * 
@@ -163,28 +197,7 @@ public class UIMA_Service implements ApplicationListener {
    * @throws Exception
    */
   public SpringContainerDeployer deploy(String[] springContextFiles) throws Exception {
-    SpringContainerDeployer springDeployer = new SpringContainerDeployer();
-    // now try to deploy the array of spring context files
-    springDeployer.deploy(springContextFiles);
-    // Poll the deployer for the initialization status. Wait for either successful
-    // initialization or failure.
-    while (!springDeployer.isInitialized() ) { 
-      if ( springDeployer.initializationFailed()) {
-        throw new ResourceInitializationException();
-      }
-      synchronized (springDeployer) {
-        springDeployer.wait(100);
-      }
-    }
-    // Check if the deployer failed
-    // Register this class to receive Spring container notifications. Specifically, looking
-    // for an even signaling the container termination. This is done so that we can stop
-    // the monitor thread
-    FileSystemXmlApplicationContext context = springDeployer.getSpringContext();
-    context.addApplicationListener(this);
-    springDeployer.startListeners();
-    
-    return springDeployer;
+	  return deploy(springContextFiles, null);
   }
 
   /**
@@ -380,6 +393,10 @@ public class UIMA_Service implements ApplicationListener {
       System.out.println("Stopping Monitor");
       // Stop the monitor. The service has stopped
       monitor.doStop();
+    } else if ( event instanceof UimaASApplicationExitEvent ) {
+    	System.out.println("!!!!!!!!!!! Service Wrapper Received UimaASApplicationEvent. Message:"+event.getSource());
+    } else {
+    	System.out.println("............ Received Notification of type:"+event.getClass().getName());
     }
   }
 

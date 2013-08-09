@@ -53,6 +53,7 @@ import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.UimaClassFactory;
@@ -1145,9 +1146,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
 
     if (ErrorHandler.TERMINATE.equalsIgnoreCase(anAction)) {
+    	String parentCasReferenceId = null;
       if ( casReferenceId != null ) {
         CasStateEntry stateEntry = null;
-        String parentCasReferenceId = null;
+        
         try {
           stateEntry = getLocalCache().lookupEntry(casReferenceId);
           if (stateEntry != null && stateEntry.isSubordinate()) {
@@ -1165,6 +1167,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         } catch (Exception e) {
         }
 
+      }
+      UimaEEAdminContext ctx = getUimaEEAdminContext();
+      if ( ctx != null ) {
+    	  ctx.onTerminate("ExceededErrorThreshold",EventTrigger.ExceededErrorThreshold );
       }
       //  Extended tests cant be killed, so skip this if dontKill is defined
       //  in System properties.

@@ -30,6 +30,9 @@ import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIDGenerator;
+import org.apache.uima.aae.UimaASApplicationEvent;
+import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
+import org.apache.uima.aae.UimaASApplicationExitEvent;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.Controller;
@@ -44,6 +47,8 @@ import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.jms.support.destination.DestinationResolver;
 
@@ -71,13 +76,20 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
   private AnalysisEngineController topLevelController = null;
 
   private Exception cause=null;
+  private ApplicationListener<ApplicationEvent> listener;
   
-  public SpringContainerDeployer() {
+  public SpringContainerDeployer(ApplicationListener listener) {
+	  this.listener = listener;
   }
 
   public SpringContainerDeployer(ConcurrentHashMap aSpringContainerRegistry) {
     springContainerRegistry = aSpringContainerRegistry;
   }
+
+  public SpringContainerDeployer(ConcurrentHashMap aSpringContainerRegistry, ApplicationListener listener) {
+	    springContainerRegistry = aSpringContainerRegistry;
+	    this.listener = listener;
+	  }
 
   private UimaDefaultMessageListenerContainer produceListenerConnector(ActiveMQConnectionFactory cf, AnalysisEngineController ctrl) {
     DestinationResolver resolver = new TempDestinationResolver();
@@ -269,7 +281,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     serviceInitializationException = false;
     // Wrap Spring context
     UimaEEAdminSpringContext springAdminContext = new UimaEEAdminSpringContext(
-            (FileSystemXmlApplicationContext) ctx);
+            (FileSystemXmlApplicationContext) ctx, this);
     // Find all deployed Controllers
     String[] controllers = ctx
             .getBeanNamesForType(org.apache.uima.aae.controller.AnalysisEngineController.class);
@@ -549,7 +561,9 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
     notifyOnInitializationSuccess(null);
   }
 
-  public void notifyOnTermination(String message) {
+  public void notifyOnTermination(String message, EventTrigger cause) {
+	  ApplicationEvent event = new UimaASApplicationExitEvent(message, cause);
+	  listener.onApplicationEvent(event);
   }
 
   public FileSystemXmlApplicationContext getSpringContext() {
@@ -566,6 +580,7 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
 
   public void notifyOnTermination(String aServiceName, String aCasReferenceId, Exception cause) {
     // TODO Auto-generated method stub
+	  System.out.println(">>>>>>>>>>>>>>>> Got notifyOnTermination() Callback");
     
   }
   public void notifyOnReconnecting(String aMessage) {

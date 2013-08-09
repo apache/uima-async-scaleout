@@ -19,15 +19,25 @@
 
 package org.apache.uima.aae;
 
-import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
+import org.springframework.context.ApplicationEvent;
 
-public interface UimaEEAdminContext {
-  public void shutdown();
+public class UimaASApplicationEvent extends ApplicationEvent {
 
-  public void onTerminate(String reason, EventTrigger cause);
-  
-  public void stopListener(String anEndpoint);
-
-  public int getConcurrentConsumerCount(String anEndpointName);
-
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+    
+	public enum EventTrigger {ExceededErrorThreshold};
+    
+	private EventTrigger cause;
+	
+	public UimaASApplicationEvent(Object source, EventTrigger cause) {
+		super(source);
+		this.cause = cause;
+	}
+	public EventTrigger gettrigger() {
+		return cause;
+	}
+	
 }

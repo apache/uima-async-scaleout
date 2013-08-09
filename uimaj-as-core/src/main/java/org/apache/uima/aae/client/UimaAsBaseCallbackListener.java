@@ -18,6 +18,7 @@
  */
 package org.apache.uima.aae.client;
 
+import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.EntityProcessStatus;
 
@@ -59,6 +60,11 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
   public void onBeforeProcessMeta(String nodeIP, String pid) {
     // to be overridden
   }
+  
+  public void onUimaAsServiceExit(EventTrigger cause) {
+	  
+  }
+  
   /**
    * The callback used to inform the application that the initialization request has completed. On
    * success aStatus will be null; on failure use the EntityProcessStatus class to get the details.
