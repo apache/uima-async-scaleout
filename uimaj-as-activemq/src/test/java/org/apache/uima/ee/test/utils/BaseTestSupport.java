@@ -32,6 +32,7 @@ import java.util.concurrent.Semaphore;
 
 import javax.jms.Message;
 
+import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
@@ -653,6 +654,10 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       System.out.println("runTest: Received onBeforeMessageSend() Notification With CAS:"
               + status.getCasReferenceId());
     }
+    public void onUimaAsServiceExit(EventTrigger cause) {
+        System.out.println("runTest: Received onUimaAsServiceExit() Notification With Cause:"
+                + cause.name());
+    }
     public synchronized void entityProcessComplete(CAS aCAS, EntityProcessStatus aProcessStatus, List<AnalysisEnginePerformanceMetrics> componentMetricsList) {
       entityProcessComplete(aCAS, aProcessStatus);
       StringBuilder sb = new StringBuilder("--- CAS");
@@ -752,12 +757,13 @@ public abstract class BaseTestSupport extends ActiveMQSupport
             processCountLatch.countDown();
           }
         } else if (processCountLatch != null) {
+        	processCountLatch.countDown();
           if (!expectedException) {
             unexpectedException = true;
             System.out.println("runTest:  ... when expecting normal completion!");
-          }
-          while (processCountLatch.getCount() > 0) {
-            processCountLatch.countDown();
+            while (processCountLatch.getCount() > 0) {
+                processCountLatch.countDown();
+              }
           }
         }
       }
@@ -781,6 +787,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
                     .println("To fix, use uima-as/src/main/lib/optional/activemq-optional-5.0.0.jar");
             unexpectedException = true;
             processCountLatch.countDown();
+
             return;
           }
         }
