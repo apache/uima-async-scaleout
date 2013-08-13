@@ -328,14 +328,16 @@ public abstract class Delegate {
       entry.setCasHashCode(String.valueOf(casHashCode));
       // Remember the command
       entry.setCommand(AsynchAEMessage.Process);
-      UIMAFramework.getLogger(CLASS_NAME).logrb(
-              Level.WARNING,
-              this.getClass().getName(),
-              "addCasToPendingDispatchList",
-              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAEE_add_cas_to_delegate_pending_dispatch_WARNING",
-              new Object[] { getComponentName(), aCasReferenceId, String.valueOf(casHashCode), 
-                  delegateKey, pendingDispatchList.size() });
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(
+                  Level.WARNING,
+                  this.getClass().getName(),
+                  "addCasToPendingDispatchList",
+                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_add_cas_to_delegate_pending_dispatch_WARNING",
+                  new Object[] { getComponentName(), aCasReferenceId, String.valueOf(casHashCode), 
+                      delegateKey, pendingDispatchList.size() });
+      }
       // Append Cas Entry to the end of the list
       pendingDispatchList.add(entry);
       dumpDelayedList();
@@ -350,7 +352,7 @@ public abstract class Delegate {
   protected void dumpDelayedList() {
     StringBuffer sb = new StringBuffer();
     
-    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
       sb.append("Current Pending Dispatch List. Delegate:"+delegateKey);
       
       for (DelegateEntry entry : pendingDispatchList) {
