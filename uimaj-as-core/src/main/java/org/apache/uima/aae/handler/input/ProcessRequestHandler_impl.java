@@ -65,6 +65,12 @@ public class ProcessRequestHandler_impl extends HandlerBase {
 
   private Object mux = new Object();
 
+  // controlls access to Aggregates semaphore which
+  // throttles ingestion of CASes from service input queue
+  private Object lock = new Object();
+  
+  
+  
   public ProcessRequestHandler_impl(String aName) {
     super(aName);
   }
@@ -251,23 +257,32 @@ public class ProcessRequestHandler_impl extends HandlerBase {
               casReferenceId, marker, acceptsDeltaCas);
       
       /*
-       * In UIMA AS Aggregate the receiving thread must be blocked until a CAS is fully
-       * processed. This is to prevent the receiving thread from grabbing another CAS
-       * breaking prefetch throttling. The receiving thread takes a CAS from service queue,
-       * deserializes CAS, asks the FC for the next step and enqueues the CAS
-       * onto delegate's queue. Once the enqueue completes, the thread is done
-       * and ready to get more CASes from the service queue. The receiving must 
-       * therefor be blocked right after it enqueues the CAS on delegates queue. 
-       * To that end, while handling a new CAS, create a shared semaphore and
-       * associate it with a current thread as ThreadLocal variable. Also, associate the
-       * same semaphore with a CAS so that when the CAS is sent back to the client the
-       * the receiving thread is unblocked.
+		Lazily create a Semaphore that will be used to throttle CAS ingestion from service
+		input queue. This only applies to async aggregates. The semaphore is initialized
+		with the number of permits equal to the service CasPool size. The idea is that this
+		service should only ingest as many CASes as it is capable of processing without
+		waiting for a free instance of CAS from the service CasPool.
       */
-      if ( !getController().isPrimitive() ) {
-        Semaphore semaphore = new Semaphore(0);
-        //  threadCompletionMonitor is a ThreadLocal var
-        threadCompletionMonitor.set(semaphore);
-        entry.setThreadCompletionSemaphore(semaphore);
+      boolean inputCAS = aMessageContext
+           .getMessageStringProperty(AsynchAEMessage.InputCasReference) == null ? true : false;
+      if ( !getController().isPrimitive() && inputCAS) {
+    	 
+    	  try {
+    		  synchronized(lock) {
+    			  // lazily create a Semaphore on the first Process request. This semaphore
+    			  // will throttle ingestion of CASes from service input queue.
+    			  if (((AggregateAnalysisEngineController_impl) getController()).semaphore == null) {
+    				  ((AggregateAnalysisEngineController_impl) getController()).semaphore = 
+    						  new Semaphore(
+    						  ((AggregateAnalysisEngineController) getController())
+    						  .getServiceCasPoolSize()-1);
+    				 // semaphore.acquire();
+    			  }
+    		  }
+    	  } catch( Exception e) {
+    		  throw e;
+    	  }
+        entry.setThreadCompletionSemaphore(((AggregateAnalysisEngineController_impl) getController()).semaphore);
       }
       long timeToDeserializeCAS = getController().getCpuTime() - t1;
       getController().incrementDeserializationTime(timeToDeserializeCAS);
@@ -473,8 +488,9 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // its queue possibly from the same client. Only the first message for any given
       // CasReferenceId
       // should be processed.
+      CasStateEntry cse = null;
       if (!getController().getInProcessCache().entryExists(casReferenceId)) {
-        CasStateEntry cse = null;
+        
         if (getController().getLocalCache().lookupEntry(casReferenceId) == null) {
           // Create a new entry in the local cache for the CAS received from the remote
           cse = getController().getLocalCache().createCasStateEntry(casReferenceId);
@@ -533,16 +549,17 @@ public class ProcessRequestHandler_impl extends HandlerBase {
          * semaphore to block the thread. It will be unblocked when the aggregate is done with
          * the CAS.
          */
-        if (!getController().isPrimitive() ) {
-          Semaphore completionSemaphore = threadCompletionMonitor.get();
+        if (!getController().isPrimitive() && 
+        		cse != null && !cse.isSubordinate() ) {
+        		
           try {
-            //  Block until the CAS is fully processed or there is an error
-            completionSemaphore.acquire();
+        	  synchronized(lock) {
+        		  if ( entry.getThreadCompletionSemaphore() != null) {
+                 	 entry.getThreadCompletionSemaphore().acquire();
+        		  }
+        	  }
           } catch( InterruptedException ex) {
-          } finally {
-            //  remove ThreadLocal semaphore
-            threadCompletionMonitor.remove();
-          }
+          } 
         }
         
       } else {

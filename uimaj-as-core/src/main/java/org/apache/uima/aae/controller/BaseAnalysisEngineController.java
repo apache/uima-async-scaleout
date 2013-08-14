@@ -122,7 +122,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   private OutputChannel outputChannel;
 
-  private AsynchAECasManager casManager;
+  protected AsynchAECasManager casManager;
 
   private InProcessCache inProcessCache;
 
@@ -940,8 +940,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                 new Object[] { getComponentName(), getUimaContextAdmin().getQualifiedContextName(),
                     aComponentCasPoolSize, anInitialCasHeapSize / 4 });
       }
-    }
-
+    } 
   }
 
   public boolean isTopLevelComponent() {
@@ -1403,12 +1402,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if ( entry != null ) {
       CAS cas = inProcessCache.getCasByReference(aCasReferenceId);
       if (deleteCacheEntry) {
-	      // Release semaphore that is shared with a thread that received the CAS
-	      // to unlock the thread. This thread is blocking to prevent it from 
-	      // receiving another CAS.
-        Semaphore threadLocalSemaphore=null;
-        if ( !isPrimitive() && (threadLocalSemaphore = entry.getThreadCompletionSemaphore()) != null ) {
-          threadLocalSemaphore.release();
+	      // Release semaphore which throttles ingestion of CASes from service
+	      // input queue.
+        Semaphore semaphore=null;
+        if ( !isPrimitive() && (semaphore = entry.getThreadCompletionSemaphore()) != null ) {
+          semaphore.release();
         }
   
         inProcessCache.remove(aCasReferenceId);

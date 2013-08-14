@@ -723,7 +723,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
               System.out.println("runTest: Incrementing ProcessTimeout Counter");
               timeoutCounter++;
             }
-          } else if (engine != null && e instanceof UimaASPingTimeout) {
+          } else if (engine != null && (e instanceof UimaASPingTimeout || (e.getCause() != null && e.getCause() instanceof UimaASPingTimeout) )) {
             System.out.println("runTest: Ping Timeout - service Not Responding To Ping");
             if (cpcLatch != null) {
               cpcLatch.countDown();

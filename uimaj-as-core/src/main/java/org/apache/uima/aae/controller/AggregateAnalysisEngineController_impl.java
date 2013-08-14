@@ -37,6 +37,7 @@ import org.apache.uima.UIMARuntimeException;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
+import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
@@ -160,7 +161,19 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   private HashMap<String, String> casLogDirMap; // = new HashMap<String, String>();
   // Base time used for default XmiCas file names.
   private Long initializationTime = System.nanoTime();
-
+  
+  // Used by async aggregate to throttle CAS ingestion from an input queue. The 
+  // semaphore is lazily created on the first Process request and is assigned
+  // the number of permits equal to the size of CasPool configured for this
+  // service. A permit is acquired right after process() is called which means
+  // that the CAS has been handed off to another async delegate. The permit is
+  // released when the CAS is fully processed and reply sent to a client. This
+  // allows the async aggregate to concurrently process as many CASes as there 
+  // are CASes in a CasPool. It also ensures that this aggregate doesnt try
+  // to ingest more CASes as it is currently capable of processing without waiting
+  // for a free CAS from the CasPool.
+  public Semaphore semaphore = null;
+  
   /**
    * 
    * @param anEndpointName
@@ -3136,7 +3149,17 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   public void stop() {
-    super.stop(true);  // shutdown now
+	  super.stop(true);  // shutdown now
+	  
+	// release all permits
+	  if ( semaphore != null ) {
+		  while ( semaphore.availablePermits() > 0) {
+		  		semaphore.release();
+	  	  }
+	  }
+
+   
+    
     this.cleanUp();
         // dont kill jUnit tests
     if (isTopLevelComponent() &&  System.getProperty("dontKill") == null) {
@@ -3253,5 +3276,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       enableCasLogMap = new HashMap<String, Boolean>();
     enableCasLogMap.put(key, false);
     initializationTime = System.nanoTime();
+  }
+  public int getServiceCasPoolSize() {
+	 return ((AsynchAECasManager_impl)casManager).getCasPoolSize();
   }
 }

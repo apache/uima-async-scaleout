@@ -132,4 +132,5 @@ public interface AggregateAnalysisEngineController extends AnalysisEngineControl
   
   public void changeCollocatedDelegateState( String delegateKey, ServiceState state ) throws Exception;
 
+  public int getServiceCasPoolSize();
 }
