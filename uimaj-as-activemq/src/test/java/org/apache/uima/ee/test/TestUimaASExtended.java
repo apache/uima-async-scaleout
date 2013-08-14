@@ -1653,7 +1653,30 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
             10, PROCESS_LATCH);
   }
-
+  /**
+   * Sends total of 10 CASes to async aggregate configured to process 2 CASes at a time.
+   * The inner NoOp annotator is configured to sleep for 5 seconds. The client should
+   * be receiving 2 ACKs simultaneously confirming that the aggregate is processing 2 
+   * input CASes at the same time.
+   * 
+   * @throws Exception
+   */
+  public void testDeployAggregateServiceWithScaledInnerNoOp() throws Exception {
+	    System.out.println("-------------- testDeployAggregateServiceWithScaledInnerNoOp -------------");
+	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
+	    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithScaledInnerNoOp.xml");
+	    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+	            "TopLevelTaeQueue");
+	    appCtx.put(UimaAsynchronousEngine.Timeout, 0);
+	    appCtx.put(UimaAsynchronousEngine.CasPoolSize, 5);
+	    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
+	    
+	    addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class); 
+	    
+	    runTest(appCtx, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+	            10, PROCESS_LATCH);
+	  }
   public void testDeployAggregateServiceWithDelegateTimeoutAndContinueOnError() throws Exception {
     System.out.println("-------------- testDeployAggregateServiceWithDelegateTimeoutAndContinueOnError -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2843,12 +2866,12 @@ public class TestUimaASExtended extends BaseTestSupport {
     // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy remote service
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
     // Deploy top level aggregate service
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
     // Initialize and run the Test. Wait for a completion and cleanup resources.
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            1, CPC_LATCH);
+            1, EXCEPTION_LATCH);
   }
 
 
