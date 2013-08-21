@@ -434,6 +434,13 @@ public class UIMA_Service implements ApplicationListener {
         System.out.println(">>> Failed to Deploy UIMA Service. Check Logs for Details");
         System.exit(1);
       }
+      // remove temporary spring context files generated from DD
+      for( String contextFile: contextFiles) {
+        File file = new File(contextFile);
+        if ( file.exists()) {
+          file.delete();
+        }
+      }
       // Add a shutdown hook to catch kill signal and to force quiesce and stop
       ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
       Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -447,6 +454,7 @@ public class UIMA_Service implements ApplicationListener {
         // If the monitor fails to initialize the service is not effected.
         service.startMonitor(Long.parseLong(monitorCheckpointFrequency));
       }
+      
       AnalysisEngineController topLevelControllor = serviceDeployer.getTopLevelController();
       String prompt = "Press 'q'+'Enter' to quiesce and stop the service or 's'+'Enter' to stop it now.\nNote: selected option is not echoed on the console.";
       if (topLevelControllor != null) {
@@ -481,6 +489,7 @@ public class UIMA_Service implements ApplicationListener {
       }
     }
   }
+  
   static class ServiceShutdownHook extends Thread {
 
     public SpringContainerDeployer serviceDeployer;

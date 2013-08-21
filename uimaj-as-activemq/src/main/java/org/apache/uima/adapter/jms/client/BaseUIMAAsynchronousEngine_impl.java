@@ -829,9 +829,18 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     } catch (ResourceInitializationException e) {
       running = true;
       throw e;
+    } finally {
+      disposeContextFiles(springContext);
     }
   }
-
+  private void disposeContextFiles(String ...contextFiles) {
+    for( String contextFile: contextFiles) {
+      File file = new File(contextFile);
+      if ( file.exists()) {
+        file.delete();
+      }
+    }
+  }
   /**
 	 * 
 	 */
@@ -864,6 +873,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     } catch (ResourceInitializationException e) {
       running = true;
       throw e;
+    } finally {
+      disposeContextFiles(springContextFiles);
     }
 
   }
