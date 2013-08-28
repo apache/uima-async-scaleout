@@ -1916,6 +1916,8 @@ public class JmsOutputChannel implements OutputChannel {
 
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     
+    private boolean doLog = true;
+    
     public ConnectionTimer(BrokerConnectionEntry aBrokerDestinations) {
       brokerDestinations = aBrokerDestinations;
     }
@@ -1950,9 +1952,10 @@ public class JmsOutputChannel implements OutputChannel {
         //	Fire the runnable at fixed intervals equal to inactivityTimeout value
         scheduler.scheduleWithFixedDelay(new Runnable(){
             public void run() {
-                System.out.println("SessionReaper Thread Woke Up After:"+inactivityTimeout*60*1000+" Millis");
+              //  System.out.println("SessionReaper Thread Woke Up After:"+inactivityTimeout*60*1000+" Millis");
                 long inactivityThreshold = inactivityTimeout*60*1000;  // normalize into millis
-                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                if ( doLog && UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  doLog = false;
                   UIMAFramework.getLogger(CLASS_NAME).logrb(
                           Level.INFO,
                           CLASS_NAME.getName(),
