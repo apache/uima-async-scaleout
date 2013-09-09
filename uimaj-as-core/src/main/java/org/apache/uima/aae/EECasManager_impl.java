@@ -32,11 +32,14 @@ import org.apache.uima.resource.impl.CasManager_impl;
 public class EECasManager_impl extends CasManager_impl {
   Map casPoolMap = new HashMap();
   protected long initialCasHeapSize = 0;
-
+  protected boolean disableJCasCaching = false;
   public EECasManager_impl(ResourceManager aResourceManager) {
     super(aResourceManager);
   }
 
+  public void disableJCasCaching() {
+    disableJCasCaching = true;
+  }
   public void setInitialCasHeapSize(long anInitialCasHeapSize) {
     // Heap size is defined in terms of bytes. Uima core expects number of cells.
     // Each cell is 4 bytes. Divide heapSize expressed in bytes by 4.
@@ -51,6 +54,10 @@ public class EECasManager_impl extends CasManager_impl {
     if (initialCasHeapSize > 0) {
       aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, String.valueOf(
               initialCasHeapSize));
+    }
+    if ( disableJCasCaching ) {
+      aPerformanceTuningSettings.setProperty(UIMAFramework.JCAS_CACHE_ENABLED, String.valueOf(
+              Boolean.FALSE));
     }
     synchronized (CasManager_impl.class) {
       super.defineCasPool(aRequestorContextName, aMinimumSize, aPerformanceTuningSettings);
@@ -68,6 +75,10 @@ public class EECasManager_impl extends CasManager_impl {
     if (initialCasHeapSize > 0) {
       aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE,
               String.valueOf(initialCasHeapSize));
+    }
+    if ( disableJCasCaching ) {
+      aPerformanceTuningSettings.setProperty(UIMAFramework.JCAS_CACHE_ENABLED, String.valueOf(
+              Boolean.FALSE));
     }
     synchronized (CasManager_impl.class) {
       super.defineCasPool(aRequestorContext, aMinimumSize, aPerformanceTuningSettings);

@@ -57,6 +57,8 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
 
   private long initialHeapSize = 0;// 2000000; // Default
 
+  boolean disableJCasCache = false;
+  
   public AsynchAECasManager_impl(ResourceManager aResourceManager, Map aDescriptorMap) {
     this(aResourceManager);
     descriptorMap = aDescriptorMap;
@@ -87,7 +89,9 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
       aPerformanceTuningSettings.setProperty(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(
               (int) initialHeapSize).toString());
     }
-
+    if ( disableJCasCache ) {
+      aPerformanceTuningSettings.setProperty(UIMAFramework.JCAS_CACHE_ENABLED, String.valueOf(Boolean.FALSE));
+    }
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(), "initialize",
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_primary_cas_pool_init__CONFIG",
@@ -191,5 +195,11 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
   public long getInitialFsHeapSize() {
     return initialHeapSize;
   }
-
+  
+  public void setDisableJCasCache(boolean disableJCasCache) {
+    this.disableJCasCache = disableJCasCache;   
+  }
+  public boolean getDisableJCasCache() {
+    return disableJCasCache;
+  }
 }
