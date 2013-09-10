@@ -24,7 +24,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,7 +80,6 @@ import org.apache.uima.resourceSpecifier.factory.DeploymentDescriptorFactory;
 import org.apache.uima.resourceSpecifier.factory.ServiceContext;
 import org.apache.uima.resourceSpecifier.factory.UimaASPrimitiveDeploymentDescriptor;
 import org.apache.uima.resourceSpecifier.factory.impl.ServiceContextImpl;
-import org.apache.uima.util.Level;
 import org.apache.uima.util.XMLInputSource;
 import org.xml.sax.SAXException;
 
@@ -457,6 +455,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    executor.shutdownNow();
 	    broker2.stop();
 	    broker.stop();
+	    broker.waitUntilStopped();
 	}
   
   public void testAggregateHttpTunnelling() throws Exception {
@@ -592,9 +591,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       uimaAsEngine.stop();
       super.cleanBroker(broker2);
       broker2.stop();
-      synchronized(this) {
-        wait(3000);   // allow broker some time to stop  
-      }
+      broker2.waitUntilStopped();
+
   }
   
   /**
@@ -638,10 +636,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       super.cleanBroker(broker2);
 
       broker2.stop();
-     
-      synchronized(this) {
-        wait(3000);   // allow broker some time to stop  
-      }
+      broker2.waitUntilStopped();
+
   }
   
   /**
@@ -672,9 +668,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         if ( i == 10 ) {
           //  Stop the broker
           broker2.stop();
-          synchronized(this) {
-            wait(3000);   // allow broker some time to fully stop  
-          }
+          broker2.waitUntilStopped();
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
@@ -723,18 +717,15 @@ public class TestUimaASExtended extends BaseTestSupport {
         
         if ( i == 5 ) {
           broker2.stop();
-          synchronized(this) {
-            wait(9000);   // allow broker some time to stop. changed from 3 seconds to 9 to make test work on a laptop 5/2013
-          }
+          broker2.waitUntilStopped();
         } else if ( i == 10 ) {
           //  restart the broker 
           System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
           broker2 = setupSecondaryBroker(true);
           
           broker2.start();
-          synchronized(this) {
-            wait(9000);   // allow broker some time to start. changed from 3 seconds to 9 to make test work on a laptop  5/2013
-          }
+          broker2.waitUntilStarted();
+
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
@@ -758,9 +749,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       if ( errorCount != 5 ) {
         fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
       }
-      synchronized(this) {
-        wait(3000);   // allow broker some time to stop  
-      }
+      broker2.waitUntilStopped();
+
   }
   /**
    * This test creates 4 UIMA AS clients and runs each in a separate thread. There is a single 
@@ -828,16 +818,13 @@ public class TestUimaASExtended extends BaseTestSupport {
 
       broker2.stop();
       System.out.println("Stopping Broker - wait ...");
-      synchronized(this) {
-          wait(4000);   // allow broker some time to stop 
-      }
+      broker2.waitUntilStopped();
+
       System.out.println("Restarting Broker - wait ...");
       //  restart the broker 
       broker3 = setupSecondaryBroker(true);
-      
-      synchronized(this) {
-        wait(3000);   // allow broker some time to start  
-      }
+      broker3.waitUntilStarted();
+
     } catch ( Exception e ) {
       
     } finally {
@@ -849,9 +836,8 @@ public class TestUimaASExtended extends BaseTestSupport {
         super.cleanBroker(broker3);
 
         broker3.stop();
-        synchronized(this) {
-           wait(3000);   // allow broker some time to stop  
-        }
+        broker3.waitUntilStopped();
+
       }
     }
 }
@@ -880,9 +866,8 @@ public class TestUimaASExtended extends BaseTestSupport {
         
         if ( i == 10 ) {
           broker2.stop();
-          synchronized(this) {
-            wait(3000);   // allow broker some time to start  
-          }
+          broker2.waitUntilStopped();
+
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
@@ -893,9 +878,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       uimaAsEngine.stop();
       super.cleanBroker(broker2);
       broker2.stop();
-      synchronized(this) {
-        wait(3000);   // allow broker some time to stop  
-     }
+      broker2.waitUntilStopped();
+
   }
   
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
@@ -917,14 +901,12 @@ public class TestUimaASExtended extends BaseTestSupport {
       for (int i = 0; i < 150; i++) {
         if ( i == 10 ) {
           broker2.stop();
-          synchronized(this) {
-            wait(3000);   // allow broker some time to stop  
-          }
+          broker2.waitUntilStopped();
+
         } else if ( i == 20 ) {
           broker2 = setupSecondaryBroker(true);
-          synchronized(this) {
-            wait(3000);   // allow broker some time to start  
-          }
+          broker2.waitUntilStarted();
+
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
@@ -936,10 +918,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       super.cleanBroker(broker2);
 
       broker2.stop();
+      broker2.waitUntilStopped();
 
-      synchronized(this) {
-        wait(2000);   // allow broker some time to stop  
-      }
   }
 
   /**
@@ -992,15 +972,13 @@ public class TestUimaASExtended extends BaseTestSupport {
         //  Stop broker before second CAS is sent to the service
         if ( i == 1 ) {
           broker2.stop();
-          synchronized(this) {
-            wait(3000);   // allow broker some time to stop 
-          }
+          broker2.waitUntilStopped();
+
           //  restart broker before 3rd CAS is sent
           //  restart the broker 
           broker2 = setupSecondaryBroker(true);
-          synchronized(this) {
-            wait(3000);   // allow broker some time to start  
-          }
+          broker2.waitUntilStarted();
+
         } 
         CAS cas = uimaClient1.getCAS();
         cas.setDocumentText("Some Text");
@@ -1033,10 +1011,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       super.cleanBroker(broker2);
 
       broker2.stop();
+      broker2.waitUntilStopped();
 
-      synchronized(this) {
-        wait(3000);   // allow broker some time to stop  
-      }
   }
   /**
    * Tests ability of an aggregate to recover from a Broker restart. The broker managing
@@ -1091,15 +1067,13 @@ public class TestUimaASExtended extends BaseTestSupport {
         if ( i == 1 ) {
           System.out.println("Stopping Secondary Broker Running on Port:"+broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
           broker2.stop();
-          synchronized(this) {
-            wait(3000);   // allow broker some time to stop 
-          }
+          broker2.waitUntilStopped();
+
           //  restart broker before 3rd CAS is sent
           //  restart the broker 
           broker2 = setupSecondaryBroker(true);
-          synchronized(this) {
-            wait(3000);   // allow broker some time to start  
-          }
+          broker2.waitUntilStarted();
+
         } 
         CAS cas = uimaClient1.getCAS();
         cas.setDocumentText("Some Text");
@@ -1119,11 +1093,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       super.cleanBroker(broker2);
 
       broker2.stop();
+      broker2.waitUntilStopped();
 
-      synchronized(this) {
-        wait(3000);   // allow broker some time to stop  
-      }
-    
   }
   /**
    * Tests sending CPC after CAS timeout. The service is a Primitive taking 
@@ -1864,6 +1835,8 @@ public class TestUimaASExtended extends BaseTestSupport {
             if (bs != null) {
               try {
                 bs.stop();
+                bs.waitUntilStopped();
+               
               } catch (Exception e) {
                 e.printStackTrace();
               }
@@ -1901,14 +1874,9 @@ public class TestUimaASExtended extends BaseTestSupport {
     bs = setupSecondaryBroker(false);
     System.setProperty("SecondaryBrokerURL",bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
     bs.stop();
+    
     // wait for the broker to stop
-    while( bs.isStarted() ) {
-      try {
-        synchronized(this) {
-          this.wait(100);
-        }
-      } catch( Exception e) {}
-    }
+    bs.waitUntilStopped();
     // Deploy aggregate on a secondary broker which was shutdown above. The aggregate should 
     // detect missing broker and silently wait for the broker to come up
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorOnSecondaryBroker.xml");
@@ -1924,6 +1892,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             }
             // Create a new broker on port 8119
             bs = setupSecondaryBroker(false);
+            bs.waitUntilStarted();
             System.setProperty("SecondaryBrokerURL",bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
             // Start the uima AS client. It connects to the top level service and sends
             // 10 messages
@@ -1937,6 +1906,8 @@ public class TestUimaASExtended extends BaseTestSupport {
             if (bs != null) {
               try {
                 bs.stop();
+                bs.waitUntilStopped();
+
               } catch (Exception e) {
                 e.printStackTrace();
               }
@@ -2611,9 +2582,8 @@ public class TestUimaASExtended extends BaseTestSupport {
     super.cleanBroker(broker2);
 
     broker2.stop();
-    synchronized(this) {
-      wait(3000);   // allow broker some time to stop  
-    }
+    broker2.waitUntilStopped();
+
   }
   
   
