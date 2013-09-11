@@ -31,7 +31,7 @@ REM   under the License.
 @REM  ActiveMQ needs a HOME
 @setlocal
 @if "%ACTIVEMQ_HOME%" == "" (
-  set "ACTIVEMQ_HOME=%UIMA_HOME%\apache-activemq-5.4.1"
+  set "ACTIVEMQ_HOME=%UIMA_HOME%\apache-activemq"
 )
 
 @REM  ActiveMQ needs a writable directory for the log files and derbydb

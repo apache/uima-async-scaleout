@@ -28,13 +28,13 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uima-as-parent</artifactId>
-    <version>2.4.1-SNAPSHOT</version>
+    <version>2.4.2-SNAPSHOT</version>
     <relativePath>uima-as-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>uima-as</artifactId>
   <packaging>pom</packaging>
-  <version>2.4.1-SNAPSHOT</version>
+  <version>2.4.2-SNAPSHOT</version>
   <name>Apache UIMA-AS: ${project.artifactId}</name>
   <description>The top project for UIMA-AS</description>
   <url>${uimaWebsiteUrl}</url>
@@ -63,6 +63,9 @@
     <jiraVersion>12316312</jiraVersion> <!-- for 2.4.0AS -->  
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <assemblyFinalName>uima-as-${project.version}</assemblyFinalName> 
+     <!--org.springframework.version>3.0.7.RELEASE</org.springframework.version>
+     <org.apache.activemq.version>5.6.0</org.apache.activemq.version -->
+ 
   </properties>
   
   <!-- override pom setting in the build project. JIRA 5.1 needs different URL -->
@@ -163,49 +166,49 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
      
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-asm</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-aop</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-expression</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-tx</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-jms</artifactId>
-      <version>3.0.3.RELEASE</version>
+      <version>${org.springframework.version}</version>
     </dependency>
 
 
@@ -215,43 +218,43 @@
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-all</artifactId>
-      <version>5.4.1</version>
+      <version>${org.apache.activemq.version}</version>
     </dependency> 
 
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-jaas</artifactId>
-      <version>5.4.1</version>
+      <version>${org.apache.activemq.version}</version>
     </dependency>
   
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-web</artifactId>
-      <version>5.4.1</version>
+      <version>${org.apache.activemq.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-spring</artifactId>
-      <version>5.4.1</version>
+      <version>${org.apache.activemq.version}</version>
     </dependency> 
 
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-optional</artifactId>
-      <version>5.4.1</version>
+      <version>${org.apache.activemq.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.activemq</groupId>
       <artifactId>kahadb</artifactId>
-      <version>5.4.1</version>
+      <version>${org.apache.activemq.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jms_1.1_spec</artifactId>
-      <version>1.1</version>
+      <version>1.1.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
@@ -272,7 +275,7 @@
 	<dependency>
       <groupId>org.eclipse.jetty.aggregate</groupId>
       <artifactId>jetty-all-server</artifactId>
-      <version>7.0.1.v20091125</version>
+      <version>7.6.7.v20120910</version>
     </dependency>
 	
     <dependency>
@@ -284,7 +287,7 @@
     <dependency>
       <groupId>com.thoughtworks.xstream</groupId>
       <artifactId>xstream</artifactId>
-      <version>1.3.1</version>
+      <version>1.4.3</version>
     </dependency>
 
     <!-- lib/optional -->
@@ -538,6 +541,7 @@
               			    <exclude>uima-as-docbooks/.project</exclude>
               			    <exclude>uima-as-docbooks/.settings/**</exclude>
               			    <exclude>uima-as-docbooks/target/**</exclude>
+              			    <exclude>uima-as-docbooks/src/docbook/images/uima_async_scaleout/**</exclude>
               			    <exclude>uimaj-as-activemq/.classpath</exclude>
               			    <exclude>uimaj-as-activemq/.project</exclude>
               			    <exclude>uimaj-as-activemq/.settings/**</exclude>
@@ -609,6 +613,57 @@
           		</execution>
         	</executions>
       	</plugin>
+      	
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<!-- use the dependency:unpack goal to unpack the AMQ binary release -->
+						<id>unpack-activemq-distro</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<overWriteIfNewer>true</overWriteIfNewer>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.apache.activemq</groupId>
+									<artifactId>apache-activemq</artifactId>
+									<version>${org.apache.activemq.version}</version>
+									<type>zip</type>
+									<classifier>bin</classifier>
+									<outputDirectory>${project.build.directory}/apache-activemq-win</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+<execution>
+						<!-- use the dependency:unpack goal to unpack the AMQ binary release -->
+						<id>unpack-activemq-distro-linux</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<overWriteIfNewer>true</overWriteIfNewer>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.apache.activemq</groupId>
+									<artifactId>apache-activemq</artifactId>
+									<version>${org.apache.activemq.version}</version>
+									<type>tar.gz</type>
+									<classifier>bin</classifier>
+									<outputDirectory>${project.build.directory}/apache-activemq-linux</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+
+				</executions>
+			</plugin>
+      	
 	    </plugins>
 	  <!-- /pluginManagement-->	
 	</build>
