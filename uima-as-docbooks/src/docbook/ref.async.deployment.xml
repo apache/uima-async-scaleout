@@ -74,7 +74,9 @@ under the License.
 
   <deployment protocol="jms" provider="activemq">
 
-    <casPool numberOfCASes="xxx" initialFsHeapSize="nnn"/>
+    <casPool numberOfCASes="xxx" 
+             initialFsHeapSize="nnn" 
+             disableJCasCache="[true/false]"/>
 
     <service>         <!-- must have only 1 -->
 
@@ -97,7 +99,8 @@ under the License.
         <casMultiplier 
              poolSize="5"                       <!-- optional --> 
              initialFsHeapSize="nnn"            <!-- optional -->
-             processParentLast="[true/false]"/> <!-- optional -->
+             processParentLast="[true/false]"   <!-- optional -->
+             disableJCasCache="[true/false]/>   <!-- optional -->
              
         <asyncPrimitiveErrorConfiguration .../> <!-- optional -->
 
@@ -117,8 +120,8 @@ under the License.
             <casMultiplier 
                     poolSize="5" 
                     initialFsHeapSize="nnn"
-                    processParentLast="[true/false]"/> <!-- optional -->
-                    
+                    processParentLast="[true/false]"     <!-- optional -->
+                    disableJCasCache="[true/false]/>     <!-- optional -->
             <inputQueue ... />
             <serializer method="xmi"/>
             <asyncAggregateErrorConfiguration ... />
@@ -145,6 +148,13 @@ under the License.
       top-level services, and 40 kilobytes for C++ top level services. The heap grows as needed; this parameter is
       useful for those cases where the expected heap size is much smaller than the default.</para>
     
+    <para>The disableJCasCache attribute on the &lt;casMultiplier> element is optional, and allows disabling of
+      JCas cache. The JCas cache is an internal datastructure that caches any JCas object created by the CAS. 
+      This may result in better performance for applications that make extensive use of the JCas, but also 
+      incurs a steep memory overhead. If you're processing large documents and have memory issues, you should 
+      disable this option. In general, just try running a few experiments to see what setting works better for 
+      your application. The JCas cache is enabled by default.</para>
+      
     <!--
     <para>In this design, CASes are managed in two pools; one is for incoming work to be done
     on this JVM, and the other is to receive results from work sent to other (remote) JVMs,
@@ -357,7 +367,8 @@ under the License.
   <casMultiplier 
        poolSize="5"                        <!-- optional  -->
        initialFsHeapSize="nn"              <!-- optional  -->   
-       processParentLast="[true/false]"/>  <!-- optional  -->             
+       processParentLast="[true/false]"    <!-- optional  -->          
+       disableJCasCache="[true/false]/>    <!-- optional -->   
 
     <!-- next two are optional, but only one allowed -->
   <asyncAggregateErrorConfiguration .../>  <!-- optional  -->
@@ -375,7 +386,8 @@ under the License.
       <casMultiplier 
            poolSize="5"                        <!-- optional  -->
            initialFsHeapSize="nnn"             <!-- optional  -->
-           processParentLast="[true/false]"/>  <!-- optional  -->             
+           processParentLast="[true/false]"    <!-- optional  -->   
+           disableJCasCache="[true/false]/>    <!-- optional -->          
       
       <inputQueue ... />
       <serializer method="[xmi|binary]"/>              <!-- optional -->
@@ -446,6 +458,14 @@ under the License.
       default is approximately 2 megabytes for Java top-level services, and 40 kilobytes for C++ top level services.
       The heap grows as needed; this parameter is useful for those cases where the expected heap size is much smaller
       than the default.</para>
+    
+    <para>The disableJCasCache attribute on the &lt;casMultiplier> element is optional, and allows disabling of
+      JCas cache. The JCas cache is an internal datastructure that caches any JCas object created by the CAS. 
+      This may result in better performance for applications that make extensive use of the JCas, but also 
+      incurs a steep memory overhead. If you're processing large documents and have memory issues, you should 
+      disable this option. In general, just try running a few experiments to see what setting works better for 
+      your application. The JCas cache is enabled by default.</para>
+    
     
     <para>The processParentLast attribute on the &lt;casMultiplier> element is optional, and specifies processing
       order of an input CAS relative to its children. If true, a flow of an input CAS will be suspended after it is 
