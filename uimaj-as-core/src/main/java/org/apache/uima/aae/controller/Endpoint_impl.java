@@ -119,7 +119,16 @@ public class Endpoint_impl implements Endpoint, Cloneable {
   
   private volatile TypeSystemImpl typeSystemImpl;
   
+  private volatile boolean disableJCasCache;
   
+  public boolean isDisableJCasCache() {
+    return disableJCasCache;
+  }
+
+  public void setDisableJCasCache(boolean disableJCasCache) {
+    this.disableJCasCache = disableJCasCache;
+  }
+
   public Endpoint_impl() {
     status = Endpoint.OK;
   }

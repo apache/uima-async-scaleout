@@ -262,7 +262,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           int aComponentCasPoolSize, String anEndpointName, String aDescriptor,
           AsynchAECasManager aCasManager, InProcessCache anInProcessCache) throws Exception {
     this(aParentController, aComponentCasPoolSize, 0, anEndpointName, aDescriptor, aCasManager,
-            anInProcessCache, null, null);
+            anInProcessCache, null, null, false);
   }
 
   public BaseAnalysisEngineController(AnalysisEngineController aParentController,
@@ -270,7 +270,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           AsynchAECasManager aCasManager, InProcessCache anInProcessCache, Map aDestinationMap)
           throws Exception {
     this(aParentController, aComponentCasPoolSize, 0, anEndpointName, aDescriptor, aCasManager,
-            anInProcessCache, aDestinationMap, null);
+            anInProcessCache, aDestinationMap, null, false);
   }
 
   public BaseAnalysisEngineController(AnalysisEngineController aParentController,
@@ -278,13 +278,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           AsynchAECasManager aCasManager, InProcessCache anInProcessCache, Map aDestinationMap,
           JmxManagement aJmxManagement) throws Exception {
     this(aParentController, aComponentCasPoolSize, 0, anEndpointName, aDescriptor, aCasManager,
-            anInProcessCache, aDestinationMap, aJmxManagement);
+            anInProcessCache, aDestinationMap, aJmxManagement, false);
   }
 
   public BaseAnalysisEngineController(AnalysisEngineController aParentController,
           int aComponentCasPoolSize, long anInitialCasHeapSize, String anEndpointName,
           String aDescriptor, AsynchAECasManager aCasManager, InProcessCache anInProcessCache,
-          Map aDestinationMap, JmxManagement aJmxManagement) throws Exception {
+          Map aDestinationMap, JmxManagement aJmxManagement,boolean disableJCasCache) throws Exception {
     casManager = aCasManager;
     inProcessCache = anInProcessCache;
     localCache = new LocalCache(this);
@@ -425,7 +425,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                             new Object[] { getComponentName(), aComponentCasPoolSize,
                                 anInitialCasHeapSize,getUimaContextAdmin().getQualifiedContextName() });
           }
-          initializeComponentCasPool(aComponentCasPoolSize, anInitialCasHeapSize);
+          initializeComponentCasPool(aComponentCasPoolSize, anInitialCasHeapSize, disableJCasCache);
         }
       }
     } else {
@@ -447,7 +447,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
       paramsMap.put(Resource.PARAM_UIMA_CONTEXT, childContext);
       initialize(resourceSpecifier, paramsMap);
-      initializeComponentCasPool(aComponentCasPoolSize, anInitialCasHeapSize);
+      initializeComponentCasPool(aComponentCasPoolSize, anInitialCasHeapSize, disableJCasCache);
       if (parentController instanceof AggregateAnalysisEngineController) {
 
         // Register self with the parent controller
@@ -924,12 +924,15 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     jmxManagement = aJmxManagement;
   }
 
-  private void initializeComponentCasPool(int aComponentCasPoolSize, long anInitialCasHeapSize) {
+  private void initializeComponentCasPool(int aComponentCasPoolSize, long anInitialCasHeapSize, boolean disableJCasCache) {
     if (aComponentCasPoolSize > 0) {
       EECasManager_impl cm = (EECasManager_impl) getResourceManager().getCasManager();
       
       cm.setInitialCasHeapSize(anInitialCasHeapSize);
       cm.setPoolSize(getUimaContextAdmin().getUniqueName(), aComponentCasPoolSize);
+      if ( disableJCasCache ) {
+        cm.disableJCasCaching();
+      }
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.INFO,
@@ -938,7 +941,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                 UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_cas_pool_config_INFO",
                 new Object[] { getComponentName(), getUimaContextAdmin().getQualifiedContextName(),
-                    aComponentCasPoolSize, anInitialCasHeapSize / 4 });
+                    aComponentCasPoolSize, anInitialCasHeapSize / 4, disableJCasCache });
       }
     } 
   }

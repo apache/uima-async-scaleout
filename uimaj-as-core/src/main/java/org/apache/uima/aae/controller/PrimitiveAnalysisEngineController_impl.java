@@ -125,7 +125,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
           int aComponentCasPoolSize) throws Exception {
     this(aParentController, anEndpointName, anAnalysisEngineDescriptor, aCasManager,
-            anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, aComponentCasPoolSize, null);
+            anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, aComponentCasPoolSize, null, false);
   }
 
   // 9 args - adds initialCasHeapSize
@@ -133,30 +133,38 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
+          int aComponentCasPoolSize, long anInitialCasHeapSize, boolean disableJCasCache) throws Exception {
+    this(aParentController, anEndpointName, anAnalysisEngineDescriptor, aCasManager,
+            anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, aComponentCasPoolSize,
+            anInitialCasHeapSize, null, disableJCasCache);
+  }
+  public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
+          String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
+          InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
           int aComponentCasPoolSize, long anInitialCasHeapSize) throws Exception {
     this(aParentController, anEndpointName, anAnalysisEngineDescriptor, aCasManager,
             anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, aComponentCasPoolSize,
-            anInitialCasHeapSize, null);
+            anInitialCasHeapSize, null, false);
   }
-
   // 9 args - repl initialCasHeapSize with jmxManagement
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
-          int aComponentCasPoolSize, JmxManagement aJmxManagement) throws Exception {
+          int aComponentCasPoolSize, JmxManagement aJmxManagement,  boolean disableJCasCache) throws Exception {
     this(aParentController, anEndpointName, anAnalysisEngineDescriptor, aCasManager,
             anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, aComponentCasPoolSize, 0,
-            aJmxManagement);
+            aJmxManagement, disableJCasCache);
   }
 
   // 10 args - adds initialCasHeapSize back
   public PrimitiveAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String anAnalysisEngineDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
-          int aComponentCasPoolSize, long anInitialCasHeapSize, JmxManagement aJmxManagement)
+          int aComponentCasPoolSize, long anInitialCasHeapSize, JmxManagement aJmxManagement,
+          boolean disableJCasCache)
           throws Exception {
     super(aParentController, aComponentCasPoolSize, anInitialCasHeapSize, anEndpointName,
-            anAnalysisEngineDescriptor, aCasManager, anInProcessCache, null, aJmxManagement);
+            anAnalysisEngineDescriptor, aCasManager, anInProcessCache, null, aJmxManagement, disableJCasCache);
     analysisEnginePoolSize = anAnalysisEnginePoolSize;
   }
 
@@ -166,7 +174,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           InProcessCache anInProcessCache, int aWorkQueueSize, int anAnalysisEnginePoolSize,
           JmxManagement aJmxManagement) throws Exception {
     this(aParentController, anEndpointName, anAnalysisEngineDescriptor, aCasManager,
-            anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, 0, aJmxManagement);
+            anInProcessCache, aWorkQueueSize, anAnalysisEnginePoolSize, 0, aJmxManagement, false );
   }
 
   public int getAEInstanceCount() {
