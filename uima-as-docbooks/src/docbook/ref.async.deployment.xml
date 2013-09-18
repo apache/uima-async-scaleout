@@ -74,9 +74,11 @@ under the License.
 
   <deployment protocol="jms" provider="activemq">
 
-    <casPool numberOfCASes="xxx" 
-             initialFsHeapSize="nnn" 
-             disableJCasCache="[true/false]"/>
+    <casPool                    <!--optional -->
+      numberOfCASes="xxx"       <!--optional -->     
+      initialFsHeapSize="nnn"   <!--optional -->
+      disableJCasCache=         <!--optional --> 
+         "[true/false]"/>
 
     <service>         <!-- must have only 1 -->
 
@@ -142,11 +144,17 @@ under the License.
       components to run at the same time. For instance, if your application had four components, but one was slow, you
       might deploy 10 instances of the slow component. To get all 10 instances working on CASes simultaneously, your
       CAS pool should be at least 10 CASes. The casPool size should be small enough to avoid paging.</para>
+      
+    <para>This element and all its attributes are optional; if not specified, the values take their defaults (see below).</para>
     
-    <para>The initialFsHeapSize attribute is optional, and allows setting the size of the initial CAS Feature
+    <para>If the <code>numberOfCASes</code> is not specified, it is set to either 1 or, for 
+    top level asynchronous deployments, the <code>scaleout numberOfInstances</code>.</para>
+    
+    <para>The initialFsHeapSize attribute allows setting the size of the initial CAS Feature
       Structure heap. This number is specified in bytes, and the default is approximately 2 megabytes for Java
       top-level services, and 40 kilobytes for C++ top level services. The heap grows as needed; this parameter is
-      useful for those cases where the expected heap size is much smaller than the default.</para>
+      useful for those cases where the expected heap size is much smaller than the default.
+      If not specified, its default value is <code>2,000,000</code> words.</para>
     
     <para>The disableJCasCache attribute on the &lt;casMultiplier> element is optional, and allows disabling of
       JCas cache. The JCas cache is an internal datastructure that caches any JCas object created by the CAS. 
