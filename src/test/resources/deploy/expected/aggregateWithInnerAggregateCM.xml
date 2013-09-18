@@ -36,7 +36,8 @@
 
      <!-- Defines how many CASes will be in the CAS pool -->
      <property name="casPoolSize" value="5"/>
-
+     <property name="disableJCasCache" value="false"/>
+     
      <!-- Initial heap size for CASes  -->
      <property name="initialFsHeapSize" value="2000000"/>
    </bean>
@@ -167,7 +168,8 @@
      <!-- Delegate key name or remote queue name -->
      <property name="endpoint" value="inQ_TestMultiplier_1.1"/>
       <property name="processParentLast" value="false"/>
-
+      <property name="disableJCasCache" value="false"/>
+      
      <!--      Timeouts      -->
      <property name="metadataRequestTimeout" value="60000"/>
       <property name="processRequestTimeout" value="0"/>
@@ -189,6 +191,7 @@
      <!-- Delegate key name or remote queue name -->
      <property name="endpoint" value="inQ_MeetingDetectorAggregate_1.2"/>
       <property name="processParentLast" value="false"/>
+      <property name="disableJCasCache" value="false"/>
 
      <!--      Timeouts      -->
      <property name="metadataRequestTimeout" value="60000"/>
@@ -367,6 +370,10 @@
 
      <!-- CAS Multiplier initial heap size -->
      <constructor-arg index="8" value="2000000"/>
+
+     <!-- CAS Multiplier disableJcasCache -->
+     <constructor-arg index="9" value="false"/>
+     
    </bean>
    <!--===============================================-->
    <!-- Async Aggregate: MeetingDetectorAggregate_1.2 -->
@@ -403,7 +410,7 @@
 
      <!-- Delegate key name or remote queue name -->
      <property name="endpoint" value="inQ_TestMultiplier_1.2.1"/>
-      <property name="processParentLast" value="false"/>
+     <property name="processParentLast" value="false"/>
 
      <!--      Timeouts      -->
      <property name="metadataRequestTimeout" value="60000"/>

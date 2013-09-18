@@ -464,6 +464,12 @@
         <xsl:if test="$aeDelegate/u:casMultiplier/@processParentLast">
           <property name="processParentLast" value="{$aeDelegate/u:casMultiplier/@processParentLast}"/>
         </xsl:if>
+
+        <!-- jira UIMA-2735 -->
+        <xsl:if test="$aeDelegate/u:casMultiplier/@disableJCasCache">
+          <property name="disableJCasCache" value="{$aeDelegate/u:casMultiplier/@disableJCasCache}"/>
+        </xsl:if>
+        
         
         <xsl:sequence select="f:generateLineComment('Timeouts', 5)"/>
         <property name="metadataRequestTimeout"
@@ -710,7 +716,7 @@
 
            <xsl:variable name="initialHeapSize" select="if (../../u:casPool/@initialFsHeapSize eq 'defaultFsHeapSize') 
              then '40000' else ../../u:casPool/@initialFsHeapSize"/>
-           <constructor-arg index="9" value="{$initialHeapSize}"/> 
+           <constructor-arg index="9" value="{$initialHeapSize}"/>           
             
           </bean>
         </xsl:when>
@@ -748,6 +754,12 @@
             <xsl:if test="u:casMultiplier/@initialFsHeapSize">
               <xsl:sequence select="f:generateLineComment('CAS Multiplier initial heap size', 5)"/>
               <constructor-arg index="8" value="{u:casMultiplier/@initialFsHeapSize}"/>
+            </xsl:if>
+            
+            <!-- https://issues.apache.org/jira/browse/UIMA-2735 -->
+            <xsl:if test="u:casMultiplier/@disableJCasCache">
+              <xsl:sequence select="f:generateLineComment('CAS Multiplier disableJcasCache', 5)"/>
+              <constructor-arg index="9" value="{u:casMultiplier/@disableJCasCache}" />
             </xsl:if>
             
             <xsl:if test="parent::u:service">
@@ -1344,6 +1356,7 @@
       <constructor-arg index="0" ref="resourceManager"/>
       <xsl:sequence select="f:generateLineComment('Defines how many CASes will be in the CAS pool',5)"/>
       <property name="casPoolSize" value="{u:casPool/@numberOfCASes}" />
+      <property name="disableJCasCache" value="{u:casPool/@disableJCasCache}" />
       <xsl:if test="u:casPool/@initialFsHeapSize">
         <xsl:sequence select="f:generateLineComment('Initial heap size for CASes',5)"/>
         <property name="initialFsHeapSize" value="{if (u:casPool/@initialFsHeapSize eq 'defaultFsHeapSize') 
@@ -1464,10 +1477,10 @@
           <xsl:choose>
             <xsl:when test=             "u:service/u:analysisEngine[(not(@async)) or (@async = ('no', 'false'))]/u:scaleout/@numberOfInstances">
               <u:casPool numberOfCASes="{u:service/u:analysisEngine[(not(@async)) or (@async = ('no', 'false'))]/u:scaleout/@numberOfInstances}"
-                 initialFsHeapSize="defaultFsHeapSize"/>
+                 initialFsHeapSize="defaultFsHeapSize" disableJCasCache="false" />
             </xsl:when>
             <xsl:otherwise>
-              <u:casPool numberOfCASes="1" initialFsHeapSize="defaultFsHeapSize"/>
+              <u:casPool numberOfCASes="1" initialFsHeapSize="defaultFsHeapSize" disableJCasCache="false" />
             </xsl:otherwise>
           </xsl:choose>
         </xsl:when>
@@ -1527,7 +1540,9 @@
     </xsl:variable>
 
     <u:casPool numberOfCASes="{$casPoolSize}"
-               initialFsHeapSize="{if (./@initialFsHeapSize) then ./@initialFsHeapSize else 'defaultFsHeapSize'}"/>
+               initialFsHeapSize="{if (./@initialFsHeapSize) then ./@initialFsHeapSize else 'defaultFsHeapSize'}"
+               disableJCasCache="{if (./@disableJCasCache) then ./@disableJCasCache else 'false'}" 
+               />
   </xsl:template>
     
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1855,6 +1870,7 @@
                 <xsl:when test="(string($async) eq 'true') and not(parent::u:service)">
                   <u:casMultiplier 
                     processParentLast="{if (u:casMultiplier/@processParentLast) then u:casMultiplier/@processParentLast else 'false'}"
+                    disableJCasCache="{if (u:casMultiplier/@disableJCasCache) then u:casMultiplier/@disableJCasCache else 'false'}"
                   />
                 </xsl:when>
                 <!--  top level async: no cas multiplier settings are used
@@ -1866,7 +1882,8 @@
                       a Second Input Q is built for messages from remote cas 
                       Multipliers, at the top level -->
                 <xsl:when test="string($async) eq 'true'">
-                  <u:casMultiplier/>                  
+                  <u:casMultiplier 
+                      disableJCasCache="{if (u:casMultiplier/@disableJCasCache) then u:casMultiplier/@disableJCasCache else 'false'}"/>                  
                 </xsl:when>
                 
                 <!-- case async = false and not top level -->
@@ -1874,12 +1891,14 @@
                   <u:casMultiplier poolSize="{if (u:casMultiplier/@poolSize) then u:casMultiplier/@poolSize else '1'}"
                           initialFsHeapSize="{if (u:casMultiplier/@initialFsHeapSize) then u:casMultiplier/@initialFsHeapSize else '2000000'}"
                           processParentLast="{if (u:casMultiplier/@processParentLast) then u:casMultiplier/@processParentLast else 'false'}"
+                          disableJCasCache= "{if (u:casMultiplier/@disableJCasCache)  then u:casMultiplier/@disableJCasCache  else 'false'}" 
                   />  
                 </xsl:when>
                 <!-- case async = false, top level -->
                 <xsl:otherwise>
                   <u:casMultiplier poolSize="{if (u:casMultiplier/@poolSize) then u:casMultiplier/@poolSize else '1'}"
                           initialFsHeapSize="{if (u:casMultiplier/@initialFsHeapSize) then u:casMultiplier/@initialFsHeapSize else '2000000'}"
+                          disableJCasCache="{if (u:casMultiplier/@disableJCasCache) then u:casMultiplier/@disableJCasCache else 'false'}"
                   />  
                 </xsl:otherwise>             
               </xsl:choose>
@@ -2288,6 +2307,7 @@
         <u:casMultiplier poolSize="{if (u:casMultiplier/@poolSize) then u:casMultiplier/@poolSize else '1'}"
                 initialFsHeapSize="{if (u:casMultiplier/@initialFsHeapSize) then u:casMultiplier/@initialFsHeapSize else '2000000'}"
                 processParentLast="{if (u:casMultiplier/@processParentLast) then u:casMultiplier/@processParentLast else 'false'}"
+                disableJCasCache= "{if (u:casMultiplier/@disableJCasCache)  then u:casMultiplier/@disableJCasCache  else 'false'}"
                 />
       </xsl:if>
       <xsl:variable name="tmp">
@@ -2850,7 +2870,7 @@
       <u:version i:maxone=""/>
       <u:vendor i:maxone=""/>
       <u:deployment i:maxone="" i:required="" protocol="" provider="">
-          <u:casPool i:maxone="" numberOfCASes=""  initialFsHeapSize=""/>
+          <u:casPool i:maxone="" numberOfCASes=""  initialFsHeapSize="" disableJCasCache=""/>
         
           <u:service i:required="">
             <u:custom name="" value=""/>
@@ -2866,7 +2886,7 @@
                 inputQueueScaleout="">
               <u:scaleout i:maxone="" numberOfInstances=""/>
                 <!-- top level cas multiplier can't specify processParentLast -->
-              <u:casMultiplier i:maxone="" poolSize="" initialFsHeapSize=""/>
+              <u:casMultiplier i:maxone="" poolSize="" initialFsHeapSize="" disableJCasCache="" />
               <u:asyncPrimitiveErrorConfiguration i:maxone="">
                 <u:processCasErrors i:maxone="" 
                   thresholdCount="" thresholdWindow="" thresholdAction=""/>
@@ -2881,7 +2901,7 @@
               <u:delegates i:maxone="">
                 <u:analysisEngine/>
                 <u:remoteAnalysisEngine key="" remoteReplyQueueScaleout="">
-                  <u:casMultiplier i:maxone="" poolSize="" initialFsHeapSize="" processParentLast=""/>
+                  <u:casMultiplier i:maxone="" poolSize="" initialFsHeapSize="" processParentLast="" disableJCasCache="" />
                   <u:inputQueue i:maxone="" i:required="" brokerURL="" endpoint="" queueName=""/>
                   <u:replyQueue i:maxone="" location=""/>
                   <u:serializer i:maxone="" method=""/>

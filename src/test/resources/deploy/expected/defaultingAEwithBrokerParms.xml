@@ -38,6 +38,7 @@
 
      <!-- Defines how many CASes will be in the CAS pool -->
      <property name="casPoolSize" value="5"/>
+     <property name="disableJCasCache" value="false"/>
 
      <!-- Initial heap size for CASes  -->
      <property name="initialFsHeapSize" value="2000000"/>
