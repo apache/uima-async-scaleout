@@ -44,10 +44,10 @@ For more details, please see http://uima.apache.org/building-uima.html
 --------------------------------------------------
 
 The Apache UIMA-AS binary distribution includes
-  - Apache UIMA Java SDK version 2.4.0
+  - Apache UIMA Java SDK version 2.4.2
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
-  - Apache ActiveMQ version 5.4.1
+  - Apache ActiveMQ version 5.6.0
   - Spring Framework
   - XMLBeans
 
@@ -206,8 +206,8 @@ b. Run the command:
   as well as directories on UIMA_DATAPATH to resolve the import.
  
   Note: deployAsyncService.sh/cmd scripts launch UimaBootstrap main program which loads UIMA jars
-  dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-5.4.1, UIMA_HOME/apache-activemq-5.4.1/lib,
-  and UIMA_HOME/apache-activemq-5.4.1/lib/optional directories. If you want to use a different
+  dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-5.6.0, UIMA_HOME/apache-activemq-5.6.0/lib,
+  and UIMA_HOME/apache-activemq-5.6.0/lib/optional directories. If you want to use a different
   version of ActiveMQ, set the ACTIVEMQ_HOME environment variable to the location of 
   ActiveMQ you intend to use. When using different version of ActiveMQ ( older than version 5.4), start
   the broker using a startup script located in ACTIVEMQ_HOME/bin directory instead of 
@@ -302,7 +302,7 @@ is on a broker that is accessable. For example, the service can register with a
 public broker running outside the firewall. Alternatively the broker may be configured 
 to tunnel over HTTP. For details see http://activemq.apache.org/configuring-transports.html
 
-Note: The ActiveMQ 5.4.1 jars distributed with this UIMA AS release include bug fixes described in 
+Note: The ActiveMQ 5.6.0 jars distributed with this UIMA AS release include bug fixes described in 
       http://issues.apache.org/activemq/browse/AMQ-1308. Previous releases of UIMA AS included 
       custom ActiveMQ 4.1.1 jars (which we have patched) to remedy the problems. When using 
       ActiveMQ HTTP connector, make sure that both a client and a service use either ActiveMQ 4.1.1 
@@ -396,7 +396,7 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.4.0
+5. Known problems/limitations with Release 2.4.2
 ================================================
 
   1. No automatic refresh for broken connections with temp reply queues.
@@ -406,15 +406,12 @@ An example of this kind of migration is embodied by the sample descriptors:
      as it turns off AMQ 'keep alive' messaging. Without these, a firewall may assume a connection
      has become stale and close its ports. 
 
-  3. UIMA AS does not (yet) support PEAR specifiers. The deployment descriptor should not point to PEAR file. 
-     Instead, PEARs must be unzipped and classpath adjusted to point to required resources.
-
-  4. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
+  3. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
      JMX port (see section 3.8).
 
-  5. Handling of timeouts on Cas Multiplier delegates not working 
+  4. Handling of timeouts on Cas Multiplier delegates not working 
   
-  6. When building uima-as from sources using newer versions of IBM JDK (1.7, 1.6 Refresh 10) maven's build 
+  5. When building uima-as from sources using newer versions of IBM JDK (1.7, 1.6 Refresh 10) maven's build 
      fails with OutOfMemory error while running javadoc plugin. This has been identified as IBM JDK problem and 
      reported to IBM JDK development team as a bug with a problem number (PMR) 90063,001,866. The 
      known workaround is to use Sun SDK or older versions of IBM SDK like 1.6 Refresh 8 FP1. 
