@@ -1,4 +1,4 @@
-     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.4.0 README
+     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.4.2 README
      ----------------------------------------------------------------
      
 0. Building from the Source Distribution
@@ -21,20 +21,14 @@ Look for the result in the two artifacts:
 
 For more details, please see http://uima.apache.org/building-uima.html   
 
-1. What's New in 2.4.0
+1. What's New in 2.4.2
 ====================== 
-  - Added support for programmatic generation of deployment descriptors (from java) 
-  - Fixed UIMA-AS client to work with user supplied CR
-  - Modified UIMA-AS to self-destruct via System.exit() if exceeding error threshold
-  - Fixed UIMA-AS Aggregate to block listener thread until a CAS is processed
-  - Supports securing ActiveMQ connection with application provided crudentials
-  - Modified UIMA-AS client to handle InterruptedException while blocking in sendAndReceive()
-  - Added support to collect AE performance breakdown and return it along with a reply 
-  - Fixed bug to prevent a parent CAS from accessing its Flow object until all child CASes 
-    obtain their Flow objects.
-  - Expanded UIMA-AS client API to include a callback containing information where a CAS
-    is being processed (host IP, PID and thread ID)
-  - Fixed missing dependency on activemq-optional to enable http tunelling
+  - Replaced Activemq 5.4.1 with 5.6.0 
+  - Implemented PEAR support
+  - Added client side callbacks to notify an application where a CAS is being processed
+  - Fixed major bug preventing async aggregate from processing CASes concurrently
+  - Fixed CAS accounting to prevent loosing CASes
+  - Modified JMS session expiration handling to prevent OOM in the broker
   - Many bug fixes 
   - Improvements to increase performance
   - Improved error handling and stability

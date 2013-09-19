@@ -201,6 +201,44 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+====================================================================
+== Licenses for non-apache libraries included in this assembly    ==
+====================================================================
+
+jetty
+spring
+tanuki wrapper
+xmlpull
+xstream
+Saxon 8.9      
+SVG Icons 
+
+=========================================================================
+== Jetty is licensed under the Apache License Version 2.0              ==
+=========================================================================
+=========================================================================
+== For the xmlpull library                                             ==
+=========================================================================
+
+XMLPULL API IS FREE
+-------------------
+
+All of the XMLPULL API source code, compiled code, and documentation
+contained in this distribution *except* for tests (see separate LICENSE_TESTS.txt)
+are in the Public Domain.
+
+XMLPULL API comes with NO WARRANTY or guarantee of fitness for any purpose.
+
+Initial authors:
+
+  Stefan Haustein
+  Aleksander Slominski
+
+2001-12-12
+
+=========================================================================
+== Spring is licensed under the Apache License Version 2.0             ==
+=========================================================================
 
 =========================================================================
 == For the Java Service Wrapper                                        ==
@@ -435,7 +473,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
          
 =========================================================================
 == XStream library                                                     ==
-   License from ActiveMQ 5.4.1 binary distribution
+   License from ActiveMQ 5.6.0 binary distribution
 =========================================================================
 This product contains XStream from Codehaus.  It is licensed under the BSD
 license:
