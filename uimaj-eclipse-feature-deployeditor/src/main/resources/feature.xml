@@ -57,8 +57,9 @@ under the License.
    </url>
 
    <requires>
-      <import plugin="org.apache.uima.runtime" version="2.4.1.SNAPSHOT" match="greaterOrEqual"/>
-      <import plugin="org.apache.uima.desceditor" version="2.4.1.SNAPSHOT" match="greaterOrEqual"/>
+      <!-- Make sure the pre-req uima plugins are installed -->
+      <import plugin="org.apache.uima.runtime" version="2.4.2" match="greaterOrEqual"/>
+      <import plugin="org.apache.uima.desceditor" version="2.4.2" match="greaterOrEqual"/>
    </requires>
 
    <plugin
