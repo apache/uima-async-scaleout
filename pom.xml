@@ -60,7 +60,7 @@
   </scm>
 
   <properties>
-    <jiraVersion>12316312</jiraVersion> <!-- for 2.4.0AS -->  
+    <jiraVersion>12323591</jiraVersion> <!-- for 2.4.0AS -->  
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <assemblyFinalName>uima-as-${project.version}</assemblyFinalName> 
      <!--org.springframework.version>3.0.7.RELEASE</org.springframework.version>
