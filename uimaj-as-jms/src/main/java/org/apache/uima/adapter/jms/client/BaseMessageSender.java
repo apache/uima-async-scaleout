@@ -253,6 +253,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     // will call doStop() which sets the global flag 'done' to true.
     PendingMessage pm = null;
     ClientRequest cacheEntry = null;
+    boolean doCallback = false;
     while (!done) {
       // Remove the oldest message from the shared 'queue'
       // // Wait for a new message
@@ -336,22 +337,9 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                    cacheEntry.setCASDepartureTime(System.nanoTime());
                  }
                  cacheEntry.setCASDepartureTime(System.nanoTime());
-                 UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),cacheEntry.getCAS(),
-                         cacheEntry.getCasReferenceId());
-                 // Notify engine before sending a message
-                 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-                     UIMAFramework.getLogger(CLASS_NAME).logrb(
-                             Level.FINE,
-                             CLASS_NAME.getName(),
-                             "run",
-                             JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                             "UIMAJMS_calling_onBeforeMessageSend__FINE",
-                             new Object[] {
-                            	 pm.get(AsynchAEMessage.CasReference),
-                            	 String.valueOf(cas.hashCode())
-                             });
-                   }
-                 engine.onBeforeMessageSend(status);
+         
+                 doCallback = true;
+                 
              } else {
                  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
                      UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -391,7 +379,28 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
              } 
              //  Dispatch asynchronous request to Uima AS service
              producer.send(message);
+             if ( doCallback ) {
+               UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),cacheEntry.getCAS(),
+                       cacheEntry.getCasReferenceId());
+               // Notify engine before sending a message
+               if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+                   UIMAFramework.getLogger(CLASS_NAME).logrb(
+                           Level.FINE,
+                           CLASS_NAME.getName(),
+                           "run",
+                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                           "UIMAJMS_calling_onBeforeMessageSend__FINE",
+                           new Object[] {
+                             pm.get(AsynchAEMessage.CasReference),
+                             String.valueOf(cacheEntry.getCAS().hashCode())
+                           });
+                 }  
+               // Note the callback is a misnomer. The callback is made *after* the send now
+               // Application receiving this callback can consider the CAS as delivere to a queue
+               engine.onBeforeMessageSend(status);
              
+             
+             }
            } catch (Exception e) {
              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
