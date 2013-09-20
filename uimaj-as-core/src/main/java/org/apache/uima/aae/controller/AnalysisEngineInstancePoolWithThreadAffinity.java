@@ -103,7 +103,6 @@ public class AnalysisEngineInstancePoolWithThreadAffinity implements AnalysisEng
    * @see org.apache.uima.aae.controller.AnalysisEngineInstancePool#destroy()
    */
   public void destroy() throws Exception {
-    System.out.println("....... AnalysisEngineInstancePool.destroy() was called");
 	  //	set the flag so that any AE instance returned from PrimitiveController
 	  //    will be destroyed. 
 	  destroyAEInstanceIfFree = true;

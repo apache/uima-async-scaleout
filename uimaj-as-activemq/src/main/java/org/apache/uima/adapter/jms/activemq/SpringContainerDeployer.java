@@ -313,7 +313,6 @@ public class SpringContainerDeployer implements ControllerCallbackListener {
       // during initialization
       waitForServiceNotification();
       
-      System.out.println("----------------- Everybody Initialized - Lets GO!");
       //  success, the service initialized
       startListeners();
     } catch (Exception e) {
