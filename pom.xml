@@ -243,6 +243,12 @@
       <groupId>org.apache.activemq</groupId>
       <artifactId>activemq-optional</artifactId>
       <version>${org.apache.activemq.version}</version>
+      <exclusions> 
+			 <exclusion>  
+                 <groupId>axis</groupId>
+                 <artifactId>axis</artifactId>
+             </exclusion>
+      </exclusions> 
     </dependency>
 
     <dependency>
