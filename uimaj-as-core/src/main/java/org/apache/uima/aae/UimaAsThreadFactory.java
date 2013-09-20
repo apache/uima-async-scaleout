@@ -144,9 +144,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
         			  if ( latchToCountNumberOfTerminatedThreads != null ) {
                   synchronized( latchToCountNumberOfTerminatedThreads ) {
                     latchToCountNumberOfTerminatedThreads.countDown();
-                    System.out.println(".................... Thread:"+Thread.currentThread().getId()+" CountDownLatch Value:"+latchToCountNumberOfTerminatedThreads.getCount());
-                    System.out.flush();
-                  }
+                   }
         			  }
               }
           }
