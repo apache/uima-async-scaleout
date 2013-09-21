@@ -548,6 +548,7 @@
               			    <exclude>uima-as-docbooks/.settings/**</exclude>
               			    <exclude>uima-as-docbooks/target/**</exclude>
               			    <exclude>uima-as-docbooks/src/docbook/images/uima_async_scaleout/**</exclude>
+              			    <exclude>uima-as-docbooks/src/docbook/images/uima_async_scaleout/async.overview/wrapAAE.ppt</exclude>
               			    <exclude>uimaj-as-activemq/.classpath</exclude>
               			    <exclude>uimaj-as-activemq/.project</exclude>
               			    <exclude>uimaj-as-activemq/.settings/**</exclude>
