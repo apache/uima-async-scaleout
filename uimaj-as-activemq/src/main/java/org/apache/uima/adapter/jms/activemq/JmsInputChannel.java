@@ -154,7 +154,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
    *          - jms message retrieved from queue
    * @param properties
    *          - map containing message properties
-   * @return
+   * @return - true if message Type is valid, false otherwise
    * @throws Exception
    */
 
@@ -524,7 +524,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
    * 
    * @param aMessage
    * @param messageContext
-   * @return
+   * @return true if the message is of type Process, false otherwise
    * @throws Exception
    */
   private boolean processRequestMessage(Message aMessage, JmsMessageContext messageContext) throws Exception {

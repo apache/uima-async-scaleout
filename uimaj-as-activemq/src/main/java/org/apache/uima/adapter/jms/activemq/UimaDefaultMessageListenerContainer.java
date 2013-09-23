@@ -198,8 +198,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 
   /**
    * 
-   * @param t
-   * @return
+   * @param t - Throwable object to use when determining whether or not to disable 
+   *            a UIMA-AS listener
+   * @return - true if the listener should be disabled, false otherwise
    */
   private boolean disableListener(Throwable t) {
     if (t.toString().indexOf("SharedConnectionNotInitializedException") > 0
