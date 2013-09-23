@@ -476,7 +476,7 @@ public class JmsOutputChannel implements OutputChannel {
           }
         } else {
           brokerConnectionEntry = createConnectionEntry(brokerConnectionURL);
-          System.out.println("---------------- New Broker "+brokerConnectionURL);
+          //System.out.println("---------------- New Broker "+brokerConnectionURL);
 //          System.out.println(">>>>>> Connection Map Size:"+connectionMap.size());
 //          long replyQueueInactivityTimeout = getInactivityTimeout(destination, brokerConnectionURL);
           startInactivityReaperTimer = true;
