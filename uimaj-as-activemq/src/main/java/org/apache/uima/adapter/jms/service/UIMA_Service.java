@@ -290,8 +290,6 @@ public class UIMA_Service implements ApplicationListener {
    * Creates an instance of a {@link JmxMonitor}, initializes it with the JMX Server URI and
    * checkpoint frequency, and finally starts the monitor.
    * 
-   * @param samplingFrequency
-   *          - how often the JmxMonitor should checkpoint to fetch service metrics
    * 
    * @throws Exception
    *           - error on monitor initialization or startup

@@ -48,7 +48,7 @@ public interface Import {
   /**
    * Sets the location.
    *
-   * @param location the new location
+   * @param name
    */
   public void setByName(String name);
 
