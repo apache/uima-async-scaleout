@@ -362,7 +362,7 @@
           <execution>
             <!-- use the dependency:unpack goal to unpack the 
                  base binary uimaj sdk distribution -->
-            <id>unpackUimajBin</id>
+            <id>unpack Uimaj Bin</id>
             <phase>prepare-package</phase>
             <goals><goal>unpack</goal></goals>
             <configuration>
@@ -627,7 +627,7 @@
 				<executions>
 					<execution>
 						<!-- use the dependency:unpack goal to unpack the AMQ binary release -->
-						<id>unpack-activemq-distro</id>
+						<id>unpack-activemq-distro-win</id>
 						<phase>prepare-package</phase>
 						<goals>
 							<goal>unpack</goal>
@@ -646,7 +646,7 @@
 							</artifactItems>
 						</configuration>
 					</execution>
-<execution>
+                    <execution>
 						<!-- use the dependency:unpack goal to unpack the AMQ binary release -->
 						<id>unpack-activemq-distro-linux</id>
 						<phase>prepare-package</phase>
