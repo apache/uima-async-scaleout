@@ -19,6 +19,8 @@
 
 package org.apache.uima.dde.internal.wizards;
 
+import java.text.MessageFormat;
+
 import org.apache.uima.taeconfigurator.wizards.AbstractNewWizard;
 
 public class DDENewWizard extends AbstractNewWizard  {
@@ -36,22 +38,18 @@ public class DDENewWizard extends AbstractNewWizard  {
   }
 
   public String getPrototypeDescriptor(String name) {
-    return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" + "<analysisEngineDeploymentDescription "
-    + XMLNS_PART
-    + "<name>" + name + "</name>\n"
-    + "<description></description>\n" + "<version>1.0</version>\n" + "<vendor></vendor>\n"
-
-    + "<deployment protocol=\"jms\" provider=\"activemq\">\n"
-    + "<casPool numberOfCASes=\"1\"/>\n" // since Top AE is a primitive (not Async)
-    + "<service>"
-    + "<inputQueue endpoint=\"myQueueName\" brokerURL=\"${defaultBrokerURL}\"/>\n"
-    // + "<topDescriptor>\n"
-    // + "<import location=\"\"/>\n"
-    // + "</topDescriptor>\n"
-    + "</service>"
-    + "</deployment>\n"
-
-    + "</analysisEngineDeploymentDescription>\n";
+    // UIMA-3308
+    return MessageFormat.format(COMMON_PARTIAL_DESCRIPTOR, 
+        name,
+        
+        "    <deployment protocol=\"jms\" provider=\"activemq\">\n"
+      + "        <casPool numberOfCASes=\"1\"/>\n" // since Top AE is a primitive (not Async)
+      + "        <service>\n"
+      + "            <inputQueue endpoint=\"myQueueName\" brokerURL=\"${defaultBrokerURL}\"/>\n"
+      + "        </service>\n"
+      + "    </deployment>\n",
+      
+        "analysisEngineDeploymentDescription");
   }
 
 }
