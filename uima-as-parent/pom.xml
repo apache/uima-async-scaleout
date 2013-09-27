@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>org.apache.uima</groupId>
 		<artifactId>parent-pom</artifactId>
-		<version>6</version>
+		<version>7-SNAPSHOT</version>
 		<relativePath />
 	</parent>
 
@@ -143,6 +143,8 @@
 		<xmlbeans.version>2.4.0</xmlbeans.version>
 		
 		<slf4j.version>1.6.4</slf4j.version>
+		
+		<http.version>3.1</http.version>
 	</properties>
 	<!-- dependencyManagement is a declaration section naming each artifact 
 		the uima-as components depends on. -->
@@ -430,59 +432,4 @@
 	<build>
 	</build>
 
-	<profiles>
-		<!-- ************************************************** -->
-		<!-- -->
-		<!-- REMOVE when parent-pom v 7 released -->
-		<!-- -->
-		<!-- * apache-release * -->
-		<!-- * NOTE: This profile is activated while * -->
-		<!-- * running the Maven build pipeline, usually * -->
-		<!-- * clean verify (for mvn release:prepare) or * -->
-		<!-- * deploy (for mvn release;perform), * -->
-		<!-- * but is not activated for the * -->
-		<!-- * outer execution for mvn release... * -->
-		<!-- * on the pom being released * -->
-		<!-- ************************************************** -->
-		<profile>
-			<id>apache-release</id>
-
-			<build>
-				<plugins>
-
-					<!-- to fix up any generated Javadocs to have consistent line ends in 
-						html files -->
-					<!-- runs in phase after package -->
-					<plugin>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>maybe-fix-javadoc-line-ends</id>
-								<phase>pre-integration-test</phase>
-								<goals>
-									<goal>run</goal>
-								</goals>
-								<configuration>
-									<target>
-										<taskdef name="if" classname="net.sf.antcontrib.logic.IfTask" />
-										<if>
-											<available file="${project.build.directory}/site/apidocs/" />
-											<then>
-												<echo>Fixing line-endings for
-													${project.build.directory}/site/apidocs/</echo>
-												<fixcrlf srcdir="${project.build.directory}/site/apidocs/">
-													<include name="**/*.html" />
-												</fixcrlf>
-											</then>
-										</if>
-									</target>
-								</configuration>
-							</execution>
-						</executions>
-
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 </project>
