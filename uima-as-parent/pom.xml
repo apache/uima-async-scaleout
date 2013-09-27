@@ -144,7 +144,7 @@
 		
 		<slf4j.version>1.6.4</slf4j.version>
 		
-		<http.version>3.1</http.version>
+		<http.client.version>3.1</http.client.version>
 	</properties>
 	<!-- dependencyManagement is a declaration section naming each artifact 
 		the uima-as components depends on. -->
@@ -328,6 +328,13 @@
           <version>${slf4j.version}</version>
           </dependency>
 			
+			
+		  <dependency>
+              <groupId>commons-httpclient</groupId>
+              <artifactId>commons-httpclient</artifactId>
+              <version>${http.client.version}</version>
+          </dependency> 
+		  	
 		</dependencies>
 
 
