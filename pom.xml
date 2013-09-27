@@ -606,6 +606,12 @@
               			    <exclude>uimaj-as-camel/.settings/**</exclude>
               			    <exclude>uimaj-as-camel/target/**</exclude>
 
+             			    <exclude>uima-as-eclipse-update-site/.classpath</exclude>
+              			    <exclude>uima-as-eclipse-update-site/.project</exclude>
+              			    <exclude>uima-as-eclipse-update-site/.settings/**</exclude>
+              			    <exclude>uima-as-eclipse-update-site/target/**</exclude>
+
+
               			    <exclude>uimaj-as-core/.classpath</exclude>
               			    <exclude>uimaj-as-core/.project</exclude>
               			    <exclude>uimaj-as-core/.settings/**</exclude>
