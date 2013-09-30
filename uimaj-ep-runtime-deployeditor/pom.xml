@@ -99,10 +99,11 @@
             </Export-Package>
 
             <Bundle-SymbolicName>org.apache.uima.runtime.fragments.deployeditor;singleton:=true</Bundle-SymbolicName>
+            
             <!-- Uncomment Line below for the actual release -->
-            <!-- Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host -->
+            <Fragment-Host>org.apache.uima.runtime;bundle-version="${parsedVersion.osgiVersion}"</Fragment-Host>
             <!-- Remove below line for the actual release -->
-            <Fragment-Host>org.apache.uima.runtime;bundle-version="2.4.2"</Fragment-Host>
+            <!-- Fragment-Host>org.apache.uima.runtime;bundle-version="2.4.2"</Fragment-Host-->
           </instructions>
         </configuration>
       </plugin>
