@@ -94,7 +94,7 @@
             </goals>
             <configuration>
               <!-- ===================================================================
-                List here all the plugins, with all versions - needed by P2 build 
+                List here all the new plugins 
                 ======================================================================= -->
               <artifactItems>
                 <artifactItem>
@@ -103,19 +103,6 @@
                    <version>${project.version}</version>
                    <destFileName>org.apache.uima.deployeditor_${parsedVersion.osgiVersion}.jar</destFileName>
                 </artifactItem>
-                <artifactItem>
-                   <groupId>org.apache.uima</groupId>
-                   <artifactId>uimaj-ep-deployeditor</artifactId>
-                   <version>2.4.0</version>
-                   <destFileName>org.apache.uima.deployeditor_2.4.0.jar</destFileName>
-                </artifactItem>
-                <artifactItem>
-                   <groupId>org.apache.uima</groupId>
-                   <artifactId>uimaj-ep-deployeditor</artifactId>
-                   <version>2.3.1</version>
-                   <destFileName>org.apache.uima.deployeditor_2.3.1.jar</destFileName>
-                </artifactItem>
-
                 
                 <artifactItem>
                    <groupId>org.apache.uima</groupId>
@@ -123,24 +110,18 @@
                    <version>${project.version}</version>
                    <destFileName>org.apache.uima.runtime.fragments.deployeditor_${parsedVersion.osgiVersion}.jar</destFileName>
                 </artifactItem>
-                <artifactItem>
-                   <groupId>org.apache.uima</groupId>
-                   <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
-                   <version>2.4.0</version>
-                   <destFileName>org.apache.uima.runtime.fragments.deployeditor_2.4.0.jar</destFileName>
-                </artifactItem>
-                <artifactItem>
-                   <groupId>org.apache.uima</groupId>
-                   <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
-                   <version>2.3.1</version>
-                   <destFileName>org.apache.uima.runtime.fragments.deployeditor_2.3.1.jar</destFileName>
-                </artifactItem>
 
               </artifactItems>            
-              <outputDirectory>${toBePacked}/plugins</outputDirectory>              
+              <!-- outputDirectory>${toBePacked}/plugins</outputDirectory -->              
+              <outputDirectory>${toBePacked}</outputDirectory>              
               <!-- outputDirectory>${project.build.directory}/work/plugins</outputDirectory-->
             </configuration>
           </execution>
+          
+          <!-- ===================================================================
+                                         the FEATURES
+          ======================================================================= -->
+          
           <execution>
             <id>copy-features</id>
             <goals>
@@ -155,20 +136,9 @@
                    <version>${project.version}</version>
                    <destFileName>org.apache.uima.deployeditor_${parsedVersion.osgiVersion}.jar</destFileName>
                 </artifactItem>
-                <artifactItem>
-                   <groupId>org.apache.uima</groupId>
-                   <artifactId>uimaj-eclipse-feature-deployeditor</artifactId>
-                   <version>2.4.0</version>
-                   <destFileName>org.apache.uima.deployeditor_2.4.0.jar</destFileName>
-                </artifactItem>
-                <artifactItem>
-                   <groupId>org.apache.uima</groupId>
-                   <artifactId>uimaj-eclipse-feature-deployeditor</artifactId>
-                   <version>2.3.1</version>
-                   <destFileName>org.apache.uima.deployeditor_2.3.1.jar</destFileName>
-                </artifactItem>                
+                     
               </artifactItems>
-              <outputDirectory>${toBePacked}</outputDirectory>
+              <outputDirectory>${project.build.directory}/eus-work/features</outputDirectory>
               <!-- outputDirectory>${eclipseUpdateSite}/features</outputDirectory -->              
             </configuration>
           </execution>
