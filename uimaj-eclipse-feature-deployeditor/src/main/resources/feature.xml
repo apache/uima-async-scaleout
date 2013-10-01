@@ -58,8 +58,8 @@ under the License.
 
    <requires>
       <!-- Make sure the pre-req uima plugins are installed -->
-      <import plugin="org.apache.uima.runtime" version="2.4.2" match="greaterOrEqual"/>
-      <import plugin="org.apache.uima.desceditor" version="2.4.2" match="greaterOrEqual"/>
+      <import plugin="org.apache.uima.runtime" version="${uimajDependencyVersion}" match="greaterOrEqual"/>
+      <import plugin="org.apache.uima.desceditor" version="${uimajDependencyVersion}" match="greaterOrEqual"/>
    </requires>
 
    <plugin
