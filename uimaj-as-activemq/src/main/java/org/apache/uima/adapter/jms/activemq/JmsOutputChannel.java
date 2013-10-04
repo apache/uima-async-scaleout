@@ -1016,19 +1016,9 @@ public class JmsOutputChannel implements OutputChannel {
     try {
     	
     	
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendReply",
-                    JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_fetching_endpoint_dispatcher__INFO",
-                    new Object[] {analysisEngineController.getComponentName(), anEndpoint.getDestination()});
-      }
       anEndpoint.setReplyEndpoint(true);
       // Initialize JMS connection to given endpoint
       JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendReply",
-                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_fetched_endpoint_dispatcher__INFO",
-                  new Object[] {analysisEngineController.getComponentName(), anEndpoint.getDestination()});
-    }
 
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "sendReply",

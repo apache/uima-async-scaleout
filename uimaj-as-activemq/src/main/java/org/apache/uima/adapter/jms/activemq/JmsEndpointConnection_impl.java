@@ -262,10 +262,12 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		        }
 
 		        producerSession = conn.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
-	              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-	                      "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-	                      "UIMAJMS_session_open__INFO",
-	                      new Object[] { aComponentName, anEndpointName, brokerUri });
+		        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
+                      "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_session_open__FINE",
+                      new Object[] { aComponentName, anEndpointName, brokerUri });
+		        }
 
 		        if ((delegateEndpoint.getCommand() == AsynchAEMessage.Stop || isReplyEndpoint)
 		                && delegateEndpoint.getDestination() != null) {
@@ -619,17 +621,6 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       // record the time when this dispatches sent a message. This time will be used
       // to find inactive sessions.
 	  lastDispatchTimestamp.set(System.currentTimeMillis());
-	  
-	  if ( msgType == AsynchAEMessage.Response && command == AsynchAEMessage.GetMeta ) {
-	      if (UIMAFramework.getLogger().isLoggable(Level.INFO)) {
-	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "send",
-	                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_dispatched_getmeta_reply__INFO",
-	                  new Object[] { controller.getComponentName(), destinationName });
-          }
-	  }
-      
-	  
-	  
 	  
       // Succeeded sending the CAS
       return true;
