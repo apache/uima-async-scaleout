@@ -242,10 +242,10 @@
 			</excludes>
 
 			<includes>
-				<include>NOTICE</include>
-				<include>LICENSE</include>
+				<include>readme/NOTICE</include>
+				<include>readme/LICENSE</include>
 				<include>README*</include>
-				<include>readme*</include>
+				<!-- include>readme*</include -->
 				<include>RELEASE_NOTES*</include>
 				<include>Release-Notes*</include>
 				<include>issuesFixed/**</include>
