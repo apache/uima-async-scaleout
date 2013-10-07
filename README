@@ -24,6 +24,7 @@ For more details, please see http://uima.apache.org/building-uima.html
 1. What's New in 2.4.2
 ====================== 
   - Replaced Activemq 5.4.1 with 5.6.0 
+  - Requires Java 1.6+ as ActiveMQ 5.6.0 classes have been compiled with Java 1.6
   - Implemented PEAR support
   - Added client side callbacks to notify an application where a CAS is being processed
   - Fixed major bug preventing async aggregate from processing CASes concurrently
@@ -104,8 +105,8 @@ UIMA-AS components, in addition to those that come with base UIMA include:
 2.1 Supported Platforms
 -----------------------
 
-UIMA AS Requires Java 5 or later.  It has been tested with Sun Java 5 on Windows XP and Linux,
-and with IBM Java 6 on Linux.  Other platforms and Java (5+) implementations should work, 
+UIMA AS Requires Java 6 or later.  It has been tested with Sun Java 6 on Windows XP and Linux,
+and with IBM Java 6 on Linux.  Other platforms and Java (6+) implementations should work, 
 but have not been significantly tested.
 
 2.2. Environment Variables
@@ -135,10 +136,10 @@ procedure described in Chapter 3 of the Apache UIMA Overview and Setup guide,
 which you can find online at http://uima.apache.org; click on Documentation ->
 HTML Online Version -> Overview and Setup -> 3. Eclipse IDE setup for UIMA. 
 
-Since UIMA AS requires Java 5, you must be sure to set up your uimaj-examples Eclipse
-project to use a version 5 (or later) JRE, and you must set your compiler compliance level to 5.0.  To do
+Since UIMA AS requires Java 6, you must be sure to set up your uimaj-examples Eclipse
+project to use a version 6 (or later) JRE, and you must set your compiler compliance level to 6.0.  To do
 this go to Window->Preferences and navigate to the Java->Compiler page.  Remember to 
-run the base Eclipse using Java 5 (or later), as well.
+run the base Eclipse using Java 6 (or later), as well.
 
 
 3. Getting Started
@@ -200,8 +201,8 @@ b. Run the command:
   as well as directories on UIMA_DATAPATH to resolve the import.
  
   Note: deployAsyncService.sh/cmd scripts launch UimaBootstrap main program which loads UIMA jars
-  dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq-5.6.0, UIMA_HOME/apache-activemq-5.6.0/lib,
-  and UIMA_HOME/apache-activemq-5.6.0/lib/optional directories. If you want to use a different
+  dynamically from UIMA_HOME/lib, UIMA_HOME/apache-activemq, and UIMA_HOME/apache-activemq/lib.
+  directories. If you want to use a different
   version of ActiveMQ, set the ACTIVEMQ_HOME environment variable to the location of 
   ActiveMQ you intend to use. When using different version of ActiveMQ ( older than version 5.4), start
   the broker using a startup script located in ACTIVEMQ_HOME/bin directory instead of 
