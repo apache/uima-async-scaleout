@@ -236,19 +236,25 @@
 			<directoryMode>755</directoryMode>
 			<excludes>
 				<exclude>LicNoticeAnalysisActiveMQ.txt</exclude>
-				<exclude>NOTICE.prev</exclude>
-				<exclude>LICENSE.prev</exclude>
-
 			</excludes>
 
 			<includes>
-				<include>readme/NOTICE</include>
-				<include>readme/LICENSE</include>
 				<include>README*</include>
-				<!-- include>readme*</include -->
 				<include>RELEASE_NOTES*</include>
 				<include>Release-Notes*</include>
 				<include>issuesFixed/**</include>
+			</includes>
+
+		</fileSet>
+
+		<fileSet>
+			<directory>src/main/readme</directory>
+			<outputDirectory />
+			<fileMode>644</fileMode>
+			<directoryMode>755</directoryMode>
+			<includes>
+				<include>NOTICE</include>
+				<include>LICENSE</include>
 			</includes>
 
 		</fileSet>

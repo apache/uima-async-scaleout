@@ -24,7 +24,7 @@ For more details, please see http://uima.apache.org/building-uima.html
 1. What's New in 2.4.2
 ====================== 
   - Replaced Activemq 5.4.1 with 5.6.0 
-  - Requires Java 1.6+ as ActiveMQ 5.6.0 classes have been compiled with Java 1.6
+  - Requires Java 1.6 or later as ActiveMQ 5.6.0 classes have been compiled with Java 1.6
   - Implemented PEAR support
   - Added client side callbacks to notify an application where a CAS is being processed
   - Fixed major bug preventing async aggregate from processing CASes concurrently
