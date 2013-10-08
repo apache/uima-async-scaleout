@@ -212,7 +212,7 @@
               <descriptors>
                 <descriptor>src/main/assembly/bin.xml</descriptor>
               </descriptors>
-              <finalName>uima-as-2.4.2-SNAPSHOT</finalName>
+              <finalName>uima-as-${project.version}</finalName>
               <tarLongFileMode>gnu</tarLongFileMode>
             </configuration>
           </execution>
