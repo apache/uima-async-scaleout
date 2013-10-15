@@ -407,10 +407,7 @@ An example of this kind of migration is embodied by the sample descriptors:
   4. Handling of timeouts on Cas Multiplier delegates not working 
   
   5. UIMA-AS requires java 1.6 or newer since it bundles Active MQ 5.6.0 which has been
-     compiled with jdk1.6. When building uima-as from sources using newer versions of IBM JDK (1.7, 1.6 Refresh 10) maven's build 
-     fails with OutOfMemory error while running javadoc plugin. This has been identified as IBM JDK problem and 
-     reported to IBM JDK development team as a bug with a problem number (PMR) 90063,001,866. The 
-     known workaround is to use Sun SDK or older versions of IBM SDK like 1.6 Refresh 8 FP1. 
+     compiled with jdk1.6. 
      
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
