@@ -69,6 +69,16 @@
 		<dependency>
 			<groupId>org.apache.activemq</groupId>
 			<artifactId>activemq-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>fusemq-leveldb</artifactId>
+					<groupId>org.fusesource.fuse-extra</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>mqtt-client</artifactId>
+					<groupId>org.fusesource.mqtt-client</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
