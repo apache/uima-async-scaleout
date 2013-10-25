@@ -343,7 +343,6 @@
 				<include>credentials.properties</include>
 				<include>jetty-realm.properties</include>
 				<include>jetty.xml</include>
-				<include>README.txt</include>
 			</includes>
 			<fileMode>644</fileMode>
 			<directoryMode>755</directoryMode>
@@ -363,11 +362,13 @@
 		<fileSet>
 			<directory>target/apache-activemq-linux/apache-activemq-5.6.0</directory>
 			<outputDirectory>apache-activemq</outputDirectory>
-			<includes>
-				<include>README.txt</include>
-				<include>user-guide.html</include>
-				<include>WebConsole-README.txt</include>
-			</includes>
+			<excludes>
+			    <exclude>LICENSE</exclude>
+			    <exclude>NOTICE</exclude>
+				<exclude>README.txt</exclude>
+				<exclude>user-guide.html</exclude>
+				<exclude>WebConsole-README.txt</exclude>
+			</excludes>
 			<fileMode>755</fileMode>
 			<directoryMode>755</directoryMode>
 		</fileSet>
