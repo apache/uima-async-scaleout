@@ -110,6 +110,7 @@ public class RunRemoteAsyncAE {
   // For logging CAS activity
   private ConcurrentHashMap casMap = new ConcurrentHashMap();
 
+  private String springContainerId = null;
   /**
    * Constructor for the class. Parses command line arguments and sets the values of fields in this
    * instance. If command line is invalid prints a message and calls System.exit().
@@ -170,7 +171,7 @@ public class RunRemoteAsyncAE {
             String service = args[++i];
             System.out.println("Attempting to deploy " + service + " ...");
 
-            uimaEEEngine.deploy(service, appCtx);
+            springContainerId = uimaEEEngine.deploy(service, appCtx);
           } else if (args[i].equals("-t")) {
             timeout = Integer.parseInt(args[++i]);
           } else if (args[i].equals("-it")) {
@@ -251,16 +252,18 @@ public class RunRemoteAsyncAE {
       uimaEEEngine.sendCAS(cas);
       uimaEEEngine.collectionProcessingComplete();
     }
-
-    // if (logCas) {
-    // System.out.println();
-    // List<String> log = getLog();
-    // Iterator logline = log.iterator();
-    // while (logline.hasNext()) {
-    // System.out.println(logline.next());
-    // }
-    // }
-    uimaEEEngine.stop();
+      // If running with -d (deploy) option, the service must be 
+      // first be undeployed before stop() is called. Otherwise,
+      // this process hangs
+      if ( springContainerId != null ) {
+        uimaEEEngine.undeploy(springContainerId);
+      }
+    try {
+      uimaEEEngine.stop();
+    } catch( Exception e) {
+      
+    }
+    System.exit(0);
   }
 
   /**
@@ -343,7 +346,7 @@ public class RunRemoteAsyncAE {
       } catch( Exception e) {
         
       }
-      System.exit(1);
+      System.exit(0);
       
     }
     /**
@@ -374,8 +377,12 @@ public class RunRemoteAsyncAE {
         System.out.println("\n\n ------------------ PERFORMANCE REPORT ------------------\n");
         System.out.println(uimaEEEngine.getPerformanceReport());
       }
-      // stop the JVM.
-      stop();
+      // stop the JVM. Dont stop here if running with -d (deploy) option. 
+      // service must be first be undeployed before stop() is called. Otherwise,
+      // this process hangs
+    //  if ( springContainerId == null ) {
+      //  stop();
+      //}
     }
 
     /**
