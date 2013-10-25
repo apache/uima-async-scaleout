@@ -42,6 +42,7 @@ import org.apache.uima.util.Level;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 public class UIMA_Service implements ApplicationListener {
@@ -392,9 +393,9 @@ public class UIMA_Service implements ApplicationListener {
       // Stop the monitor. The service has stopped
       monitor.doStop();
     } else if ( event instanceof UimaASApplicationExitEvent ) {
-    	System.out.println("!!!!!!!!!!! Service Wrapper Received UimaASApplicationEvent. Message:"+event.getSource());
-    } else {
-    	System.out.println("............ Received Notification of type:"+event.getClass().getName());
+    	System.out.println("Service Wrapper Received UimaASApplicationEvent. Message:"+event.getSource());
+    } else if ( event instanceof ContextStoppedEvent ){ // Spring has been shutdown
+    	System.exit(0);
     }
   }
 
