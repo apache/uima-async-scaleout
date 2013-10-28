@@ -82,6 +82,7 @@ public class ActiveMQSupport extends TestCase {
   protected synchronized void setUp() throws Exception {
     super.setUp();
     broker = createBroker();
+    broker.setUseJmx(false);
     broker.start();
     broker.setMasterConnectorURI(uri);
     addHttpConnector(DEFAULT_HTTP_PORT);
