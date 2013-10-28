@@ -335,7 +335,7 @@
 		</fileSet>
 
 		<!-- activemq -->
-		<fileSet>
+		<!-- fileSet>
 			<directory>target/apache-activemq-linux/apache-activemq-5.6.0/conf</directory>
 			<outputDirectory>apache-activemq/conf</outputDirectory>
 			<includes>
@@ -344,9 +344,12 @@
 				<include>jetty-realm.properties</include>
 				<include>jetty.xml</include>
 			</includes>
+			<excludes>
+			
+			</excludes>
 			<fileMode>644</fileMode>
 			<directoryMode>755</directoryMode>
-		</fileSet>
+		</fileSet -->
 
 		<fileSet>
 			<directory>target/apache-activemq-linux/apache-activemq-5.6.0</directory>
@@ -354,14 +357,11 @@
 			<includes>
 				<include>bin/*</include>
 				<include>bin/**/*</include>
+				<include>**/conf/credentials-enc.properties</include>
+				<include>**/conf/credentials.properties</include>
+				<include>**/conf/log4j.properties</include>
+				<include>**/conf/logging.properties</include>
 			</includes>
-			<fileMode>755</fileMode>
-			<directoryMode>755</directoryMode>
-		</fileSet>
-
-		<fileSet>
-			<directory>target/apache-activemq-linux/apache-activemq-5.6.0</directory>
-			<outputDirectory>apache-activemq</outputDirectory>
 			<excludes>
 			    <exclude>LICENSE</exclude>
 			    <exclude>NOTICE</exclude>
@@ -373,6 +373,22 @@
 			<directoryMode>755</directoryMode>
 		</fileSet>
 
+		<!-- fileSet>
+			<directory>target/apache-activemq-linux/apache-activemq-5.6.0</directory>
+			<outputDirectory>apache-activemq</outputDirectory>
+			<excludes>
+			    <exclude>LICENSE</exclude>
+			    <exclude>NOTICE</exclude>
+				<exclude>README.txt</exclude>
+				<exclude>user-guide.html</exclude>
+				<exclude>WebConsole-README.txt</exclude>
+				<exclude>**/lib/*</exclude>
+			  <exclude>**/lib/**/*</exclude>
+			</excludes>
+			<fileMode>755</fileMode>
+			<directoryMode>755</directoryMode>
+		</fileSet -->
+
 		<fileSet>
 			<directory>target/apache-activemq-win/apache-activemq-5.6.0</directory>
 			<outputDirectory>apache-activemq</outputDirectory>
@@ -381,9 +397,13 @@
 				<include>bin/**/*</include>
 			</includes>
 			<excludes>
-				<exclude>activemq</exclude>
-				<exclude>activemq-admin</exclude>
-				<exclude>run.jar</exclude>
+				<exclude>LICENSE</exclude>
+			    <exclude>NOTICE</exclude>
+				<exclude>README.txt</exclude>
+				<exclude>user-guide.html</exclude>
+				<exclude>WebConsole-README.txt</exclude>
+			    <exclude>**/lib/*</exclude>
+			    <exclude>**/lib/**/*</exclude>
 			</excludes>
 			<fileMode>755</fileMode>
 			<directoryMode>755</directoryMode>
@@ -459,6 +479,14 @@
 			<fileMode>644</fileMode>
 		</file>
 
+	    <!--  Copy README.txt as it is *required* by activemq startup script -->
+	    <!--  If not present, the script fails with ACTIVEMQ_HOME not set!  -->
+		<file>
+			<source>src/main/config/README.txt</source>
+			<outputDirectory>apache-activemq</outputDirectory>
+			<fileMode>644</fileMode>
+		</file>
+		
 		<!-- The following should be removed when deploying AS with the Base at 
 			the same time. This is a temporary measure for releasing AS 2.3.1 after the 
 			Base. There is a change made to the CollectionReader descriptor to fix a 
