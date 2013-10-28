@@ -159,26 +159,25 @@ public class JmxMonitor implements Runnable {
   }
 
   /**
-   * Connects to a remote JMX server identified by given <code>remoteServerURI</code>. Creates
+   * Connects to a local MBeanServer identified by given <code>serverUri</code>. Creates
    * proxies for all UIMA AS ServicePerformance MBeans found in the JMX server registry. If UIMA AS
    * service MBean indicates a remote service, this method connects to a remote Broker and creates a
    * proxy to an input queue for that service.
    * 
    * 
-   * @param remoteServerURI
+   * @param serverUri
    * @param samplingInterval
    * @throws Exception
    */
-  public void initialize(String remoteServerURI, long samplingInterval) throws Exception {
+  public void initialize(String serverUri, long samplingInterval) throws Exception {
     interval = samplingInterval;
-    // Connect to the remote JMX Server
     try {
-      mbsc = getServerConnection(remoteServerURI);
+      mbsc = getServerConnection(serverUri);
     } catch (Exception e) {
-      System.out.println("Unable to Connect To Jmx Server. URL:" + remoteServerURI);
+      System.out.println("Unable to Connect To Jmx Server. URL:" + serverUri);
       throw e;
     }
-    System.out.println(">>> Connected To Jmx Server. URL:" + remoteServerURI);
+    System.out.println(">>> Connected To Jmx Server. URL:" + serverUri);
     // Fetch remote JVM's MXBeans
     ObjectName runtimeObjName = new ObjectName(ManagementFactory.RUNTIME_MXBEAN_NAME);
     ObjectName threadObjName = new ObjectName(ManagementFactory.THREAD_MXBEAN_NAME);
@@ -210,7 +209,7 @@ public class JmxMonitor implements Runnable {
     Set<ObjectName> names = new HashSet<ObjectName>(mbsc.queryNames(uimaServicePattern, null));
     String key = "";
     if (verbose)
-      System.out.println("\nFound UIMA AS Services Managed by JMX Server:" + remoteServerURI);
+      System.out.println("\nFound UIMA AS Services Managed by JMX Server:" + serverUri);
 
     // Find all Service Performance MBeans
     for (ObjectName name : names) {
