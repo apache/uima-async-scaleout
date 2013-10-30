@@ -356,8 +356,9 @@ public interface UimaAsynchronousEngine {
    */
   public String sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList) throws ResourceProcessException;
   /**
-   * Deploys a UIMA AS container and all services defined in provided deployment descriptor. Each
-   * deployment descriptor contains an assembly of related UIMA AS services. This method is
+   * Deploys a UIMA AS container and all services defined in the provided deployment descriptor.
+   * The deployment is within the same JVM. 
+   * Each deployment descriptor contains an assembly of related UIMA AS services. This method is
    * synchronous and will block until all UIMA AS services are completely deployed and initialized.
    * If there is a problem deploying any of the UIMA AS services the container is destroyed and
    * exception thrown.
@@ -376,6 +377,7 @@ public interface UimaAsynchronousEngine {
 
   /**
    * Deploys a single UIMA AS container and all services defined in provided deployment descriptors.
+   * The deployment is within the same JVM. 
    * Each deployment descriptor contains an assembly of related UIMA AS services. This method is
    * synchronous and will block until all UIMA AS services are completely deployed and initialized.
    * If there is a problem deploying any of the UIMA AS services the container is destroyed and
