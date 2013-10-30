@@ -148,6 +148,11 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     exceptionsToIgnore.add(anExceptionToIgnore);
   }
 
+  /**
+   * Test if an exception is in the ignore list
+   * @param anException
+   * @return true if exception is ignored, or arg is null
+   */
   protected boolean ignoreException(Class<?> anException) {
     if (anException == null) {
       return true;
@@ -396,6 +401,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
   /**
    * Initializes a given instance of the Uima EE client and executes a test. It uses synchronization
    * to enforce correct sequence of calls and setups expected result.
+   * It sends "howMany" CASes all at once to the service.
    * 
    * @param appCtx
    * @param aUimaEeEngine
@@ -507,6 +513,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
   /**
    * Initializes a given instance of the Uima EE client and executes a test. It uses synchronization
    * to enforce correct sequence of calls and setups expected result.
+   * It sends "howMany" CASes, one at a time, to the service, waiting after each one until it is completely done.
    * 
    * @param appCtx
    * @param aUimaEeEngine

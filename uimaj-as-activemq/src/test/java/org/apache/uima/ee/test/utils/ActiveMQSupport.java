@@ -58,6 +58,9 @@ public class ActiveMQSupport extends TestCase {
   
   protected static BrokerService broker;
 
+  /**
+   * Is set to uri of started broker for the TCP connection
+   */
   protected String uri = null;
 
   protected static ThreadGroup brokerThreadGroup = null;
@@ -81,7 +84,7 @@ public class ActiveMQSupport extends TestCase {
 
   protected synchronized void setUp() throws Exception {
     super.setUp();
-    broker = createBroker();
+    broker = createBroker();  // sets uri
     broker.setUseJmx(false);
     broker.start();
     broker.setMasterConnectorURI(uri);
@@ -98,6 +101,7 @@ public class ActiveMQSupport extends TestCase {
     // error handler action=terminate.
     System.setProperty("dontKill","");  
   }
+  
   protected void cleanBroker( BrokerService targetBroker) throws Exception {
     // Remove messages from all queues
     targetBroker.deleteAllMessages();
@@ -124,6 +128,7 @@ public class ActiveMQSupport extends TestCase {
   protected String addHttpConnector(int aDefaultPort) throws Exception {
     return addHttpConnector(broker, aDefaultPort);
   }
+  
   protected String addHttpConnector(BrokerService aBroker, int aDefaultPort) throws Exception {
     boolean found = false;
     while( !found ) {
@@ -153,6 +158,7 @@ public class ActiveMQSupport extends TestCase {
     }
     throw new BrokerConnectionException("Unable to acquire Open Port for HTTPConnector");
   }
+  
   protected String getHttpURI() throws Exception {
     while ( httpConnector == null  ) {
      synchronized(this) {
@@ -161,6 +167,7 @@ public class ActiveMQSupport extends TestCase {
     }
     return httpConnector.getConnectUri().toString();
   }
+  
   protected void removeQueue(String aQueueName) throws Exception {
     httpConnector.stop();
   }
