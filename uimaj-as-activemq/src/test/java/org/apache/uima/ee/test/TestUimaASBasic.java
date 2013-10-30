@@ -64,6 +64,7 @@ public class TestUimaASBasic extends BaseTestSupport {
    */
   public void testBrokerLifecycle() {
     System.out.println("-------------- testBrokerLifecycle -------------");
+    // the setup and teardown create and destroy a broker
   }
 
   /**
@@ -74,7 +75,7 @@ public class TestUimaASBasic extends BaseTestSupport {
    */
   public void testInvalidInitializeCall() throws Exception {
     System.out.println("-------------- testInvalidInitializeCall -------------");
-    // Instantiate Uima EE Client
+    // Instantiate UIMA-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
@@ -108,8 +109,8 @@ public class TestUimaASBasic extends BaseTestSupport {
   }
 
   /**
-   * Tests deployment of a primitive Uima EE Service (PersontTitleAnnotator). Deploys the primitive
-   * in the same jvm using Uima EE Client API and blocks on a monitor until the Uima Client calls
+   * Tests deployment of a primitive UIMA-AS Service (PersontTitleAnnotator). Deploys the primitive
+   * in the same jvm using UIMA-AS Client API and blocks on a monitor until the Uima Client calls
    * initializationComplete() method. Once the primitive service starts it is expected to send its
    * metadata to the Uima client which in turn notifies this object with a call to
    * initializationComplete() where the monitor is signaled to unblock the thread. This code will
@@ -119,9 +120,9 @@ public class TestUimaASBasic extends BaseTestSupport {
    */
   public void testDeployPrimitiveService() throws Exception {
     System.out.println("-------------- testDeployPrimitiveService -------------");
-    // Instantiate Uima EE Client
+    // Instantiate UIMA-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
+    // Deploy UIMA-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
             "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
