@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -61,7 +62,6 @@ import org.apache.uima.aae.client.UimaASStatusCallbackListener;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
-import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.delegate.Delegate.DelegateEntry;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -84,18 +84,17 @@ import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.AllowPreexistingFS;
 import org.apache.uima.cas.impl.BinaryCasSerDes6;
+import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
 import org.apache.uima.cas.impl.CASImpl;
 import org.apache.uima.cas.impl.Serialization;
 import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
-import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
-import org.apache.uima.resourceSpecifier.factory.SerializationStrategy;
 import org.apache.uima.util.Level;
 import org.apache.uima.util.ProcessTrace;
 import org.apache.uima.util.XMLInputSource;
@@ -254,6 +253,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   abstract protected MessageSender getDispatcher();
   
   abstract protected void initializeConsumer(String aBrokerURI, Connection connection) throws Exception;
+
+  abstract protected SharedConnection validateConnection(String aBrokerURI) throws Exception;
 
   // enables/disable timer per CAS. Defaul is to use single timer for
   // all outstanding CASes
@@ -908,7 +909,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           SharedConnection sharedConnection = lookupConnection(getBrokerURI());
           
           //  Send Ping to service as getMeta request
-          if ( !serviceDelegate.isAwaitingPingReply() && sharedConnection.isOpen() ) {
+          if ( sharedConnection != null && !serviceDelegate.isAwaitingPingReply() && sharedConnection.isOpen() ) {
             serviceDelegate.setAwaitingPingReply();
             // Add the cas to a list of CASes pending reply. Also start the timer if necessary
 			// serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
@@ -953,7 +954,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           }
         }
         SharedConnection sharedConnection = lookupConnection(getBrokerURI());
-        if ( !sharedConnection.isOpen() ) {
+        if ( sharedConnection != null &&  !sharedConnection.isOpen() ) {
           if (requestToCache != null && !requestToCache.isSynchronousInvocation() && aCAS != null ) {
             aCAS.release();
           }
@@ -2847,7 +2848,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 	SharedConnection sharedConnection;
     if ( !connectionOpen() ) {
       sharedConnection = lookupConnection(getBrokerURI());
-      while ( running ) {
+      while ( sharedConnection != null && running ) {
         //  blocks until connection is refreshed 
         try {
           sharedConnection.retryConnectionUntilSuccessfull();
@@ -2888,12 +2889,67 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   
   protected SharedConnection lookupConnection(String brokerUrl) {
+    SharedConnection sharedConnection = null;
+    try {
+      if ( sharedConnections.containsKey(brokerUrl) ) {
+        return sharedConnections.get(brokerUrl);
+      } else {
+        boolean first = true;
+        while( running ) {
+
+          try {
+            producerInitialized = false;
+            sharedConnection = validateConnection(brokerUrl);
+            sharedConnection.retryConnectionUntilSuccessfull();
+            break;
+          } catch( Exception e) {
+            Object monitor = new Object();
+            try {
+              synchronized(monitor) {
+                if ( first ) {
+                  first = false;
+                  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "onException",
+                            JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_retrying_jms_connection__WARNING",
+                            new Object[] { brokerUrl });
+                  }
+                }
+                monitor.wait(5000);  // retry connection every 5 secs
+              }
+            } catch( Exception ex) {
+            }
+          }
+        } // while
+      }
+    } catch( Exception exx ) {
+
+      if ( brokerUrl == null ) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "onException",
+                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_invalid_broker_url__WARNING",
+                new Object[] { });
+        Thread.dumpStack();
+      }
+      StringBuffer sb = new StringBuffer();
+      for( Entry<String, SharedConnection> conn : sharedConnections.entrySet()) {
+        sb.append("-- Shared Connection broker:"+conn.getKey()+" State:"+conn.getValue().getState()+"\n");
+      }
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "onException",
+                JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_shared_connections__INFO",
+                new Object[] { sb.toString()});
+      }
+      throw new RuntimeException("Invalid State");
+    }
+
+    return sharedConnection;
+    /*    
     if ( brokerUrl != null ) {
       if ( sharedConnections.containsKey(brokerUrl) ) {
         return sharedConnections.get(brokerUrl);
       }
     }
 	  return null;
+	*/  
   }
   
   // This class is used to share JMS Connection by all instances of UIMA AS

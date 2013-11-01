@@ -224,7 +224,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
   private void stopConnection() {
 	SharedConnection sharedConnection;
-    if ((sharedConnection = lookupConnection(brokerURI)) != null) {
+    if ( brokerURI != null && (sharedConnection = lookupConnection(brokerURI)) != null) {
       // Remove a client from registry
       sharedConnection.unregisterClient(this);
       ActiveMQConnection amqc = (ActiveMQConnection)sharedConnection.getConnection();
@@ -422,7 +422,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     ((ActiveMQConnection) aConnection).setPrefetchPolicy(prefetchPolicy);
   }
 
-  private SharedConnection validateConnection(String aBrokerURI) throws Exception {
+  protected SharedConnection validateConnection(String aBrokerURI) throws Exception {
     // checks if a sharedConnection exists and if not creates a new one
     return createSharedConnection(aBrokerURI);
   }

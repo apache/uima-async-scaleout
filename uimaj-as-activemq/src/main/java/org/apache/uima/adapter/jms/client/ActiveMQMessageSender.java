@@ -36,6 +36,7 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.SharedConnection;
 import org.apache.uima.util.Level;
 
 /**
@@ -157,9 +158,12 @@ public class ActiveMQMessageSender extends BaseMessageSender {
   public MessageProducer getMessageProducer() {
     if ( engine.running && engine.producerInitialized == false  ) {
       try {
-        setConnection(engine.lookupConnection(getBrokerURL()).getConnection());
-        initializeProducer();
-        engine.producerInitialized = true;
+        SharedConnection con = engine.lookupConnection(getBrokerURL());
+        if ( con != null ) {
+          setConnection(con.getConnection());
+          initializeProducer();
+          engine.producerInitialized = true;
+        }
       } catch( Exception e) {
         e.printStackTrace();
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
