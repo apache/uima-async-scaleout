@@ -50,7 +50,6 @@ public class AnalysisEngineInstancePoolWithThreadAffinity implements AnalysisEng
 		  lock.acquireUninterruptibly();
 		  // Call destroy() on AE on checkin if the UIMA AS process is in quiesce mode  
 		  if ( destroyAEInstanceIfFree ) {
-		    System.out.println("........... AnalysisEngineInstancePool.checkin() - Thread:"+Thread.currentThread().getId()+" calling destroy() on AE checkin");
 		    anAnalysisEngine.destroy();
 		  } else {
 	      aeInstanceMap.put(Thread.currentThread().getId(), anAnalysisEngine);

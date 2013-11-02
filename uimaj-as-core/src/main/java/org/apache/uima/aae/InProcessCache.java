@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.EventSubscriber;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -64,6 +65,18 @@ public class InProcessCache implements InProcessCacheMBean {
 
   int size = 0;
 
+  private BaseAnalysisEngineController controller;
+  
+  /**
+	  Register controller to call when the cache becomes empty.
+    This call is made when the controller enters quiesce
+    state. In this state the controller waits for 
+    the cache to send notification when all CASes have been 
+    processed.
+  **/
+  public void registerController(BaseAnalysisEngineController ctrl) {
+    controller = ctrl;
+  }
   public void registerCallbackWhenCacheEmpty(EventSubscriber aController) {
     registerCallbackWhenCacheEmpty(aController, 0);
   }
@@ -271,7 +284,10 @@ public class InProcessCache implements InProcessCacheMBean {
         ((EventSubscriber) callbackListeners.get(i)).onCacheEmpty();
       }
     }
-
+    if (cache.size() == 0 && controller != null ) {
+      // unblock the controller waiting in quiesceAndStop
+      controller.notifyOnCacheEmpty();
+    }
   }
 
   // never called 5/2013

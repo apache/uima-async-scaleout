@@ -23,12 +23,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidClassException;
-import java.net.Socket;
 
 import org.apache.uima.UIMAFramework;
-import org.apache.uima.UimaContext;
-import org.apache.uima.UimaContextAdmin;
-import org.apache.uima.aae.UimaASApplicationEvent;
 import org.apache.uima.aae.UimaASApplicationExitEvent;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -395,7 +391,7 @@ public class UIMA_Service implements ApplicationListener {
     } else if ( event instanceof UimaASApplicationExitEvent ) {
     	System.out.println("Service Wrapper Received UimaASApplicationEvent. Message:"+event.getSource());
     } else if ( event instanceof ContextStoppedEvent ){ // Spring has been shutdown
-    	System.exit(0);
+    	
     }
   }
 
@@ -490,7 +486,6 @@ public class UIMA_Service implements ApplicationListener {
   }
   
   static class ServiceShutdownHook extends Thread {
-
     public SpringContainerDeployer serviceDeployer;
 
     public ServiceShutdownHook(SpringContainerDeployer serviceDeployer) {
@@ -501,18 +496,19 @@ public class UIMA_Service implements ApplicationListener {
       try {
       	AnalysisEngineController topLevelController = serviceDeployer.getTopLevelController();
       	if (topLevelController != null && !topLevelController.isStopped() ) {
-      	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_caught_signal__INFO", new Object[] { topLevelController.getComponentName() });
-    	    serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
-    	  }
+      	  serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+    	  } 
       } catch( Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_exception__WARNING", e);
         }
-      }
+      } 
     }
+
   } 
 }
