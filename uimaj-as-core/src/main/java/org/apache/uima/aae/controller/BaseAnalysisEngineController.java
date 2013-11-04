@@ -2298,7 +2298,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	          iC = (InputChannel) inputChannelMap.get(key);
 	          if (iC != null ) {
 	        	  if ( stopAllListeners ) {
-	              System.out.println(">>>>>>>>>>>>>>> Closing Channel on Queue:"+iC.getInputQueueName());
                 iC.disconnectListenersFromQueue();
 	        	  } else if ( iC.getInputQueueName() != null && !iC.getInputQueueName().startsWith("temp-queue")) {
                 iC.disconnectListenersFromQueue();
