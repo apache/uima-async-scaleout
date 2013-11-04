@@ -2051,7 +2051,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
         // Stops all input channels of this service, but keep temp reply queue input channels open
         // to process replies.
-        stopReceivingCASes();
+        stopReceivingCASes(false);  // dont kill listeners on temp queues. The remotes may send replies
         if ( this instanceof PrimitiveAnalysisEngineController_impl &&
         		((PrimitiveAnalysisEngineController_impl)this).aeInstancePool != null ) {
         	//	Since we are quiescing, destroy all AEs that are in AE pool. Those that
@@ -2083,11 +2083,13 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             // on this controller when the cache becomes empty.
             quiesceSemaphore.acquire();
           }
+          stopReceivingCASes(true);
+          stopInputChannels(InputChannel.InputChannels, true);  
           System.out.println("UIMA-AS Service is Stopping, All CASes Have Been Processed");
         } catch( InterruptedException e) {
           
         }
-        stop(false); 
+        stop(true); 
       }
     }
   }
@@ -2284,7 +2286,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 		  iC.setTerminating();
 	  }
   }
-  protected void stopReceivingCASes()  {
+  protected void stopReceivingCASes(boolean stopAllListeners)  {
 	  
 	    InputChannel iC = null;
 	    setInputChannelForNoRecovery();
@@ -2294,9 +2296,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	        String key = it.next();
 	        if (key != null && key.trim().length() > 0) {
 	          iC = (InputChannel) inputChannelMap.get(key);
-	          if (iC != null) {
-	        	  iC.disconnectListenersFromQueue();
-               }
+	          if (iC != null ) {
+	        	  if ( stopAllListeners ) {
+	              System.out.println(">>>>>>>>>>>>>>> Closing Channel on Queue:"+iC.getInputQueueName());
+                iC.disconnectListenersFromQueue();
+	        	  } else if ( iC.getInputQueueName() != null && !iC.getInputQueueName().startsWith("temp-queue")) {
+                iC.disconnectListenersFromQueue();
+	        	  }
+            }
 	        }
 	      } catch (Exception e) {
 	        if (iC != null) {
