@@ -409,7 +409,8 @@ An example of this kind of migration is embodied by the sample descriptors:
      
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
-http://issues.apache.org/jira/secure/BrowseProject.jspa?id=12316312
+http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12323591&styleName=Html&projectId=12310570
+
 
 Crypto Notice
 -------------
