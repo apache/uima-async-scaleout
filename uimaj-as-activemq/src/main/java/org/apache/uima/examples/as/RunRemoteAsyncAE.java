@@ -244,24 +244,26 @@ public class RunRemoteAsyncAE {
     if (logCas) {
       System.out.println("\nService-IPaddr\tSent\tDuration");
     }
-    if (collectionReaderDescriptor != null) {
-      uimaEEEngine.process();
-    } else {
-      // send an empty CAS
-      CAS cas = uimaEEEngine.getCAS();
-      uimaEEEngine.sendCAS(cas);
-      uimaEEEngine.collectionProcessingComplete();
-    }
+    try {
+      if (collectionReaderDescriptor != null) {
+        uimaEEEngine.process();
+      } else {
+        // send an empty CAS
+        CAS cas = uimaEEEngine.getCAS();
+        uimaEEEngine.sendCAS(cas);
+        uimaEEEngine.collectionProcessingComplete();
+      }
       // If running with -d (deploy) option, the service must be 
       // first be undeployed before stop() is called. Otherwise,
       // this process hangs
       if ( springContainerId != null ) {
         uimaEEEngine.undeploy(springContainerId);
       }
-    try {
+
       uimaEEEngine.stop();
     } catch( Exception e) {
-      
+      e.printStackTrace();
+      Runtime.getRuntime().halt(-1);
     }
     System.exit(0);
   }
