@@ -461,9 +461,12 @@ public class UIMA_Service implements ApplicationListener {
             if (c == 's') {
               service.stopMonitor();
               serviceDeployer.undeploy(SpringContainerDeployer.STOP_NOW);
+              System.exit(0);
             } else if (c == 'q') {
               service.stopMonitor();
               serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+              System.exit(0);
+
             } else if (Character.isLetter(c) || Character.isDigit(c)) {
               System.out.println(prompt);
             }
@@ -500,6 +503,7 @@ public class UIMA_Service implements ApplicationListener {
                 "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_caught_signal__INFO", new Object[] { topLevelController.getComponentName() });
       	  serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+      	  Runtime.getRuntime().halt(0);
     	  } 
       } catch( Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
