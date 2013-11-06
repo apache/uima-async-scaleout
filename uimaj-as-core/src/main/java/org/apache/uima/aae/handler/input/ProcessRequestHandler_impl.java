@@ -21,6 +21,7 @@ package org.apache.uima.aae.handler.input;
 
 import java.io.ByteArrayInputStream;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
@@ -554,9 +555,17 @@ public class ProcessRequestHandler_impl extends HandlerBase {
         		
           try {
         	  synchronized(lock) {
-        		  if ( entry.getThreadCompletionSemaphore() != null) {
-                 	 entry.getThreadCompletionSemaphore().acquire();
-        		  }
+        	    while( !getController().isStopped()) {
+                if ( entry.getThreadCompletionSemaphore() != null) {
+                  boolean gotIt = entry.getThreadCompletionSemaphore().tryAcquire(500, TimeUnit.MILLISECONDS);
+                  if ( gotIt ) {
+                    break;
+                  }
+                } else {
+                  break;
+                }
+        	      
+        	    }
         	  }
           } catch( InterruptedException ex) {
           } 
