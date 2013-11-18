@@ -3151,13 +3151,20 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   public void stop() {
 	  super.stop(true);  // shutdown now
 	  
-	// release all permits
-	  if ( semaphore != null ) {
-		  while ( semaphore.availablePermits() > 0) {
-		  		semaphore.release();
-	  	  }
-	  }
-
+	  // enable blocked threads to finish // https://issues.apache.org/jira/browse/UIMA-3433
+    if ( semaphore != null ) {
+      while ( semaphore.hasQueuedThreads()) {
+        semaphore.release(); // permit any blocked threads to clean up
+        try {
+          Thread.sleep(1); // allow other thread to become unqueued
+        } catch (InterruptedException e) {
+        }  
+      }
+//      semaphore.drainPermits();  
+//      while ( semaphore.availablePermits() > 0) {
+//          semaphore.release();
+//        }
+    }
    
     
     this.cleanUp();
