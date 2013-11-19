@@ -930,6 +930,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     for (Object listenerObject : listenerContainerList) {
       final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer) listenerObject;
       if (mL != null && doCloseChannel(mL, channelsToClose)) {
+        mL.setRecoveryInterval(0);  // https://issues.apache.org/jira/browse/UIMA-3437
     	  stopChannel(mL, shutdownNow);
         // Just in case check if the container still in the list. If so, add it to
         // another list that container listeners that have been stopped and need
