@@ -369,7 +369,6 @@
 							<excludePackageNames>*.aae.*</excludePackageNames>
 							<!-- add a few classes in impl packages that are directly used by user code -->
               <additionalparam>
-                -Xdoclint:none
                 ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/BasicUimaJmxMonitorListener.java
                 ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/JmxMonitorListener.java
                 ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/ServiceMetrics.java
