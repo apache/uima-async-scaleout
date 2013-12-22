@@ -42,11 +42,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.uima.UIMAFramework;
-import org.apache.uima.aae.client.UimaASStatusCallbackListener;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.adapter.jms.JmsConstants;
-import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.analysis_engine.AnalysisEngineServiceStub;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
@@ -64,6 +62,7 @@ import org.apache.uima.util.Level;
 public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener implements
         AnalysisEngineServiceStub {
   
+  @SuppressWarnings("rawtypes")
   private static final Class CLASS_NAME = JmsAnalysisEngineServiceStub.class;
 
   public static final String PARAM_BROKER_URL = "brokerUrl";
@@ -90,8 +89,12 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
 
   private int retry = 0;
 
+  @SuppressWarnings("rawtypes")
+  private static HashMap enginemap = new HashMap();
+
   private UimaAsynchronousEngine uimaEEEngine;
 
+  @SuppressWarnings("unchecked")
   public JmsAnalysisEngineServiceStub(Resource owner, Parameter[] parameters)
           throws ResourceInitializationException {
     // read parameters
@@ -123,26 +126,34 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
       }
     }
 
-    // initialize UIMA EE Engine
-    Map appCtxt = new HashMap();
-    appCtxt.put(UimaAsynchronousEngine.ServerUri, brokerUrl);
-    appCtxt.put(UimaAsynchronousEngine.ENDPOINT, endpoint);
-    appCtxt.put(UimaAsynchronousEngine.CasPoolSize, 0);
-    if (timeout > 0) {
-      appCtxt.put(UimaAsynchronousEngine.Timeout, timeout);
+    if (enginemap.containsKey(brokerUrl+endpoint)) {
+      uimaEEEngine = (UimaAsynchronousEngine)enginemap.get(brokerUrl+endpoint);
     }
-    if (getMetaTimeout > 0) {
-      appCtxt.put(UimaAsynchronousEngine.GetMetaTimeout, getMetaTimeout);
+    else {
+      // initialize UIMA EE Engine
+      @SuppressWarnings("rawtypes")
+      Map appCtxt = new HashMap();
+      appCtxt.put(UimaAsynchronousEngine.ServerUri, brokerUrl);
+      appCtxt.put(UimaAsynchronousEngine.ENDPOINT, endpoint);
+      appCtxt.put(UimaAsynchronousEngine.CasPoolSize, 0);
+      if (timeout > 0) {
+        appCtxt.put(UimaAsynchronousEngine.Timeout, timeout);
+      }
+      if (getMetaTimeout > 0) {
+        appCtxt.put(UimaAsynchronousEngine.GetMetaTimeout, getMetaTimeout);
+      }
+      if (cpcTimeout > 0) {
+        appCtxt.put(UimaAsynchronousEngine.CpcTimeout, cpcTimeout);
+      }
+      if (binary_serialization != null && binary_serialization.equalsIgnoreCase("true")) {
+        appCtxt.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "binary");
+      }
+      uimaEEEngine = new BaseUIMAAsynchronousEngine_impl();
+      uimaEEEngine.addStatusCallbackListener(this);
+      uimaEEEngine.initialize(appCtxt);
+      enginemap.put(brokerUrl+endpoint, uimaEEEngine);
     }
-    if (cpcTimeout > 0) {
-      appCtxt.put(UimaAsynchronousEngine.CpcTimeout, cpcTimeout);
-    }
-    if (binary_serialization != null && binary_serialization.equalsIgnoreCase("true")) {
-      appCtxt.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "binary");
-    }
-    uimaEEEngine = new BaseUIMAAsynchronousEngine_impl();
-    uimaEEEngine.addStatusCallbackListener(this);
-    uimaEEEngine.initialize(appCtxt);
+
   }
 
   /**
