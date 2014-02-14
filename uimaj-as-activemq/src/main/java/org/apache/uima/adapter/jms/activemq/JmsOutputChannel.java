@@ -845,6 +845,19 @@ public class JmsOutputChannel implements OutputChannel {
 	        if ( !endpointConnection.send(tm, 0, false, notifyOnJmsException) && notifyOnJmsException ) {
 	        	throw new JMSException("JMS Send Failed. Check UIMA Log For Details.");
 	        }
+          if ( aCasReferenceId != null && aCommand == AsynchAEMessage.ServiceInfo) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(
+                      Level.INFO,
+                      CLASS_NAME.getName(),
+                      "sendReply",
+                      JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_sent_ack_message__INFO",
+                      new Object[] {aCasReferenceId});
+            }
+          }
+
+
 	        addIdleTime(tm);
 	        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
 	          UIMAFramework.getLogger(CLASS_NAME).logrb(

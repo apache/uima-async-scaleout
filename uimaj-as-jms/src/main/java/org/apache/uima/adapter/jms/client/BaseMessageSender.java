@@ -319,7 +319,12 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                        pm.get(AsynchAEMessage.CasReference));
                if (cacheEntry != null) {
                    CAS cas = cacheEntry.getCAS();
-
+                   // enable logging 
+                   if (System.getProperty("UimaAsCasTracking") != null) {
+                     message.setStringProperty("UimaAsCasTracking", "enable");
+					 System.out.println("Added UimaAsCasTracking property <<<<<<<<<<<<<<<");
+                   }
+				   
             	   // Use Process Timeout value for the time-to-live property in the
                  // outgoing JMS message. When this time is exceeded
                  // while the message sits in a queue, the JMS Server will remove it from
@@ -361,6 +366,8 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
              // start timers
              if( casProcessRequest ) { 
             	 CAS cas = cacheEntry.getCAS();
+
+
                // Add the cas to a list of CASes pending reply. Also start the timer if necessary
                engine.serviceDelegate.addCasToOutstandingList(cacheEntry.getCasReferenceId(), cas.hashCode(), engine.timerPerCAS); // true=timer per cas
                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {

@@ -1311,19 +1311,21 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	      String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
     	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
     	      if ( casReferenceId != null && nodeIP != null && pid != null) {
-    	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+			    if (System.getProperty("UimaAsCasTracking") != null) {
+    	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                       UIMAFramework.getLogger(CLASS_NAME).logrb(
-                              Level.FINE,
+                              Level.INFO,
                               CLASS_NAME.getName(),
                               "handleServiceInfo",
                               JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                              "UIMAJMS_calling_onBeforeProcessCAS_FINE",
+                              "UIMAJMS_calling_onBeforeProcessCAS_INFO",
                               new Object[] {
-                            	  casReferenceId,
-                             	 String.valueOf(casCachedRequest.getCAS().hashCode())
+                            	  casReferenceId
+                             	 
                               });
                   }
-    	    	  onBeforeProcessCAS(status,nodeIP, pid);
+    	    	}
+   				  onBeforeProcessCAS(status,nodeIP, pid);
     	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
                       UIMAFramework.getLogger(CLASS_NAME).logrb(
                               Level.FINE,
