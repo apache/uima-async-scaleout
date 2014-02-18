@@ -322,7 +322,6 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                    // enable logging 
                    if (System.getProperty("UimaAsCasTracking") != null) {
                      message.setStringProperty("UimaAsCasTracking", "enable");
-					 System.out.println("Added UimaAsCasTracking property <<<<<<<<<<<<<<<");
                    }
 				   
             	   // Use Process Timeout value for the time-to-live property in the

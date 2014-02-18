@@ -622,7 +622,6 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       try {
         String workId="";
         if ( (workId = aMessage.getStringProperty("UimaAsCasTracking") ) != null ) {
-		System.out.println("Got UimaAsCasTracking property");
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(
                     Level.INFO,
