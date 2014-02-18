@@ -583,21 +583,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     long idleTime = 0;
 
     boolean doCheckpoint = false;
-    try {
-      String workId="";
-      if ( (workId = aMessage.getStringProperty("DuccWorkId") ) != null ) {
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(
-                  Level.INFO,
-                  CLASS_NAME.getName(),
-                  "onMessage",
-                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_recvd_new_message__INFO",
-                  new Object[] {workId});
-        }
-      }
-    } catch (JMSException e1) {
-    }
+
     String eN = endpointName;
     if (getController() != null) {
       eN = getController().getComponentName();
