@@ -194,7 +194,19 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                      ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() });
 		          }
 		        } else if ( !brokerUri.startsWith("http") && !brokerUri.startsWith("failover")){
-		              brokerUri += "?wireFormat.maxInactivityDuration=0";
+				  String prefix = "";
+  		          if ( brokerUri.indexOf("?") > -1) {
+		            prefix = "&";
+		          } else {
+		            prefix ="?";
+		          }
+		          String extraParams = "";
+		          // check if maxInactivityDuration exists in the given url
+		          if ( brokerUri.indexOf("wireFormat.maxInactivityDuration") == -1 ) {
+		            // turn off activemq inactivity monitor
+		            extraParams = prefix+"wireFormat.maxInactivityDuration=0";
+		          }
+				  brokerUri += extraParams;
 		        }
 
 		        if (!isOpen()) {
