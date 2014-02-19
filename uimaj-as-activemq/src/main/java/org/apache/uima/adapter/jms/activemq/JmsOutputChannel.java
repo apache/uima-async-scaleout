@@ -1957,14 +1957,14 @@ public class JmsOutputChannel implements OutputChannel {
             public void run() {
               //  System.out.println("SessionReaper Thread Woke Up After:"+inactivityTimeout*60*1000+" Millis");
                 long inactivityThreshold = inactivityTimeout*60*1000;  // normalize into millis
-                if ( doLog && UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                if ( doLog && UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
                   doLog = false;
                   UIMAFramework.getLogger(CLASS_NAME).logrb(
-                          Level.INFO,
+                          Level.FINE,
                           CLASS_NAME.getName(),
                           "startSessionReaperTimer.run",
                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                          "UIMAJMS_inactivity_timer_expired__INFO",
+                          "UIMAJMS_inactivity_timer_expired__FINE",
                           new Object[] { Thread.currentThread().getId(), componentName,
                               inactivityTimeout, brokerDestinations.getBrokerURL() });
                 }
