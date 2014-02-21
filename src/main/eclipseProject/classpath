@@ -54,30 +54,30 @@
 		</attributes>
 	<classpathentry kind="var" path="UIMA_HOME/lib/uimaj-as-activemq.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/lib/uimaj-as-jms.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/activemq-all-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-core-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/geronimo-j2ee-management_1.1_spec-1.0.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-asm-3.0.3.RELEASE.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-core-3.0.3.RELEASE.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-tx-3.0.3.RELEASE.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-camel-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-spring-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/geronimo-jms_1.1_spec-1.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-beans-3.0.3.RELEASE.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-expression-3.0.3.RELEASE.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/xbean-spring-3.7.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/activemq-console-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/commons-logging-1.1.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/kahadb-5.4.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-context-3.0.3.RELEASE.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/spring-jms-3.0.3.RELEASE.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/commons-codec-1.2.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/jetty-all-server-7.0.1.v20091125.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/xstream-1.3.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/commons-httpclient-3.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/log4j-1.2.14.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/geronimo-servlet_2.5_spec-1.2.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq-5.4.1/lib/optional/xmlpull-1.1.3.4d_b4_min.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/activemq-all-5.6.0.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/activemq-core-5.6.0.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/geronimo-j2ee-management_1.1_spec-1.0.1.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/spring-asm-3.0.6.RELEASE.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/spring-core-3.0.6.RELEASE.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/spring-tx-3.0.6.RELEASE.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/activemq-camel-5.6.0.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/activemq-spring-5.6.0.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/geronimo-jms_1.1_spec-1.1.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/spring-beans-3.0.6.RELEASE.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/spring-expression-3.0.6.RELEASE.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/xbean-spring-3.7.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/activemq-console-5.6.0.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/kahadb-5.6.0.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/spring-context-3.0.6.RELEASE.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/spring-jms-3.0.6.RELEASE.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/commons-codec-1.2.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/jetty-all-server-7.6.7.v20120910.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/xstream-1.1.3.1.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/commons-httpclient-3.1.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/log4j-1.2.16.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/geronimo-servlet_2.5_spec-1.2.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/xmlpull-1.1.3.1.jar"/>
 	<classpathentry kind="lib" path="resources"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

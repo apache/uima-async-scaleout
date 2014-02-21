@@ -624,7 +624,7 @@ public class JmxMonitor implements Runnable {
 
   private static void printUsage() {
     System.out
-            .println("Usage: \njava -cp %UIMA_HOME%/lib/*;%UIMA_HOME%/apache-activemq-5.4.1/* -Djava.util.logging.config.file=%UIMA_HOME%/config/MonitorLogger.properties    org.apache.uima.aae.jmx.monitor.JmxMonitor uri <frequency>\nuri - jmx server URI- required\nfrequency - how often the checkpoint is done. Default: 1000ms - optional");
+            .println("Usage: \njava -cp %UIMA_HOME%/lib/*;%UIMA_HOME%/apache-activemq/* -Djava.util.logging.config.file=%UIMA_HOME%/config/MonitorLogger.properties    org.apache.uima.aae.jmx.monitor.JmxMonitor uri <frequency>\nuri - jmx server URI- required\nfrequency - how often the checkpoint is done. Default: 1000ms - optional");
   }
 
   private static void echo(String msg) {
