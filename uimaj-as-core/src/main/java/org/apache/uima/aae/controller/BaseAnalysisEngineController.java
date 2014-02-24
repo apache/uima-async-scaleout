@@ -345,7 +345,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       //  this adds the handler to every thread
       Thread.setDefaultUncaughtExceptionHandler(new UimaAsUncaughtExceptionHandler(getComponentName()));
       // Check the version of uimaj that UIMA AS was built with, against the UIMA Core version. If not the same throw Exception
-      if (!UimaAsVersion.getUimajFullVersionString().equals(UimaVersion.getFullVersionString())) {
+      if (UimaAsVersion.getMajorVersion() != UimaVersion.getMajorVersion()) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.WARNING,
                 CLASS_NAME.getName(),

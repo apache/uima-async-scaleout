@@ -583,8 +583,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     shutdownHookThread = new Thread(new UimaASShutdownHook(this));
     Runtime.getRuntime().addShutdownHook(shutdownHookThread);
            
-    // Check the version of uimaj that UIMA AS was built with, against the UIMA Core version. If not the same throw Exception
-    if (!UimaAsVersion.getUimajFullVersionString().equals(UimaVersion.getFullVersionString())) {
+    // Check for compatibility with a version of uima sdk. Only check major versions.
+    if (UimaAsVersion.getMajorVersion() != UimaVersion.getMajorVersion() ) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(
               Level.WARNING,
               CLASS_NAME.getName(), 
