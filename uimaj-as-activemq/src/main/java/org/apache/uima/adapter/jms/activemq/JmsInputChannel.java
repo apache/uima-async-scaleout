@@ -608,13 +608,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       try {
         String workId="";
         if ( (workId = aMessage.getStringProperty("UimaAsCasTracking") ) != null ) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(
-                    Level.INFO,
+                    Level.FINE,
                     CLASS_NAME.getName(),
                     "onMessage",
                     JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_recvd_new_message__INFO",
+                    "UIMAJMS_service_recvd_new_message__FINE",
                     new Object[] {casRefId});
           }
         }
