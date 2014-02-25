@@ -81,11 +81,22 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
 
   public static final String PARAM_IGNORE_PROCESS_ERRORS = "ignore_process_errors";
 
+  //TODO remove synchronized access when broker overload problem fixed
+  public static final String PARAM_SYNCHRONIZED_ACCESS = "synchronized_access";
+
+  //TODO remove muxMap when broker overload problem fixed
+  private static HashMap muxmap = new HashMap();
+
+  //TODO remove staticMux when broker overload problem fixed
+  private Object staticMux = null;
+
   private Object mux = new Object();
 
   private boolean cpcReceived;
 
   private boolean ignoreErrors = false;
+
+  private boolean synchCalls = false;
 
   private int retry = 0;
 
@@ -123,11 +134,14 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
         retry = (retry < 0) ? 0 : retry;
       } else if (PARAM_IGNORE_PROCESS_ERRORS.equalsIgnoreCase(parameters[i].getName())) {
         ignoreErrors = parameters[i].getValue().equalsIgnoreCase("true");
+      } else if (PARAM_SYNCHRONIZED_ACCESS.equalsIgnoreCase(parameters[i].getName())) {
+        synchCalls = parameters[i].getValue().equalsIgnoreCase("true");
       }
     }
 
     if (enginemap.containsKey(brokerUrl+endpoint)) {
       uimaEEEngine = (UimaAsynchronousEngine)enginemap.get(brokerUrl+endpoint);
+      staticMux = muxmap.get(brokerUrl+endpoint);
     }
     else {
       // initialize UIMA EE Engine
@@ -152,6 +166,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
       uimaEEEngine.addStatusCallbackListener(this);
       uimaEEEngine.initialize(appCtxt);
       enginemap.put(brokerUrl+endpoint, uimaEEEngine);
+      staticMux = new Object();
+      muxmap.put(brokerUrl+endpoint, staticMux);
     }
 
   }
@@ -191,7 +207,14 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     int tries = retry;
     while (true) {
       try {
-        uimaEEEngine.sendAndReceiveCAS(aCAS);
+        if (synchCalls) {
+          synchronized (staticMux) {
+            uimaEEEngine.sendAndReceiveCAS(aCAS);
+          }
+        }
+        else {
+          uimaEEEngine.sendAndReceiveCAS(aCAS);
+        }
         return;
       } catch (Throwable e) {
         if (tries-- > 0) {
