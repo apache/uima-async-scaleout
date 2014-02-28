@@ -124,7 +124,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                         "UimaAsThreadFactory", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAEE_exception__WARNING", e);
-                System.out.println(">>>>>>>>>>>>>>>>>>Exiting UIMA AS Process Due to Java Error "+e.getClass().getName()+" "+ e.getMessage());
+                System.out.println(">>>>>>>>>>>>>>>>>>Exiting UIMA AS Process Due to Java Error "+e);
               } catch( Throwable t ) {
                  // Failed during logging. We are tight on memory. Just exit 
               }
