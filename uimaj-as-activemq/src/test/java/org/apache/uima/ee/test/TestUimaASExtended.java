@@ -101,6 +101,128 @@ public class TestUimaASExtended extends BaseTestSupport {
    * bring up testing for compressed binary serialization
    */
   
+  
+  
+  /*
+  public void testContinueOnRetryFailure2() throws Exception {
+	    System.out.println("-------------- testContinueOnRetryFailure -------------");
+	    File tempDir = new File("target/temp");
+	    deleteAllFiles(tempDir);
+	    try {
+	        tempDir.mkdir();
+	    } catch( Exception e) {
+	    	e.printStackTrace();
+	    	throw e;
+	    }
+	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployService(eeUimaEngine, relativePath + "/Deploy_WriterAnnotatorA.xml");
+	    deployService(eeUimaEngine, relativePath + "/Deploy_WriterAnnotatorB.xml");
+	    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateWithContinueOnRetryFailures.xml");
+	    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+	            1, EXCEPTION_LATCH);
+	    if (!(new File(tempDir, "WriterAnnotatorB.3")).exists()
+	            || (new File(tempDir, "WriterAnnotatorB.4")).exists()) {
+	      fail("Second annotator should have run 3 times");
+	    }
+	    if ((new File(tempDir, "WriterAnnotatorC.1")).exists()) {
+	      fail("Third annotator should not have seen CAS");
+	    }
+	  }
+*/
+  
+  
+  /**
+   * Test use of a JMS Service Adapter. Invoke from a synchronous aggregate to emulate usage from
+   * RunAE or RunCPE.
+   * 
+   * @throws Exception
+   */
+  public void testJmsServiceAdapter() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapter -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            10, PROCESS_LATCH);
+  }
+  /*
+   * Tests Uima AS client placeholder handling and substitution. The Uima Aggregate instantiates
+   * UIMA AS client proxy using Jms Client Descriptor that contains a placeholder
+   * ${defaultBrokerURL} instead of hard coded Broker URL. The client parses the 
+   * placeholder string, retrieves the name (defaultBrokerURL) and uses it to look
+   * up tha actual broker URL in System properties.
+   */
+  public void testJmsServiceAdapterWithPlaceholder() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapterWithPlaceholder -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceUsingPlaceholder.xml");
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            10, PROCESS_LATCH);
+  }
+
+  /**
+   * Tests use of a JMS Service Adapter and an override of the MultipleDeploymentAllowed. 
+   * In this test, the AE descriptor of the remote service is configured with MultipleDeploymentAllowed=false
+   * Without the override this causes an exception when instantiating Uima aggregate with
+   * MultipleDeploymentAllowed=true. 
+   * 
+   * @throws Exception
+   */
+  public void testJmsServiceAdapterWithOverride() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapterWithOverride -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_SingleInstancePersonTitleAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceAndScaleoutOverride.xml");
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            10, PROCESS_LATCH);
+  }
+
+  public void testJmsServiceAdapterWithException() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapterWithException -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
+    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+            "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
+    initialize(eeUimaEngine, appCtx);
+    waitUntilInitialized();
+    CAS cas = eeUimaEngine.getCAS();
+    try {
+      eeUimaEngine.sendAndReceiveCAS(cas);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      eeUimaEngine.collectionProcessingComplete();
+      cas.reset();
+    }
+    eeUimaEngine.stop();
+  }
+
+  public void testJmsServiceAdapterWithProcessTimeout() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapterWithProcessTimeout -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceLongDelay.xml");
+    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+            1, EXCEPTION_LATCH);
+
+  }
+
+  public void testJmsServiceAdapterWithGetmetaTimeout() throws Exception {
+    System.out.println("-------------- testJmsServiceAdapterWithGetmetaTimeout -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    try {
+      deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
+    } catch (ResourceInitializationException e) {
+      System.out.println("Received Expected ResourceInitializationException");
+      return;
+    }
+    Assert.fail("Expected ResourceInitializationException Not Thrown. Instead Got Clean Run");
+  }
+
+  
   /**
    * Test binary compressed serialization between client and svc, and between 
    * service and remote delegate
@@ -3145,98 +3267,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       fail("Third annotator should not have seen CAS");
     }
   }
-
-  /**
-   * Test use of a JMS Service Adapter. Invoke from a synchronous aggregate to emulate usage from
-   * RunAE or RunCPE.
-   * 
-   * @throws Exception
-   */
-  public void testJmsServiceAdapter() throws Exception {
-    System.out.println("-------------- testJmsServiceAdapter -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            10, PROCESS_LATCH);
-  }
-  /*
-   * Tests Uima AS client placeholder handling and substitution. The Uima Aggregate instantiates
-   * UIMA AS client proxy using Jms Client Descriptor that contains a placeholder
-   * ${defaultBrokerURL} instead of hard coded Broker URL. The client parses the 
-   * placeholder string, retrieves the name (defaultBrokerURL) and uses it to look
-   * up tha actual broker URL in System properties.
-   */
-  public void testJmsServiceAdapterWithPlaceholder() throws Exception {
-    System.out.println("-------------- testJmsServiceAdapterWithPlaceholder -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceUsingPlaceholder.xml");
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            10, PROCESS_LATCH);
-  }
-
-  /**
-   * Tests use of a JMS Service Adapter and an override of the MultipleDeploymentAllowed. 
-   * In this test, the AE descriptor of the remote service is configured with MultipleDeploymentAllowed=false
-   * Without the override this causes an exception when instantiating Uima aggregate with
-   * MultipleDeploymentAllowed=true. 
-   * 
-   * @throws Exception
-   */
-  public void testJmsServiceAdapterWithOverride() throws Exception {
-    System.out.println("-------------- testJmsServiceAdapterWithOverride -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    deployService(eeUimaEngine, relativePath + "/Deploy_SingleInstancePersonTitleAnnotator.xml");
-    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceAndScaleoutOverride.xml");
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            10, PROCESS_LATCH);
-  }
-
-  public void testJmsServiceAdapterWithException() throws Exception {
-    System.out.println("-------------- testJmsServiceAdapterWithException -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithException.xml");
-    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
-    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
-            "TopLevelTaeQueue");
-    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
-    initialize(eeUimaEngine, appCtx);
-    waitUntilInitialized();
-    CAS cas = eeUimaEngine.getCAS();
-    try {
-      eeUimaEngine.sendAndReceiveCAS(cas);
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      eeUimaEngine.collectionProcessingComplete();
-      cas.reset();
-    }
-    eeUimaEngine.stop();
-  }
-
-  public void testJmsServiceAdapterWithProcessTimeout() throws Exception {
-    System.out.println("-------------- testJmsServiceAdapterWithProcessTimeout -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml");
-    deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsServiceLongDelay.xml");
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
-            1, EXCEPTION_LATCH);
-
-  }
-
-  public void testJmsServiceAdapterWithGetmetaTimeout() throws Exception {
-    System.out.println("-------------- testJmsServiceAdapterWithGetmetaTimeout -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    try {
-      deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
-    } catch (ResourceInitializationException e) {
-      System.out.println("Received Expected ResourceInitializationException");
-      return;
-    }
-    Assert.fail("Expected ResourceInitializationException Not Thrown. Instead Got Clean Run");
-  }
-
 
 //  public void testCatchExtraThreads() throws Exception {
 //    Thread.sleep(24 * 60 * 60 * 1000);  // sleep for one day
