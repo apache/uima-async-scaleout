@@ -123,7 +123,7 @@
 		<!-- level of uimaj sdk this release depends on -->
 		<uimajDependencyVersion>2.4.2</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
-		<org.apache.activemq.version>5.6.0</org.apache.activemq.version>
+		<org.apache.activemq.version>5.7.0</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
 		<org.springframework.version>3.0.6.RELEASE</org.springframework.version>
 
