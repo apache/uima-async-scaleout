@@ -40,6 +40,7 @@ package org.apache.uima.aae.jms_adapter;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
@@ -103,6 +104,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
   @SuppressWarnings("rawtypes")
   private static HashMap enginemap = new HashMap();
 
+  private static AtomicInteger instanceCounter = new AtomicInteger();
+  
   private UimaAsynchronousEngine uimaEEEngine;
 
   @SuppressWarnings("unchecked")
@@ -115,6 +118,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
     int getMetaTimeout = 0;
     int cpcTimeout = 0;
 
+    instanceCounter.incrementAndGet();
+    
     String binary_serialization = null;
     for (int i = 0; i < parameters.length; i++) {
       if (PARAM_BROKER_URL.equalsIgnoreCase(parameters[i].getName())) {
@@ -239,12 +244,19 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
    * @see org.apache.uima.resource.service.impl.ResourceServiceStub#destroy()
    */
   public void destroy() {
-    try {
-      uimaEEEngine.stop();
+	  int howManyInstancesLeft = 0;
+	  try {
+    	if ( (howManyInstancesLeft = instanceCounter.decrementAndGet()) == 0 ) {
+        	uimaEEEngine.stop();
+    	}
     } catch (Exception e) {
       if (UIMAFramework.getLogger().isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger().log(Level.WARNING, e.getMessage(), e);
       }
+    } finally {
+    	if ( howManyInstancesLeft == 0 ) {
+        	enginemap.clear();
+    	}
     }
   }
 
