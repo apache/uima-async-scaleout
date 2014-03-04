@@ -233,6 +233,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		              }
 		              //System.out.println("---------- Opening New Broker Connection ---------------"+brokerUri);
 		              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
+		              factory.setWatchTopicAdvisories(false);
 		              //  Create shared jms connection to a broker
 		              conn = factory.createConnection();
 		              
