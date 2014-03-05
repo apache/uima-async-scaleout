@@ -1325,6 +1325,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                               });
                   }
     	    	}
+			      casCachedRequest.setReceivedServiceACK(true);
    				  onBeforeProcessCAS(status,nodeIP, pid);
     	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
                       UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -1340,6 +1341,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                   }
     	     } 
    	      casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
+   	      casCachedRequest.setServicePID(pid);
+   	      
    	      if (message.getJMSReplyTo() != null && serviceDelegate.isCasPendingReply(casReferenceId)) {
    	        casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
    	      }
@@ -1404,9 +1407,30 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
       // Increment number of replies
       if (cachedRequest != null && casReferenceId.equals(cachedRequest.getCasReferenceId())) {
-        // Received a reply, decrement number of outstanding CASes
+    	    if ( !cachedRequest.receivedServiceACK ) {  // ACK not received from remote service
+    	    	cachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
+    	    	cachedRequest.setServicePID(message.getStringProperty(AsynchAEMessage.UimaASProcessPID));
+                UimaASProcessStatusImpl status;
+                String inputCasReferenceId = message.getStringProperty(AsynchAEMessage.InputCasReference);
+                if (inputCasReferenceId != null
+                         && inputCasReferenceId.equals(cachedRequest.getCasReferenceId())) {
+                    status = new UimaASProcessStatusImpl(pt, cachedRequest.getCAS(),casReferenceId, inputCasReferenceId);
+                } else {
+                    status = new UimaASProcessStatusImpl(pt, cachedRequest.getCAS(), casReferenceId);
+                }
+                try {
+        	    	// Notify the application with an ACK as if the ACK came from the remote service. Some
+            		// applications may depend on receiving the ACK.
+            		onBeforeProcessCAS(status, cachedRequest.getHostIpProcessingCAS(), cachedRequest.getServicePID());
+                } catch( Exception uex) {  // ignore user code exception in the callback
+                } finally {
+            	    cachedRequest.setReceivedServiceACK(true);
+                }
+    	    }
+
+    	  // Received a reply, decrement number of outstanding CASes
         decrementOutstandingCasCounter();
-      }
+        }
       serviceDelegate.removeCasFromOutstandingList(casReferenceId);
     }
     if (AsynchAEMessage.Exception == payload) {
@@ -1626,7 +1650,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                 && cachedRequest.getCAS() != null) {
           notifyListeners(cachedRequest.getCAS(), status, AsynchAEMessage.Process);
         } else {
-          notifyListeners(null, status, AsynchAEMessage.Process);
+        	notifyListeners(null, status, AsynchAEMessage.Process);
         }
         // Done here
         return;
@@ -2472,9 +2496,30 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     private Destination freeCasNotificationQueue = null;
 
     private String hostIpProcessingCAS;
+
+	private String servicePID;
     
     List<AnalysisEnginePerformanceMetrics> componentMetricsList;
     
+    // flag to indicate if the remote service acknowledged receiving a CAS for processing
+    private volatile boolean receivedServiceACK=false;
+    
+    public boolean receivedServiceACK() {
+		return receivedServiceACK;
+	}
+
+	public void setReceivedServiceACK(boolean receivedServiceACK) {
+		this.receivedServiceACK = receivedServiceACK;
+	}
+
+	public String getServicePID() {
+		return servicePID;
+	}
+
+	public void setServicePID(String servicePID) {
+		this.servicePID = servicePID;
+	}
+	
     public List<AnalysisEnginePerformanceMetrics> getComponentMetricsList() {
 		return componentMetricsList;
 	}
