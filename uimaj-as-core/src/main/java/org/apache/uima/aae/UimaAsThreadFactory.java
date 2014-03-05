@@ -54,6 +54,8 @@ public class UimaAsThreadFactory implements ThreadFactory {
   
   private CountDownLatch latchToCountNumberOfTerminatedThreads;
   
+  private volatile boolean initFailed=false;
+  
   public UimaAsThreadFactory(ThreadGroup tGroup) {
     this(tGroup,null);
   }
@@ -108,10 +110,19 @@ public class UimaAsThreadFactory implements ThreadFactory {
             if (controller != null && !controller.threadAssignedToAE()) {
               // call the controller to initialize next instance of AE. Once initialized this
               // AE instance process() method will only be called from this thread
-			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+			  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
 					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 					"UIMAEE_calling_ae_initialize__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
-              controller.initializeAnalysisEngine();
+             
+			  if ( !initFailed ) {
+            	  try {
+            		  controller.initializeAnalysisEngine();
+            	  } catch( Exception e) {
+            		  initFailed = true;
+            		  e.printStackTrace();
+            		  throw e;
+            	  }
+              }
             }
             // Call given Worker (Runnable) run() method and block. This call block until the
             // TaskExecutor is terminated.
