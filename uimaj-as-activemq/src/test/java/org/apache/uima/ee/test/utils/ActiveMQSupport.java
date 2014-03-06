@@ -39,6 +39,10 @@ import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.store.memory.MemoryPersistenceAdapter;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
@@ -84,8 +88,18 @@ public class ActiveMQSupport extends TestCase {
 
   protected synchronized void setUp() throws Exception {
     super.setUp();
+	  //BasicConfigurator.configure();
+    ConsoleAppender console = new ConsoleAppender(); //create appender
+    //configure the appender
+    String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+    console.setLayout(new PatternLayout(PATTERN)); 
+    console.setThreshold(org.apache.log4j.Level.WARN);
+    console.activateOptions();
+    //add appender to any Logger (here is root)
+    Logger.getRootLogger().addAppender(console);
+    
     broker = createBroker();  // sets uri
-    broker.setUseJmx(false);
+    broker.setUseJmx(true);
     broker.start();
     broker.setMasterConnectorURI(uri);
     addHttpConnector(DEFAULT_HTTP_PORT);
