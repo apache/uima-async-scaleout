@@ -236,7 +236,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		              factory.setWatchTopicAdvisories(false);
 		              //  Create shared jms connection to a broker
 		              conn = factory.createConnection();
-		              
+		              conn.start();
 		              factory.setDispatchAsync(true);
 		              factory.setUseAsyncSend(true);
 		              factory.setCopyMessageOnSend(false);
