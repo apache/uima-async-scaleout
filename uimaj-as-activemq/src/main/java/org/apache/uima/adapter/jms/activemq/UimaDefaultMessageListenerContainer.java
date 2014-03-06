@@ -1022,7 +1022,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         	}
           // Close Connection to the broker
           String controllerName = (__listenerRef.controller == null) ? "" :__listenerRef.controller.getComponentName();
-          __listenerRef.getSharedConnection().close();
+          try {
+              __listenerRef.getSharedConnection().close();
+          } catch( Exception ie) {
+          }
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                        "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,

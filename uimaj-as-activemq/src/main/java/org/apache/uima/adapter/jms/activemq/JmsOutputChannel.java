@@ -2004,8 +2004,11 @@ public class JmsOutputChannel implements OutputChannel {
                       } finally {
                         try {
                       	  if ( brokerDestinations.endpointMap.isEmpty() ) {
-                          	  brokerDestinations.getConnection().stop();
-                                brokerDestinations.getConnection().close();
+                          	    try {
+                          		    brokerDestinations.getConnection().stop();
+                                    brokerDestinations.getConnection().close();
+                          	    } catch( Exception e) {
+                          	    }
                                 brokerDestinations.setConnection(null);
                                 brokerDestinations.endpointMap.clear();
                                 connectionMap.remove(brokerDestinations);
