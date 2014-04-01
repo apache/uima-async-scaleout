@@ -369,13 +369,13 @@ public class JmsOutputChannel implements OutputChannel {
     } finally {
        brokerConnectionEntry.endpointMap.clear();
        connectionMap.remove(brokerConnectionEntry.getBrokerURL());
-       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
          UIMAFramework.getLogger(CLASS_NAME).logrb(
-                 Level.INFO,
+                 Level.FINE,
                  CLASS_NAME.getName(),
                  "invalidateConnectionAndEndpoints",
                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                 "UIMAJMS_service_closing_connection__INFO",
+                 "UIMAJMS_service_closing_connection__FINE",
                  new Object[] { getAnalysisEngineController().getComponentName(),
                    brokerConnectionEntry.getBrokerURL() });
        }
