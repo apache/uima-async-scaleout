@@ -231,30 +231,65 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                  //  Ignore exceptions on a close of a bad connection
 		                }
 		              }
-		              //System.out.println("---------- Opening New Broker Connection ---------------"+brokerUri);
-		              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
-		              factory.setWatchTopicAdvisories(false);
-		              //  Create shared jms connection to a broker
-		              conn = factory.createConnection();
-		              conn.start();
-		              factory.setDispatchAsync(true);
-		              factory.setUseAsyncSend(true);
-		              factory.setCopyMessageOnSend(false);
-		              //  Cache the connection. There should only be one connection in the jvm
-		              //  per unique broker url. 
-		              brokerDestinations.setConnection(conn);
-		              // Close and invalidate all sessions previously created from the old connection
-		              Iterator<Map.Entry<Object, JmsEndpointConnection_impl>> it = brokerDestinations.endpointMap
-		                      .entrySet().iterator();
-		              while (it.hasNext()) {
-		                Map.Entry<Object, JmsEndpointConnection_impl> entry = it.next();
-		                if (entry.getValue().producerSession != null) {
-		                  // Close session
-		                  entry.getValue().producerSession.close();
-		                  // Since we created a new connection invalidate session that
-		                  // have been created with the old connection
-		                  entry.getValue().producerSession = null;
-		                }
+		              // log connectivity problem once and retry
+		              boolean logConnectionProblem=true;
+		              
+		              // recover lost connection indefinitely while the service is running
+		              while( !controller.isStopped() ) {
+
+		            	  try {
+				              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
+				              factory.setWatchTopicAdvisories(false);
+				              //  Create shared jms connection to a broker
+				              conn = factory.createConnection();
+				              conn.start();
+				              factory.setDispatchAsync(true);
+				              factory.setUseAsyncSend(true);
+				              factory.setCopyMessageOnSend(false);
+				              //  Cache the connection. There should only be one connection in the jvm
+				              //  per unique broker url. 
+				              brokerDestinations.setConnection(conn);
+				              // Close and invalidate all sessions previously created from the old connection
+				              Iterator<Map.Entry<Object, JmsEndpointConnection_impl>> it = brokerDestinations.endpointMap
+				                      .entrySet().iterator();
+				              while (it.hasNext()) {
+				                Map.Entry<Object, JmsEndpointConnection_impl> entry = it.next();
+				                if (entry.getValue().producerSession != null) {
+				                  // Close session
+				                  entry.getValue().producerSession.close();
+				                  // Since we created a new connection invalidate session that
+				                  // have been created with the old connection
+				                  entry.getValue().producerSession = null;
+				                }
+				              }
+		            		  break; // Got the connection, break out of the while-loop
+		            		  
+		            	  } catch( JMSException jex) {
+		            		//  if ( logConnectionProblem ) {
+		            			  logConnectionProblem = false;   // log once
+			            		  // Check if unable to connect to the broker and retry ...
+		            			  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+		            		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+		            		                  "openChannel", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+		            		                  "UIMAEE_service_lost_connectivity_WARNING",
+		            		                  new Object[] { controller.getComponentName(), brokerUri});
+		            		          
+		            		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+		            		                  "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+		            		                  "UIMAJMS_exception__WARNING", jex);
+		            		        }
+		            	//	  } 
+		            		 this.wait(1000);  // wait between retries 
+		            	  }
+		              } //while
+		              if ( logConnectionProblem == false )  { // we had conectivity problem. Log the fact that it was recovered
+		            	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+            		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+            		                  "openChannel", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+            		                  "UIMAEE_service_regained_connectivity_INFO",
+            		                  new Object[] { controller.getComponentName(), brokerUri});
+		            	  }
+		            	  
 		              }
 		            }
 		          } catch( Exception exc) {
