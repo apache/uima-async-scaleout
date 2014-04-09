@@ -68,6 +68,7 @@
 				<include>org.apache.activemq:activemq-console</include>
 				<include>org.apache.activemq:activemq-core</include>
 				<include>org.apache.activemq:activemq-spring</include>
+				
 				<include>org.apache.geronimo.specs:geronimo-jms_1.1_spec</include>
 				<include>org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec
 				</include>
@@ -102,6 +103,9 @@
 				<include>org.apache.geronimo.specs:geronimo-servlet_2.5_spec
 				</include>
 				<include>log4j:log4j</include>
+				<include>xpp3:xpp3</include>
+				<include>org.apache.httpcomponents:httpclient</include>
+				<include>org.apache.httpcomponents:httpcore</include>
 			</includes>
 			<useTransitiveDependencies>false</useTransitiveDependencies>
 			<outputDirectory>apache-activemq/lib/optional</outputDirectory>
@@ -352,7 +356,7 @@
 		</fileSet -->
 
 		<fileSet>
-			<directory>target/apache-activemq-linux/apache-activemq-5.6.0</directory>
+			<directory>target/apache-activemq-linux/apache-activemq-5.7.0</directory>
 			<outputDirectory>apache-activemq</outputDirectory>
 			<includes>
 				<include>bin/*</include>
@@ -390,7 +394,7 @@
 		</fileSet -->
 
 		<fileSet>
-			<directory>target/apache-activemq-win/apache-activemq-5.6.0</directory>
+			<directory>target/apache-activemq-win/apache-activemq-5.7.0</directory>
 			<outputDirectory>apache-activemq</outputDirectory>
 			<includes>
 				<include>bin/*</include>
