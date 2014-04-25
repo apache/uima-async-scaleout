@@ -1156,6 +1156,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         CasStateEntry stateEntry = null;
         
         try {
+            stopInputChannels(InputChannel.CloseAllChannels, true);
+        } catch( Exception e) {
+        }
+        
+        try {
           stateEntry = getLocalCache().lookupEntry(casReferenceId);
           if (stateEntry != null && stateEntry.isSubordinate()) {
             CasStateEntry topParentEntry = getLocalCache().getTopCasAncestor(casReferenceId);

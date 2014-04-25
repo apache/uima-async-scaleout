@@ -968,7 +968,14 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     this.setAutoStartup(false);
   }
   public void shutdownTaskExecutor(ThreadPoolExecutor tpe, boolean stopImmediate) throws InterruptedException {
+    tpe.awaitTermination(50, TimeUnit.MILLISECONDS);
+    
     if ( stopImmediate ) {
+      tpe.setKeepAliveTime(50, TimeUnit.MILLISECONDS);
+      tpe.allowCoreThreadTimeOut(true);
+      synchronized(tpe.getThreadFactory()) {
+        tpe.getThreadFactory().notifyAll();
+      }
   	  tpe.purge();
       tpe.shutdownNow();
     } else {
@@ -1013,11 +1020,28 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                 ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setKeepAliveTime(1000, TimeUnit.MILLISECONDS);
               	((ThreadPoolTaskExecutor) taskExecutor).setWaitForTasksToCompleteOnShutdown(true);
               	((ThreadPoolTaskExecutor) taskExecutor).shutdown();
+            
+               	try {
+                  __listenerRef.getSharedConnection().close();
+              	} catch( Exception e){
+              	}
+              	System.out.println("Listener.destroy() - stopping executor 1 Done");
+            
               } else if (concurrentListener != null) {
                   shutdownTaskExecutor(concurrentListener.getTaskExecutor(), stopImmediate);
                   concurrentListener.stop();
-              } else if ( threadPoolExecutor != null ) {
+                   try {
+                    __listenerRef.getSharedConnection().close();
+                  } catch( Exception e) {
+                  }
+                  __listenerRef.shutdown();
+                } else if ( threadPoolExecutor != null ) {
             	  shutdownTaskExecutor(threadPoolExecutor, true);
+           	       try {
+                      __listenerRef.getSharedConnection().close();
+           	       } catch( Exception e) {
+            	      
+           	    }
               }
         	}
           // Close Connection to the broker
@@ -1031,7 +1055,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                        "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                        "UIMAJMS_listener_shutdown__INFO", new Object[] {controllerName,__listenerRef.getMessageSelector(),__listenerRef.getBrokerUrl()});
          }
-         // __listenerRef.shutdown();
          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                        "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1098,7 +1121,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
     } else {
         UimaAsThreadFactory tf = new UimaAsThreadFactory(threadGroup);
-        tf.setDaemon(false);
+        tf.setDaemon(true);
         if ( isFreeCasQueueListener()) {
           tf.setThreadNamePrefix(controller.getComponentName()+" - FreeCASRequest Thread");
         } else if ( isGetMetaListener()  ) {

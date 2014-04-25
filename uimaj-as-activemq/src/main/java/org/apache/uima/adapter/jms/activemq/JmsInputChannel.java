@@ -22,8 +22,8 @@ package org.apache.uima.adapter.jms.activemq;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
 import javax.jms.Connection;
@@ -40,10 +40,10 @@ import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
-import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.InvalidMessageException;
 import org.apache.uima.aae.handler.Handler;
@@ -114,6 +114,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   //  able to determine if client's reply queue exists before processing a CAS. 
   public static transient boolean attachToBrokerMBeanServer=true;
   
+  private static Map<String, List<UimaDefaultMessageListenerContainer>> listenerMap =
+          new ConcurrentHashMap<String, List<UimaDefaultMessageListenerContainer>>();
+
   public AnalysisEngineController getController() {
     return controller;
   }
@@ -604,10 +607,10 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         casRefId = "CasReferenceId Not In Message";
       } else {
         casRefId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
-		
+      }	
       try {
-        String workId="";
-        if ( (workId = aMessage.getStringProperty("UimaAsCasTracking") ) != null ) {
+       
+        if ( aMessage.getStringProperty("UimaAsCasTracking")  != null ) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(
                     Level.FINE,
@@ -623,7 +626,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       
       
 
-      }
+     
       if (validMessage(aMessage)) {
         command = decodeIntToString(AsynchAEMessage.Command, aMessage
                 .getIntProperty(AsynchAEMessage.Command));
@@ -780,7 +783,32 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   public String getServerUri() {
     return brokerURL;
   }
-
+ public List<UimaDefaultMessageListenerContainer> registerListener(UimaDefaultMessageListenerContainer messageListener) {
+	    List<UimaDefaultMessageListenerContainer> ll = null;
+	    if ( listenerMap.containsKey(getController().getComponentName()+getController().hashCode()) ) {
+	      ll = listenerMap.get(getController().getComponentName()+getController().hashCode());
+	    } else {
+	      ll = new CopyOnWriteArrayList<UimaDefaultMessageListenerContainer>();
+	      listenerMap.put(getController().getComponentName()+getController().hashCode(), ll);
+	    }
+	    if (!ll.contains(messageListener)) {
+	      ll.add(messageListener);
+	      System.out.println("------------ Added Listener Container:"+messageListener.hashCode());
+	    } else {
+	      System.out.println("------------ Listener Container:"+messageListener.hashCode()+" Already Added");
+	    }
+	    for(Object container: ll ) {
+	      UimaDefaultMessageListenerContainer c = (UimaDefaultMessageListenerContainer) container;
+	    }
+	    return ll;
+  }
+  public List<UimaDefaultMessageListenerContainer> getListeners() {
+	    List<UimaDefaultMessageListenerContainer> ll = null;
+	    if ( listenerMap.containsKey(getController().getComponentName()+getController().hashCode()) ) {
+	      ll = listenerMap.get(getController().getComponentName()+getController().hashCode());
+	    }
+	    return ll;
+  }
   public synchronized void setListenerContainer(UimaDefaultMessageListenerContainer messageListener) {
     this.messageListener = messageListener;
     System.setProperty("BrokerURI", messageListener.getBrokerUrl());
@@ -788,9 +816,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       brokerURL = messageListener.getBrokerUrl();
       getController().getOutputChannel().setServerURI(brokerURL);
     }
-    if (!listenerContainerList.contains(messageListener)) {
-      listenerContainerList.add(messageListener);
-    }
+   // Add new message listener to the list
+    registerListener(messageListener);
+
     if (getController() != null) {
       try {
         getController().addInputChannel(this);
@@ -913,6 +941,10 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   public void stop(boolean shutdownNow) throws Exception {
     stop(InputChannel.CloseAllChannels, shutdownNow);
     listenerContainerList.clear();
+    List<UimaDefaultMessageListenerContainer> ll = getListeners();
+    if ( ll != null ) {
+       ll.clear();
+    }
     failedListenerMap.clear();
     if ( remoteJMXServer != null ) {
       remoteJMXServer.disconnect();
@@ -920,23 +952,26 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   public void disconnectListenersFromQueue() throws Exception {
-	for (Object listenerObject : listenerContainerList) {
-	  final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer) listenerObject;
-	  	stopChannel(mL, false);
-	}	  
+	List<UimaDefaultMessageListenerContainer> ll = getListeners();
+	for (UimaDefaultMessageListenerContainer listenerObject : ll) {
+		  	 stopChannel(listenerObject, false);
+	}	
+
   }
   public void setTerminating() {
-  	 if ( listenerContainerList.size() > 0 ) {
-  		 //	set a global static flag to stop spring's from automatic recovery on lost connection
-  		 //	This method should be called when a service is shutting down
-  		 ((UimaDefaultMessageListenerContainer)listenerContainerList.get(0)).setTerminating();
-   	 }
+    List<UimaDefaultMessageListenerContainer> ll = getListeners();
+    for (UimaDefaultMessageListenerContainer listenerObject : ll) {
+        listenerObject.setTerminating();
+      } 
+
   }
   public void terminate() {
 	 try {
-		 if ( listenerContainerList.size() > 0 ) {
-	 		 ((UimaDefaultMessageListenerContainer)listenerContainerList.get(0)).closeConnection();
-		 }
+	    List<UimaDefaultMessageListenerContainer> ll = getListeners();
+	    for (UimaDefaultMessageListenerContainer listenerObject : ll) {
+		      listenerObject.closeConnection();
+		 }  
+	
 	 } catch( Exception e) {
 	     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "terminate", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -946,49 +981,27 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   }
   public synchronized void stop(int channelsToClose, boolean shutdownNow) throws Exception {
 	  List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
-    for (Object listenerObject : listenerContainerList) {
-      final UimaDefaultMessageListenerContainer mL = (UimaDefaultMessageListenerContainer) listenerObject;
-      if (mL != null && doCloseChannel(mL, channelsToClose)) {
-        mL.setRecoveryInterval(0);  // https://issues.apache.org/jira/browse/UIMA-3437
-    	  stopChannel(mL, shutdownNow);
-        // Just in case check if the container still in the list. If so, add it to
-        // another list that container listeners that have been stopped and need
-        // to be removed from the listenerContainerList. Removing the listener from
-        // the listenerContainerList in this iterator loop is not working. If for
-        // example the iterator has two elements, after the first remove from the
-        // listenerContainerList, the iterator stops event though there is still
-        // one element left. Process removal of listeners outside of the iterator
-        // loop
-        if (listenerContainerList.contains(mL)) {
-			    // When last listener, close shared connection
-          if ( listenerContainerList.size() == 1 ) {
-            try {
-              mL.closeConnection();
-            } catch( Exception e) {
-              e.printStackTrace();
-            }
-          }
-          listenersToRemove.add(mL);
-        }
+      List<UimaDefaultMessageListenerContainer> ll = getListeners();
+ 	  
+      for (UimaDefaultMessageListenerContainer listenerObject : ll) {
+
+       if (listenerObject != null && doCloseChannel(listenerObject, channelsToClose)) {
+           listenerObject.setRecoveryInterval(0);  // https://issues.apache.org/jira/browse/UIMA-3437
+          listenerObject.setTerminating();
+          listenerObject.setAutoStartup(false);
+          stopChannel(listenerObject, shutdownNow);
+
       } else {
         if (getController() != null) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "stop",
-                    JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_transport_not_stopped__INFO",
+                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_transport_not_stopped__INFO",
                     new Object[] { getController().getComponentName() });
           }
         }
       }
     }
-    // Remove listeners from the listenerContainerList
-    for (UimaDefaultMessageListenerContainer mL : listenersToRemove) {
-      if ( listenerContainerList.size() == 1 ) {
-        ((UimaDefaultMessageListenerContainer)listenerContainerList.get(0)).closeConnection();
-      }
 
-      listenerContainerList.remove(mL);
-    }
-    listenersToRemove.clear();
     if (channelsToClose == InputChannel.CloseAllChannels) {
       stopped = true;
     }
@@ -1073,15 +1086,15 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   public boolean isListenerActiveOnDestination(Destination destination ) {
-    for (int i = 0; i < listenerContainerList.size(); i++) {
-      UimaDefaultMessageListenerContainer mListener = (UimaDefaultMessageListenerContainer) listenerContainerList
-              .get(i);
-      if ( mListener.getDestination() != null && 
-           mListener.getDestination() == destination &&
-           mListener.isRunning()) {
-        return true;
-      }
-    }
+   List<UimaDefaultMessageListenerContainer> ll = getListeners();
+   for (UimaDefaultMessageListenerContainer mListener : ll ) {
+     if ( mListener.getDestination() != null && 
+          mListener.getDestination() == destination &&
+          mListener.isRunning()) {
+       return true;
+     }
+   }
+
     return false;
   }
   /**
@@ -1095,24 +1108,25 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
    * @return - list of listeners
    */
   private UimaDefaultMessageListenerContainer[] getListenersForEndpoint(String anEndpointName) {
-    List<UimaDefaultMessageListenerContainer> listeners = new ArrayList<UimaDefaultMessageListenerContainer>();
-    for (int i = 0; i < listenerContainerList.size(); i++) {
-      UimaDefaultMessageListenerContainer mListener = (UimaDefaultMessageListenerContainer) listenerContainerList
-              .get(i);
-      if (mListener.getDestinationName() != null
-              && mListener.getDestinationName().equals(anEndpointName)) {
-        listeners.add(mListener);
-      } else if (mListener.getDestination() != null
-              && mListener.getDestination().toString().equals(anEndpointName)) {
-        listeners.add(mListener);
-      }
-    }
-    if (listeners.size() > 0) {
-      UimaDefaultMessageListenerContainer[] listenerArray = new UimaDefaultMessageListenerContainer[listeners
-              .size()];
-      listeners.toArray(listenerArray);
-      return listenerArray;
-    }
+	    List<UimaDefaultMessageListenerContainer> ll = getListeners();
+
+	    
+	    List<UimaDefaultMessageListenerContainer> listeners = new ArrayList<UimaDefaultMessageListenerContainer>();
+	    for (UimaDefaultMessageListenerContainer mListener : ll) {
+	      if (mListener.getDestinationName() != null
+	              && mListener.getDestinationName().equals(anEndpointName)) {
+	        listeners.add(mListener);
+	      } else if (mListener.getDestination() != null
+	              && mListener.getDestination().toString().equals(anEndpointName)) {
+	        listeners.add(mListener);
+	      }
+	    }
+	    if (listeners.size() > 0) {
+	      UimaDefaultMessageListenerContainer[] listenerArray = new UimaDefaultMessageListenerContainer[listeners
+	              .size()];
+	      listeners.toArray(listenerArray);
+	      return listenerArray;
+	    }
     return null;
   }
 
@@ -1149,11 +1163,15 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
           Endpoint endpoint = ((AggregateAnalysisEngineController) getController()).lookUpEndpoint(
                   aDelegateKey, false);
           endpoint.setStatus(Endpoint.FAILED);
+          List<UimaDefaultMessageListenerContainer> ll = null;
+          if ( listenerMap.containsKey(getController().getComponentName()+getController().hashCode()) ) {
+            ll = listenerMap.get(getController().getComponentName()+getController().hashCode());
+          }
           if (mListener.getConnectionFactory() != null) {
             if (getController() instanceof AggregateAnalysisEngineController) {
               if (!failedListenerMap.containsKey(aDelegateKey)) {
                 failedListenerMap.put(aDelegateKey, mListener);
-                listenerContainerList.remove(mListener);
+                ll.remove(mListener);
               }
             }
           }
