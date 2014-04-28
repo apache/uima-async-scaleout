@@ -166,6 +166,16 @@
 			<fileMode>644</fileMode>
 			<directoryMode>755</directoryMode>
 		</fileSet>
+		
+	    <fileSet>
+			<directory>uimaj-as-activemq/src/main/java/org/apache/uima/examples/as</directory>
+			<outputDirectory>examples/as</outputDirectory>
+			<excludes>
+				<exclude>.classpath</exclude>
+			</excludes>
+			<fileMode>644</fileMode>
+			<directoryMode>755</directoryMode>
+		</fileSet>
 
 		<fileSet>
 			<directory>target/uimaj/apache-uima/eclipsePlugins</directory>
