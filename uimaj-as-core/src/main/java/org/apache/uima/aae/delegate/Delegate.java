@@ -149,9 +149,11 @@ public abstract class Delegate {
   public  void cancelTimerForCasOrPurge(String casReferenceId) {
 	    if ( timer != null && timer.getTimerCasId() != null && timer.getTimerCasId().equals(casReferenceId)) {
 	      //System.out.println("\n\n\t Canceled Timer For CAS:"+casReferenceId+" and Restarting Timer for the next oldest CAS in the outstanding list\n\n");
-	      cancelDelegateTimer();
-	      //  Restart timer for the next older CAS in the oustanding list
-	      restartTimerForOldestCasInOutstandingList();
+	    	synchronized( outstandingCasList ) {
+  		    	  cancelDelegateTimer();
+			      //  Restart timer for the next older CAS in the oustanding list
+			      restartTimerForOldestCasInOutstandingList();
+	    	}
 	    } else {
 	      // Given CAS is not the oldest in outstanding list. Purge the CAS from both outstanding and
 	      // pending dispatch lists (if exists).
@@ -566,11 +568,14 @@ public abstract class Delegate {
     // Before removing the entry check if this is the oldest in the list. This will be
     // used to determine if we need to restart the delegate timer
     DelegateEntry oldestEntry = outstandingCasList.get(0);
-    boolean doStartDelegateTimer = false; //oldestEntry.equals(aDelegateEntry) && getCasProcessTimeout() > 0;
+    boolean doStartDelegateTimer = false; 
     outstandingCasList.remove(aDelegateEntry);
     if ( getCasProcessTimeout() > 0 ) {
         if ( aDelegateEntry.usesDedicatedTimerThread) {
-        	aDelegateEntry.getDelegateTimer().cancel();
+        	synchronized( timerLock ) {
+        		aDelegateEntry.getDelegateTimer().cancel();
+        	}
+        	
         } else {
         	doStartDelegateTimer = oldestEntry.equals(aDelegateEntry);
         }
