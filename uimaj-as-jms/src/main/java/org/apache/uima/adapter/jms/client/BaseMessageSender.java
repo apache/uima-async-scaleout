@@ -19,7 +19,6 @@
 
 package org.apache.uima.adapter.jms.client;
 
-import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -382,9 +381,12 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                if ( !engine.serviceDelegate.isAwaitingPingReply()) {
                  engine.serviceDelegate.startGetMetaRequestTimer();
                } 
-             } 
+             } else {
+            	 doCallback = false;  // dont call onBeforeMessageSend() callback on CPC
+             }
              //  Dispatch asynchronous request to Uima AS service
              producer.send(message);
+             
              if ( doCallback ) {
                UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),cacheEntry.getCAS(),
                        cacheEntry.getCasReferenceId());
