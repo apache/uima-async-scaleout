@@ -320,7 +320,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    	    for (int i = 0; listeners != null && i < listeners.size(); i++) {
    	        UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
    	        statCL.onBeforeMessageSend(status);
-        }
+   	    }
       } catch( Throwable t) {
 			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
                     "onBeforeMessageSend", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1304,58 +1304,23 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
     try {
     	if ( casCachedRequest != null ) {
-    	      //  entering user provided callback. Handle exceptions.
-    	      UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),casCachedRequest.getCAS(),
-    	              casReferenceId);
-    	      
-    	      String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
-    	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
-    	      if ( casReferenceId != null && nodeIP != null && pid != null) {
-			    if (System.getProperty("UimaAsCasTracking") != null) {
-    	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-                      UIMAFramework.getLogger(CLASS_NAME).logrb(
-                              Level.FINE,
-                              CLASS_NAME.getName(),
-                              "handleServiceInfo",
-                              JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                              "UIMAJMS_calling_onBeforeProcessCAS_FINE",
-                              new Object[] {
-                            	  casReferenceId
-                             	 
-                              });
-                  }
-    	    	}
-			      casCachedRequest.setReceivedServiceACK(true);
-   				  onBeforeProcessCAS(status,nodeIP, pid);
-    	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-                      UIMAFramework.getLogger(CLASS_NAME).logrb(
-                              Level.FINE,
-                              CLASS_NAME.getName(),
-                              "handleServiceInfo",
-                              JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                              "UIMAJMS_completed_onBeforeProcessCAS_FINE",
-                              new Object[] {
-                            	  casReferenceId,
-                             	 String.valueOf(casCachedRequest.getCAS().hashCode())
-                              });
-                  }
-    	     } 
-   	      casCachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
-   	      casCachedRequest.setServicePID(pid);
+    	  // invoke 2nd callback to the application if necessary. Makes  sure the callback is done once
+	  	  notifyApplication(casCachedRequest, 
+            	  new ProcessTrace_impl(), 
+          		  casReferenceId, 
+       		      message.getStringProperty(AsynchAEMessage.InputCasReference),
+   		          message.getStringProperty(AsynchAEMessage.ServerIP), 
+   		          message.getStringProperty(AsynchAEMessage.UimaASProcessPID));
    	      
-   	      if (message.getJMSReplyTo() != null && serviceDelegate.isCasPendingReply(casReferenceId)) {
+	  	  if (message.getJMSReplyTo() != null && serviceDelegate.isCasPendingReply(casReferenceId)) {
    	        casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
    	      }
     	} else {
-    		
-    		
     		ClientRequest requestToCache = (ClientRequest) clientCache.get(uniqueIdentifier);
     		if ( requestToCache != null && requestToCache.isMetaRequest()) {
         	  String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
       	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
       	      if ( pid != null && nodeIP != null ) {
-          	     UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),null,
-          	              casReferenceId);
           	      // notify client that the last request (GetMeta ) has been received by a service.
           	     onBeforeProcessMeta(nodeIP, pid);
       	      }
@@ -1377,6 +1342,36 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       cpcReadySemaphore.release();
     }
   }
+  private void  notifyApplication(ClientRequest cachedRequest, ProcessTrace pt, String casReferenceId, String parentCasReferenceId, String hostIP, String processPID) {
+	    // synchronize handling of the ACK to avoid race condition where the ACK process thread
+	    // comes after the reply thread. We want to avoid calling onBeforeProcessCAS() twice.
+	  synchronized( cachedRequest) {
+		    	if ( !cachedRequest.receivedServiceACK ) {
+				       cachedRequest.setReceivedServiceACK(true);
+				     
+		    	    	cachedRequest.setHostIpProcessingCAS(hostIP);
+		    	    	cachedRequest.setServicePID(processPID);
+		                UimaASProcessStatusImpl status;
+		                
+		                if (parentCasReferenceId != null  && parentCasReferenceId.equals(cachedRequest.getCasReferenceId())) {
+		                    status = new UimaASProcessStatusImpl(pt, cachedRequest.getCAS(),casReferenceId, parentCasReferenceId);
+		                } else {
+		                    status = new UimaASProcessStatusImpl(pt, cachedRequest.getCAS(), casReferenceId);
+		                }
+		                try {
+		        	    	// Notify the application with an ACK as if the ACK came from the remote service. Some
+		            		// applications may depend on receiving the ACK.
+		            		onBeforeProcessCAS(status, cachedRequest.getHostIpProcessingCAS(), cachedRequest.getServicePID());
+		                } catch( Exception uex) {  
+		                	UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+		                            "notifyApplication", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+		                            "UIMAEE_exception__WARNING", uex);  
+		                }				     
+		    	}
+		    }
+
+  }
+
   /**
    * Handles response to Process CAS request. If the message originated in a service that is running
    * in a separate jvm (remote), deserialize the CAS and notify the application of the completed
@@ -1405,28 +1400,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
     if (casReferenceId != null) {
       cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
-      // Increment number of replies
       if (cachedRequest != null && casReferenceId.equals(cachedRequest.getCasReferenceId())) {
-    	    if ( !cachedRequest.receivedServiceACK ) {  // ACK not received from remote service
-    	    	cachedRequest.setHostIpProcessingCAS(message.getStringProperty(AsynchAEMessage.ServerIP));
-    	    	cachedRequest.setServicePID(message.getStringProperty(AsynchAEMessage.UimaASProcessPID));
-                UimaASProcessStatusImpl status;
-                String inputCasReferenceId = message.getStringProperty(AsynchAEMessage.InputCasReference);
-                if (inputCasReferenceId != null
-                         && inputCasReferenceId.equals(cachedRequest.getCasReferenceId())) {
-                    status = new UimaASProcessStatusImpl(pt, cachedRequest.getCAS(),casReferenceId, inputCasReferenceId);
-                } else {
-                    status = new UimaASProcessStatusImpl(pt, cachedRequest.getCAS(), casReferenceId);
-                }
-                try {
-        	    	// Notify the application with an ACK as if the ACK came from the remote service. Some
-            		// applications may depend on receiving the ACK.
-            		onBeforeProcessCAS(status, cachedRequest.getHostIpProcessingCAS(), cachedRequest.getServicePID());
-                } catch( Exception uex) {  // ignore user code exception in the callback
-                } finally {
-            	    cachedRequest.setReceivedServiceACK(true);
-                }
-    	    }
+    	  // invoke 2nd callback to the application if necessary. Makes  sure the callback is done once
+          notifyApplication(cachedRequest, 
+        		  pt, 
+        		  casReferenceId, 
+        		  message.getStringProperty(AsynchAEMessage.InputCasReference),
+        		  message.getStringProperty(AsynchAEMessage.ServerIP), 
+        		  message.getStringProperty(AsynchAEMessage.UimaASProcessPID));
 
     	  // Received a reply, decrement number of outstanding CASes
         decrementOutstandingCasCounter();
