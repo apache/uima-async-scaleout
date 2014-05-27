@@ -119,6 +119,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   
   private CountDownLatch latchToCountNumberOfTerminatedThreads;
   
+  //	 on listener failure log once and retry silently
+  private volatile boolean logListenerFailure=true;
+  
   public UimaDefaultMessageListenerContainer() {
     super();
     // reset global static. This only effects unit testing as services are deployed 
@@ -488,11 +491,14 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       if (controller != null) {
         controllerId = "Uima AS Service:" + controller.getComponentName();
       }
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-                "handleListenerSetupFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_listener_connection_failure__WARNING",
-                new Object[] { controllerId, getBrokerUrl() });
+      if ( logListenerFailure ) {
+    	  logListenerFailure = false;  // dont log again while in retry mode
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                      "handleListenerSetupFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_listener_connection_failure__WARNING",
+                      new Object[] { controllerId, getBrokerUrl() });
+            }
       }
  	  // Use Spring to retry connection until successful. This call is
 	  // blocking this thread.
@@ -500,6 +506,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       if ( controller != null ) {
         controller.changeState(ServiceState.RUNNING);
       }
+	  logListenerFailure = true;   // reset so that the logging happens on the next listener failure
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
                 "handleListenerSetupFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
@@ -973,9 +980,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if ( stopImmediate ) {
       tpe.setKeepAliveTime(50, TimeUnit.MILLISECONDS);
       tpe.allowCoreThreadTimeOut(true);
-      synchronized(tpe.getThreadFactory()) {
-        tpe.getThreadFactory().notifyAll();
-      }
+//      synchronized(tpe.getThreadFactory()) {
+//        tpe.getThreadFactory().notifyAll();
+//      }
   	  tpe.purge();
       tpe.shutdownNow();
     } else {
