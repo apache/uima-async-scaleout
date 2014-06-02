@@ -246,6 +246,13 @@ public class ProcessResponseHandler extends HandlerBase {
                 "UIMAEE_number_parallel_delegates_FINE",
                 new Object[] { totalNumberOfParallelDelegatesProcessingCas, Thread.currentThread().getId(), Thread.currentThread().getName() });
       }
+      if (totalNumberOfParallelDelegatesProcessingCas > 1) {
+    	  // Block this thread until CAS is dispatched to all delegates in parallel step. Fixes race condition where
+    	  // a reply comes from one of delegates in parallel step before dispatch sequence completes. Without
+    	  // this blocking the result of analysis are merged into a CAS.
+    	  casStateEntry.blockIfParallelDispatchNotComplete();
+      }
+      
       if (cas == null) {
         throw new AsynchAEException(Thread.currentThread().getName()
                 + "-Cache Does not contain a CAS. Cas Reference Id::" + casReferenceId);

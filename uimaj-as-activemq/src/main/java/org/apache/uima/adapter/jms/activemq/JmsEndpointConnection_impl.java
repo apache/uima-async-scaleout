@@ -688,6 +688,19 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       // to find inactive sessions.
 	  lastDispatchTimestamp.set(System.currentTimeMillis());
 	  
+	  // If in ParallelStep its possible to receive a reply from one of the delegates in parallel 
+	  // step *before* a CAS is dispatched to all of the delegates. This can cause a problem
+	  // as replies are merged which causes the CAS to be in an inconsistent state.
+	  // The following code calls dispatchCasToParallelDelegate() which count down
+	  // a java latch. The same latch is used when receiving replies. If the latch is non zero
+	  // the code blocks a thread from performing deserialization.
+	  if ( msgType == AsynchAEMessage.Request && command == AsynchAEMessage.Process ) {
+		  String casReferenceId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
+		  CasStateEntry casStateEntry = controller.getLocalCache().lookupEntry(casReferenceId);
+		  if ( casStateEntry.getNumberOfParallelDelegates() > 0) {
+			  casStateEntry.dispatchedCasToParallelDelegate();
+		  }
+	  }
       // Succeeded sending the CAS
       return true;
     } catch (Exception e) {

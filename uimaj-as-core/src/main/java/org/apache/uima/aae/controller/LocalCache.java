@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -240,6 +241,12 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     
     private Object monitor = new Object();
     
+    //	 used only for parallel step. Counts down when a CAS is dispatched to a each delegate.
+    // Prevents a race when reply from 1st parallel delegate arrives before a dispatch to a remaining
+    // delegates has not yet completed. In such scenario, the CAS may be corrupted by merging
+    // reply from the 1st delegate.
+    private CountDownLatch latch=null;
+    
     public boolean waitingForChildrenToFinish() {
     	return waitingForChildren;
     }
@@ -386,12 +393,35 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 
     public void setNumberOfParallelDelegates(int aNumberOfParallelDelegates) {
       numberOfParallelDelegates = aNumberOfParallelDelegates;
+      latch = new CountDownLatch(aNumberOfParallelDelegates);
     }
 
     public int getNumberOfParallelDelegates() {
       return numberOfParallelDelegates;
     }
-
+    
+    public void dispatchedCasToParallelDelegate() {
+    	if (latch != null ) {
+        	if ( latch.getCount() > 0 ) {
+        		latch.countDown();
+        	}
+    	}
+    }
+    public void blockIfParallelDispatchNotComplete() {
+    	try {
+        	if (latch != null ) {
+        	   latch.await();
+        	}
+    	} catch( InterruptedException e) {
+    	}
+    }
+    public void resetDispatchLatch() {
+    	if (latch != null ) {
+    		while ( latch.getCount() > 0 ) {
+    			latch.countDown();
+    		}
+    	}
+    }
     public boolean isFailed() {
       return failed;
     }
