@@ -242,10 +242,10 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 				              factory.setWatchTopicAdvisories(false);
 				              //  Create shared jms connection to a broker
 				              conn = factory.createConnection();
-				              conn.start();
 				              factory.setDispatchAsync(true);
 				              factory.setUseAsyncSend(true);
 				              factory.setCopyMessageOnSend(false);
+				              conn.start();
 				              //  Cache the connection. There should only be one connection in the jvm
 				              //  per unique broker url. 
 				              brokerDestinations.setConnection(conn);
@@ -265,6 +265,11 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            		  break; // Got the connection, break out of the while-loop
 		            		  
 		            	  } catch( JMSException jex) {
+		            		  if ( conn != null  ) {
+		            			  try {
+		            				  conn.close();
+		            			  } catch( Exception ee) {}
+		            		  }
 		            		//  if ( logConnectionProblem ) {
 		            			  logConnectionProblem = false;   // log once
 			            		  // Check if unable to connect to the broker and retry ...
@@ -280,6 +285,13 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            		        }
 		            	//	  } 
 		            		 this.wait(1000);  // wait between retries 
+		            	  } catch ( Exception ee) {
+		            		  ee.printStackTrace();
+		            		  if ( conn != null  ) {
+		            			  try {
+		            				  conn.close();
+		            			  } catch( Exception eee) {}
+		            		  }
 		            	  }
 		              } //while
 		              if ( logConnectionProblem == false )  { // we had conectivity problem. Log the fact that it was recovered
@@ -291,11 +303,17 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            	  }
 		            	  
 		              }
-		            }
+		              }
 		          } catch( Exception exc) {
-		            throw exc; // rethrow
+		        	  if ( conn != null  ) {
+	          			  try {
+	          				  conn.close();
+	          			  } catch( Exception ee) {}
+		        	  }
+		             throw exc; // rethrow
 		          } finally {
 		            connectionSemaphore.release();
+		           
 		          }
 		          
 		          connectionCreationTimestamp = System.nanoTime();
