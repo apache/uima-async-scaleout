@@ -1960,6 +1960,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    * 
    */
   public void onMessage(final Message message) {
+	  if ( !this.running) {
+		  return;    // ignore the message if the client is stopping
+	  }
     // Process message in a separate thread. Previously the message was processed in ActiveMQ dispatch thread.
     // This onMessage() method is called by ActiveMQ code from a critical region protected with a lock. The lock 
     // is only released if this method returns. Running in a dispatch thread caused a hang when an application
