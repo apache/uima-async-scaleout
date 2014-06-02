@@ -158,18 +158,24 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         		return;
         	}
     	    while (isRunning() && !terminating ) {
+    	    	Connection tcon = null;
     		      try {
     		        if (sharedConnectionEnabled()) {
     		          refreshSharedConnection();
     		        }
     		        else {
-    		          Connection tcon = createConnection();
+    		          tcon = createConnection();
     		          JmsUtils.closeConnection(tcon);
     		        }
     		        logger.info("Successfully refreshed JMS Connection");
     		        break;
     		      }
     		      catch (Exception ex) {
+    		    	  if ( tcon != null ) {
+    		    		  try {
+    		    			  tcon.close();
+    		    		  } catch (Exception ee) {}
+    		    	  }
     		        if ( doLogFailureMsg ) {
     		          StringBuilder msg = new StringBuilder();
     		          msg.append("Could not refresh JMS Connection for destination '");
@@ -282,6 +288,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     ActiveMQConnection conn = null;
     try {
       conn = (ActiveMQConnection)getSharedConnection();
+      
     } catch( Exception exx ) { // shared connection  may not exist yet if a broker is not up
     }
     if ( (conn != null && conn.isTransportFailed() ) || 
@@ -491,6 +498,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       if (controller != null) {
         controllerId = "Uima AS Service:" + controller.getComponentName();
       }
+
+      
       if ( logListenerFailure ) {
     	  logListenerFailure = false;  // dont log again while in retry mode
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -1023,40 +1032,19 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                 } catch ( NoSuchMethodException e) {
                   ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setCorePoolSize(0);
                 }
-               // ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().allowCoreThreadTimeOut(true);
                 ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setKeepAliveTime(1000, TimeUnit.MILLISECONDS);
               	((ThreadPoolTaskExecutor) taskExecutor).setWaitForTasksToCompleteOnShutdown(true);
               	((ThreadPoolTaskExecutor) taskExecutor).shutdown();
-            
-               	try {
-                  __listenerRef.getSharedConnection().close();
-              	} catch( Exception e){
-              	}
-              	System.out.println("Listener.destroy() - stopping executor 1 Done");
-            
               } else if (concurrentListener != null) {
                   shutdownTaskExecutor(concurrentListener.getTaskExecutor(), stopImmediate);
                   concurrentListener.stop();
-                   try {
-                    __listenerRef.getSharedConnection().close();
-                  } catch( Exception e) {
-                  }
-                  __listenerRef.shutdown();
-                } else if ( threadPoolExecutor != null ) {
+              } else if ( threadPoolExecutor != null ) {
             	  shutdownTaskExecutor(threadPoolExecutor, true);
-           	       try {
-                      __listenerRef.getSharedConnection().close();
-           	       } catch( Exception e) {
-            	      
-           	    }
               }
-        	}
-          // Close Connection to the broker
-          String controllerName = (__listenerRef.controller == null) ? "" :__listenerRef.controller.getComponentName();
-          try {
-              __listenerRef.getSharedConnection().close();
-          } catch( Exception ie) {
           }
+          String controllerName = (__listenerRef.controller == null) ? "" :__listenerRef.controller.getComponentName();
+     	 __listenerRef.shutdown();
+ 
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                        "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -1084,26 +1072,43 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           }
         } catch (Exception e) {
         } // Ignore
+
+  	  //	Wait for process threads to finish. Each thread
+  	  // will count down the latch on exit. When all thread
+  	  // finish we can continue. Otherwise we block on the latch
+      try {
+        if ( latchToCountNumberOfTerminatedThreads != null && cc > 1) {
+          latchToCountNumberOfTerminatedThreads.await();
+        }
+      } catch( Exception ex) {
+         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+                    "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", ex);
+      }
+
+      
       }
     };
     threadGroupDestroyer.start();
 	  //	Wait for process threads to finish. Each thread
 	  // will count down the latch on exit. When all thread
 	  // finish we can continue. Otherwise we block on the latch
-    try {
-      if ( latchToCountNumberOfTerminatedThreads != null && cc > 1) {
-        latchToCountNumberOfTerminatedThreads.await();
-      }
-    } catch( Exception ex) {
-       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-                  "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", ex);
-    }
+//    try {
+//      if ( latchToCountNumberOfTerminatedThreads != null && cc > 1) {
+//    	  System.out.println("---------------- Latch Count:"+latchToCountNumberOfTerminatedThreads.getCount());
+//        latchToCountNumberOfTerminatedThreads.await();
+//      }
+//    } catch( Exception ex) {
+//       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
+//                  "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+//                  "UIMAJMS_exception__WARNING", ex);
+//    }
     
   }
   
   private void setUimaASThreadPoolExecutor(int consumentCount) throws Exception{
     super.setMessageListener(ml);
+   
     // create task executor with custom thread pool for:
     // 1) GetMeta request processing
     // 2) ReleaseCAS request
