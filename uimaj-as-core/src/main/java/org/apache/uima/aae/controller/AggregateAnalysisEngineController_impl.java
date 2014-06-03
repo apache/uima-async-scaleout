@@ -2762,25 +2762,26 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         //  
         if (collocatedAggregate || resource instanceof ProcessingResourceMetaData) {
           if (allTypeSystemsMerged()) {
-            for (int i = 0; i < remoteCasMultiplierList.size(); i++) {
-              Endpoint endpt = (Endpoint) destinationMap.get((String) remoteCasMultiplierList
-                      .get(i));
-              if (endpt != null && endpt.isCasMultiplier() && endpt.isRemote()) {
-           	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-            	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-            	                "mergeTypeSystem", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-            	                "UIMAEE_shadow_caspool_set__INFO",new Object[] { getComponentName(),endpt.getShadowPoolSize(),(String) remoteCasMultiplierList.get(i) } );
-        	    }
-                getCasManagerWrapper().initialize(endpt.getShadowPoolSize(),
-                        (String) remoteCasMultiplierList.get(i));
-                if (remoteDelegateServiceInfo != null) {
-                  remoteDelegateServiceInfo.setCASMultiplier();
-                }
-              }
-            }
             if (!isStopped()) {
               try {
                 completeInitialization();
+                for (int i = 0; i < remoteCasMultiplierList.size(); i++) {
+                    Endpoint endpt = (Endpoint) destinationMap.get((String) remoteCasMultiplierList
+                            .get(i));
+                    if (endpt != null && endpt.isCasMultiplier() && endpt.isRemote()) {
+                 	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  	                "mergeTypeSystem", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  	                "UIMAEE_shadow_caspool_set__INFO",new Object[] { getComponentName(),endpt.getShadowPoolSize(),(String) remoteCasMultiplierList.get(i) } );
+              	    }
+                      getCasManagerWrapper().initialize(endpt.getShadowPoolSize(),
+                              (String) remoteCasMultiplierList.get(i));
+                      if (remoteDelegateServiceInfo != null) {
+                        remoteDelegateServiceInfo.setCASMultiplier();
+                      }
+                    }
+                  }
+
               } catch (ResourceInitializationException ex) {
                 handleInitializationError(ex);
                 return;
