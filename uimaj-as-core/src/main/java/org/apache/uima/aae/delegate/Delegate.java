@@ -887,14 +887,15 @@ public abstract class Delegate {
     return concurrentConsumersOnReplyQueue;
   }
 
+  public boolean isCasOutstanding(String aCasReferenceId) {
+	  synchronized(outstandingCasList) {
+		  return lookupEntry(aCasReferenceId, outstandingCasList) != null;
+	  }
+  }
   public boolean isGeneratingChildrenFrom(String aCasReferenceId) {
     synchronized (outstandingCasList) {
       DelegateEntry entry = lookupEntry(aCasReferenceId, outstandingCasList);
-      if (entry == null) {
-        return false;
-      } else {
-        return entry.isGeneratingChildren();
-      }
+      return entry != null && entry.isGeneratingChildren();
     }
   }
 

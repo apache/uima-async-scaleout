@@ -1312,8 +1312,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    		          message.getStringProperty(AsynchAEMessage.ServerIP), 
    		          message.getStringProperty(AsynchAEMessage.UimaASProcessPID));
    	      
-	  	  if (message.getJMSReplyTo() != null && serviceDelegate.isCasPendingReply(casReferenceId)) {
-   	        casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
+	  	  if (message.getJMSReplyTo() != null && serviceDelegate.isCasOutstanding(casReferenceId)) {
+   	          casCachedRequest.setFreeCasNotificationQueue(message.getJMSReplyTo());
    	      }
     	} else {
     		ClientRequest requestToCache = (ClientRequest) clientCache.get(uniqueIdentifier);
@@ -1875,13 +1875,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   }
 
   protected void removeFromCache(String aCasReferenceId) {
-    if (aCasReferenceId != null && clientCache.containsKey(aCasReferenceId)) {
-      ClientRequest requestToCache = (ClientRequest) clientCache.get(aCasReferenceId);
-      if (requestToCache != null) {
-        requestToCache.removeEntry(aCasReferenceId);
-      }
+	  if ( aCasReferenceId == null ) {
+		  return;
+	  }
       clientCache.remove(aCasReferenceId);
-    }
   }
 
   protected CAS deserialize(String aSerializedCAS, CAS aCAS) throws Exception {
