@@ -793,9 +793,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	    }
 	    if (!ll.contains(messageListener)) {
 	      ll.add(messageListener);
-	      System.out.println("------------ Added Listener Container:"+messageListener.hashCode());
 	    } else {
-	      System.out.println("------------ Listener Container:"+messageListener.hashCode()+" Already Added");
 	    }
 	    for(Object container: ll ) {
 	      UimaDefaultMessageListenerContainer c = (UimaDefaultMessageListenerContainer) container;
