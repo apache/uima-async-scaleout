@@ -21,14 +21,14 @@
 	<parent>
 		<groupId>org.apache.uima</groupId>
 		<artifactId>parent-pom</artifactId>
-		<version>7</version>
+		<version>9</version>
 		<relativePath />
 	</parent>
 
 	<groupId>org.apache.uima</groupId>
 	<artifactId>uima-as-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>2.5.0-SNAPSHOT</version>
+	<version>2.6.0-SNAPSHOT</version>
 	<name>Apache UIMA-AS: ${project.artifactId}</name>
 	<description>The common parent pom for uima-as</description>
 	<url>${uimaWebsiteUrl}</url>
@@ -121,7 +121,7 @@
 		<uimaScmRoot>uima-as</uimaScmRoot>
 		<uimaScmProject>${project.artifactId}</uimaScmProject>
 		<!-- level of uimaj sdk this release depends on -->
-		<uimajDependencyVersion>2.4.2</uimajDependencyVersion>
+		<uimajDependencyVersion>2.6.0</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
 		<org.apache.activemq.version>5.7.0</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
@@ -152,6 +152,8 @@
 		<http.commons.core.version>4.2.1</http.commons.core.version>
 		
 	</properties>
+	
+	
 	<!-- dependencyManagement is a declaration section naming each artifact 
 		the uima-as components depends on. -->
 	<dependencyManagement>
