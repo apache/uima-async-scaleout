@@ -43,7 +43,6 @@
 
 	<properties>
 		<uimaScmProject>${project.artifactId}</uimaScmProject>
-		<postNoticeText>${ibmNoticeText}</postNoticeText>
 	</properties>
 
 	<dependencies>
