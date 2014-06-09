@@ -407,7 +407,7 @@ An example of this kind of migration is embodied by the sample descriptors:
   4. UIMA-AS requires java 1.6 or newer since it bundles Active MQ 5.7.0 which has been
      compiled with jdk1.6. 
   
-  5. JCache Enable/Disable not supported in Deployment Editor GUI.   
+  5. JCAS caching Enable/Disable not supported in the Deployment Editor GUI.   
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
 http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12323591&styleName=Html&projectId=12310570
