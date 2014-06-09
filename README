@@ -1,4 +1,4 @@
-     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.4.2 README
+     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.6.0 README
      ----------------------------------------------------------------
      
 0. Building from the Source Distribution
@@ -21,17 +21,17 @@ Look for the result in the two artifacts:
 
 For more details, please see http://uima.apache.org/building-uima.html   
 
-1. What's New in 2.4.2
+1. What's New in 2.6.0
 ====================== 
-  - Replaced Activemq 5.4.1 with 5.6.0 
-  - Requires Java 1.6 or later as ActiveMQ 5.6.0 classes have been compiled with Java 1.6
-  - Implemented PEAR support
-  - Added client side callbacks to notify an application where a CAS is being processed
-  - Fixed major bug preventing async aggregate from processing CASes concurrently
-  - Fixed CAS accounting to prevent loosing CASes
-  - Modified JMS session expiration handling to prevent OOM in the broker
+  - Replaced Activemq 5.6.0 with 5.7.0 
+  - Fixed parallel step processing to prevent merging replies if the request
+    has not been fully dispatched to all delegates.
+  - Fixed bug that allowed the JVM to exit while threads still executing in
+    AE.destroy().
+  - Added missing http jars to enable support for http protocol
+  - Added retry logic when handling exceptions while opening broker connection
+  - Requires Java 1.6 or later as ActiveMQ 5.7.0 classes have been compiled with Java 1.6
   - Many bug fixes 
-  - Improvements to increase performance
   - Improved error handling and stability
   
 
@@ -39,10 +39,10 @@ For more details, please see http://uima.apache.org/building-uima.html
 --------------------------------------------------
 
 The Apache UIMA-AS binary distribution includes
-  - Apache UIMA Java SDK version 2.4.2
+  - Apache UIMA Java SDK version 2.6.0
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
-  - Apache ActiveMQ version 5.6.0
+  - Apache ActiveMQ version 5.7.0
   - Spring Framework
   - XMLBeans
 
@@ -297,7 +297,7 @@ is on a broker that is accessable. For example, the service can register with a
 public broker running outside the firewall. Alternatively the broker may be configured 
 to tunnel over HTTP. For details see http://activemq.apache.org/configuring-transports.html
 
-Note: The ActiveMQ 5.6.0 jars distributed with this UIMA AS release include bug fixes described in 
+Note: The ActiveMQ 5.7.0 jars distributed with this UIMA AS release include bug fixes described in 
       http://issues.apache.org/activemq/browse/AMQ-1308. Previous releases of UIMA AS included 
       custom ActiveMQ 4.1.1 jars (which we have patched) to remedy the problems. When using 
       ActiveMQ HTTP connector, make sure that both a client and a service use either ActiveMQ 4.1.1 
@@ -391,7 +391,7 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.4.2
+5. Known problems/limitations with Release 2.6.0
 ================================================
 
   1. No automatic refresh for broken connections with temp reply queues.
@@ -404,9 +404,10 @@ An example of this kind of migration is embodied by the sample descriptors:
   3. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
      JMX port (see section 3.8).
 
-  4. UIMA-AS requires java 1.6 or newer since it bundles Active MQ 5.6.0 which has been
+  4. UIMA-AS requires java 1.6 or newer since it bundles Active MQ 5.7.0 which has been
      compiled with jdk1.6. 
-     
+  
+  5. JCache Enable/Disable not supported in Deployment Editor GUI.   
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
 http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12323591&styleName=Html&projectId=12310570
