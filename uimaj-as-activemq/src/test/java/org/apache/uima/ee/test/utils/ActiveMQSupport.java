@@ -100,6 +100,7 @@ public class ActiveMQSupport extends TestCase {
     
     broker = createBroker();  // sets uri
     broker.setUseJmx(true);
+    broker.getManagementContext().setConnectorPort(1098);
     broker.start();
     broker.setMasterConnectorURI(uri);
     addHttpConnector(DEFAULT_HTTP_PORT);
@@ -216,6 +217,7 @@ public class ActiveMQSupport extends TestCase {
   }
 
   protected String getBrokerUri() {
+//	  return "failover:("+uri+")";
     return uri;
   }
 
@@ -246,6 +248,9 @@ public class ActiveMQSupport extends TestCase {
         tcpConnector.setName(DEFAULT_BROKER_URL_KEY);
       }
       broker.setUseJmx(useJmx);
+      if ( useJmx) {
+    	  broker.getManagementContext().setConnectorPort(1097);
+      }
       PolicyEntry policy = new PolicyEntry();
       policy.setDeadLetterStrategy(new SharedDeadLetterStrategy());
 
@@ -287,6 +292,7 @@ public class ActiveMQSupport extends TestCase {
       broker.deleteAllMessages();
       broker.stop();
       broker.waitUntilStopped();
+//      cleanBroker(broker);
       System.out.println(">>> Broker Stopped");
     }
   }
@@ -296,7 +302,6 @@ public class ActiveMQSupport extends TestCase {
     System.clearProperty("activemq.broker.jmx.domain");
     System.clearProperty("BrokerURL");
     stopBroker();
-
   }
 
 }
