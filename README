@@ -297,6 +297,14 @@ is on a broker that is accessable. For example, the service can register with a
 public broker running outside the firewall. Alternatively the broker may be configured 
 to tunnel over HTTP. For details see http://activemq.apache.org/configuring-transports.html
 
+The UIMA-AS ships with http support enabled. This is configured in broker configuration file found
+in $UIMA_HOME/as_config/activemq-nojournal.xml. By default, the broker listens for http
+based connections on port 8080. If you need to change the port, please modify broker 
+configuration file by changing the following line:
+
+ <transportConnector name="http" uri="http://0.0.0.0:8080"/>
+
+
 Note: The ActiveMQ 5.7.0 jars distributed with this UIMA AS release include bug fixes described in 
       http://issues.apache.org/activemq/browse/AMQ-1308. Previous releases of UIMA AS included 
       custom ActiveMQ 4.1.1 jars (which we have patched) to remedy the problems. When using 
@@ -410,7 +418,7 @@ An example of this kind of migration is embodied by the sample descriptors:
   5. JCAS caching Enable/Disable not supported in the Deployment Editor GUI.   
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
-http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12323591&styleName=Html&projectId=12310570
+http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12325591&styleName=Html&projectId=12310570
 
 
 Crypto Notice
