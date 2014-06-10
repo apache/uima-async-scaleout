@@ -125,7 +125,7 @@
 		<!-- level of ActiveMQ this release depends on -->
 		<org.apache.activemq.version>5.7.0</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
-		<org.springframework.version>3.0.6.RELEASE</org.springframework.version>
+		<org.springframework.version>3.0.7.RELEASE</org.springframework.version>
 
 		<org.apache.geronimo.jms.specs.version>1.1.1</org.apache.geronimo.jms.specs.version>
 
@@ -135,7 +135,7 @@
 
 		<jetty.version>7.6.7.v20120910</jetty.version>
 
-		<commons-pool.version>1.5.4</commons-pool.version>
+		<commons-pool.version>1.6</commons-pool.version>
 
 		<xstream.version>1.4.3</xstream.version>
 
