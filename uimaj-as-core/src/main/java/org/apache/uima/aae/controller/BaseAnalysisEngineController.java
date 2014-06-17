@@ -1188,37 +1188,37 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         // The UIMA AS service error handling says to terminate. Try to terminate
         // cleanly. If the process is not down after 40 secs, take it down via
         // System.exit.  
-        Thread reaperThread = new Thread( new Runnable() {
-          public void run() {
-            System.out.println("++++++++++++++++++++++++ Starting Reaper thread");
-            Object sleepLock = new Object();
-            try {
-              synchronized( sleepLock ) {
-                sleepLock.wait(40000); // allow up to 40 sec minute for a clean shutdown.
-              }
-            } catch( Exception exx) {
-              exx.printStackTrace();
-            }
-             
-            // **********************************************************************
-            // **********************************************************************
-            // **********************************************************************
-            // **********************************************************************
-            // **********************************************************************
-            // Per discussion with Eddie on 4/11/12, exit process via System.exit() 
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                    "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAEE_killing_process__INFO", new Object[] { getComponentName() });
-            System.exit(1);
-            // **********************************************************************
-            // **********************************************************************
-            // **********************************************************************
-            // **********************************************************************
-            // **********************************************************************
-          }
-        }
-        );
-        reaperThread.start();        
+//        Thread reaperThread = new Thread( new Runnable() {
+//          public void run() {
+//            System.out.println("++++++++++++++++++++++++ Starting Reaper thread");
+//            Object sleepLock = new Object();
+//            try {
+//              synchronized( sleepLock ) {
+//                sleepLock.wait(40000); // allow up to 40 sec minute for a clean shutdown.
+//              }
+//            } catch( Exception exx) {
+//              exx.printStackTrace();
+//            }
+//             
+//            // **********************************************************************
+//            // **********************************************************************
+//            // **********************************************************************
+//            // **********************************************************************
+//            // **********************************************************************
+//            // Per discussion with Eddie on 4/11/12, exit process via System.exit() 
+//            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+//                    "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+//                    "UIMAEE_killing_process__INFO", new Object[] { getComponentName() });
+//            System.exit(1);
+//            // **********************************************************************
+//            // **********************************************************************
+//            // **********************************************************************
+//            // **********************************************************************
+//            // **********************************************************************
+//          }
+//        }
+//        );
+//        reaperThread.start();        
         
       }
 
@@ -1230,6 +1230,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
                 (String) anErrorContext.get(AsynchAEMessage.CasReference));
       } else {
         terminate();
+      }
+      //  Extended tests cant be killed, so skip this if dontKill is defined
+      //  in System properties.
+      if ( System.getProperty("dontKill") == null) {
+    	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_killing_process__INFO", new Object[] { getComponentName() });
+          System.exit(1);
       }
 
     } else if (ErrorHandler.DISABLE.equalsIgnoreCase(anAction)) {
