@@ -100,3 +100,20 @@ modified April 2001  by Iris Van den Broeke, Daniel Deville.
 This product contains icons developed by the SVG Icons project 
 (http://sourceforge.net/projects/svgicons), licensed under the 
 BSD license (see LICENSE file).
+
+----- httpclient, httpcore Notice ----------------
+This project contains annotations derived from JCIP-ANNOTATIONS
+Copyright (c) 2005 Brian Goetz and Tim Peierls.
+See http://www.jcip.net and the Creative Commons Attribution License
+(http://creativecommons.org/licenses/by/2.5)
+
+---- geronimo-servlet_2.5_spec-1.2 library Notice
+
+This product includes software developed by
+The W3C Consortium (http://www.w3.org/).
+
+Copyright © 1994-2002 World Wide Web Consortium,
+(Massachusetts Institute of Technology, Institut National
+de Recherche en Informatique et en Automatique, Keio
+University). All Rights Reserved.
+http://www.w3.org/Consortium/Legal/
