@@ -202,15 +202,6 @@
    limitations under the License.
 
 =========================================================================
-== APACHE ACTIVEMQ DEPENDENCIES                                        ==
-=========================================================================
-
-The Apache ActiveMQ message broker includes a number of dependencies, many
-of them optional, with separate copyright notices and license terms. Your
-use of the source code for the these subcomponents is subject to the terms
-and conditions of the following licenses.
-
-=========================================================================
 == For the geronimo-servlet_2.5_spec-1.2 library                                                ==
 =========================================================================
 
