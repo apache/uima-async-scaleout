@@ -319,7 +319,7 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   public void setServerURI(String aServerURI) {
     this.serverURI = aServerURI;
-    if (aServerURI != null && aServerURI.startsWith("vm:") == true) {
+    if ( aServerURI != null && ( aServerURI.startsWith("vm:") == true && !aServerURI.equals("vm://localhost?broker.persistent=false")  ) ){
       setRemote(false);
     } else {
       setRemote(true);

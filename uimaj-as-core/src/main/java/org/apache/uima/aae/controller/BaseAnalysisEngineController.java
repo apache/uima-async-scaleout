@@ -2862,6 +2862,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     try {
       if (metadata != null) {
 
+    	  if ( anEndpoint.getServerURI().equals("vm://localhost?broker.persistent=false")) {
+    		  anEndpoint.setRemote(true);
+    	  }
         if (!anEndpoint.isRemote()) {
           ByteArrayOutputStream bos = new ByteArrayOutputStream();
           try {

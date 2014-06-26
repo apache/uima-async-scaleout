@@ -193,7 +193,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                    new Object[] {  aComponentName, getEndpoint(),
 		                      ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() });
 		          }
-		        } else if ( !brokerUri.startsWith("http") && !brokerUri.startsWith("failover")){
+		        } else if ( !brokerUri.startsWith("http") && !brokerUri.startsWith("failover") && !brokerUri.startsWith("vm://localhost?broker.persistent=false")){
 				  String prefix = "";
   		          if ( brokerUri.indexOf("?") > -1) {
 		            prefix = "&";
