@@ -648,8 +648,14 @@ EXHIBIT A.
       Contributor(s): ______________________________________.''   
    
 =========================================================================
-== For jaxb-api and jaxb-impl (CDDL)                                   ==
-== Source code is at java.net                                          ==
+
+This product includes jaxb-api, jaxb-impl and javax.servlet (CDDL version 1)   
+
+Source code for jaxb-api, jaxb-impl is at http://jaxb.java.net/
+                                        
+The original source code for javax.servlet can be found 
+at http://www.eclipse.org/jetty/downloads.php
+
 =========================================================================
 
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL)
