@@ -22,7 +22,9 @@ Includes software from other Apache Software Foundation projects:
  - Apache ActiveMQ
  
  - XBean::Spring
-  
+ 
+ - javax.servlet
+ 
  - Java Servlet API 2.5 as part of the Tomcat project.
    The names "Tomcat" and "Apache Software Foundation" must not be used to endorse
    or promote products derived from this software without prior written permission.
@@ -78,7 +80,7 @@ For the terms of use of this code, see http://www.unicode.org/terms_of_use.html,
 which should be regarded as forming part of these conditions of use, and part 
 of the Saxon documentation. 
 
-------- jaxb-api, jaxb-impl, javax.servlet Package Notice ----------
+------- jaxb-api, jaxb-impl Package Notice ----------
 The jaxb-api, jaxb-impl,javax.servlet is distributed under the 
 Common Development and Distribution License v1.0.
 
@@ -86,9 +88,6 @@ You can obtain a copy of the license at
 https://glassfish.dev.java.net/public/CDDLv1.0.html.
 
 Source code for jaxb-api, jaxb-impl is at http://jaxb.java.net/
-
-The source code for javax.servlet can be found 
-at http://www.eclipse.org/jetty/downloads.php
 
 -------SVG Icons Notice ------------------------
 
