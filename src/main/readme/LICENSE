@@ -258,6 +258,112 @@ times remain with copyright holders.
 =========================================================================
 == For the xpp3 library                                                ==
 =========================================================================
+  xpp3 library is licensed:
+    - Apache Software License, version 1.1
+      The license applies to the class javax.xml.namespace.QName
+    
+    - http://creativecommons.org/licenses/publicdomain
+      The license applies to the XmlPull API (all classes directly in 
+      the org.xmlpull.v1 package)
+      
+    - Indiana University Extreme! Lab Software License
+      The license applies to the Xpp3 classes (all classes below 
+      the org.xmlpull package with exception of classes directly 
+      in package org.xmlpull.v1 )
+ 
+ *****
+ 
+  Apache Software License, version 1.1
+  
+  Copyright (c) 2000 The Apache Software Foundation.  All rights
+  reserved.
+ 
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+ 
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+ 
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+ 
+  3. The end-user documentation included with the redistribution,
+     if any, must include the following acknowledgment:
+        "This product includes software developed by the
+         Apache Software Foundation (http://www.apache.org/)."
+     Alternately, this acknowledgment may appear in the software itself,
+     if and wherever such third-party acknowledgments normally appear.
+ 
+  4. The names "Apache" and "Apache Software Foundation" must
+     not be used to endorse or promote products derived from this
+     software without prior written permission. For written
+     permission, please contact apache@apache.org.
+ 
+  5. Products derived from this software may not be called "Apache",
+     nor may "Apache" appear in their name, without prior written
+     permission of the Apache Software Foundation.
+ 
+  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+  ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+  SUCH DAMAGE.
+  ====================================================================
+ 
+  This software consists of voluntary contributions made by many
+  individuals on behalf of the Apache Software Foundation.  For more
+  information on the Apache Software Foundation, please see
+  <http://www.apache.org/>.
+ 
+  Portions of this software are based upon public domain software
+  originally written at the National Center for Supercomputing Applications,
+  University of Illinois, Urbana-Champaign.
+
+*****
+
+http://creativecommons.org/licenses/publicdomain
+
+The person or persons who have associated work with this document 
+(the "Dedicator" or "Certifier") hereby either (a) certifies that, to 
+the best of his knowledge, the work of authorship identified is in 
+the public domain of the country from which the work is published, 
+or (b) hereby dedicates whatever copyright the dedicators holds in 
+the work of authorship identified below (the "Work") to the public 
+domain. A certifier, moreover, dedicates any copyright interest he 
+may have in the associated work, and for these purposes, is described 
+as a "dedicator" below.
+
+A certifier has taken reasonable steps to verify the copyright status 
+of this work. Certifier recognizes that his good faith efforts may not 
+shield him from liability if in fact the work certified is not in the 
+public domain.
+
+Dedicator makes this dedication for the benefit of the public at large 
+and to the detriment of the Dedicator's heirs and successors. Dedicator 
+intends this dedication to be an overt act of relinquishment in perpetuity 
+of all present and future rights under copyright law, whether vested or 
+contingent, in the Work. Dedicator understands that such relinquishment of 
+all rights includes the relinquishment of all rights to enforce 
+(by lawsuit or otherwise) those copyrights in the Work.
+
+Dedicator recognizes that, once placed in the public domain, the Work 
+may be freely reproduced, distributed, transmitted, used, modified, built 
+upon, or otherwise exploited by anyone for any purpose, commercial 
+or non-commercial, and in any way, including by methods that have not 
+yet been invented or conceived.
+
+*****
+
 Indiana University Extreme! Lab Software License
 
 Version 1.1.1
@@ -315,8 +421,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         http://www.apache.org/licenses/
 
    (See first license)
-   
 
+jetty-util artifact only:
+
+The UnixCrypt.java code implements the one way cryptography used by
+Unix systems for simple password protection.  Copyright 1996 Aki Yoshida,
+modified April 2001  by Iris Van den Broeke, Daniel Deville.
+Permission to use, copy, modify and distribute UnixCrypt
+for non-commercial or commercial purposes and without fee is
+granted provided that the copyright notice appears in all copies.
+ 
 =========================================================================
 == For the httpclient and httpcore libraries                           ==
 =========================================================================
@@ -357,24 +471,58 @@ Initial authors:
 
    (See first license above)
 
+
+
+=========================================================================
+= For jcl-over-slf4j-1.6.4, slf4j-api-1.6.4, slf4j-log4j12-1.6.4        =
+=========================================================================
+
+( MIT License )
+ 
+Copyright (c) 2004-2013 QOS.ch
+ All rights reserved.
+
+ Permission is hereby granted, free  of charge, to any person obtaining
+ a  copy  of this  software  and  associated  documentation files  (the
+ "Software"), to  deal in  the Software without  restriction, including
+ without limitation  the rights to  use, copy, modify,  merge, publish,
+ distribute,  sublicense, and/or sell  copies of  the Software,  and to
+ permit persons to whom the Software  is furnished to do so, subject to
+ the following conditions:
+ 
+ The  above  copyright  notice  and  this permission  notice  shall  be
+ included in all copies or substantial portions of the Software.
+ 
+ THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
+ EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
+ MERCHANTABILITY,    FITNESS    FOR    A   PARTICULAR    PURPOSE    AND
+ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ 
 =========================================================================
 == For the xstream library                                             ==
 =========================================================================
 
 (BSD Style License)
 
-Copyright (c) 2003-2004, Joe Walnes
+
+Copyright (c) 2003-2006, Joe Walnes
+Copyright (c) 2006-2009, 2011 XStream Committers
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-Redistributions of source code must retain the above copyright notice, this list of
-conditions and the following disclaimer. Redistributions in binary form must reproduce
-the above copyright notice, this list of conditions and the following disclaimer in
-the documentation and/or other materials provided with the distribution.
+1. Redistributions of source code must retain the above copyright notice, this list of
+conditions and the following disclaimer.
 
-Neither the name of XStream nor the names of its contributors may be used to endorse
+2. Redistributions in binary form must reproduce the above copyright notice, this list of
+conditions and the following disclaimer in the documentation and/or other materials provided
+with the distribution.
+
+3. Neither the name of XStream nor the names of its contributors may be used to endorse
 or promote products derived from this software without specific prior written
 permission.
 
@@ -388,7 +536,6 @@ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
 WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
-
 
 =========================================================================
 == For the behaviour.js library                                        ==
