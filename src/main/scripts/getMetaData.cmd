@@ -29,7 +29,7 @@
 @if .%2 == . goto usage
 
 @rem call common script that will launch the Uima AS service
-@call "%UIMA_HOME%\bin\runUimaClass.bat" org.apache.uima.examples.as/GetMetaRequest %*
+@call "%UIMA_HOME%\bin\runUimaClass.bat" org.apache.uima.examples.as.GetMetaRequest %*
 
 @goto end
 :usage
