@@ -153,10 +153,6 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     	// on observing jconsole attached to uima-as service with multiple listeners
     	// on an endpoint.  
     	synchronized(UimaDefaultMessageListenerContainer.class ) {
-            ActiveMQConnection con = (ActiveMQConnection)super.getSharedConnection();
-        	if ( con != null && con.isStarted() && !con.isTransportFailed() ) {
-        		return;
-        	}
     	    while (isRunning() && !terminating ) {
     	    	Connection tcon = null;
     		      try {
