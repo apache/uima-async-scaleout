@@ -1031,6 +1031,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                 ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().setKeepAliveTime(1000, TimeUnit.MILLISECONDS);
               	((ThreadPoolTaskExecutor) taskExecutor).setWaitForTasksToCompleteOnShutdown(true);
               	((ThreadPoolTaskExecutor) taskExecutor).shutdown();
+             	((ThreadPoolTaskExecutor) taskExecutor).destroy();
+            	((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().shutdownNow();
               } else if (concurrentListener != null) {
                   shutdownTaskExecutor(concurrentListener.getTaskExecutor(), stopImmediate);
                   concurrentListener.stop();
@@ -1039,7 +1041,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               }
           }
           String controllerName = (__listenerRef.controller == null) ? "" :__listenerRef.controller.getComponentName();
-     	 __listenerRef.shutdown();
+          __listenerRef.shutdown();
  
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
