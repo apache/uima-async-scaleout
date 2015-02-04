@@ -809,7 +809,7 @@
           <xsl:with-param name="inputOrReturn" select="'input'"/>
           <xsl:with-param name="kind" select="'primitive'"/>  <!-- used in ctrl id name -->
           <xsl:with-param name="msgHandlerChainID" select="f:getMetaMsgHandlerID(., 'primitive')"/>
-          <xsl:with-param name="nbrConcurrentConsumers" select="u:scaleout/@numberOfInstances"/> 
+          <xsl:with-param name="nbrConcurrentConsumers" select="fn:string(u:scaleout/@numberOfInstances)"/> 
           <xsl:with-param name="remote" select="()"/>
           <xsl:with-param name="poolingTaskExecutor" select="$poolingTaskExecutorID"/>     
         </xsl:call-template>
@@ -1517,9 +1517,9 @@
     <xsl:variable name="isTopLvlSync" as="xs:boolean" select=
       "if (../u:service/u:analysisEngine[(not(@async)) or (@async = ('no', 'false'))]) then fn:true() else fn:false()"/>
     
-    <xsl:variable name="nbrInstances" select="../u:service/u:analysisEngine/u:scaleout/@numberOfInstances"/>
+    <xsl:variable name="nbrInstances" select="fn:string(../u:service/u:analysisEngine/u:scaleout/@numberOfInstances)"/>
     
-    <xsl:variable name="casPoolSize" as="xs:integer">      
+    <xsl:variable name="casPoolSize">      
       <xsl:choose>
         <xsl:when test="$isTopLvlSync and 
           $nbrInstances and
@@ -1528,13 +1528,13 @@
           <xsl:sequence select="f:msgWithLineNumber(
                 'WARN',
                 ('Top level Async Primitive specifies a scaleout of', $nbrInstances,
-                 ', but also specifies a Cas Pool size of', ./@numberOfCASes,
+                 ', but also specifies a Cas Pool size of', fn:string(./@numberOfCASes),
                  '.  The Cas Pool size is being forced to be the same as the scaleout.'), 
                 .)"/>
           <xsl:sequence select="$nbrInstances"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:sequence select="if (./@numberOfCASes) then ./@numberOfCASes else '1'"/>
+          <xsl:sequence select="if (./@numberOfCASes) then fn:string(./@numberOfCASes) else '1'"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -2020,7 +2020,7 @@
           <xsl:when test="u:scaleout">
             <!--xsl:message select="'*** defaulting scaleout'"/>
             <xsl:message select="u:scaleout"/-->
-            <u:scaleout numberOfInstances="{if (u:scaleout/@numberOfInstances) then u:scaleout/@numberOfInstances else 1}"/>
+            <u:scaleout numberOfInstances="{if (u:scaleout/@numberOfInstances) then fn:string(u:scaleout/@numberOfInstances) else 1}"/>
           </xsl:when>
           <xsl:otherwise>
             <u:scaleout numberOfInstances="1"/>
@@ -3027,5 +3027,8 @@
       *** <xsl:sequence select="concat($kind,':')"/> line-number: <xsl:sequence select="saxon:line-number($node)"/>
       <xsl:sequence select="$msg"/> 
     </xsl:message>
+    <!-- xsl:if test="$kind eq 'ERROR'">
+      <xsl:sequence select="error()"/>
+    </xsl:if-->
   </xsl:function>
 </xsl:stylesheet>

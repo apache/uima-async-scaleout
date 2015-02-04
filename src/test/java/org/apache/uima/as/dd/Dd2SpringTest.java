@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import junit.framework.TestCase;
 
 import org.apache.uima.adapter.jms.service.Dd2spring;
+import org.apache.uima.adapter.jms.service.Dd2springException;
 import org.apache.uima.test.junit_extension.FileCompare;
 import org.apache.uima.test.junit_extension.TeePrintStream;
 
@@ -81,6 +82,9 @@ public class Dd2SpringTest extends TestCase{
   private static Pattern nevermatch = Pattern.compile("     ");
   
   private static Dd2spring dd2SpringInstance = new Dd2spring();
+  static {
+    dd2SpringInstance.setTestMode();  // prevents throwing on errors
+  }
   
   protected void setUp() {
 
@@ -107,7 +111,7 @@ public class Dd2SpringTest extends TestCase{
     checkDd2SpringErrMsg(
         "defaultingPrimAEMultInstanceDiffCasPool.xml",
         "running test defaultingPrimAEMultInstanceDiffCasPool.xml: \n" +
-"      *** WARN: line-number: 26 Top level Async Primitive specifies a scaleout of numberOfInstances=\"40\", but also specifies a Cas Pool size of numberOfCASes=\"30\".  The Cas Pool size is being forced to be the same as the scaleout.");
+"      *** WARN: line-number: 26 Top level Async Primitive specifies a scaleout of 40 , but also specifies a Cas Pool size of 30 .  The Cas Pool size is being forced to be the same as the scaleout.");
 
   }
   
@@ -243,6 +247,7 @@ public class Dd2SpringTest extends TestCase{
  
   private void checkDd2Spring(String dd) throws Exception {
     System.err.print("running test " + dd + ": ");
+
     File springContextFile = 
       dd2SpringInstance.convertDd2Spring(pathToDds + dd, dd2SpringXsltFilePath, saxonClasspath, "");
 
