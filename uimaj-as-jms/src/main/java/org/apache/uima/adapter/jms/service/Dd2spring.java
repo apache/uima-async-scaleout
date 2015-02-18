@@ -23,7 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,14 +34,11 @@ import java.util.List;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.adapter.jms.JmsConstants;
-import org.apache.uima.util.FileUtils;
 import org.apache.uima.util.Level;
 
 public class Dd2spring {
 
-  private static final Class[] mainArg = new Class[] { String[].class };
-
-  private static final Class THIS_CLASS = Dd2spring.class;
+  private static final Class<Dd2spring> THIS_CLASS = Dd2spring.class;
 
   private ClassLoader saxonClassLoader;
   
@@ -131,7 +127,7 @@ public class Dd2spring {
 
       saxonClassLoader = new URLClassLoader(classLoaderUrls, Object.class.getClassLoader());
     }
-    Class mainStartClass = null;
+    Class<?> mainStartClass = null;
     try {
       try {
         mainStartClass = Class.forName("net.sf.saxon.Transform", true, saxonClassLoader);
@@ -146,9 +142,22 @@ public class Dd2spring {
       }
   
       // args for saxon
-      // -l -s deployment_descriptor} -o output_file_path dd2spring.xsl_file_path
+      // -l -s deployment_descriptor} -o output_file_path dd2spring.xsl_file_path <-x sax_parser_class>
+      // If a custom framework includes a custom XML parser we may also need a custom parser for Saxon,
+      // so check for the existence of a class with "_SAXParser" appended to the framework name. 
   
       List<String> argsForSaxon = new ArrayList<String>();
+      String uimaFrameworkClass = System.getProperty("uima.framework_impl");
+      if (uimaFrameworkClass != null) {
+        String saxonParserClass = uimaFrameworkClass + "_SAXParser";
+        try {
+          ClassLoader.getSystemClassLoader().loadClass(saxonParserClass);
+          argsForSaxon.add("-x");
+          argsForSaxon.add(saxonParserClass);
+        } catch (ClassNotFoundException e) {
+          // No parser clkass defined
+        }
+      }
       argsForSaxon.add("-l"); // turn on line numbers
       argsForSaxon.add("-s"); // source file
       argsForSaxon.add(ddFilePath); // source file
@@ -156,13 +165,11 @@ public class Dd2spring {
       argsForSaxon.add(tempFile.getAbsolutePath()); // output file
       argsForSaxon.add(dd2SpringXsltFilePath); // xslt transform to apply
   
-      if (null != System.getProperty("uima-as.dd2spring.noTempQueues")) {
-        argsForSaxon.add("noTempQueues=true"); // disable generate of temp queues (for testing)
-      }
-  
+      UIMAFramework.getLogger(THIS_CLASS).log(Level.INFO, "Saxon args: " + argsForSaxon); 
+      
       Method mainMethod = null;
       try {
-        mainMethod = mainStartClass.getMethod("main", mainArg);
+        mainMethod = mainStartClass.getMethod("main", String[].class);
       } catch (SecurityException e) {
         e.printStackTrace();
         UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
