@@ -61,6 +61,7 @@ import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ConfigurationParameter;
+import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resource.metadata.impl.ConfigurationParameter_impl;
 import org.apache.uima.util.Level;
 
@@ -1122,12 +1123,21 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   // Return metadata
   public void sendMetadata(Endpoint anEndpoint) throws AsynchAEException {
-    addConfigIntParameter(AnalysisEngineController.AEInstanceCount, analysisEnginePoolSize);
+   
+	  if ( ((ProcessingResourceMetaData) getAnalysisEngineMetadata())
+	            .getConfigurationParameterSettings().getParameterValue(
+	              AnalysisEngineController.AEInstanceCount) == null ) {
+	     addConfigIntParameter(AnalysisEngineController.AEInstanceCount, analysisEnginePoolSize);
+	  }
 
-    if (getAnalysisEngineMetadata().getOperationalProperties().getOutputsNewCASes()) {
-      addConfigIntParameter(AnalysisEngineController.CasPoolSize, super.componentCasPoolSize);
-    }
-    super.sendMetadata(anEndpoint, getAnalysisEngineMetadata());
+	  if (getAnalysisEngineMetadata().getOperationalProperties().getOutputsNewCASes()) {
+         if ( ((ProcessingResourceMetaData) getAnalysisEngineMetadata())
+	              .getConfigurationParameterSettings().getParameterValue(
+	                AnalysisEngineController.CasPoolSize) == null ) {
+	                addConfigIntParameter(AnalysisEngineController.CasPoolSize, super.componentCasPoolSize);
+	     }
+	  }
+	  super.sendMetadata(anEndpoint, getAnalysisEngineMetadata());
   }
 
   private AnalysisEngineMetaData getAnalysisEngineMetadata() {
