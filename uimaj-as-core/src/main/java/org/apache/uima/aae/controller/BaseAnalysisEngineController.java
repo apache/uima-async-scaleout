@@ -54,10 +54,12 @@ import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
+import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.UimaEEAdminContext;
+import org.apache.uima.aae.WarmUpDataProvider;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -256,6 +258,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   private String serviceName=null;
   
   public abstract void dumpState(StringBuffer buffer, String lbl1);
+  
+  protected abstract void doWarmUp(CAS cas, String casReferenceId) throws Exception;
 
   public BaseAnalysisEngineController() {
 
@@ -1168,7 +1172,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           }
           if (!isStopped()) {
             Endpoint endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
-            if ( endpoint != null ) {
+            if ( endpoint != null && !"WarmupDelegate".equals(endpoint.getDelegateKey() ) ) {
               getOutputChannel().sendReply((Throwable) anErrorContext.get(ErrorContext.THROWABLE_ERROR), 
                       casReferenceId, parentCasReferenceId,
                       endpoint, AsynchAEMessage.Process);
@@ -2948,4 +2952,80 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public Map<String,String> getDeadClientMap() {
 	  return deadClientDestinationMap;
   }
+  public void warmUp(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception {
+	  if ( isPrimitive() ) {
+		  runWarmup(warmUpDataPath, warmUpLatch);
+	  } else {
+		  asyncWarmup(warmUpDataPath, warmUpLatch);
+	  }
+  }
+  
+  private void runWarmup(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception {
+	  long warmupStartTime = 0;
+	  long warmupCasCount=0;
+	  CAS cas = null;
+	  boolean isException = false;
+      if ( isTopLevelComponent() ) {
+          try {
+        	  warmupStartTime = System.currentTimeMillis();
+        	  WarmUpDataProvider wdp = new WarmUpDataProvider(warmUpDataPath);
+	    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	    	     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+	    	                "runWarmup", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	    	                "UIMAEE_service_warmup_start_INFO", new Object[] { getComponentName(), Thread.currentThread().getId() });
+	    	  }
+	    	  
+	    	  while( wdp.hasNext() && !isStopped()) {
+	    		  cas = getCasManagerWrapper().getNewCas();
+	    		  wdp.next(cas);
+	    		  warmupCasCount++;
+	    		  UIDGenerator idGenerator = new UIDGenerator();
+	    		  String casReferenceId = idGenerator.nextId();
+
+	    		  CasStateEntry cse = getLocalCache().createCasStateEntry(casReferenceId);
+	    		  CacheEntry entry = getInProcessCache().register(cas, null, null, null,
+	    				  casReferenceId, null, false);
+	    		  entry.setWarmUp(true);
+	    		  // delegate execution to the controller (primitive or aggregate)
+	    		  doWarmUp(cas, casReferenceId);
+
+	    	  }
+	    	  //        	      }
+        		  
+          } catch( Exception e) {
+        	  isException = true;
+        	  throw e;
+          }
+          finally {
+      		  if ( !isException ) {
+       			  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+       			     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+        			                "runWarmup", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+        			                "UIMAEE_service_warmup_success_INFO", new Object[] { getComponentName(), Thread.currentThread().getId(), warmupCasCount, (System.currentTimeMillis()-warmupStartTime)/1000 });
+       			  }
+               	  if ( this instanceof AggregateAnalysisEngineController ) {
+            		  ((AggregateAnalysisEngineController_impl)this).startProcessing();
+        		  }
+        	  }
+          }
+    	  
+      }
+	  warmUpLatch.countDown();
+  }
+  private void asyncWarmup(final String warmUpDataPath, final CountDownLatch warmUpLatch) throws Exception {
+	  Thread t = new Thread(new Runnable() {
+			public void run() {
+				try {
+					runWarmup(warmUpDataPath, warmUpLatch);
+				} catch( Exception e) {
+					//e.printStackTrace();
+					notifyListenersWithInitializationStatus(new RuntimeException(e));
+				}
+			}
+
+	  });
+	  t.start();
+  
+  }
+  
 }

@@ -453,9 +453,10 @@ public class ProcessRequestHandler_impl extends HandlerBase {
         // we dont want to send a generated CAS back to the CM, override
         // with an endpoint provided by the client of
         // this service. Client endpoint is attached to an input Cas cache entry.
-        aMessageContext.getEndpoint().setEndpoint(replyToEndpoint.getEndpoint());
-        aMessageContext.getEndpoint().setServerURI(replyToEndpoint.getServerURI());
-
+        if ( replyToEndpoint != null ) {
+            aMessageContext.getEndpoint().setEndpoint(replyToEndpoint.getEndpoint());
+            aMessageContext.getEndpoint().setServerURI(replyToEndpoint.getServerURI());
+        } 
         // Before sending a CAS to Cas Multiplier, the aggregate has
         // saved the CM key in the CAS cache entry. Fetch the key
         // of the CM so that we can ask the right Shadow Cas Pool for
@@ -1021,7 +1022,18 @@ public class ProcessRequestHandler_impl extends HandlerBase {
         int payload = messageContext.getMessageIntProperty(AsynchAEMessage.Payload);
         int command = messageContext.getMessageIntProperty(AsynchAEMessage.Command);
 
-        getController().getControllerLatch().waitUntilInitialized();
+        CacheEntry ce = null;
+        if (AsynchAEMessage.CASRefID == payload) {
+        	String cid = null;
+        	// Fetch id of the CAS from the message.
+            if ((cid = getCasReferenceId(messageContext)) == null) {
+              return; // Invalid message. Nothing to do
+            }
+            ce = getController().getInProcessCache().getCacheEntryForCAS(cid);
+        }
+        if ( ce == null || !ce.isWarmUp() ) {
+            getController().getControllerLatch().waitUntilInitialized();
+        }
 
         // If a Process Request, increment number of CASes processed
         if (messageContext.getMessageIntProperty(AsynchAEMessage.MessageType) == AsynchAEMessage.Request

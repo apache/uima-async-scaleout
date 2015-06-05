@@ -525,7 +525,12 @@ public class InProcessCache implements InProcessCacheMBean {
   public static class CacheEntry {
     public static final int FINAL_STATE = 1;
 
-    private CAS cas;
+    private volatile boolean warmUp = false;
+    
+    private volatile boolean failed = false;;
+    
+	
+	private CAS cas;
 
     // the following is set to true if the CAS has been created by CAS Multiplier
     // This flag is used to determine if the CAS should be output to client.
@@ -615,10 +620,25 @@ public class InProcessCache implements InProcessCacheMBean {
     public Semaphore getThreadCompletionSemaphore() {
       return threadCompletionSemaphore;
     }
+    public boolean isFailed() {
+  		return failed;
+  	}
+
+    public void setFailed(boolean failed) {
+  		this.failed = failed;
+  		Thread.dumpStack();
+    }
 
     public void setThreadCompletionSemaphore(Semaphore threadCompletionSemaphore) {
       this.threadCompletionSemaphore = threadCompletionSemaphore;
     }
+    public boolean isWarmUp() {
+ 		return warmUp;
+ 	}
+
+ 	public void setWarmUp(boolean warmUp) {
+ 		this.warmUp = warmUp;
+ 	}
     // never called 5/2013  was for XCAS
 //    protected CacheEntry(CAS aCas, String aCasReferenceId, MessageContext aMessageAccessor,
 //            OutOfTypeSystemData aotsd) {

@@ -185,8 +185,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
   }
 
   public static class CasStateEntry {
-
-    private String casReferenceId;
+	private String casReferenceId;
 
     private volatile boolean waitingForChildren; // true if in FinalState and still has children in play
     
@@ -488,5 +487,8 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     public List<AnalysisEnginePerformanceMetrics> getAEPerformanceList() {
       return performanceList;
     }
+    
+  
+
   }
 }

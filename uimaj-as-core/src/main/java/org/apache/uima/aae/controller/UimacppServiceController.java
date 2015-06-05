@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -844,6 +845,12 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
     // TODO Auto-generated method stub
     return null;
   }
+
+@Override
+public void warmUp(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
 }
 
 /**

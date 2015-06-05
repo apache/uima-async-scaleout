@@ -30,7 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMARuntimeException;
@@ -39,8 +42,10 @@ import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.InputChannel;
+import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
+import org.apache.uima.aae.WarmUpDataProvider;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.ControllerDelegate;
 import org.apache.uima.aae.delegate.Delegate;
@@ -173,6 +178,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   // to ingest more CASes as it is currently capable of processing without waiting
   // for a free CAS from the CasPool.
   public Semaphore semaphore = null;
+  
+  private Lock mergeLock = new ReentrantLock();
   
   /**
    * 
@@ -1019,7 +1026,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // CASes will be dropped in finalStep() as they come back from delegates. When all are
         // accounted for and dropped, the parent CAS will be returned back to the client
         // with an exception.
-        if (parentCasStateEntry.isFailed()) {
+        if (parentCasStateEntry != null && parentCasStateEntry.isFailed()) {
           // Fetch Delegate object for the CM that produced the CAS. The producer key
           // is associated with a cache entry in the ProcessRequestHandler. Each new CAS
           // must have a key of a CM that produced it.
@@ -1090,7 +1097,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
     return false;
   }
-
   /**
    * This is a process method that is executed for CASes not created by a Multiplier in this
    * aggregate.
@@ -1703,7 +1709,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
       return;
     }
-
     // Found entries in caches for a given CAS id
     try {
       endpoint = getInProcessCache().getEndpoint(null, aCasReferenceId);
@@ -1715,8 +1720,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           return;
         }
         
-  	 // System.out.println(" ---- Controller::"+getComponentName()+" CAS:"+casStateEntry.getCasReferenceId()+ " Has Children:"+casHasChildrenInPlay(casStateEntry)+" Parent::"+casStateEntry.getInputCasReferenceId());
-
         // Check if this CAS has children that are still being processed in this aggregate
         if (casHasChildrenInPlay(casStateEntry)) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -1734,6 +1737,22 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           casStateEntry.waitingForChildrenToFinish(true);
           return;
         }
+      
+        // check if this is a warm up CAS. Such CAS is internally created with
+        // a main purpose of warming up analytics.
+        if ( isTopLevelComponent() && cacheEntry.isWarmUp()) {
+        	if ( cacheEntry.getThreadCompletionSemaphore() != null ) {
+            	cacheEntry.getThreadCompletionSemaphore().release();
+        	}
+        	// we are in the warm up state which means the pipelines have been initialized
+        	// and we are sending CASes to warm up/prime the analytics. Since we
+        	// reached the end of the flow here, just return now. There is nothing
+        	// else to do with the CAS.
+        	return;
+        	
+        }
+
+        
         casStateEntry.waitingForChildrenToFinish(false);
         if (UIMAFramework.getLogger().isLoggable(Level.FINEST)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(),
@@ -1792,7 +1811,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // Send a reply to the Client. If the CAS is an input CAS it will be dropped
           cEndpoint = replyToClient(cacheEntry, casStateEntry);
           replySentToClient = true;
-          if (cEndpoint.isRemote()) {
+          
+          if (cEndpoint != null && cEndpoint.isRemote()) {
             // if this service is a Cas Multiplier don't remove the CAS. It will be removed
             // when a remote client sends explicit Release CAS Request
             if (!isCasMultiplier()) {
@@ -2664,9 +2684,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     mergeTypeSystem(aTypeSystem, fromDestination, null);
   }
 
-  public synchronized void mergeTypeSystem(String aTypeSystem, String fromDestination,
+//  public synchronized void mergeTypeSystem(String aTypeSystem, String fromDestination,
+  public void mergeTypeSystem(String aTypeSystem, String fromDestination,
           String fromServer) throws AsynchAEException {
-
+    mergeLock.lock();
     try {
       // Find the endpoint for this service, given its input queue name and broker URI.
       // We now allow endpoints managed by different servers to have the same queue name.
@@ -2792,7 +2813,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
     } catch (Exception e) {
       throw new AsynchAEException(e);
+    } finally {
+    	mergeLock.unlock();
     }
+    
   }
   
   public static TypeSystemImpl getTypeSystemImpl(ProcessingResourceMetaData resource) throws ResourceInitializationException {
@@ -2809,7 +2833,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     return ((CASImpl) casMgr).getTypeSystemImpl();
   }
 
-  private synchronized void completeInitialization() throws Exception {
+  private void completeInitialization() throws Exception {
     if (initialized) {
       return;
     }
@@ -2856,22 +2880,35 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               "completeInitialization", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMAEE_initialized_controller__INFO", new Object[] { getComponentName() });
     }
-
-    // Open latch to allow messages to be processed. The
-    // latch was closed to prevent messages from entering
-    // the controller before it is initialized.
-    latch.openLatch(getName(), isTopLevelComponent(), true);
-    initialized = true;
-    // Notify client listener that the initialization of the controller was successfull
-    notifyListenersWithInitializationStatus(null);
-    //  If this is a collocated aggregate change its state to RUNNING from INITIALIZING.
-    //  The top level aggregate state is changed when listeners on its input queue are
-    //  succesfully started in SpringContainerDeployer.doStartListeners() method.
-    if ( !isTopLevelComponent() ) {
-      changeState(ServiceState.RUNNING);
+    String warmUpDataPath=null;
+    // start warm up engine which will prime pipeline analytics
+    if ( isTopLevelComponent() && (warmUpDataPath = System.getProperty("WarmUpDataPath")) != null ) {
+//    	getInputChannel().startTempListeners();
+    	CountDownLatch warmUpLatch = new CountDownLatch(1);
+        super.warmUp(warmUpDataPath,warmUpLatch);
+        //warmUpLatch.await();
+    } else {
+    	startProcessing();
     }
   }
 
+  protected void startProcessing() throws Exception {
+	  
+	    // Open latch to allow messages to be processed. The
+	    // latch was closed to prevent messages from entering
+	    // the controller before it is initialized.
+	    latch.openLatch(getName(), isTopLevelComponent(), true);
+	    initialized = true;
+	    // Notify client listener that the initialization of the controller was successfull
+	    notifyListenersWithInitializationStatus(null);
+	    //  If this is a collocated aggregate change its state to RUNNING from INITIALIZING.
+	    //  The top level aggregate state is changed when listeners on its input queue are
+	    //  succesfully started in SpringContainerDeployer.doStartListeners() method.
+	    if ( !isTopLevelComponent() ) {
+	      changeState(ServiceState.RUNNING);
+	    }
+	  
+  }
   private String findKeyForValue(String fromDestination) {
 
     Set set = destinationMap.entrySet();
@@ -3287,5 +3324,40 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
   public int getServiceCasPoolSize() {
 	 return ((AsynchAECasManager_impl)casManager).getCasPoolSize();
+  }
+  protected void doWarmUp(CAS cas, String casReferenceId) throws Exception {
+	  long processTime = 0;
+      Semaphore ts = new Semaphore(0);
+	  try {
+		  
+	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(), "doWarmUp",
+	                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_warmup_start_cas__FINE",
+	                  new Object[] { casReferenceId});
+	      }
+	      CacheEntry entry = getInProcessCache().getCacheEntryForCAS(casReferenceId);
+	      entry.setThreadCompletionSemaphore(ts);
+	      long t1 = System.currentTimeMillis();
+	      process(cas, casReferenceId);
+	      // wait until the CAS reaches final step
+	      ts.acquire();
+		  processTime = System.currentTimeMillis() - t1;
+		  CasStateEntry cse = getLocalCache().lookupEntry(casReferenceId);
+	  } catch( Exception e) {
+	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                  "doWarmUp", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAEE_service_warmup_failed_WARNING", getComponentName());
+	      }
+	      throw e;
+	  } finally {
+		  dropCAS(casReferenceId, true);
+	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(), "doWarmUp",
+	                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_warmup_dropping_cas__FINE",
+	                  new Object[] { casReferenceId, processTime});
+	      }
+
+	  }
   }
 }

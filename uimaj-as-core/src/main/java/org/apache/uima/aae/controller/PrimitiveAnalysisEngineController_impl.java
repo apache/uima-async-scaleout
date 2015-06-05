@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae.controller;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
@@ -53,12 +55,14 @@ import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineManagement;
 import org.apache.uima.analysis_engine.CasIterator;
+import org.apache.uima.analysis_engine.impl.AnalysisEngineManagementImpl;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.CASImpl;
 import org.apache.uima.cas.impl.OutOfTypeSystemData;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ConfigurationParameter;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
@@ -73,6 +77,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   private static final Class CLASS_NAME = PrimitiveAnalysisEngineController_impl.class;
   private static final String DUMP_HEAP_THRESHOLD = "dumpHeapThreshold";
   
+  private volatile boolean casPoolInited = false;
   // Stores AE metadata
   private AnalysisEngineMetaData analysisEngineMetadata;
 
@@ -193,8 +198,28 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       sharedInitSemaphore.acquire();
       // Parse the descriptor in the calling thread.
       rSpecifier = UimaClassFactory.produceResourceSpecifier(super.aeDescriptor);
+/*      
+      if ( rSpecifier instanceof AnalysisEngineDescription ) {
+          String name = ((AnalysisEngineDescription)rSpecifier).getAnalysisEngineMetaData().getName();
+          ((AnalysisEngineDescription)rSpecifier).getAnalysisEngineMetaData().setName(name+"-"+Thread.currentThread().getId());
+      //    System.out.println(getUimaContextAdmin().);
+          Field f =getUimaContextAdmin().getClass().getDeclaredField("mQualifiedContextName");//getQualifiedContextName()
+          f.setAccessible(true);
+         
+          f.get(getUimaContextAdmin().getQualifiedContextName()+Thread.currentThread().getId());
+      }
+      */
+      //paramsMap.put(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX, String.valueOf(Thread.currentThread().getId()));
+      //String p = (String)paramsMap.get(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX);//      +"-"+Thread.currentThread().getId();
+      //p = p.substring(0, p.lastIndexOf(","))+" "+Thread.currentThread().getId()+",";
+      //paramsMap.remove(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX);
+      //paramsMap.put(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX, p);
       AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
-        //  Call to produceAnalysisEngine() may take a long time to complete. While this
+   
+      //AnalysisEngineManagementImpl aemi = (AnalysisEngineManagementImpl)ae.getManagementInterface();
+      //System.out.println("..... Created AE instance - Mgmt Instance Hashcode:"+aemi.hashCode()+" Unique MBean Name:"+aemi.getUniqueMBeanName());
+         // ae.getManagementInterface().getClass().
+      //  Call to produceAnalysisEngine() may take a long time to complete. While this
         //  method was executing, the service may have been stopped. Before continuing 
         //  check if the service has been stopped. If so, destroy AE instance and return.
         if ( isStopped() ) {
@@ -216,6 +241,54 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   "UIMAEE_multiple_deployment_not_allowed__WARNING", new Object[] {this.getComponentName(), ae.getMetaData().getName()});
         }
         aeInstancePool.checkin(ae);
+        
+        if (!isStopped() && !casPoolInited) {
+        	casPoolInited = true;
+        	
+            if (errorHandlerChain == null) {
+                super.plugInDefaultErrorHandlerChain();
+            }
+
+            getMonitor().setThresholds(getErrorHandlerChain().getThresholds());
+            // Initialize Cas Manager
+            if (getCasManagerWrapper() != null) {
+              try {
+            	  // Below should always be true. In spring context file AsynchAECasManager_impl
+            	  // is instantiated and setCasPoolSize() method is called which sets the 
+            	  // initialized state = true. isInitialized() returning true just means that
+            	  // setCasPoolSize() was called.
+                if (getCasManagerWrapper().isInitialized()) {
+                  getCasManagerWrapper().addMetadata(getAnalysisEngineMetadata());
+                  if (isTopLevelComponent()) {
+                    getCasManagerWrapper().initialize("PrimitiveAEService");
+                    CAS cas = getCasManagerWrapper().getNewCas("PrimitiveAEService");
+                    cas.release();
+                  }
+                }
+              } catch( Exception e) {
+            	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                              "postInitialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                              "UIMAEE_service_exception_WARNING", getComponentName());
+
+                      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                              "postInitialize", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                              "UIMAEE_exception__WARNING", e);
+            	  }
+            	  throw new AsynchAEException(e);
+              }
+            }
+        }
+        
+        
+        String warmUpDataPath=null;
+		// start warm up engine which will prime pipeline analytics
+		if ( isTopLevelComponent() && (warmUpDataPath = System.getProperty("WarmUpDataPath")) != null ) {
+		     CountDownLatch warmUpLatch = new CountDownLatch(1);
+			 warmUp(warmUpDataPath, warmUpLatch);
+			 warmUpLatch.await();
+		}
+		
         if (aeInstancePool.size() == analysisEnginePoolSize) {
           try {
             postInitialize();
@@ -299,6 +372,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       serviceInfo.setAnalysisEngineInstanceCount(analysisEnginePoolSize);
 
       if (!isStopped()) {
+    	  /*
         getMonitor().setThresholds(getErrorHandlerChain().getThresholds());
         // Initialize Cas Manager
         if (getCasManagerWrapper() != null) {
@@ -315,6 +389,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 cas.release();
               }
             }
+            */
+     if (getCasManagerWrapper() != null) {
+          try {
             if (isTopLevelComponent()) {
               // add delay to allow controller listener to plug itself in
               synchronized(this) {
@@ -551,6 +628,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
    
   private String produceUniqueName(AnalysisEngineManagement aem) {
+//	  System.out.println(">>>>>>>>>>>>>>>>>>> Thread:"+Thread.currentThread().getId()+" MBean:"+aem.getUniqueMBeanName());
     String[] parts = aem.getUniqueMBeanName().split(",");
     StringBuffer sb = new StringBuffer();
     for( String part : parts) {
@@ -574,6 +652,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         sb.append("/").append(part.substring(part.trim().indexOf("=")+1));
       }
     }
+	//  System.out.println("<<<<<<<<<<<<<<<<<<< Thread:"+Thread.currentThread().getId()+" MBean:"+sb.toString());
+
     return sb.toString();
   }
 
@@ -682,6 +762,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       
       
       AnalysisEngineManagement rootAem = ae.getManagementInterface();
+      //System.out.println("%%%%%%%%%%%%%%%%%%%% Unique MBean Name:"+rootAem.getUniqueMBeanName()+" AE Instance Hashcode"+ae.hashCode());
       if ( rootAem.getComponents().size() > 0 ) {
           getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects);
       } else {
@@ -866,6 +947,27 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           // Increment number of CASes processed by this service
           sequence++;
         }
+        try {
+           CacheEntry cacheEntry =
+                getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+
+           if ( isTopLevelComponent() && cacheEntry.isWarmUp() && "WarmupDelegate".equals(anEndpoint.getDelegateKey())) {
+              localCache.lookupEntry(newEntry.getCasReferenceId()).setDropped(true);
+              localCache.remove(newEntry.getCasReferenceId());
+              // Remove Stats from the global Map associated with the new CAS
+              // These stats for this CAS were added to the response message
+              // and are no longer needed
+              dropCasStatistics(newEntry.getCasReferenceId());
+
+        	  return;
+           }
+        
+        } catch( Exception exx ) {
+           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "process", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", exx);
+        }
+
         if (!anEndpoint.isRemote()) {
           UimaTransport transport = getTransport(anEndpoint.getEndpoint());
           UimaMessage message = transport.produceMessage(AsynchAEMessage.Process,
@@ -932,6 +1034,24 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 new Object[] { Thread.currentThread().getName(), getComponentName(),
                     aCasReferenceId, (double) (super.getCpuTime() - time) / (double) 1000000 });
       }
+
+
+      // check if this is a warm up CAS. Such CAS is internally created with
+      // a main purpose of warming up analytics.
+      CacheEntry cacheEntry =
+              getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+
+      if ( isTopLevelComponent() && cacheEntry.isWarmUp()) {
+//      	if ( cacheEntry.getThreadCompletionSemaphore() != null ) {
+//          	cacheEntry.getThreadCompletionSemaphore().release();
+//      	}
+      	// we are in the warm state which means the pipelines have been initialized
+      	// and we are sending CASes to warm up/prime the analytics. Since we
+      	// reached the end of the flow here, just return now. There is nothing
+      	// else to do with the CAS.
+      	return;
+      }
+
       getMonitor().resetCountingStatistic("", Monitor.ProcessErrorCount);
       // Set total number of children generated from this CAS
       // Store total time spent processing this input CAS
@@ -971,8 +1091,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       after.getUniqueName(),
                       after.getAnalysisTime()- before.getAnalysisTime(),
                       after.getNumProcessed());
-            //System.out.println("********************"+metrics.getUniqueName());
-           // System.out.println("********************"+metrics.getName());
+           // System.out.println("********************"+metrics.getUniqueName()+" Analysis Time:"+metrics.getAnalysisTime());
+            //System.out.println("********************"+metrics.getName()+" Analysis Time:"+metrics.getAnalysisTime());
             performanceList.add(metrics);
             break;
           }
@@ -1125,19 +1245,20 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   public void sendMetadata(Endpoint anEndpoint) throws AsynchAEException {
    
 	  if ( ((ProcessingResourceMetaData) getAnalysisEngineMetadata())
-	            .getConfigurationParameterSettings().getParameterValue(
-	              AnalysisEngineController.AEInstanceCount) == null ) {
-	     addConfigIntParameter(AnalysisEngineController.AEInstanceCount, analysisEnginePoolSize);
+            .getConfigurationParameterSettings().getParameterValue(
+              AnalysisEngineController.AEInstanceCount) == null ) {
+		    addConfigIntParameter(AnalysisEngineController.AEInstanceCount, analysisEnginePoolSize);
 	  }
 
-	  if (getAnalysisEngineMetadata().getOperationalProperties().getOutputsNewCASes()) {
-         if ( ((ProcessingResourceMetaData) getAnalysisEngineMetadata())
-	              .getConfigurationParameterSettings().getParameterValue(
-	                AnalysisEngineController.CasPoolSize) == null ) {
-	                addConfigIntParameter(AnalysisEngineController.CasPoolSize, super.componentCasPoolSize);
-	     }
-	  }
-	  super.sendMetadata(anEndpoint, getAnalysisEngineMetadata());
+    if (getAnalysisEngineMetadata().getOperationalProperties().getOutputsNewCASes()) {
+  	  if ( ((ProcessingResourceMetaData) getAnalysisEngineMetadata())
+              .getConfigurationParameterSettings().getParameterValue(
+                AnalysisEngineController.CasPoolSize) == null ) {
+  	    	addConfigIntParameter(AnalysisEngineController.CasPoolSize, super.componentCasPoolSize);
+  	  }
+
+    }
+    super.sendMetadata(anEndpoint, getAnalysisEngineMetadata());
   }
 
   private AnalysisEngineMetaData getAnalysisEngineMetadata() {
@@ -1355,5 +1476,51 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public void dumpState(StringBuffer buffer, String lbl1) {
     buffer.append(getComponentName()+" State:"+getState());
+  }
+
+  protected void doWarmUp(CAS cas, String casReferenceId) throws Exception {
+	long processTime = 0;
+	try {
+	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(), "doWarmUp",
+	                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_warmup_start_cas__FINE",
+	                new Object[] { casReferenceId});
+	    }
+
+		long t1 = System.currentTimeMillis();
+		
+		Endpoint endpoint = new Endpoint_impl();
+		// set fake delegate key. This will be checked in process() method
+		// to make sure we are not attempting sending the CAS to a reply queue.
+		// Warm up simulates incoming CASes but there is no client to reply to.
+		endpoint.setDelegateKey("WarmupDelegate");
+		
+		process(cas, casReferenceId, endpoint);
+		processTime = System.currentTimeMillis() - t1;
+
+//		CacheEntry entry = getInProcessCache().getCacheEntryForCAS(casReferenceId);
+//	    if ( entry != null && entry.isFailed()) {
+//		   if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+//		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+//		                  "doWarmUp", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+//		                  "UIMAEE_service_warmup_failed_WARNING", getComponentName());
+//		   }
+//		   throw new ResourceInitializationException();
+//	    }
+	} catch( Exception e) {
+		 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                  "doWarmUp", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAEE_service_warmup_failed_WARNING", getComponentName());
+	      }
+	      throw e;
+	} finally {
+		  dropCAS(casReferenceId, true);
+		 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(), "doWarmUp",
+	                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_warmup_dropping_cas__FINE",
+	                  new Object[] { casReferenceId, processTime});
+	      }
+	}
   }
 }

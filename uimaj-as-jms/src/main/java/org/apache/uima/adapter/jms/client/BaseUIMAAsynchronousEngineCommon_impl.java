@@ -1594,6 +1594,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       cachedRequest.setException(exception);
       cachedRequest.setProcessException();
     }
+    cpcReadySemaphore.release();
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(
               Level.INFO,
@@ -2378,7 +2379,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	        serviceDelegate.removeCasFromOutstandingList(casReferenceId);
     	        // Check if all replies have been received
     	        long outstandingCasCount = outstandingCasRequests.decrementAndGet();
-    	        if (outstandingCasCount == 0) {
+
+    	        if (outstandingCasCount <= 0) {
     	          cpcReadySemaphore.release();
     	        }
     	        //	

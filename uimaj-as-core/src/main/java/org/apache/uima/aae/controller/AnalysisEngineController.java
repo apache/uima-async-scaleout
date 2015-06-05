@@ -20,6 +20,7 @@
 package org.apache.uima.aae.controller;
 
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.aae.AsynchAECasManager;
@@ -230,4 +231,6 @@ public interface AnalysisEngineController extends ControllerLifecycle {
    * @return
    */
   public String getPID();
+  
+  public void warmUp(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception;
 }

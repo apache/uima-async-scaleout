@@ -104,6 +104,11 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
 
   private void sendExceptionToClient(Throwable t, String aCasReferenceId, Endpoint anEndpoint,
           AnalysisEngineController aController) throws Exception {
+	// When warming up the pipeline there is no client. CASes are
+	// created by the controller itself. Just return in this case.                
+	if ( anEndpoint != null && "WarmupDelegate".equals(anEndpoint.getDelegateKey())) {
+		  return;
+	}
     // Notify the parent of the exception
     if (anEndpoint != null && aCasReferenceId != null && !anEndpoint.isCasMultiplier()) {
       try {
@@ -384,6 +389,9 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
               anErrorContext.add(AsynchAEMessage.SkipPendingLists, "true");
             }
             if (ErrorHandler.TERMINATE.equalsIgnoreCase(threshold.getAction())) {
+            	if ( aController.isTopLevelComponent() && t instanceof Exception  ) {
+            		aController.notifyListenersWithInitializationStatus((Exception)t);
+            	}
               anErrorContext.add(ErrorContext.THROWABLE_ERROR, t);
               if (casReferenceId != null) {
                 try {

@@ -547,7 +547,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       failed = true;
     }
   }
-
+  public Endpoint getEndpoint() {
+	  return endpoint;
+  }
   private void terminate(Throwable t) {
     // ****************************************
     // terminate the service
