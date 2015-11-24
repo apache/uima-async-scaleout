@@ -37,6 +37,7 @@ import org.apache.uima.aae.controller.EventSubscriber;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.monitor.statistics.AEMetrics;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.monitor.statistics.DelegateStats;
 import org.apache.uima.cas.CAS;
@@ -66,6 +67,8 @@ public class InProcessCache implements InProcessCacheMBean {
   int size = 0;
 
   private BaseAnalysisEngineController controller;
+  
+  
   
   /**
 	  Register controller to call when the cache becomes empty.
@@ -614,9 +617,16 @@ public class InProcessCache implements InProcessCacheMBean {
 		//  via ThreadLocal var
     private Semaphore threadCompletionSemaphore;
     
-    private Map<String,List<AnalysisEnginePerformanceMetrics>> delegateMetrics =
-            new ConcurrentHashMap<String, List<AnalysisEnginePerformanceMetrics>>();
+//    private Map<String,List<AnalysisEnginePerformanceMetrics>> delegateMetrics =
+//            new ConcurrentHashMap<String, List<AnalysisEnginePerformanceMetrics>>();
+
+    private Map<String,AEMetrics> delegateMetrics =
+            new ConcurrentHashMap<String, AEMetrics>();
+
     
+    private List<AnalysisEnginePerformanceMetrics> performanceBreakdownList = 
+  		  new ArrayList<AnalysisEnginePerformanceMetrics>();
+
     public Semaphore getThreadCompletionSemaphore() {
       return threadCompletionSemaphore;
     }
@@ -961,36 +971,40 @@ public class InProcessCache implements InProcessCacheMBean {
     }
 
     public void addDelegateMetrics(String delegateKey, List<AnalysisEnginePerformanceMetrics> metrics, boolean remote) {
-/*
-      System.out.println("................ Adding metrics for delegate:"+delegateKey+" Metrics Size:"+metrics.size()+" CAS:"+getCasReferenceId());
-      if ( remote && delegateMetrics.containsKey(delegateKey)) {
-//        List<AnalysisEnginePerformanceMetrics> delegateMetrics = 
-//                delegateMetrics.get(delegateKey);
-        List<AnalysisEnginePerformanceMetrics> currentMetrics = 
-            delegateMetrics.get(delegateKey);
-        for( AnalysisEnginePerformanceMetrics rm : metrics) {
-          for( AnalysisEnginePerformanceMetrics cm : currentMetrics ) {
-            if ( cm.getUniqueName().equals(rm.getUniqueName())) {
-              AnalysisEnginePerformanceMetrics apm = 
-                      new AnalysisEnginePerformanceMetrics(rm.getName(),rm.getUniqueName(),rm.getAnalysisTime(),cm.getNumProcessed()+rm.getNumProcessed());
-              currentMetrics.remove(cm);
-              currentMetrics.add(apm);
-              break;
-            }
-          }
-        }
-      } else {
-        delegateMetrics.put(delegateKey, metrics);
+      // Store AE performance metrics in a Map where the key
+      // is the unique name of AE. The value is AEMetrics
+      // instance which aggregates stats in AtomicLongs. The
+      // AEMetrics is used internally only. The service 
+      // returns metrics to the client in AnalysisEnginePerformanceMetrics
+      // instance. The AnalysisEnginePerformanceMetrics is immutable so
+      // once populated no changes can be done. Also, this class is 
+      // used by user code so its best to not change it.
+      for( AnalysisEnginePerformanceMetrics m : metrics ) {
+    	  AEMetrics aem;
+    	  // If there are multiple instances of AE (each in its own thread)
+    	  // performance stats are aggregated for all of them in 
+    	  // in a single instance of AEMetrics.
+    	  if ( delegateMetrics.containsKey(m.getUniqueName())) {
+    		  aem = delegateMetrics.get(m.getUniqueName());
+    	  } else {
+    		  aem = new AEMetrics();
+    		  aem.setName(m.getName());
+    		  delegateMetrics.put(m.getUniqueName(), aem);
+    	  }
+    	  aem.incrementAnalysisTime(m.getAnalysisTime());
+    	  aem.incrementNumProcessed(1);
       }
-*/
-      delegateMetrics.put(delegateKey, metrics);
+      
     }
     public List<AnalysisEnginePerformanceMetrics> getDelegateMetrics() {
-      List<AnalysisEnginePerformanceMetrics> metrics = new ArrayList<AnalysisEnginePerformanceMetrics>();
-      for( Entry<String,List<AnalysisEnginePerformanceMetrics>> dm : delegateMetrics.entrySet()) {
-        for(AnalysisEnginePerformanceMetrics metric : dm.getValue()) {
-          metrics.add(metric);
-        }
+  
+    	List<AnalysisEnginePerformanceMetrics> metrics = new ArrayList<AnalysisEnginePerformanceMetrics>();
+      for( Entry<String,AEMetrics> dm : delegateMetrics.entrySet()) {
+    	  metrics.add(
+    			  new AnalysisEnginePerformanceMetrics(dm.getValue().getName(),
+    					  dm.getKey(), 
+    					  dm.getValue().getAnalysisTime().get(), 
+    					  dm.getValue().getNumProcessed().get()));
       }
       return metrics;
     }

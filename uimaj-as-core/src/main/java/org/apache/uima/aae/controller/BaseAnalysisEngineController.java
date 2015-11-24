@@ -133,7 +133,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   protected AnalysisEngineController parentController;
 
-  private String endpointName;
+  protected String endpointName;
 
   protected ResourceSpecifier resourceSpecifier;
 
@@ -453,6 +453,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         }
       }
       paramsMap.put(Resource.PARAM_UIMA_CONTEXT, childContext);
+
       initialize(resourceSpecifier, paramsMap);
       initializeComponentCasPool(aComponentCasPoolSize, anInitialCasHeapSize, disableJCasCache);
       if (parentController instanceof AggregateAnalysisEngineController) {
@@ -1051,7 +1052,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           key = aDelegateEndpointName;
         }
       }
-
       if (key == null) {
         throw new AsynchAEException(getName() + "-Unable to look up delegate "
                 + aDelegateEndpointName + " in internal map");

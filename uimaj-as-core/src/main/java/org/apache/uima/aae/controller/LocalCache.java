@@ -21,10 +21,10 @@ package org.apache.uima.aae.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
@@ -32,8 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
-import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.delegate.Delegate;
+import org.apache.uima.aae.monitor.statistics.AEMetrics;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.flow.FinalStep;
 import org.apache.uima.util.Level;
@@ -246,6 +246,8 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     // reply from the 1st delegate.
     private CountDownLatch latch=null;
     
+    protected HashMap<String, AEMetrics > casMetrics = new HashMap<String, AEMetrics>();
+    
     public boolean waitingForChildrenToFinish() {
     	return waitingForChildren;
     }
@@ -256,6 +258,33 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
       return hostIpProcessingCAS;
     }
 
+    public void addMetrics(List<AnalysisEnginePerformanceMetrics> metrics) {
+    	for( AnalysisEnginePerformanceMetrics m : metrics) {
+    		AEMetrics aeMetrics;
+    		if ( casMetrics.containsKey(m.getUniqueName()) ) {
+    			aeMetrics = casMetrics.get(m.getUniqueName());
+    		} else {
+    			aeMetrics = new AEMetrics();
+    			aeMetrics.setName(m.getName());
+    			casMetrics.put(m.getUniqueName(), aeMetrics);
+    		}
+			aeMetrics.incrementAnalysisTime(m.getAnalysisTime());
+			aeMetrics.incrementNumProcessed(m.getNumProcessed());
+    	}
+    }
+    public List<AnalysisEnginePerformanceMetrics> getCASMetrics() {
+    	List<AnalysisEnginePerformanceMetrics> list = new ArrayList<AnalysisEnginePerformanceMetrics>();
+    	for( Entry<String, AEMetrics> m : casMetrics.entrySet()) {
+    		AnalysisEnginePerformanceMetrics metrics = 
+    				new AnalysisEnginePerformanceMetrics(
+    						m.getValue().getName(),
+    						m.getKey(),
+    						m.getValue().getAnalysisTime().get(),
+    						m.getValue().getNumProcessed().get() );
+    		list.add(metrics);
+    	}
+    	return list;
+    }
     public void setHostIpProcessingCAS(String hostIpProcessingCAS) {
       this.hostIpProcessingCAS = hostIpProcessingCAS;
     }

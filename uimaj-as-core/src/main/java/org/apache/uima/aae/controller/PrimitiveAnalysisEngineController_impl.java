@@ -19,13 +19,17 @@
 
 package org.apache.uima.aae.controller;
 
-import java.lang.reflect.Field;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -33,12 +37,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.UimaContext;
+import org.apache.uima.UimaContextAdmin;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
+import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandler;
@@ -55,22 +62,18 @@ import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineManagement;
 import org.apache.uima.analysis_engine.CasIterator;
-import org.apache.uima.analysis_engine.impl.AnalysisEngineManagementImpl;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.CASImpl;
-import org.apache.uima.cas.impl.OutOfTypeSystemData;
 import org.apache.uima.collection.CollectionReaderDescription;
+import org.apache.uima.impl.RootUimaContext_impl;
+import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ConfigurationParameter;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resource.metadata.impl.ConfigurationParameter_impl;
 import org.apache.uima.util.Level;
-
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.DomDriver;
 
 public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineController implements
         PrimitiveAnalysisEngineController {
@@ -97,7 +100,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   // meaning each thread executes the same AE instance.
   protected AnalysisEngineInstancePool aeInstancePool = null;
 
-  private String abortedCASReferenceId = null;
   // Create a shared semaphore to serialize creation of AE instances.
   // There is a single instance of this semaphore per JVM and it
   // guards uima core code that is not thread safe.
@@ -105,7 +107,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   static private Object threadDumpMonitor = new Object();
   static private Long lastDump = Long.valueOf(0);
-  private XStream xstream = new XStream(new DomDriver());
 
   // 6 args
   public PrimitiveAnalysisEngineController_impl(String anEndpointName,
@@ -186,7 +187,40 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   public int getAEInstanceCount() {
     return analysisEnginePoolSize;
   }
+  public static Object copy(Object orig) {
+      Object obj = null;
+      try {
+          // Write the object out to a byte array
+          ByteArrayOutputStream bos = new ByteArrayOutputStream();
+          ObjectOutputStream out = new ObjectOutputStream(bos);
+          out.writeObject(orig);
+          out.flush();
+          out.close();
 
+          // Make an input stream from the byte array and read
+          // a copy of the object back in.
+          ObjectInputStream in = new ObjectInputStream(
+              new ByteArrayInputStream(bos.toByteArray()));
+          obj = in.readObject();
+      }
+      catch(IOException e) {
+          e.printStackTrace();
+      }
+      catch(ClassNotFoundException cnfe) {
+          cnfe.printStackTrace();
+      }
+      return obj;
+  }
+  public void dumpContext(UimaContextAdmin ctx) {
+	  if ( !(ctx instanceof RootUimaContext_impl) ) {
+		  dumpContext(ctx.getRootContext());
+	  } else {
+		  Map<String, AnalysisEngineManagement> m = ctx.getManagementInterface().getComponents();
+		  for( Entry<String, AnalysisEngineManagement> e : m.entrySet()) {
+			  System.out.println(">>>>>>>> "+e.getKey()+" "+e.getValue().getUniqueMBeanName());
+		  }
+	  }
+  }
   public void initializeAnalysisEngine() throws ResourceInitializationException {
     ResourceSpecifier rSpecifier = null;
     
@@ -198,27 +232,38 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       sharedInitSemaphore.acquire();
       // Parse the descriptor in the calling thread.
       rSpecifier = UimaClassFactory.produceResourceSpecifier(super.aeDescriptor);
-/*      
-      if ( rSpecifier instanceof AnalysisEngineDescription ) {
-          String name = ((AnalysisEngineDescription)rSpecifier).getAnalysisEngineMetaData().getName();
-          ((AnalysisEngineDescription)rSpecifier).getAnalysisEngineMetaData().setName(name+"-"+Thread.currentThread().getId());
-      //    System.out.println(getUimaContextAdmin().);
-          Field f =getUimaContextAdmin().getClass().getDeclaredField("mQualifiedContextName");//getQualifiedContextName()
-          f.setAccessible(true);
-         
-          f.get(getUimaContextAdmin().getQualifiedContextName()+Thread.currentThread().getId());
+      UimaContextAdmin uctx = null;
+      if ( parentController != null ) {
+	        int scaleout = 1;
+    	    if (parentController instanceof AggregateAnalysisEngineController) {
+    	        String key = ((AggregateAnalysisEngineController) parentController)
+    	                .lookUpDelegateKey(endpointName);
+    	        if (key == null) {
+    	          if (((AggregateAnalysisEngineController) parentController).isDelegateKeyValid(endpointName)) {
+    	            key = endpointName;
+    	          }
+    	        }
+    	        if (key == null) {
+    	          throw new AsynchAEException(getName() + "-Unable to look up delegate "
+    	                  + endpointName + " in internal map");
+    	        }
+    	        Delegate d = ((AggregateAnalysisEngineController) parentController)
+    	                .lookupDelegate(key);
+    	        scaleout = d.getEndpoint().getConcurrentRequestConsumers();
+    	    }
+    	    if ( scaleout > 1) {
+   	    	    uctx = (UimaContextAdmin)parentController.getChildUimaContext(endpointName);
+   	    	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
+   	    	       dumpContext(uctx);
+   	    	    }
+    	    	paramsMap.remove(Resource.PARAM_UIMA_CONTEXT);
+    	        paramsMap.put(Resource.PARAM_UIMA_CONTEXT, uctx);
+    	    } else {
+    	    	uctx = (UimaContextAdmin)paramsMap.get(Resource.PARAM_UIMA_CONTEXT);
+    	    }
       }
-      */
-      //paramsMap.put(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX, String.valueOf(Thread.currentThread().getId()));
-      //String p = (String)paramsMap.get(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX);//      +"-"+Thread.currentThread().getId();
-      //p = p.substring(0, p.lastIndexOf(","))+" "+Thread.currentThread().getId()+",";
-      //paramsMap.remove(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX);
-      //paramsMap.put(AnalysisEngine.PARAM_MBEAN_NAME_PREFIX, p);
       AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
    
-      //AnalysisEngineManagementImpl aemi = (AnalysisEngineManagementImpl)ae.getManagementInterface();
-      //System.out.println("..... Created AE instance - Mgmt Instance Hashcode:"+aemi.hashCode()+" Unique MBean Name:"+aemi.getUniqueMBeanName());
-         // ae.getManagementInterface().getClass().
       //  Call to produceAnalysisEngine() may take a long time to complete. While this
         //  method was executing, the service may have been stopped. Before continuing 
         //  check if the service has been stopped. If so, destroy AE instance and return.
@@ -578,10 +623,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
    * @param uimaFullyQualifiedAEContext
    */
   private void getLeafManagementObjects(AnalysisEngineManagement aem, List<AnalysisEnginePerformanceMetrics> result, String uimaFullyQualifiedAEContext) {
-   
-    if (aem.getComponents().isEmpty()) {
-      // skip Flow Controller
-      if (!aem.getName().equals("Fixed Flow Controller")) {
+    if (aem.getComponents().isEmpty() && Thread.currentThread().getId() == aem.getThreadId()) {
         // is this primitive AE delegate in an aggregate. If so the mbean unique name will have "p0=" string. An examples mbean
         // name looks like this:
         // org.apache.uima:type=ee.jms.services,s=Top Level Aggregate TAE Uima EE Service,p0=Top Level Aggregate TAE Components,p1=SecondLevelAggregateCM Components,p2=ThirdLevelAggregateCM Components,name=Multiplier1
@@ -602,11 +644,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             }
           }
         }
-        result.add(deepCopyMetrics(aem, uimaFullyQualifiedAEContext));
-      } 
+        AnalysisEnginePerformanceMetrics m = deepCopyMetrics(aem, uimaFullyQualifiedAEContext);
+        result.add(m);
     } else {
       for (AnalysisEngineManagement child : (Iterable<AnalysisEngineManagement>) aem.getComponents().values()) {
-        getLeafManagementObjects(child, result, produceUniqueName(aem));
+    	  getLeafManagementObjects(child, result, produceUniqueName(aem));
       }
     }
   }
@@ -628,7 +670,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
    
   private String produceUniqueName(AnalysisEngineManagement aem) {
-//	  System.out.println(">>>>>>>>>>>>>>>>>>> Thread:"+Thread.currentThread().getId()+" MBean:"+aem.getUniqueMBeanName());
     String[] parts = aem.getUniqueMBeanName().split(",");
     StringBuffer sb = new StringBuffer();
     for( String part : parts) {
@@ -652,8 +693,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         sb.append("/").append(part.substring(part.trim().indexOf("=")+1));
       }
     }
-	//  System.out.println("<<<<<<<<<<<<<<<<<<< Thread:"+Thread.currentThread().getId()+" MBean:"+sb.toString());
-
     return sb.toString();
   }
 
@@ -699,6 +738,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             uimaFullyQualifiedAEContext,
             aem.getAnalysisTime(),
             aem.getNumberOfCASesProcessed());
+    
   }
   
   /**
@@ -762,7 +802,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       
       
       AnalysisEngineManagement rootAem = ae.getManagementInterface();
-      //System.out.println("%%%%%%%%%%%%%%%%%%%% Unique MBean Name:"+rootAem.getUniqueMBeanName()+" AE Instance Hashcode"+ae.hashCode());
       if ( rootAem.getComponents().size() > 0 ) {
           getLeafManagementObjects(rootAem, beforeAnalysisManagementObjects);
       } else {
@@ -1056,7 +1095,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // Set total number of children generated from this CAS
       // Store total time spent processing this input CAS
       getCasStatistics(aCasReferenceId).incrementAnalysisTime(totalProcessTime);
-
       //  Fetch AE's management information that includes per component performance stats
       //  These stats are internally maintained in a Map. If the AE is an aggregate
       //  the Map will contain AnalysisEngineManagement instance for each AE.
@@ -1066,16 +1104,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           //  primitive AE's AnalysisEngineManagement instance and placing it in 
           //  afterAnalysisManagementObjects List.
           getLeafManagementObjects(aem, afterAnalysisManagementObjects);
-         // System.out.println("-----------------Unique1:"+aem.getUniqueMBeanName());
-          //System.out.println("-----------------Simple1:"+aem.getName());
       } else {
     	    String path=produceUniqueName(aem);
-    	 //   System.out.println("-----------------Unique2:"+aem.getUniqueMBeanName());
-         // System.out.println("-----------------Simple2:"+aem.getName());
           afterAnalysisManagementObjects.add(deepCopyMetrics(aem, path));   
           
       }
-
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
       //  by each AE. This list will be serialized and sent to the client
       List<AnalysisEnginePerformanceMetrics> performanceList = 
@@ -1084,23 +1117,43 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       //  metrics
       for (AnalysisEnginePerformanceMetrics after : afterAnalysisManagementObjects) {
         for( AnalysisEnginePerformanceMetrics before: beforeAnalysisManagementObjects) {
-          if ( before.getUniqueName().equals(after.getUniqueName())) {
-            
-            AnalysisEnginePerformanceMetrics metrics = 
-              new AnalysisEnginePerformanceMetrics(after.getName(),
-                      after.getUniqueName(),
-                      after.getAnalysisTime()- before.getAnalysisTime(),
-                      after.getNumProcessed());
-           // System.out.println("********************"+metrics.getUniqueName()+" Analysis Time:"+metrics.getAnalysisTime());
-            //System.out.println("********************"+metrics.getName()+" Analysis Time:"+metrics.getAnalysisTime());
+        	if ( before.getUniqueName().equals(after.getUniqueName())) {
+        	  boolean found = false;
+        	  AnalysisEnginePerformanceMetrics metrics = null;
+        	  for( AnalysisEnginePerformanceMetrics met : parentCasStateEntry.getAEPerformanceList() ) {
+                  String un = after.getUniqueName();
+        		  if ( un.indexOf("Components") >= -1 ) {
+        			  un = un.substring(un.indexOf("/"));
+        		  }
+           		  if ( met.getUniqueName().equals(un)) {
+                      long at = after.getAnalysisTime()- before.getAnalysisTime();
+                      metrics = new AnalysisEnginePerformanceMetrics(after.getName(),
+                              un,//after.getUniqueName(),
+                              met.getAnalysisTime()+at,
+                              after.getNumProcessed());
+                      found = true;
+                      parentCasStateEntry.getAEPerformanceList().remove(met);
+                      break;
+        		  } 
+        	  }
+        	  if ( !found ) {
+        		  String un = after.getUniqueName();
+        		  
+        		  if ( un.indexOf("Components") >= -1 ) {
+        			  un = un.substring(un.indexOf("/"));
+        		  }
+                  metrics = new AnalysisEnginePerformanceMetrics(after.getName(),
+                          un,//after.getUniqueName(),
+                          after.getAnalysisTime()- before.getAnalysisTime(),
+                          after.getNumProcessed());
+        		  
+        	  }
             performanceList.add(metrics);
             break;
           }
         }
       }
-      //  Save this component performance metrics
       parentCasStateEntry.getAEPerformanceList().addAll(performanceList);
-      
       if (!anEndpoint.isRemote()) {
         inputCASReturned = true;
         UimaTransport transport = getTransport(anEndpoint.getEndpoint());
@@ -1112,7 +1165,6 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                       getInProcessCache().
                         getTopAncestorCasEntry(getInProcessCache().getCacheEntryForCAS(aCasReferenceId));
             if ( ancestor != null ) {
-                // Set a flag on the input CAS to indicate that the processing was aborted
                ancestor.addDelegateMetrics(getKey(), performanceList);
             }
           } catch (Exception e) {

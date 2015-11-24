@@ -196,27 +196,51 @@ public class ProcessResponseHandler extends HandlerBase {
       // during deserialization
       CacheEntry cacheEntry = getController().getInProcessCache().getCacheEntryForCAS(
               casReferenceId);
+      // check if the client requested Performance Metrics for the CAS
       if ( aMessageContext.propertyExists(AsynchAEMessage.CASPerComponentMetrics) ) {
         try {
+          // find top ancestor of this CAS. All metrics are accumulated there since
+          // this is what will be returned to the client
           CacheEntry ancestor = 
                   getController().
                     getInProcessCache().
                       getTopAncestorCasEntry(cacheEntry);
           if ( ancestor != null ) {
+        	// fetch Performance Metrics from remote delegate reply
             List<AnalysisEnginePerformanceMetrics> metrics = 
                     UimaSerializer.deserializePerformanceMetrics(aMessageContext.getMessageStringProperty(AsynchAEMessage.CASPerComponentMetrics));
-            
             List<AnalysisEnginePerformanceMetrics> adjustedMetrics =
                     new ArrayList<AnalysisEnginePerformanceMetrics>();
             for(AnalysisEnginePerformanceMetrics delegateMetric : metrics ) {
-              String tmp =
-                      delegateMetric.getUniqueName().substring(delegateMetric.getUniqueName().indexOf(","));
-              String adjustedUniqueName =
-                ((AggregateAnalysisEngineController) getController()).getJMXDomain()+((AggregateAnalysisEngineController) getController()).getJmxContext()+tmp;
-              AnalysisEnginePerformanceMetrics metric =
-                      new AnalysisEnginePerformanceMetrics(delegateMetric.getName(),adjustedUniqueName,delegateMetric.getAnalysisTime(),delegateMetric.getNumProcessed());
+              String adjustedUniqueName = ((AggregateAnalysisEngineController) getController()).getJmxContext();
+
+              if ( adjustedUniqueName.startsWith("p0=")) {
+            	  adjustedUniqueName = adjustedUniqueName.substring(3);  // skip p0=
+              }
+              adjustedUniqueName = adjustedUniqueName.replaceAll(" Components", "");
+              if (!adjustedUniqueName.startsWith("/")) {
+            	  adjustedUniqueName = "/"+adjustedUniqueName;
+              }
+              adjustedUniqueName += delegateMetric.getUniqueName();
+              
+              boolean found = false;
+              AnalysisEnginePerformanceMetrics metric = null;
+              for( AnalysisEnginePerformanceMetrics met : ancestor.getDelegateMetrics() ) {
+            	  if ( met.getUniqueName().equals(adjustedUniqueName)) {
+            		  long at = delegateMetric.getAnalysisTime();
+            		  long count = delegateMetric.getNumProcessed();
+            		  metric = new AnalysisEnginePerformanceMetrics(delegateMetric.getName(),adjustedUniqueName,at,count);
+            		  found = true;
+            		  ancestor.getDelegateMetrics().remove(met);
+            		  break;
+            	  }
+              }
+              if ( !found ) {
+                  metric = new AnalysisEnginePerformanceMetrics(delegateMetric.getName(),adjustedUniqueName,delegateMetric.getAnalysisTime(),delegateMetric.getNumProcessed());
+              }
               adjustedMetrics.add(metric);
             }
+            
             ancestor.addDelegateMetrics(delegateKey, adjustedMetrics, true);  // true=remote
           }
         } catch (Exception e) {
