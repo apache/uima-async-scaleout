@@ -101,7 +101,8 @@ public class BrokerDeployer implements ApplicationListener {
 							.println("ActiveMQ Broker Started With Connector:"
 									+ connectors[i]);
 				}
-				brokerURI = service.getMasterConnectorURI();
+				//	brokerURI = service.getMasterConnectorURI();
+				brokerURI = service.getDefaultSocketURIString();
 			} else {
 
 				String connectorList = "";
