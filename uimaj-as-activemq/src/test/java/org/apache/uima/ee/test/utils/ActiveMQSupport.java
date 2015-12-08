@@ -102,12 +102,13 @@ public class ActiveMQSupport extends TestCase {
     broker.setUseJmx(true);
     broker.getManagementContext().setConnectorPort(1098);
     broker.start();
-    broker.setMasterConnectorURI(uri);
+    //System.out.println("Broker Version:"+broker.getBroker().)
+    //    broker.setMasterConnectorURI(uri);
     addHttpConnector(DEFAULT_HTTP_PORT);
     if ( System.getProperty(DEFAULT_BROKER_URL_KEY) != null) {
       System.clearProperty(DEFAULT_BROKER_URL_KEY);
     }
-    System.setProperty(DEFAULT_BROKER_URL_KEY, broker.getMasterConnectorURI());
+    System.setProperty(DEFAULT_BROKER_URL_KEY, broker.getDefaultSocketURIString());
     if ( System.getProperty(DEFAULT_HTTP_BROKER_URL_KEY) != null) {
       System.clearProperty(DEFAULT_HTTP_BROKER_URL_KEY);
     }
@@ -207,6 +208,7 @@ public class ActiveMQSupport extends TestCase {
         if ( e.getCause() != null && e.getCause() instanceof BindException ) {
           basePort++;
         } else {
+        	e.printStackTrace();
           throw new BrokerConnectionException("Unexpected Exception While Connecting to Broker with URL:"+uri+"\n"+e);
         }
       } catch( Exception e) {
