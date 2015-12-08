@@ -312,7 +312,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
     Thread t1 = null;
     Thread t2 = null;
-    Map appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()), queueName, timeout);
+    Map appCtx = buildContext(broker.getDefaultSocketURIString(), queueName, timeout);
     // Set an explicit getMeta (Ping)timeout
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, aGetMetaTimeout);
     appCtx.put(UimaAsynchronousEngine.Timeout, 1000);
