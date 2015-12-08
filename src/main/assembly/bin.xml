@@ -47,7 +47,7 @@
 
 		<!-- UIMA-AS included other projects -->
 
-		<dependencySet>
+		<!--dependencySet>
 			<includes>
 				<include>org.apache.activemq:activemq-all</include>
 			</includes>
@@ -56,23 +56,26 @@
 			<useProjectArtifact>false</useProjectArtifact>
 			<fileMode>644</fileMode>
 			<directoryMode>755</directoryMode>
-		</dependencySet>
+		</dependencySet-->
 
 
 		<dependencySet>
 			<includes>
 				<include>commons-logging:commons-logging</include>
 				<include>org.springframework:spring-core</include>
-				<include>org.apache.activemq:activemq-camel</include>
-				<include>org.apache.activemq:kahadb</include>
+
+				<include>org.apache.activemq:activemq-kahadb-store</include>
 				<include>org.apache.activemq:activemq-console</include>
-				<include>org.apache.activemq:activemq-core</include>
+				<include>org.apache.activemq:activemq-client</include>
+				<include>org.apache.activemq:activemq-jaas</include>
+				<include>org.apache.activemq:activemq-http</include>
+				<include>org.apache.activemq:activemq-broker</include>
 				<include>org.apache.activemq:activemq-spring</include>
 				
 				<include>org.apache.geronimo.specs:geronimo-jms_1.1_spec</include>
 				<include>org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec
 				</include>
-				<include>org.springframework:spring-asm</include>
+				<!--include>org.springframework:spring-asm</include-->
 				<include>org.springframework:spring-aop</include>
 				<include>org.springframework:spring-context</include>
 				<include>org.springframework:spring-tx</include>
@@ -80,10 +83,11 @@
 				<include>org.springframework:spring-expression</include>
 				<include>org.springframework:spring-jms</include>
 				<include>org.apache.xbean:xbean-spring</include>
-				<include>org.apache.activemq:activemq-optional</include>
+				<!--include>org.apache.activemq:activemq-optional</include-->
 				<include>org.slf4j:slf4j-log4j12</include>
 				<include>org.slf4j:jcl-over-slf4j</include>
 				<include>org.slf4j:slf4j-api</include>
+				<include>org.fusesource.hawtbuf:hawtbuf</include>
 			</includes>
 			<useTransitiveDependencies>false</useTransitiveDependencies>
 			<outputDirectory>apache-activemq/lib</outputDirectory>
@@ -96,12 +100,11 @@
 		<dependencySet>
 			<includes>
 				<include>commons-codec:commons-codec</include>
-				<include>commons-httpclient:commons-httpclient</include>
+				<!--include>commons-httpclient:commons-httpclient</include-->
 				<include>org.eclipse.jetty.aggregate:jetty-all-server</include>
 				<include>com.thoughtworks.xstream:xstream</include>
 				<include>xmlpull:xmlpull</include>
-				<include>org.apache.geronimo.specs:geronimo-servlet_2.5_spec
-				</include>
+				<include>org.apache.geronimo.specs:geronimo-servlet_3.0_spec</include>
 				<include>log4j:log4j</include>
 				<include>xpp3:xpp3</include>
 				<include>org.apache.httpcomponents:httpclient</include>
@@ -366,7 +369,7 @@
 		</fileSet -->
 
 		<fileSet>
-			<directory>target/apache-activemq-linux/apache-activemq-5.7.0</directory>
+			<directory>target/apache-activemq-linux/apache-activemq-${org.apache.activemq.version}</directory>
 			<outputDirectory>apache-activemq</outputDirectory>
 			<includes>
 				<include>bin/*</include>
@@ -404,7 +407,7 @@
 		</fileSet -->
 
 		<fileSet>
-			<directory>target/apache-activemq-win/apache-activemq-5.7.0</directory>
+			<directory>target/apache-activemq-win/apache-activemq-${org.apache.activemq.version}</directory>
 			<outputDirectory>apache-activemq</outputDirectory>
 			<includes>
 				<include>bin/*</include>
@@ -483,7 +486,6 @@
 			<destName>.classpath</destName>
 			<fileMode>644</fileMode>
 		</file>
-
 
 
 		<file>
