@@ -45,6 +45,7 @@ import org.apache.uima.ee.test.utils.BaseTestSupport;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
+import org.apache.activemq.broker.BrokerService;
 
 public class TestUimaASBasic extends BaseTestSupport {
   private static final int DEFAULT_HTTP_PORT = 8888;
@@ -66,6 +67,9 @@ public class TestUimaASBasic extends BaseTestSupport {
     System.out.println("-------------- testBrokerLifecycle -------------");
     // the setup and teardown create and destroy a broker
   }
+    private String getMasterConnectorURI(BrokerService b) {
+        return b.getDefaultSocketURIString();
+    }
 
   /**
    * Tests handling of multiple calls to initialize(). A subsequent call to initialize should result
@@ -79,7 +83,7 @@ public class TestUimaASBasic extends BaseTestSupport {
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
-    Map<String, Object> appCtx = buildContext(String.valueOf(broker.getMasterConnectorURI()),
+    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
             "PersonTitleAnnotatorQueue");
 
     try {
@@ -124,7 +128,7 @@ public class TestUimaASBasic extends BaseTestSupport {
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy UIMA-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()),
+    runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
             "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
   }
 
@@ -139,7 +143,7 @@ public class TestUimaASBasic extends BaseTestSupport {
     System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
     deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
-    runTest(null, eeUimaEngine, String.valueOf(broker.getMasterConnectorURI()), "TopLevelTaeQueue",
+    runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
             0, EXCEPTION_LATCH);
   }
 
@@ -192,7 +196,7 @@ public class TestUimaASBasic extends BaseTestSupport {
             + "/Deploy_AggregateAnnotator.xml");
 
     Map<String, Object> appCtx = new HashMap();
-    appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(broker.getMasterConnectorURI()));
+    appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(getMasterConnectorURI(broker)));
     appCtx.put(UimaAsynchronousEngine.ENDPOINT, "TopLevelTaeQueue");
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, Integer.valueOf(4));
     appCtx.put(UimaAsynchronousEngine.ReplyWindow, 15);
