@@ -24,15 +24,11 @@ For more details, please see http://uima.apache.org/building-uima.html
 1. What's New in 2.8.1
 ====================== 
   - Replaced Activemq 5.7.0 with 5.12.1 
-  - Fixed parallel step processing to prevent merging replies if the request
-    has not been fully dispatched to all delegates.
-  - Fixed bug that allowed the JVM to exit while threads still executing in
-    AE.destroy().
-  - Added missing http jars to enable support for http protocol
-  - Added retry logic when handling exceptions while opening broker connection
+  - Added dependency on UIMA SDK 2.8.1
+  - Fixed per CAS Performance Metrics breakdown for async deployments 
+  - Added new feature to allow warm up of Aalysis Engines before real processing begins
   - Requires Java 1.6 or later as ActiveMQ 5.7.0 classes have been compiled with Java 1.6
-  - Many bug fixes 
-  - Improved error handling and stability
+  - Few Bug fixes 
   
 
 1.1 Contents of Apache UIMA-AS binary distribution
@@ -43,7 +39,7 @@ The Apache UIMA-AS binary distribution includes
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
   - Apache ActiveMQ version 5.12.1
-  - Spring Framework
+  - Spring Framework version 3.2.11
   - XMLBeans
 
 It includes the base UIMA binary distribution which it depends on.
@@ -105,9 +101,14 @@ UIMA-AS components, in addition to those that come with base UIMA include:
 2.1 Supported Platforms
 -----------------------
 
-UIMA AS Requires Java 6 or later.  It has been tested with Sun Java 7 on Windows XP and Linux,
-and with IBM Java 6 on Linux.  Other platforms and Java (6+) implementations should work, 
-but have not been significantly tested.
+Apache UIMA-AS requires Java version 7 or later; it has been tested with Sun/Oracle Java SDK 7, and 8, 
+and IBM Java 7 and 8.
+
+Running the Eclipse plugin tooling for UIMA requires you start Eclipse using a Java 7 or later, as well.
+
+The supported platforms are: Windows, Linux, and Mac OS X. Other platforms and Java (7+) 
+implementations should work, but have not been significantly tested.
+
 
 2.2. Environment Variables
 --------------------------
@@ -136,10 +137,10 @@ procedure described in Chapter 3 of the Apache UIMA Overview and Setup guide,
 which you can find online at http://uima.apache.org; click on Documentation ->
 HTML Online Version -> Overview and Setup -> 3. Eclipse IDE setup for UIMA. 
 
-Since UIMA AS requires Java 6, you must be sure to set up your uimaj-examples Eclipse
-project to use a version 6 (or later) JRE, and you must set your compiler compliance level to 6.0.  To do
+Since UIMA AS requires Java 7, you must be sure to set up your uimaj-examples Eclipse
+project to use a version 7 (or later) JRE, and you must set your compiler compliance level to 7.0.  To do
 this go to Window->Preferences and navigate to the Java->Compiler page.  Remember to 
-run the base Eclipse using Java 6 (or later), as well.
+run the base Eclipse using Java 7 (or later), as well.
 
 
 3. Getting Started
@@ -304,14 +305,7 @@ configuration file by changing the following line:
 
  <transportConnector name="http" uri="http://0.0.0.0:8080"/>
 
-
-Note: The ActiveMQ 5.7.0 jars distributed with this UIMA AS release include bug fixes described in 
-      http://issues.apache.org/activemq/browse/AMQ-1308. Previous releases of UIMA AS included 
-      custom ActiveMQ 4.1.1 jars (which we have patched) to remedy the problems. When using 
-      ActiveMQ HTTP connector, make sure that both a client and a service use either ActiveMQ 4.1.1 
-      or ActivemMQ 5.4.1+ jars. 
-       
-     
+    
 3.7 Monitoring a broker and its queues
 --------------------------------------
 
@@ -399,7 +393,7 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.6.0
+5. Known problems/limitations with Release 2.8.1
 ================================================
 
   1. No automatic refresh for broken connections with temp reply queues.
@@ -412,13 +406,10 @@ An example of this kind of migration is embodied by the sample descriptors:
   3. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
      JMX port (see section 3.8).
 
-  4. UIMA-AS requires java 1.6 or newer since it bundles Active MQ 5.7.0 which has been
-     compiled with jdk1.6. 
-  
   5. JCAS caching Enable/Disable not supported in the Deployment Editor GUI.   
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
-http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12325591&styleName=Html&projectId=12310570
+http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12327044&styleName=Html&projectId=12310570
 
 
 Crypto Notice
