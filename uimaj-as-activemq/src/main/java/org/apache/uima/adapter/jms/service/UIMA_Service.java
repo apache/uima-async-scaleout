@@ -210,6 +210,12 @@ public class UIMA_Service implements ApplicationListener {
   public void startMonitor(long samplingFrequency) throws Exception {
     monitor = new JmxMonitor();
 
+    // Use the URI provided in the first arg to connect to the JMX server.
+    // Also define sampling frequency. The monitor will collect the metrics
+    // at this interval.
+    String jmxServerPort = null;
+    jmxServerPort = System.getProperty("com.sun.management.jmxremote.port");
+
     // Check if the monitor should run in the verbose mode. In this mode
     // the monitor dumps JMX Server URI, and a list of UIMA-AS services
     // found in that server. The default is to not show this info.
@@ -217,14 +223,10 @@ public class UIMA_Service implements ApplicationListener {
       monitor.setVerbose();
     }
 
-    // Use the URI provided in the first arg to connect to the JMX server.
-    // Also define sampling frequency. The monitor will collect the metrics
-    // at this interval.
-    String jmxServerPort = null;
     // get the port of the JMX Server. This property can be set on the command line via -d
     // OR it is set automatically by the code that creates an internal JMX Server. The latter
     // is created in the {@link BaseAnalysisEngineController} constructor.
-    if ((jmxServerPort = System.getProperty("com.sun.management.jmxremote.port")) != null) {
+    if (jmxServerPort != null) {
       // parameter is set, compose the URI
       String jmxServerURI = "service:jmx:rmi:///jndi/rmi://localhost:" + jmxServerPort + "/jmxrmi";
       // Connect to the JMX Server, configure checkpoint frequency, create MBean proxies for
@@ -424,7 +426,6 @@ public class UIMA_Service implements ApplicationListener {
       // the container is fully initialized and all UIMA-AS components are succefully
       // deployed.
       SpringContainerDeployer serviceDeployer = service.deploy(contextFiles);
-
       if (serviceDeployer == null) {
         System.out.println(">>> Failed to Deploy UIMA Service. Check Logs for Details");
         System.exit(1);
