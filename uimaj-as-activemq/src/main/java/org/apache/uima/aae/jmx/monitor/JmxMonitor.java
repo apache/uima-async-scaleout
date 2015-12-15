@@ -202,9 +202,10 @@ public class JmxMonitor implements Runnable {
     uimaServicePattern = new ObjectName("org.apache.uima:type=ee.jms.services,*");
     // Construct query string to fetch Queue MBean names from the JMX Server registry
     uimaServiceQueuePattern = new ObjectName(
-            "org.apache.activemq:BrokerName=localhost,Type=Queue,*");
+            "org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,*");
+
     uimaServiceTempQueuePattern = new ObjectName(
-            "org.apache.activemq:BrokerName=localhost,Type=TempQueue,*");
+            "org.apache.activemq:type=Broker,brokerName=localhost,destinationType=TempQueue,*");
     // Fetch UIMA AS MBean names from the JMX Server that match the name pattern
     Set<ObjectName> names = new HashSet<ObjectName>(mbsc.queryNames(uimaServicePattern, null));
     String key = "";
@@ -286,17 +287,22 @@ public class JmxMonitor implements Runnable {
           location = "Remote";
           int spos = infoMBeanProxy.getBrokerURL().indexOf("//");
           int endpos = infoMBeanProxy.getBrokerURL().lastIndexOf(":");
-
+          
           String remoteHostname = infoMBeanProxy.getBrokerURL().substring(spos + 2, endpos);
           if (verbose)
             System.out.println("Connecting to a remote JMX Server: " + remoteHostname + " key:"
                     + key);
           String remoteJMX = "service:jmx:rmi:///jndi/rmi://" + remoteHostname + ":1099/jmxrmi";
           MBeanServerConnection remoteServer = getServerConnection(remoteJMX);
+
           QueueViewMBean inputQueueProxy = getQueueMBean(remoteServer, infoMBeanProxy
                   .getInputQueueName(), uimaServiceQueuePattern);
           if (inputQueueProxy != null) {
             entry.setInputQueueInfo(inputQueueProxy);
+            ObjectName on = new ObjectName("org.apache.activemq:type=Broker,brokerName=localhost,destinationType=Queue,destinationName="+infoMBeanProxy.getInputQueueName());
+            long qsize = (Long)remoteServer.getAttribute(on, "QueueSize");
+            entry.setQueueSize(qsize);
+
           } else {
             System.out.println("Unable to find Input Queue:" + infoMBeanProxy.getInputQueueName()
                     + " In JMX Registry:" + remoteJMX);
@@ -308,7 +314,7 @@ public class JmxMonitor implements Runnable {
           } else {
             replyQueueProxy = getQueueMBean(remoteServer, infoMBeanProxy.getReplyQueueName(),
                     uimaServiceTempQueuePattern);
-
+            
           }
           if (replyQueueProxy != null) {
             entry.setReplyQueueInfo(replyQueueProxy);
@@ -366,11 +372,12 @@ public class JmxMonitor implements Runnable {
   private QueueViewMBean getQueueMBean(MBeanServerConnection server, String key,
           ObjectName matchPattern) throws Exception {
     Set<ObjectName> queues = new HashSet<ObjectName>(server.queryNames(matchPattern, null));
-    String target = "Destination=" + key;
+    String target = "destinationName=" + key;
     for (ObjectName name : queues) {
 
-      if (name.toString().endsWith(target)) {
+      if (name.toString().contains(target)) {
         System.out.println("Creating Proxy for Queue:" + name.toString());
+
         return (QueueViewMBean) MBeanServerInvocationHandler.newProxyInstance(server, name,
                 QueueViewMBean.class, true);
       }
@@ -389,7 +396,7 @@ public class JmxMonitor implements Runnable {
   protected ServiceMetrics[] collectStats(boolean initial, long uptime) {
     int cmFreeCasInstanceCount = 0;
     ServiceMetrics[] metrics = null;
-    int index = 0;
+    
     List<ServiceMetrics> metricsList = new ArrayList<ServiceMetrics>();
     // iterate over all Performance MBeans to retrieve current metrics
     for (ObjectName name : servicePerformanceNames) {
@@ -436,7 +443,10 @@ public class JmxMonitor implements Runnable {
           // service is top level and uses JMS queue
           inputQueueInfo = entry.getInputQueueInfo();
           if (inputQueueInfo != null) {
-            inputQueueDepth = inputQueueInfo.getQueueSize();
+        	//String [] queueAttributes = {"QueueSize"};
+            inputQueueDepth = entry.getQueueSize(); //inputQueueInfo.getQueueSize();
+            
+            
           }
         }
         long replyQueueDepth = -1; // -1 means not available
@@ -650,7 +660,17 @@ public class JmxMonitor implements Runnable {
 
     String name = "";
 
-    boolean isVmQueue = true;
+    long queueSize;
+    
+    public long getQueueSize() {
+		return queueSize;
+	}
+
+	public void setQueueSize(long queueSize) {
+		this.queueSize = queueSize;
+	}
+
+	boolean isVmQueue = true;
 
     double lastIdleTime = 0;
 
