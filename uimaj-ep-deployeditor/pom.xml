@@ -279,9 +279,10 @@
 
   <build>
     <finalName>org.apache.uima.deployeditor_${parsedVersion.osgiVersion}</finalName>
-
+    
     <plugins>
       <plugin>
+        
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
@@ -367,12 +368,21 @@ org.eclipse.core.runtime
 
             <Bundle-Activator>org.apache.uima.editors.dde.internal.Activator</Bundle-Activator>
             <Bundle-SymbolicName>org.apache.uima.deployeditor;singleton:=true</Bundle-SymbolicName>
-
+            <Bundle-RequiredExecutionEnvironment>JavaSE-1.7</Bundle-RequiredExecutionEnvironment>
             <Eclipse-LazyStart>true</Eclipse-LazyStart>
           </instructions>
         </configuration>
+        <executions>
+        <execution>
+            <phase>post-clean</phase>
+            <goals>
+                <goal>create-timestamp</goal>
+            </goals>
+        </execution>
+    </executions>
       </plugin>
 
     </plugins>
+
   </build>
 </project>
