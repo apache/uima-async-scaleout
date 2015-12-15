@@ -19,9 +19,7 @@
 		<relativePath>../uima-as-parent/pom.xml</relativePath>
 	</parent>
 
-	<groupId>org.apache.uima</groupId>
 	<artifactId>uimaj-as-core</artifactId>
-	<version>2.8.1-SNAPSHOT</version>
 	<name>Apache UIMA-AS: ${project.artifactId}</name>
 	<url>${uimaWebsiteUrl}</url>
 
@@ -154,12 +152,15 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.5</version>
+				<version>1.10</version>
 				<executions>
 					<execution>
-						<id>addVersionSrc</id>
+						<id>parse-version</id>
+						<phase>validate</phase>
+						
+						<!-- >phase>generate-sources</phase -->
 						<goals>
-							<goal>add-source</goal>
+						  <goal>add-source</goal>
 						</goals>
 						<configuration>
 							<sources>
@@ -176,6 +177,7 @@
 				<version>2.3.3</version>
 				<executions>
 					<execution>
+					    <id>gen-beans-id</id>
 						<phase>generate-sources</phase>
 						<goals>
 							<goal>xmlbeans</goal>
