@@ -36,7 +36,7 @@
         <scaleout numberOfInstances="1"/>
         <delegates>
 			
-          <analysisEngine key="BlueJTestMultiplier1" async="false">
+          <analysisEngine key="TestMultiplier1" async="false">
             <scaleout numberOfInstances="1"/>
             <casMultiplier poolSize="5" initialFsHeapSize="2000000"/>
             <asyncAggregateErrorConfiguration>
@@ -46,7 +46,7 @@
             </asyncAggregateErrorConfiguration>
           </analysisEngine>
 			
-          <analysisEngine key="BlueJTestMultiplier2" async="false">
+          <analysisEngine key="TestMultiplier2" async="false">
             <scaleout numberOfInstances="1"/>
             <casMultiplier poolSize="3" initialFsHeapSize="2000000"/>
             <asyncAggregateErrorConfiguration>
@@ -56,7 +56,7 @@
             </asyncAggregateErrorConfiguration>
           </analysisEngine>
 			
-          <remoteAnalysisEngine key="BlueJInnerRemoteCMAggregate">
+          <remoteAnalysisEngine key="InnerRemoteCMAggregate">
             <casMultiplier poolSize="5" initialFsHeapSize="2000000"/> 
             <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="InnerAggregateQueue"/>
             <serializer method="xmi"/>
@@ -67,7 +67,7 @@
             </asyncAggregateErrorConfiguration>
           </remoteAnalysisEngine>
 			
-          <analysisEngine key="BlueJNoOpCandidateAnswerCM" async="false">
+          <analysisEngine key="NoOpCandidateAnswerCM" async="false">
             <casMultiplier poolSize="3" initialFsHeapSize="2000000"/>
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="disable"/>
@@ -76,7 +76,7 @@
             </asyncAggregateErrorConfiguration>
           </analysisEngine>
 			
-          <analysisEngine key="BlueJNoOpCC" async="false">
+          <analysisEngine key="NoOpCC" async="false">
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="terminate"/>
               <processCasErrors maxRetries="0" timeout="0" continueOnRetryFailure="false" thresholdCount="0" thresholdWindow="0" thresholdAction="terminate"/>
