@@ -63,7 +63,7 @@
     <jiraVersion>12327044</jiraVersion> <!-- for 2.8.1AS -->  
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <assemblyFinalName>uima-as-${project.version}</assemblyFinalName> 
- 
+    <additionalparam>-Xdoclint:none</additionalparam> 
   </properties>
   
   <!-- override pom setting in the build project. JIRA 5.1 needs different URL -->
@@ -207,14 +207,14 @@
     
 	<build>
     <resources />
-    <!-- pluginManagement-->
-		<plugins>
+
+    <plugins>
 
 
 	    <!-- Override default assemble plug-in to use newer version of assembly plugin
 	         Version 2.4 fixes a bug http://jira.codehaus.org/browse/PLXCOMP-176
 	     -->
-	    <plugin>
+    <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>2.4</version>
         <executions>
@@ -290,111 +290,110 @@
           </execution>
           
           <execution>
-						<!-- use the dependency:unpack goal to unpack the AMQ binary release -->
-						<id>unpack-activemq-distro-win</id>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>unpack</goal>
-						</goals>
-						<configuration>
-							<overWriteIfNewer>true</overWriteIfNewer>
-							<artifactItems>
-								<artifactItem>
-									<groupId>org.apache.activemq</groupId>
-									<artifactId>apache-activemq</artifactId>
-									<version>${org.apache.activemq.version}</version>
-									<type>zip</type>
-									<classifier>bin</classifier>
-									<outputDirectory>${project.build.directory}/apache-activemq-win</outputDirectory>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</execution>
-                    <execution>
-						<!-- use the dependency:unpack goal to unpack the AMQ binary release -->
-						<id>unpack-activemq-distro-linux</id>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>unpack</goal>
-						</goals>
-						<configuration>
-							<overWriteIfNewer>true</overWriteIfNewer>
-							<artifactItems>
-								<artifactItem>
-									<groupId>org.apache.activemq</groupId>
-									<artifactId>apache-activemq</artifactId>
-									<version>${org.apache.activemq.version}</version>
-									<type>tar.gz</type>
-									<classifier>bin</classifier>
-									<outputDirectory>${project.build.directory}/apache-activemq-linux</outputDirectory>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</execution>
-          
-          
+	  <!-- use the dependency:unpack goal to unpack the AMQ binary release -->
+	  <id>unpack-activemq-distro-win</id>
+	  <phase>prepare-package</phase>
+	  <goals>
+	     <goal>unpack</goal>
+	  </goals>
+	  <configuration>
+	     <overWriteIfNewer>true</overWriteIfNewer>
+	     <artifactItems>
+	         <artifactItem>
+		    <groupId>org.apache.activemq</groupId>
+		    <artifactId>apache-activemq</artifactId>
+		    <version>${org.apache.activemq.version}</version>
+		    <type>zip</type>
+		    <classifier>bin</classifier>
+		    <outputDirectory>${project.build.directory}/apache-activemq-win</outputDirectory>
+		 </artifactItem>
+	     </artifactItems>
+	  </configuration>
+	  </execution>
+          <execution>
+	     <!-- use the dependency:unpack goal to unpack the AMQ binary release -->
+	     <id>unpack-activemq-distro-linux</id>
+	     <phase>prepare-package</phase>
+	     <goals>
+	        <goal>unpack</goal>
+	     </goals>
+	     <configuration>
+	        <overWriteIfNewer>true</overWriteIfNewer>
+		<artifactItems>
+		   <artifactItem>
+		       <groupId>org.apache.activemq</groupId>
+		       <artifactId>apache-activemq</artifactId>
+		       <version>${org.apache.activemq.version}</version>
+		       <type>tar.gz</type>
+		       <classifier>bin</classifier>
+		       <outputDirectory>${project.build.directory}/apache-activemq-linux</outputDirectory>
+		   </artifactItem>
+		</artifactItems>
+	     </configuration>
+	  </execution>
         </executions>        
       </plugin>
       
       <!-- This java doc config is for building the ones distributed with the bin packaging, and also 
            posted on our website.
        -->     
-			<plugin>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>javadocs-distr</id>
-						<phase>prepare-package</phase> <!-- must be before assembly -->
-            <!--phase>deploy</phase-->   <!-- comment above and uncomment to disable javadocs, for testing/experimentation, with assembly:assembly-->
-						<goals>
-							<goal>javadoc</goal>
-						</goals>
-						<configuration>
-              <quiet>true</quiet>
-							<groups>
-								<group>
-									<title>Packages</title>
-									<packages>*</packages>
-								</group>
-							</groups>
-              <!--verbose>true</verbose-->
-							<sourcepath>
-                uimaj-as-core/src/main/java:uimaj-as-activemq/src/main/java:uimaj-as-camel/src/main/java:uima-as-jms/src/main/java
-              </sourcepath>
-              <subpackages>org.apache.uima</subpackages>
-							<excludePackageNames>*.aae.*</excludePackageNames>
-							<!-- add a few classes in impl packages that are directly used by user code -->
-              <additionalparam>
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/BasicUimaJmxMonitorListener.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/JmxMonitorListener.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/ServiceMetrics.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/SingleLineUimaJmxMonitorListener.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/monitor/statistics/AnalysisEnginePerformanceMetrics.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaAsynchronousEngine.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaAsBaseCallbackListener.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaASStatusCallbackListener.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaASProcessStatus.java                                                                                     
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResult.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultComponentPath.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultTDs.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/DeploymentDescriptorFactory.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/UimaASPrimitiveDeploymentDescriptor.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/UimaASAggregateDeploymentDescriptor.java
-                ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/ServiceContext.java
-                
-                
-              </additionalparam>
-              <!--  Link these to the uimaj javadocs on apache.org -->
-              <links>
-                <link>http://uima.apache.org/d/uimaj-${uimajDependencyVersion}/apidocs</link>
-              </links>
-							<doctitle>Apache UIMA Async Scaleout Java SDK ${project.version} User-Level API Documentation</doctitle>
-							<windowtitle>Apache UIMA-AS Java SDK ${project.version} User-Level API Documentation</windowtitle>
-						</configuration>
-					</execution>
-				</executions>
-
-			</plugin>
+      <plugin>
+ 	  <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.9.1</version>
+	  <executions>
+	      <execution>
+		  <id>javadocs-distr</id>
+		  <phase>prepare-package</phase> <!-- must be before assembly -->
+                  <!--phase>deploy</phase-->   <!-- comment above and uncomment to disable javadocs, for testing/experimentation, with assembly:assembly-->
+		  <goals>
+		      <goal>javadoc</goal>
+		  </goals>
+		  <configuration>
+                      <quiet>true</quiet>
+                      <failOnError>false</failOnError>
+                      <source>7</source>
+		      <groups>
+			  <group>
+			      <title>Packages</title>
+			      <packages>*</packages>
+			  </group>
+		      </groups>
+                      <!--verbose>true</verbose-->
+		      <sourcepath>
+                           uimaj-as-core/src/main/java:uimaj-as-activemq/src/main/java:uimaj-as-camel/src/main/java:uima-as-jms/src/main/java
+                      </sourcepath>
+                      <subpackages>org.apache.uima</subpackages>
+		      <excludePackageNames>*.aae.*</excludePackageNames>
+		      <!-- add a few classes in impl packages that are directly used by user code -->
+                      <additionalparam>
+                          ${additionalparam}
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/BasicUimaJmxMonitorListener.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/JmxMonitorListener.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/ServiceMetrics.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/SingleLineUimaJmxMonitorListener.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/monitor/statistics/AnalysisEnginePerformanceMetrics.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaAsynchronousEngine.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaAsBaseCallbackListener.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaASStatusCallbackListener.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/client/UimaASProcessStatus.java                                                                                     
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResult.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultComponentPath.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/error/ErrorResultTDs.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/DeploymentDescriptorFactory.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/UimaASPrimitiveDeploymentDescriptor.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/UimaASAggregateDeploymentDescriptor.java
+                          ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/resourceSpecifier/factory/ServiceContext.java
+                      </additionalparam>
+                      <!--  Link these to the uimaj javadocs on apache.org -->
+                      <links>
+                          <link>http://uima.apache.org/d/uimaj-${uimajDependencyVersion}/apidocs</link>
+                      </links>
+		      <doctitle>Apache UIMA Async Scaleout Java SDK ${project.version} User-Level API Documentation</doctitle>
+		      <windowtitle>Apache UIMA-AS Java SDK ${project.version} User-Level API Documentation</windowtitle>
+		</configuration>
+             </execution>
+	   </executions>
+	</plugin>
 
 		
 	<plugin>
