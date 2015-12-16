@@ -7,3 +7,19 @@ Excluded from the UIMA AS distribution are the following parts of Apache ActiveM
 - Glassfish JSP engine
 
 - jboss integration module
+
+12/15/2015 - updated License file to include content found in 
+ - activemq-broker-5.12.1.jar in DEPENDENCIES file
+ - activemq-client-5.12.1.jar in DEPENDENCIES file
+ - activemq-console-5.12.1.jar in DEPENDENCIES file
+ - activemq-http-5.12.1.jar in DEPENDENCIES file
+ - activemq-kahadb-store-5.12.1.jar in DEPENDENCIES file
+ - activemq-spring-5.12.1.jar in DEPENDENCIES file
+ - spring-aop-3.2.11-RELEASE.jar license.txt
+ - geronimo-servlet_3.0_spec-1.0.jar LICENSE.txt
+ - jetty-all-server-8.1.16.v20140903.jar (about.html)
+ 
+12/15/2015 - updated NOTICE file to include content found in 
+  - commons-codec-1.6.jar NOTICE.txt
+  - geronimo-servlet_3.0_spec-1.0.jar NOTICE.txt
+  - httpcore-4.2.4.jar NOTICE.jar
