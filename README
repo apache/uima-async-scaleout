@@ -24,9 +24,15 @@ For more details, please see http://uima.apache.org/building-uima.html
 1. What's New in 2.8.1
 ====================== 
   - Replaced Activemq 5.7.0 with 5.12.1 
+    Starting with AMQ 5.8.0, the jmx MBean query syntax has changed. New code using jmx to
+    query a broker must follow new convention. Please refer to http://activemq.apache.org/activemq-580-release.html
+    for details.
   - Added dependency on UIMA SDK 2.8.1
   - Fixed per CAS Performance Metrics breakdown for async deployments 
-  - Added new feature to allow warm up of analysis engines before real processing begins
+  - Added new feature to allow warm up of analysis engines before real processing begins.
+    This feature is enabled by specifying -DWarmUpDataPath=<directory>, where directory is
+    a path to a directory containing zipped (serialized) CASes. The CASes are de-serialized and sent
+    through a pipeline to prime the analytics.
   - Requires Java 1.7 or later
   - Few Bug fixes 
   
