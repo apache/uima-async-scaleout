@@ -26,8 +26,8 @@ For more details, please see http://uima.apache.org/building-uima.html
   - Replaced Activemq 5.7.0 with 5.12.1 
   - Added dependency on UIMA SDK 2.8.1
   - Fixed per CAS Performance Metrics breakdown for async deployments 
-  - Added new feature to allow warm up of Aalysis Engines before real processing begins
-  - Requires Java 1.6 or later as ActiveMQ 5.7.0 classes have been compiled with Java 1.6
+  - Added new feature to allow warm up of analysis engines before real processing begins
+  - Requires Java 1.7 or later
   - Few Bug fixes 
   
 
