@@ -205,8 +205,12 @@
     
 	</dependencies>
     
+
+
 	<build>
     <resources />
+
+
 
     <plugins>
 
@@ -366,7 +370,7 @@
 		      <excludePackageNames>*.aae.*</excludePackageNames>
 		      <!-- add a few classes in impl packages that are directly used by user code -->
                       <additionalparam>
-                          ${additionalparam}
+                          ${javadoc.opts}
                           ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/BasicUimaJmxMonitorListener.java
                           ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/JmxMonitorListener.java
                           ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/ServiceMetrics.java
@@ -493,6 +497,26 @@
 
 
   <profiles>
+  <profile>
+    <id>doclint-java8-disable</id>
+    <activation>
+      <jdk>[1.8,)</jdk>
+    </activation>
+    <properties>
+      <javadoc.opts>-Xdoclint:none</javadoc.opts>
+    </properties>
+  </profile>
+
+  <profile>
+    <id>doclint-clear-for-jdk7</id>
+    <activation>
+      <jdk>1.7</jdk>
+    </activation>
+    <properties>
+      <javadoc.opts></javadoc.opts>
+    </properties>
+  </profile>
+
     <profile>
       <id>apache-release</id>
       <build>
