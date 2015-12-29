@@ -127,6 +127,8 @@
 		<!-- level of SpringFramework this release depends on -->
 		<org.springframework.version>3.2.11.RELEASE</org.springframework.version>
 
+                <org.apache.camel.version>2.15.3</org.apache.camel.version>
+
 		<org.apache.geronimo.jms.specs.version>1.1.1</org.apache.geronimo.jms.specs.version>
 
 		<org.apache.geronimo.j2ee.specs.version>1.0.1</org.apache.geronimo.j2ee.specs.version>
@@ -235,11 +237,71 @@ ${uimaASNoticeText}
 				<version>${org.apache.activemq.version}</version>
 			</dependency>
 
-<dependency>
-  <groupId>org.fusesource.hawtbuf</groupId>
-  <artifactId>hawtbuf</artifactId>
-  <version>${hawtbuff.version}</version>
-</dependency>
+
+
+
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-camel</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-jms-pool</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-leveldb-store</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-log4j-appender</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-pool</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-stomp</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-amqp</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-mqtt</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-partition</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-runtime-config</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>activemq-shiro</artifactId>
+				<version>${org.apache.activemq.version}</version>
+			</dependency>
+
+
+                        <dependency>
+                                <groupId>org.fusesource.hawtbuf</groupId>
+                                <artifactId>hawtbuf</artifactId>
+                                <version>${hawtbuff.version}</version>
+                        </dependency>
 
 
 
