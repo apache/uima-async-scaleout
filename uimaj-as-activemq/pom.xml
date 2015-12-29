@@ -100,6 +100,39 @@
 			<artifactId>activemq-spring</artifactId>
 		</dependency>
 
+
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-leveldb-store</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-log4j-appender</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-amqp</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-partition</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-runtime-config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-shiro</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+		</dependency>
+
+
+
+
 		<!-- dependency>
 			<groupId>org.apache.activemq</groupId>
 			<artifactId>activemq-optional</artifactId>
