@@ -427,6 +427,16 @@ From: 'The Apache Software Foundation' (http://www.apache.org/)
   - Commons Net (http://commons.apache.org/proper/commons-net/) commons-net:commons-net:jar:3.3
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
          
+
+=========================================================================================
+==== ActiveMQ :: JMS Pool
+=========================================================================================
+
+  - J2EE Connector 1.5 (http://geronimo.apache.org/specs/geronimo-j2ee-connector_1.5_spec) org.apache.geronimo.specs:geronimo-j2ee-connector_1.5_spec:jar:2.0.0
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+
 =========================================================================================
 ==== ActiveMQ :: Console
 =========================================================================================
@@ -561,12 +571,65 @@ From: 'XStream' (http://xstream.codehaus.org)
     License: BSD style  (http://xstream.codehaus.org/license.html)
 
 ====================================================================
+=== ActiveMQ :: Camel
+====================================================================
+From: 'Oracle Corporation' (http://www.oracle.com/)
+  - Old JAXB Core (http://jaxb.java.net/jaxb-bundles/jaxb-core) com.sun.xml.bind:jaxb-core:jar:2.2.11
+    License: CDDL+GPL License  (http://glassfish.java.net/public/CDDL+GPL_1_1.html)
+  - Old JAXB Runtime (http://jaxb.java.net/jaxb-bundles/jaxb-impl) com.sun.xml.bind:jaxb-impl:jar:2.2.11
+    License: CDDL+GPL License  (http://glassfish.java.net/public/CDDL+GPL_1_1.html)
+
+
+====================================================================
+== ActiveMQ :: Runtime Configuration
+====================================================================
+From: 'an unknown organization'
+  - JAXB2 Basics - Runtime (http://static.highsource.org/jaxb2-basics/jaxb2-basics-runtime) org.jvnet.jaxb2_commons:jaxb2-basics-runtime:jar:0.6.4
+    License: BSD-Style License  (http://confluence.highsource.org/display/J2B/License)
+
+
+====================================================================
+=== ActiveMQ :: Shiro
+====================================================================
+
+From: 'The Apache Software Foundation' (http://www.apache.org/)
+  - Apache Shiro :: Core (http://shiro.apache.org/shiro-core/) org.apache.shiro:shiro-core:bundle:1.2.2
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Shiro :: Support :: Spring (http://shiro.apache.org/shiro-spring/) org.apache.shiro:shiro-spring:bundle:1.2.2
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Shiro :: Web (http://shiro.apache.org/shiro-web/) org.apache.shiro:shiro-web:bundle:1.2.2
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+====================================================================
 === ActiveMQ :: JAAS
 ====================================================================
 
 From: 'The JASYPT team' (http://www.jasypt.org)
   - JASYPT: Java Simplified Encryption (http://www.jasypt.org) org.jasypt:jasypt:jar:1.9.2
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+====================================================================
+=== ActiveMQ :: PARTITION MANAGEMENT
+====================================================================
+
+From: 'an unknown organization'
+ - JLine (http://jline.sourceforge.net) jline:jline:jar:0.9.94
+    License: BSD  (LICENSE.txt)
+  - zookeeper  org.apache.zookeeper:zookeeper:pom:3.4.6
+  - linkedin-utils (http://github.com/linkedin/linkedin-utils) org.linkedin:org.linkedin.util-core:jar:1.4.0
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
+  - linkedin-utils (http://github.com/linkedin/linkedin-utils) org.linkedin:org.linkedin.util-groovy:jar:1.7.1
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
+  - linkedin-zookeeper (http://github.com/linkedin/linkedin-utils) org.linkedin:org.linkedin.zookeeper-impl:jar:1.4.0
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
+
+From: 'The Netty Project' (http://netty.io/)
+  - The Netty Project (http://netty.io/) io.netty:netty:bundle:3.7.0.Final
+    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
+
+
 
 ====================================================================
 ==== ActiveMQ :: KahaDB Store
