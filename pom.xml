@@ -534,7 +534,7 @@
                 <id>default-cli</id>
                 <configuration>
                   <fixVersionIds>${jiraVersion}</fixVersionIds>
-                  <!--sortColumnNames>Type, Status, Key</sortColumnNames-->
+                  <sortColumnNames>Type, Status, Key</sortColumnNames>
                 </configuration>
               </execution>
             </executions>  
