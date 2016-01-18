@@ -29,10 +29,8 @@ For more details, please see http://uima.apache.org/building-uima.html
     for details.
   - Added dependency on UIMA SDK 2.8.1
   - Fixed per CAS Performance Metrics breakdown for async deployments 
-  - Added new feature to allow warm up of analysis engines before real processing begins.
-    This feature is enabled by specifying -DWarmUpDataPath=<directory>, where directory is
-    a path to a directory containing zipped (serialized) CASes. The CASes are de-serialized and sent
-    through a pipeline to prime the analytics.
+  - Added new feature to allow warm up of a JVM service instance before real processing begins,
+    by feeding it a specified set of CASes before the instance connects to the service input queue.
   - Requires Java 1.7 or later
   - Few Bug fixes 
   

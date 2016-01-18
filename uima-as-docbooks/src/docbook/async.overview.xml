@@ -1106,16 +1106,43 @@ under the License.
   <section id="ugr.async.ov.concepts.lifecycle">
     <title>Life cycle</title>
     
-    <para>Running UIMA AS applications involves deploying (starting) UIMA AS services, perhaps over a wide area
-      network, perhaps on many machines.  UIMA AS as a few preliminary tools to help.  These include the ability
-      of the <xref linkend="ugr.ref.async.api"/> to deploy UIMA AS services (limited to deployment within the same 
-      JVM), and scripts such as <code>deployAsyncService</code> that start up a UIMA AS Service.</para>
-        
-    <para><code>deployAsyncService</code> has a facility that launches a keyboard listener after starting, which 
-      listens for a "s" or "q" keystroke.  The "s" stops the service immediately, and the "q" quiesces the service,
-      letting any in-process work finish before stopping.</para>
+    <para>Running UIMA AS applications involves deploying (starting) UIMA AS service instances, perhaps
+      on many machines. Over the life cycle of a service it can be useful to dynamically change
+      the number of service instances. Additional UIMA AS service instances can be started at any time
+      and the new instance will connect to the input queue when initialization is complete. However,
+      a new instance may be much slower than instances that are "warmed up". In order to prevent a new instance
+      from degrading overall service latency, UIMA AS offers a warmup option that runs a specified set of
+      CASes thru the service instance after initialization but before connecting to the service input queue.
+      See <xref linkend="ugr.async.mt.tuning.settings"/> for more information on service warmup.
+    </para>
       
-    <para>JMX beans for services include a control option to stop the service.</para>
+    <para>UIMA AS offers a few simple tools to help with starting and stopping services.
+    
+     <itemizedlist>
+       <listitem>
+         <para>
+           The UIMA AS client API (see <xref linkend="ugr.ref.async.api"/>) can deploy UIMA AS services within the
+           same JVM.
+         </para>
+       </listitem>
+       <listitem>
+         <para>
+           The <code>deployAsyncService</code> command will start up a UIMA AS Service in a new JVM.
+         </para>
+       </listitem>
+       <listitem>
+         <para><code>deployAsyncService</code> opens a keyboard listener after starting which 
+           listens for a "s" or "q" keystroke.  An "s" stops the service immediately, and a "q" quiesces the service by
+           detaching from the input queue and letting any in-process requests finish before stopping.
+         </para>
+       </listitem>
+       <listitem>
+	     <para>The UIMA AS service will initiate quiesce on SIGINT and SIGTERM, and also offers
+		   JMX bean based control options to stop and quiesce the service.
+         </para>
+       </listitem>
+     </itemizedlist>
+    </para>
   </section>
   
   <!-- next section omitted - this is in base UIMA -->
