@@ -62,7 +62,9 @@ public class WarmUpDataProvider {
         	 WarmUpDataProvider wdp = new WarmUpDataProvider(args[0]);
         	 
         	 System.out.println("Got it initialized");
-        	 wdp.hasNext();
+        	 while (wdp.hasNext() ) {
+		     System.out.println("Got next CAS");
+		 }
         	 
         	 System.out.println("done");
         	 
