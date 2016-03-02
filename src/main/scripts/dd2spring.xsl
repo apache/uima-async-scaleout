@@ -52,6 +52,8 @@
                  vm://localhost as the brokerURL broker
       11/xx/2007 NOT YET DONE rename pool elements for consistency between cas multiplier and main cas pool
       further updates moved to SVN comments
+      03/02/2016 Modified xbean attribute from singleton="true|false" to scope="singleton|prototype" to make
+                 it work with new version of Spring bundled with Activemq 5.13.1
     --> 
 
   <!--============================================================-->       
@@ -158,7 +160,7 @@
       <xsl:for-each select="$uniqueErrorConfigDetails/*">
 
         <bean id="{f:getErrorConfigDetailID(.)}"
-          class="org.apache.uima.aae.error.Threshold" singleton="true">
+          class="org.apache.uima.aae.error.Threshold" scope="singleton">
           
           <xsl:if test="@maxRetries">
             <property name="maxRetries" value="{@maxRetries}"/>
@@ -630,7 +632,7 @@
     </xsl:if>
     
     <xsl:sequence select="f:generateLineComment('map for delegate keys', 3)"/>
-    <bean id="{$delegateMapID}" class="java.util.HashMap" singleton="true">
+    <bean id="{$delegateMapID}" class="java.util.HashMap" >
       <constructor-arg>
         <map>
           <xsl:for-each
@@ -1087,7 +1089,7 @@
         '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),3)"/>    
       <bean id="{f:getDestinationResolverID($aeNameUnique, $remote/@key)}"
         class="org.apache.uima.adapter.jms.activemq.TempDestinationResolver"
-        singleton="false">
+        scope="prototype">
         <property name="connectionFactory" ref="{$queueFactoryID}-reply"/>
       </bean>
     </xsl:if>
@@ -1330,6 +1332,7 @@
         class="org.apache.activemq.ActiveMQConnectionFactory">
         <property name="brokerURL" value="{@brokerURL}"/>
         <property name="prefetchPolicy" ref="prefetchPolicy"/>
+        
       </bean>
     </xsl:for-each>
     
@@ -1342,17 +1345,18 @@
         class="org.apache.activemq.ActiveMQConnectionFactory">
         <property name="brokerURL" value="{@brokerURL}"/>
         <property name="prefetchPolicy" ref="prefetchPolicy-reply"/>
+          
       </bean>
     </xsl:for-each>
         
               <!-- Creates an instance of the ResourceManager -->
    <xsl:sequence select="f:generateLineComment('Creates an instance of the ResourceManager',3)"/>
    <bean id="resourceManager" class="org.apache.uima.aae.UimaClassFactory"
-    factory-method="produceResourceManager" singleton="true"/>
+    factory-method="produceResourceManager" scope="singleton"/>
 
       <!-- Creates an instance of the CasManager -->
    <xsl:sequence select="f:generateLineComment('Creates an instance of the CasManager',3)"/>
-   <bean id="casManager" class="org.apache.uima.aae.AsynchAECasManager_impl" singleton="true" >
+   <bean id="casManager" class="org.apache.uima.aae.AsynchAECasManager_impl"  >
       <constructor-arg index="0" ref="resourceManager"/>
       <xsl:sequence select="f:generateLineComment('Defines how many CASes will be in the CAS pool',5)"/>
       <property name="casPoolSize" value="{u:casPool/@numberOfCASes}" />
