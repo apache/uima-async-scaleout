@@ -123,9 +123,9 @@
 		<!-- level of uimaj sdk this release depends on -->
 		<uimajDependencyVersion>2.8.1</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
-		<org.apache.activemq.version>5.12.1</org.apache.activemq.version>
+		<org.apache.activemq.version>5.13.1</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
-		<org.springframework.version>3.2.11.RELEASE</org.springframework.version>
+		<org.springframework.version>4.1.9.RELEASE</org.springframework.version>
 
                 <org.apache.camel.version>2.15.3</org.apache.camel.version>
 
