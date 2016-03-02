@@ -33,6 +33,7 @@ import junit.framework.TestCase;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
+import org.apache.activemq.broker.BrokerStoppedException;
 import org.apache.activemq.broker.TransportConnector;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
@@ -120,7 +121,7 @@ public class ActiveMQSupport extends TestCase {
   
   protected void cleanBroker( BrokerService targetBroker) throws Exception {
     // Remove messages from all queues
-    targetBroker.deleteAllMessages();
+   // targetBroker.deleteAllMessages();
     org.apache.activemq.broker.Connection[] connections = targetBroker.getRegionBroker().getClients();
     for( org.apache.activemq.broker.Connection connection : connections) {
       try {
