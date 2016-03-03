@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController_impl;
 import org.apache.uima.util.Level;
@@ -38,7 +39,7 @@ import org.apache.uima.util.Level;
  */
 public class UimaAsThreadFactory implements ThreadFactory {
   
-  private static final Class CLASS_NAME = UimaAsThreadFactory.class;
+  private static final Class<UimaAsThreadFactory> CLASS_NAME = UimaAsThreadFactory.class;
   private static final String THREAD_POOL = "[UIMA AS ThreadPool ";
   private PrimitiveAnalysisEngineController controller;
 
@@ -114,7 +115,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
 					"UimaAsThreadFactory.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 					"UIMAEE_calling_ae_initialize__INFO", new Object[] {controller.getComponentName(),Thread.currentThread().getId()});
              
-			  if ( !initFailed ) {
+			  if ( !initFailed && !controller.getState().equals(ServiceState.FAILED) ) {
             	  try {
             		  controller.initializeAnalysisEngine();
             	  } catch( Exception e) {
@@ -122,6 +123,8 @@ public class UimaAsThreadFactory implements ThreadFactory {
             		  e.printStackTrace();
             		  throw e;
             	  }
+              } else {
+            	  return; // there was failure previously so just return
               }
             }
             // Call given Worker (Runnable) run() method and block. This call block until the
