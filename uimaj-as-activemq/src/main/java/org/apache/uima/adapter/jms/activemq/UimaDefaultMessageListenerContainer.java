@@ -850,15 +850,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 
   public void setConnectionFactory(ConnectionFactory aConnectionFactory) {
     connectionFactory = aConnectionFactory;
-    ((ActiveMQConnectionFactory)connectionFactory).
-        setTrustedPackages(new ArrayList<String>(
-        		 Arrays.asList("org.apache.uima.aae.error",
-        				 "org.apache.uima.analysis_engine",
-        				 "org.apache.activemq",
-        				 "org.fusesource.hawtbuf",
-        				 "com.thoughtworks.xstream.mapper",
-        				 "java.lang",
-        				 "java.util")));
+    ConnectionFactoryIniter cfIniter =
+            new ConnectionFactoryIniter((ActiveMQConnectionFactory)connectionFactory);
+    cfIniter.whiteListPackages();
 
     super.setConnectionFactory(connectionFactory);
   }

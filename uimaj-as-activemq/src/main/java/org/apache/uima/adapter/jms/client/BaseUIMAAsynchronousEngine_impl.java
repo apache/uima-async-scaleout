@@ -67,6 +67,7 @@ import org.apache.uima.aae.jmx.JmxManager;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.adapter.jms.activemq.ConnectionFactoryIniter;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
 import org.apache.uima.adapter.jms.activemq.UimaEEAdminSpringContext;
 import org.apache.uima.adapter.jms.service.Dd2spring;
@@ -380,11 +381,15 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 					ActiveMQConnectionValidator connectionValidator = new ActiveMQConnectionValidator();
 					//Initalize the connection Factory
 					ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(aBrokerURI);
+				    ConnectionFactoryIniter cfIniter =
+				            new ConnectionFactoryIniter(connectionFactory);
+				    cfIniter.whiteListPackages();
 					connectionFactory.setUserName(amqUser);
 					connectionFactory.setPassword(amqPassword);
 					// Create a singleton shared connection object
 					sharedConnection = new SharedConnection(
-							new ActiveMQConnectionFactory(aBrokerURI),
+							connectionFactory,
+							//new ActiveMQConnectionFactory(aBrokerURI),
 							aBrokerURI);
 
 					sharedConnections.put( aBrokerURI, sharedConnection);
