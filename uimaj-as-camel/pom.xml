@@ -62,14 +62,7 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.apache.uima</groupId>
-			<artifactId>uimaj-as-core</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-
-                <dependency>
+        <dependency>
 			<groupId>org.apache.activemq</groupId>
 			<artifactId>activemq-camel</artifactId>
 			<version>${org.apache.activemq.version}</version>
