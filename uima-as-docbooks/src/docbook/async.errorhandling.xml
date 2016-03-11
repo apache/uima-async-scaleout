@@ -28,7 +28,7 @@ under the License.
     <title>Basic concepts</title>
     <para>This chapter describes error configuration for AS components.</para>
     <para>The AS framework manages a collection of component parts written by users (user code) which can throw
-      exceptions. In addition, the AS framework can run timers when sending commands to user code which can create
+      exceptions. In addition, the AS framework can run timers when sending commands to user code deployed in a remote service which can create
       timeouts.</para>
     <para>An AS component is either an AS aggregate or an AS primitive. AS aggregates can have multiple levels of
       aggregation; error configuration is done for each level of aggregation. The rest of this chapter focuses on the
@@ -43,7 +43,7 @@ under the License.
       <listitem>
         <para>error messages received from delegates.</para></listitem>
       <listitem>
-        <para>timeouts of commands sent to delegates.</para></listitem></orderedlist>
+        <para>timeouts of commands sent to remote delegates.</para></listitem></orderedlist>
     <para>The second and third class of errors is only possible for AS aggregates.</para>
     <para>When errors happen, the framework provides a standard set of configurable actions. See <xref
         linkend="ugr.async.eh.commands_allowed_actions"></xref> for a summary table of the actions available
@@ -187,7 +187,7 @@ under the License.
     <note><para>If the delegate is co-located, the
     aggregate and the delegate are actually sharing a common CAS object, so the
     aggregate has access to the CAS in this case.</para></note-->
-    <para>Every command sent to a delegate can have an associated (configurable) timeout. If the timeout occurs
+    <para>Every command sent to a remote delegate can have an associated (configurable) timeout. If the timeout occurs
       before the delegate responds, the framework creates an error representing the timeout.
       <note>
         <para>If, subsequently, a response is (finally) received corresponding to the command that had timed-out,
@@ -518,7 +518,7 @@ under the License.
   sent a request for some kind of processing and timed-out waiting for the
   response.</para>
   
-  <para>When timeout errors happen, the delegate may at some later time actually
+  <para>When timeout errors happen, the remote delegate may at some later time actually
   complete the request send the reply message, or it may send an exception error. In both
   cases, after a time out has occurred, these messages are discarded.</para>
   </listitem>

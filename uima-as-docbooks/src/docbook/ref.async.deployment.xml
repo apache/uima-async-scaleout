@@ -547,8 +547,9 @@ under the License.
     if it determines it is failing too often.
     </para> - >
     
-    <para>Each Error Configuration can provide timeout limits for its delegate; these are used
-    when the containing aggregate sends CASes (work units) to be processed by the delegate.
+    <para>Each Error Configuration can provide timeout limits for its remote delegate; these are used
+    when the containing aggregate sends CASes (work units) to be processed by the delegate. Timeouts are
+    supported for remote delegates only.
     Timeouts inherit downward; a higher-level specification will be used for all contained 
     delegates and their delegates, recursively, for the parts managed by this Descriptor.
     Lower level Error Configurations can be used whenever needed; they override the upper
@@ -726,7 +727,7 @@ under the License.
     </para>
     </warning>
     
-    <para> The timeout attribute specifies the timeout values used when sending commands to the delegates. The units
+    <para> The timeout attribute specifies the timeout values used when sending commands to remote delegates. The units
       are milliseconds and a value of 0 has the special meaning of no timeout.</para>
     
     <para> The thresholdCount and thresholdWindow attributes specify the threshold at which the thresholdAction
