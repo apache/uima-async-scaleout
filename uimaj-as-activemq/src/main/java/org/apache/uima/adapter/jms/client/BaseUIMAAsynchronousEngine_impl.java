@@ -25,6 +25,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
@@ -42,6 +44,7 @@ import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
+import org.apache.activemq.ActiveMQSession;
 import org.apache.activemq.command.ActiveMQBytesMessage;
 import org.apache.activemq.command.ActiveMQTempDestination;
 import org.apache.activemq.command.ActiveMQTextMessage;
@@ -113,8 +116,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   private String applicationName = "UimaASClient";
 
-
-  protected static Semaphore sharedConnectionSemaphore = new Semaphore(1);
+ private String endpoint;
+ 
+ protected static Semaphore sharedConnectionSemaphore = new Semaphore(1);
 
   protected static Object connectionMux = new Object();
 
@@ -126,6 +130,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   private String amqPassword = null;
   
+  protected static Lock globalLock = new ReentrantLock();
   
   public BaseUIMAAsynchronousEngine_impl() {
 	  super();
@@ -224,109 +229,87 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   }
   private void stopConnection() {
+	
 	SharedConnection sharedConnection;
-    if ( brokerURI != null && (sharedConnection = lookupConnection(brokerURI)) != null) {
-      // Remove a client from registry
-      sharedConnection.unregisterClient(this);
-      ActiveMQConnection amqc = (ActiveMQConnection)sharedConnection.getConnection();
-      // Delete client's temp reply queue from AMQ Broker 
-      if ( amqc != null && !amqc.isClosed() && !amqc.isClosing() && consumerDestination != null && 
-           consumerDestination instanceof ActiveMQTempDestination ) {
-        try {
-          amqc.deleteTempDestination((ActiveMQTempDestination)consumerDestination);
-        } catch( Exception e) {
-          e.printStackTrace();
-        }
-      }
-      // The destroy method closes the JMS connection when
-      // the number of
-      // clients becomes 0, otherwise it is a no-op
-      if (sharedConnection.destroy()) {
-        // This needs to be done to invalidate the
-        // object for JUnit tests
-        sharedConnection = null;
-      }
+    // there is a dedicated shared connection for each broker URI
+	if ( brokerURI != null && (sharedConnection = lookupConnection(brokerURI)) != null) {
+    	try {
+    		// use broker dedicated semaphore to lock the code for updates
+        	sharedConnection.getSemaphore().acquire();
+        	 
+        	// Remove a client from registry
+    	      sharedConnection.unregisterClient(this);
+    	      ActiveMQConnection amqc = (ActiveMQConnection)sharedConnection.getConnection();
+    	      if (initialized) {
+   	    	     try {
+    	    		if ( amqc != null && amqc.isStarted() && 
+    	    			 ((ActiveMQSession)consumerSession).isRunning() ) {
+   	   	           		consumerSession.close();
+     	    	   	    ((ActiveMQMessageConsumer)consumer).stop();
+     	    	   	    consumer.close();
+   	   	        	}
+   	   	         } catch (Exception exx) {exx.printStackTrace();}
+    	   	  }
+    	      // Delete client's temp reply queue from AMQ Broker 
+    	      if ( amqc != null && !amqc.isClosed() && !amqc.isClosing() && consumerDestination != null && 
+    	           consumerDestination instanceof ActiveMQTempDestination ) {
+    	        try {
+    	          amqc.deleteTempDestination((ActiveMQTempDestination)consumerDestination);
+    	        } catch( Exception e) {
+    	          e.printStackTrace();
+    	        }
+    	      }
+    		
+    	} catch (Exception e) {
+    		
+    	} finally {
+    		sharedConnection.destroy();
+    		if ( sharedConnection != null  ) {
+    			sharedConnection.getSemaphore().release();
+    		}
+
+    	}
     }
   }
 	public void stop() {
-		synchronized (connectionMux) {
       super.doStop();
       if (!running) {
         return;
       }
       running = false;
-			if (super.serviceDelegate != null) {
-				// Cancel all timers and purge lists
-				super.serviceDelegate.cleanup();
-			}
+	  if (super.serviceDelegate != null) {
+		// Cancel all timers and purge lists
+		super.serviceDelegate.cleanup();
+	  }
       if (sender != null) {
         sender.doStop();
       }
-      if (initialized) {
-        try {
-           consumerSession.close();
-           ((ActiveMQMessageConsumer)consumer).stop();
-           consumer.close();
-        } catch (Exception exx) {}
-      }
-			try {
-				// SharedConnection object manages a single JMS connection to
-				// the broker. If the client is scaled out in the same JVM, the
-				// connection is shared by all instances of the client to reduce number of
-				// threads in the broker. The SharedConnection object also maintains the
-				// number of client instances to determine when it is ok to close the
-				// connection. The connection is closed when the last client calls stop().
-				try {
-					sharedConnectionSemaphore.acquire();
-					stopConnection();
-				} catch (InterruptedException ex) {
-				    // Force connection stop
-                    stopConnection();
-					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
-							Level.WARNING)) {
-						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
-								CLASS_NAME.getName(), "stop",
-								JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-								"UIMAJMS_client_interrupted_while_acquiring_semaphore__WARNING");
-					}
-				} catch( Exception ex ) {
-					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
-							Level.WARNING)) {
-						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
-								CLASS_NAME.getName(), "stop",
-								JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-								"UIMAJMS_exception__WARNING",ex);
-					}
-					
-				}
-				finally {
-					sharedConnectionSemaphore.release();
-				}
-				// Undeploy all containers
-				undeploy();
-				clientCache.clear();
-				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+	  try {
+		stopConnection();
+		// Undeploy all containers
+		undeploy();
+ 	    clientCache.clear();
+		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 						Level.INFO)) {
-					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
+			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
 							CLASS_NAME.getName(), "stop",
 							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 							"UIMAJMS_undeployed_containers__INFO");
-				}
-				// unregister client
-				if (jmxManager != null) {
-					jmxManager.unregisterMBean(clientJmxObjectName);
-					jmxManager.destroy();
-				}
-			} catch (Exception e) {
-				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+		}
+		// unregister client
+		if (jmxManager != null) {
+			jmxManager.unregisterMBean(clientJmxObjectName);
+			jmxManager.destroy();
+		}
+	  } catch (Exception e) {
+		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 						Level.WARNING)) {
-					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
+			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
 							CLASS_NAME.getName(), "stop",
 							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 							"UIMAJMS_exception__WARNING", e);
-				}
-			}
 		}
+	  }
 	}
 
   public void setCPCMessage(Message msg) throws Exception {
@@ -357,67 +340,95 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		return false;
 	}
 
+	private SharedConnection createAndInitializeAMQConnection( Semaphore semaphore, String aBrokerURI) throws Exception {
+		// This only effects Consumer
+		// Create AMQ specific connection validator. It uses
+		// AMQ specific approach to test the state of the connection
+		ActiveMQConnectionValidator connectionValidator = new ActiveMQConnectionValidator();
+		//Initalize the connection Factory
+		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(aBrokerURI);
+	    ConnectionFactoryIniter cfIniter =
+	            new ConnectionFactoryIniter(connectionFactory);
+	    cfIniter.whiteListPackages();
+		connectionFactory.setUserName(amqUser);
+		connectionFactory.setPassword(amqPassword);
+		// Create a singleton shared connection object
+		SharedConnection sharedConnection = new SharedConnection(
+				connectionFactory,
+				//new ActiveMQConnectionFactory(aBrokerURI),
+				aBrokerURI);
+		sharedConnection.setSemaphore(semaphore);
+		// Add AMQ specific connection validator
+		sharedConnection
+				.setConnectionValidator(connectionValidator);
+		// Connect to broker. Throws exception if unable to connect
+		sharedConnection.create();
+		addPrefetch((ActiveMQConnection) sharedConnection
+				.getConnection());
+		sharedConnection.start();
+		sharedConnections.put( aBrokerURI, sharedConnection);
+
+		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+				Level.INFO)) {
+			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
+					CLASS_NAME.getName(), "createAndInitializeAMQConnection",
+					JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+					"UIMAJMS_client_connection_setup_INFO",
+					new Object[] { aBrokerURI });
+		}
+		return sharedConnection;
+	}
 	protected SharedConnection createSharedConnection(String aBrokerURI) throws Exception {
-		SharedConnection sharedConnection = null;
-			try {
-				// Acquire global static semaphore
-				sharedConnectionSemaphore.acquire();
-				sharedConnection = lookupConnection(aBrokerURI);
-				// check the state of a connection
-				if (connectionClosedOrInvalid()) {
-					if (sharedConnection != null
-							&& sharedConnection.getConnection() != null) {
-						try {
-							// Cleanup so that we dont leak connections in a
-							// broker
-							sharedConnection.getConnection().close();
-						} catch (Exception ex) {
-							// Ignore exception while closing a bad connection
-						}
-					}
-					// This only effects Consumer
-					// Create AMQ specific connection validator. It uses
-					// AMQ specific approach to test the state of the connection
-					ActiveMQConnectionValidator connectionValidator = new ActiveMQConnectionValidator();
-					//Initalize the connection Factory
-					ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(aBrokerURI);
-				    ConnectionFactoryIniter cfIniter =
-				            new ConnectionFactoryIniter(connectionFactory);
-				    cfIniter.whiteListPackages();
-					connectionFactory.setUserName(amqUser);
-					connectionFactory.setPassword(amqPassword);
-					// Create a singleton shared connection object
-					sharedConnection = new SharedConnection(
-							connectionFactory,
-							//new ActiveMQConnectionFactory(aBrokerURI),
-							aBrokerURI);
+		Semaphore perBrokerSemaphore;
+		SharedConnection sharedConnection;
+		try {
+			// Use global sharedConnectionSemaphore to lock the code below to 
+			// prevent two threads from creating per broker semaphore in case 
+			// sharedConnection equals null. 
+			sharedConnectionSemaphore.acquire();
+			// fetch shared connection object for a given broker URI
+			sharedConnection = sharedConnections.get(aBrokerURI);
+			// if null, we need create create a new one and start the AMQ connection.
+			// Each shared connection has its own binary semaphore to guard critical
+			// code.
+			if ( sharedConnection == null  ) {
+				// create dedicated semaphore for this broker
+				perBrokerSemaphore = new Semaphore(1);
+				sharedConnection = createAndInitializeAMQConnection(perBrokerSemaphore, aBrokerURI);
+		    } else {
+		    	// fetch dedicated semaphore from shared connectiion object
+		    	perBrokerSemaphore = sharedConnection.getSemaphore();
+		    }
 
-					sharedConnections.put( aBrokerURI, sharedConnection);
-					// Add AMQ specific connection validator
-					sharedConnection
-							.setConnectionValidator(connectionValidator);
-					// Connect to broker. Throws exception if unable to connect
-					sharedConnection.create();
-					addPrefetch((ActiveMQConnection) sharedConnection
-							.getConnection());
-					sharedConnection.start();
-					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
-							Level.INFO)) {
-						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
-								CLASS_NAME.getName(), "setupConnection",
-								JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-								"UIMAJMS_client_connection_setup_INFO",
-								new Object[] { aBrokerURI });
-					}
-				}
-
-			} catch (Exception e) {
-				throw e;
-			} finally {
-				// Release global static semaphore
-				sharedConnectionSemaphore.release();
+		} catch( Exception e) {
+			throw e;
+		} finally {
+			sharedConnectionSemaphore.release();
+		}
+		// Used broker specific semaphore to lock critical code 
+		perBrokerSemaphore.acquire();
+		try {
+			// check if AMQ connection is still valid
+			if ( connectionClosedOrInvalid() ) {
+				// connection either stale or not present. Create new shared connection object for this broker
+				sharedConnection = createAndInitializeAMQConnection(perBrokerSemaphore, aBrokerURI);
 			}
+			// Create and initialize dispatch thread with JMS Producer
+			initializeProducer(brokerURI, endpoint, sharedConnection.getConnection());
+            // Create JMS Consumer and plug in Listener for processing replies
+			initializeConsumer(brokerURI, sharedConnection.getConnection());
 
+		    // Increment number of client instances. SharedConnection object is a static
+		    // and is used to share a single JMS connection. The connection is closed
+		    // when the last client finishes processing and calls stop().
+		    if (sharedConnection != null) {
+		       sharedConnection.registerClient(this);
+		    }
+		} catch( Exception e) {
+			throw e;
+		} finally {
+			perBrokerSemaphore.release();
+		}
 		return sharedConnection;
 	}
 
@@ -631,7 +642,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     asynchManager = new AsynchAECasManager_impl(rm);
 
     brokerURI = (String) anApplicationContext.get(UimaAsynchronousEngine.ServerUri);
-    String endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.ENDPOINT);
+    endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.ENDPOINT);
     
     //  Check if a placeholder is passed in instead of actual broker URL or endpoint. 
     //  The placeholder has the syntax ${placeholderName} and may be imbedded in text.
@@ -712,36 +723,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       clientJmxObjectName = new ObjectName("org.apache.uima:name=" + applicationName);
       jmxManager.registerMBean(clientSideJmxStats, clientJmxObjectName);
 
-      // these next lines were an experiment - not used https://issues.apache.org/jira/browse/UIMA-2249
-//      Properties props = new Properties();
-//      props.setProperty(Context.INITIAL_CONTEXT_FACTORY,"org.apache.activemq.jndi.ActiveMQInitialContextFactory");
-//      props.setProperty(Context.PROVIDER_URL,brokerURI);
-//      jndiContext = new InitialContext(props);
-      
       // Check if sharedConnection exists. If not create a new one. The sharedConnection
       // is static and shared by all instances of UIMA AS client in a jvm. The check
       // is made in a critical section by first acquiring a global static semaphore to
       // prevent a race condition.
       createSharedConnection(brokerURI);
-  	  synchronized (connectionMux) {
-        SharedConnection sharedConnection = lookupConnection(brokerURI);
-        // Reuse existing JMS connection if available
-        if (sharedConnection != null) {
-          initializeProducer(brokerURI, endpoint, sharedConnection.getConnection());
-          initializeConsumer(brokerURI, sharedConnection.getConnection());
-        } else {
-          initializeProducer(brokerURI, endpoint);
-          initializeConsumer(brokerURI);
-        }
-
-        // Increment number of client instances. SharedConnection object is a static
-        // and is used to share a single JMS connection. The connection is closed
-        // when the last client finishes processing and calls stop().
-        if (sharedConnection != null) {
-          sharedConnection.registerClient(this);
-        }
-
-      }
       running = true;
       //  This is done to give the broker enough time to 'finalize' creation of
       //  temp reply queue. It's been observed (on MAC OS only) that AMQ
