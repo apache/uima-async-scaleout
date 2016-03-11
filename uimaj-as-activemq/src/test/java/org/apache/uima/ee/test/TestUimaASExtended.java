@@ -600,6 +600,101 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    }
 	}
   
+
+  public void testMultipleASClients() throws Exception  {
+	    System.out.println("-------------- testMultipleSyncClientsWithMultipleBrokers -------------");
+	    
+	    class RunnableClient implements Runnable {
+	    	String brokerURL;
+	    	BaseTestSupport testSupport;
+            BaseUIMAAsynchronousEngine_impl uimaAsEngine;
+            String serviceEndpoint;
+
+            
+            RunnableClient(BaseTestSupport testSupport, String brokerURL,String serviceEndpoint) {
+	    		this.brokerURL = brokerURL;
+	    		this.testSupport = testSupport;
+	    		this.serviceEndpoint = serviceEndpoint;
+	    		uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	    	}
+	    	public BaseUIMAAsynchronousEngine_impl getUimaAsClient() {
+	    		return uimaAsEngine;
+	    	}
+	    	public void initialize() throws Exception {
+	    		@SuppressWarnings("unchecked")
+			  Map<String, Object> appCtx = buildContext(brokerURL, serviceEndpoint);
+		  	  appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+		  	  appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+		  	  testSupport.initialize(getUimaAsClient(), appCtx);
+		  	  waitUntilInitialized();
+		  	  
+	    	}
+			public void run() {
+				try {
+					initialize();
+					System.out.println("Thread:"+Thread.currentThread().getId()+" Completed GetMeta() broker:"+brokerURL);
+				} catch( Exception e) {
+					e.printStackTrace();
+				} finally {
+					try {
+				        uimaAsEngine.stop();
+					} catch( Exception e) {
+						e.printStackTrace();
+					}
+				}
+
+			}
+	    	
+	    }
+	    
+	    ExecutorService executor = Executors.newCachedThreadPool();
+
+	    //	change broker URl in system properties
+	    System.setProperty("BrokerURL", getMasterConnectorURI(broker).toString());
+	    
+	    RunnableClient client1 = 
+	    		new RunnableClient(this, getMasterConnectorURI(broker), "NoOpAnnotatorQueue");
+	    BaseUIMAAsynchronousEngine_impl engine = client1.getUimaAsClient();
+	    deployService(engine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+
+	    final BrokerService broker2 = setupSecondaryBroker(true);
+	    //	change broker URl in system properties
+	    System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
+	    
+	    RunnableClient client2 = 
+	    		new RunnableClient(this, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+	    BaseUIMAAsynchronousEngine_impl engine2 = client2.getUimaAsClient();
+	    deployService(engine2, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+
+	    
+	    for( int x = 0; x < 100; x++) {
+		    List<Future<?>> list = new ArrayList<Future<?>>();
+		    String b;
+		    if ( x % 2 == 0 ) {
+		    	b = getMasterConnectorURI(broker);
+		    } else {
+		    	b = broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString();
+		    }
+		    for (int i = 0; i < 50; i++) {
+			    RunnableClient client = 
+			    		new RunnableClient(this, b, "NoOpAnnotatorQueue");
+			    list.add(executor.submit(client));;
+		    }
+		    for (int i = 0; i < 50; i++) {
+		    	list.get(i).get();
+		    }
+	    }
+	    executor.shutdownNow();
+	    while( !executor.isShutdown() ) {
+	    	synchronized(broker) {
+	    		broker.wait(0);
+	    	}
+	    }
+	    broker2.stop();
+	}
+
+  
+  
   public void testAggregateHttpTunnelling() throws Exception {
     System.out.println("-------------- testAggregateHttpTunnelling -------------");
     // Create Uima-AS Client
