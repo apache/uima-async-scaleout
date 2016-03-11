@@ -123,11 +123,11 @@
 		<!-- level of uimaj sdk this release depends on -->
 		<uimajDependencyVersion>2.8.1</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
-		<org.apache.activemq.version>5.13.1</org.apache.activemq.version>
+		<org.apache.activemq.version>5.13.2</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
 		<org.springframework.version>4.1.9.RELEASE</org.springframework.version>
 
-                <org.apache.camel.version>2.15.3</org.apache.camel.version>
+        <org.apache.camel.version>2.15.3</org.apache.camel.version>
 
 		<org.apache.geronimo.jms.specs.version>1.1.1</org.apache.geronimo.jms.specs.version>
 
@@ -135,17 +135,18 @@
 
 		<org.apache.geronimo.servlet.specs.version>1.0</org.apache.geronimo.servlet.specs.version>
 
-		<jetty.version>8.1.16.v20140903</jetty.version>
+		<!-- jetty.version>8.1.16.v20140903</jetty.version -->
+		<jetty.version>9.2.13.v20150730</jetty.version>
 
 		<commons-pool.version>2.4.2</commons-pool.version>
 
-		<xstream.version>1.4.7</xstream.version>
+		<xstream.version>1.4.8</xstream.version>
 
         <log4j.version>1.2.17</log4j.version>
 
 		<xmlbeans.version>2.4.0</xmlbeans.version>
 		
-		<slf4j.version>1.7.10</slf4j.version>
+		<slf4j.version>1.7.13</slf4j.version>
 		
 		<!-- http.client.version>4.5.1</http.client.version>
 		
@@ -153,9 +154,9 @@
 
 		<xpp3.version>1.1.4c</xpp3.version>
 		
-		<http.commons.client.version>4.2.5</http.commons.client.version>
+		<http.client.version>4.2.5</http.client.version>
 		
-		<http.commons.core.version>4.2.4</http.commons.core.version>
+		<http.core.version>4.2.4</http.core.version>
 		
         <hawtbuff.version>1.11</hawtbuff.version>		
 		
@@ -394,8 +395,8 @@ ${uimaASNoticeText}
 
 			<!-- Jetty -->
 			<dependency>
-				<groupId>org.eclipse.jetty.aggregate</groupId>
-				<artifactId>jetty-all-server</artifactId>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-server</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 
@@ -447,17 +448,7 @@ ${uimaASNoticeText}
           <version>${log4j.version}</version>
           </dependency>
 			
-          <!-- dependency>
-              <groupId>commons-httpclient</groupId>
-              <artifactId>commons-httpclient</artifactId>
-              <version>${http.client.version}</version>
-          </dependency> 
-		  	
-          <dependency>
-              <groupId>commons-httpcore</groupId>
-              <artifactId>commons-httpcore</artifactId>
-              <version>${http.coreh.version}</version>
-          </dependency--> 
+          
 	  <dependency>
              <groupId>xpp3</groupId>
              <artifactId>xpp3</artifactId>
@@ -468,13 +459,13 @@ ${uimaASNoticeText}
         <dependency>
            <groupId>org.apache.httpcomponents</groupId>
            <artifactId>httpclient</artifactId>
-           <version>${http.commons.client.version}</version>
+           <version>${http.client.version}</version>
         </dependency>
         
         <dependency>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpcore</artifactId>
-          <version>${http.commons.core.version}</version>
+          <version>${http.core.version}</version>
         </dependency>
           
 		</dependencies>
