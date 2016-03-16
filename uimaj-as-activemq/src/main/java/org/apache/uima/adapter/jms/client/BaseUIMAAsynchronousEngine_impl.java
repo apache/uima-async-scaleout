@@ -25,12 +25,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.Destination;
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
@@ -353,11 +357,15 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		connectionFactory.setUserName(amqUser);
 		connectionFactory.setPassword(amqPassword);
 		// Create a singleton shared connection object
-		SharedConnection sharedConnection = new SharedConnection(
+		SharedConnection sharedConnection = sharedConnections.get(aBrokerURI);
+		sharedConnection.setConnectionFactory(connectionFactory);
+/*
+		new SharedConnection(
 				connectionFactory,
 				//new ActiveMQConnectionFactory(aBrokerURI),
 				aBrokerURI);
 		sharedConnection.setSemaphore(semaphore);
+	*/
 		// Add AMQ specific connection validator
 		sharedConnection
 				.setConnectionValidator(connectionValidator);
@@ -365,6 +373,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		sharedConnection.create();
 		addPrefetch((ActiveMQConnection) sharedConnection
 				.getConnection());
+		((ActiveMQConnection) sharedConnection.getConnection()).setExceptionListener(new ClientExceptionListener());
+		//System.out.println(">>>>>>>>>>>>>>>> Starting Connection to Broker:"+aBrokerURI);
 		sharedConnection.start();
 		sharedConnections.put( aBrokerURI, sharedConnection);
 
@@ -394,7 +404,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 			if ( sharedConnection == null  ) {
 				// create dedicated semaphore for this broker
 				perBrokerSemaphore = new Semaphore(1);
-				sharedConnection = createAndInitializeAMQConnection(perBrokerSemaphore, aBrokerURI);
+				sharedConnection = new SharedConnection(null,aBrokerURI);
+				sharedConnection.setSemaphore(perBrokerSemaphore);
+				sharedConnections.put( aBrokerURI, sharedConnection);
+				
+				//sharedConnection = createAndInitializeAMQConnection(perBrokerSemaphore, aBrokerURI);
 		    } else {
 		    	// fetch dedicated semaphore from shared connectiion object
 		    	perBrokerSemaphore = sharedConnection.getSemaphore();
@@ -405,8 +419,16 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		} finally {
 			sharedConnectionSemaphore.release();
 		}
-		// Used broker specific semaphore to lock critical code 
-		perBrokerSemaphore.acquire();
+		try {
+			// Used broker specific semaphore to lock critical code 
+			if ( !perBrokerSemaphore.tryAcquire(2, TimeUnit.SECONDS) ) {
+				throw new TimeoutException("UIMA-AS Client Timed Out Waiting to Acquire Broker Semaphore (2 Seconds) - Broker:"+aBrokerURI);
+			}
+			
+		} catch( Exception e) {
+			throw e;
+		}
+		//System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> THREAD:"+Thread.currentThread().getId()+" LOCK: "+aBrokerURI);
 		try {
 			// check if AMQ connection is still valid
 			if ( connectionClosedOrInvalid() ) {
@@ -427,6 +449,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		} catch( Exception e) {
 			throw e;
 		} finally {
+			//System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  THREAD:"+Thread.currentThread().getId()+" UN-LOCK: "+aBrokerURI);
+
 			perBrokerSemaphore.release();
 		}
 		return sharedConnection;
@@ -1216,5 +1240,14 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		   statCL.onUimaAsServiceExit( ((UimaASApplicationExitEvent)event).getEventTrigger());
 	    }
     }
+  }
+  public class ClientExceptionListener implements ExceptionListener {
+
+	@Override
+	public void onException(JMSException arg0) {
+		arg0.printStackTrace();
+		
+	}
+	  
   }
 }
