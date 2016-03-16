@@ -115,7 +115,7 @@
 			<includes>
 				<include>commons-codec:commons-codec</include>
 				<!--include>commons-httpclient:commons-httpclient</include-->
-				<include>org.eclipse.jetty.aggregate:jetty-all-server</include>
+				<include>org.eclipse.jetty:jetty-server</include>
 				<include>com.thoughtworks.xstream:xstream</include>
 				<include>xmlpull:xmlpull</include>
 				<include>org.apache.geronimo.specs:geronimo-servlet_3.0_spec</include>
