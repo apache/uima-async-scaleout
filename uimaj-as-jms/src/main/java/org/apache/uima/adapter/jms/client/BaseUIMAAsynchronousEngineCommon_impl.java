@@ -2877,11 +2877,16 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    */
   public boolean recoverSharedConnectionIfClosed() {
 	SharedConnection sharedConnection;
+    //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.recoverSharedConnectionIfClosed() ");
+
     if ( !connectionOpen() ) {
+        //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.recoverSharedConnectionIfClosed() connection Not Open");
       sharedConnection = lookupConnection(getBrokerURI());
       while ( sharedConnection != null && running ) {
         //  blocks until connection is refreshed 
+          //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.recoverSharedConnectionIfClosed() got SharedConnection");
         try {
+            //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.recoverSharedConnectionIfClosed() Retrying until success");
           sharedConnection.retryConnectionUntilSuccessfull();
           break;
         } catch( Exception e) {
@@ -2893,6 +2898,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         //  Inject a new Connection object into an object that sends 
         //  messages to a service. This call invalidates all Session
         //  and Producer objects.
+        //  System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.recoverSharedConnectionIfClosed() Got new connection");
         getDispatcher().setConnection(sharedConnection.getConnection());
       }
       return true;
@@ -2996,7 +3002,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     private ConnectionFactory connectionFactory = null;
     private Semaphore semaphore;
     
-
+    public void setConnectionFactory(ConnectionFactory cf ) {
+    	this.connectionFactory = cf;
+    }
 	public Semaphore getSemaphore() {
 		return semaphore;
 	}
@@ -3036,11 +3044,15 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
      */ 
     public void create() throws Exception {
       if ( connectionFactory == null ) {
+          //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - ConnectionFactory is null");
         throw new InstantiationException("UIMA AS Client Unable to Initialize SharedConnection Object. ConnectionFactory Has Not Been Provided");
       }
+      //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Creating new Connection");
       //  Create shared jms connection to a broker
       connection = connectionFactory.createConnection();
       state = ConnectionState.OPEN;
+      stop = false;      
+      //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Created New Connection");
     }
     private void reinitializeClientListeners() {
       for( BaseUIMAAsynchronousEngineCommon_impl client : clientList ) {
@@ -3080,21 +3092,28 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //  may have previously recovered the connection here while we were blocked
       //  on entry to this method ( it is synchronized)
       if ( isConnectionValid() ) {
+          //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.retryConnectionUntilSuccessfull() connection is valid");
+
         return;
       }
+      //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.retryConnectionUntilSuccessfull() connection Not valid");
       //  Change state of each client in this JVM that uses this shared connection.
       for(BaseUIMAAsynchronousEngineCommon_impl client: clientList) {
         client.state = ClientState.RECONNECTING;
         client.producerInitialized = false;
       }
+      //System.out.println("------------------------ stop1? "+stop);
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(), "retryConnectionUntilSuccessfull",
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_lost_connection_to_broker__WARNING",
               new Object[] { brokerURL, (stop==true) });
       }
+//      stop = false;
+      //System.out.println("------------------------ stop2? "+stop);
       //  This loop attempts to recover broker connection every 5 seconds and ends when all clients 
       //  using this shared object terminate or a connection is recovered
       while( !stop ) {
+          //System.out.println("------------------------ clientList.size()- "+clientList.size());
         if ( clientList.size() == 0 ) {
           break; // no more active clients - break out of connection recovery
         }
@@ -3111,6 +3130,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           }
           break;
         } catch( Exception e) {
+        	e.printStackTrace();
           synchronized( stateMonitor ) {
             try {
               stateMonitor.wait(5000); // retry every 5 secs
