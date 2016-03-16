@@ -37,6 +37,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.jms.Connection;
 import javax.jms.Message;
@@ -134,6 +135,9 @@ public class TestUimaASExtended extends BaseTestSupport {
 	  }
 */
   
+
+
+ 
   
   /**
    * Test use of a JMS Service Adapter. Invoke from a synchronous aggregate to emulate usage from
@@ -600,98 +604,6 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    }
 	}
   
-
-  public void testMultipleASClients() throws Exception  {
-	    System.out.println("-------------- testMultipleSyncClientsWithMultipleBrokers -------------");
-	    
-	    class RunnableClient implements Runnable {
-	    	String brokerURL;
-	    	BaseTestSupport testSupport;
-            BaseUIMAAsynchronousEngine_impl uimaAsEngine;
-            String serviceEndpoint;
-
-            
-            RunnableClient(BaseTestSupport testSupport, String brokerURL,String serviceEndpoint) {
-	    		this.brokerURL = brokerURL;
-	    		this.testSupport = testSupport;
-	    		this.serviceEndpoint = serviceEndpoint;
-	    		uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-	    	}
-	    	public BaseUIMAAsynchronousEngine_impl getUimaAsClient() {
-	    		return uimaAsEngine;
-	    	}
-	    	public void initialize() throws Exception {
-	    		@SuppressWarnings("unchecked")
-			  Map<String, Object> appCtx = buildContext(brokerURL, serviceEndpoint);
-		  	  appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
-		  	  appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
-		  	  testSupport.initialize(getUimaAsClient(), appCtx);
-		  	  waitUntilInitialized();
-		  	  
-	    	}
-			public void run() {
-				try {
-					initialize();
-					System.out.println("Thread:"+Thread.currentThread().getId()+" Completed GetMeta() broker:"+brokerURL);
-				} catch( Exception e) {
-					e.printStackTrace();
-				} finally {
-					try {
-				        uimaAsEngine.stop();
-					} catch( Exception e) {
-						e.printStackTrace();
-					}
-				}
-
-			}
-	    	
-	    }
-	    
-	    ExecutorService executor = Executors.newCachedThreadPool();
-
-	    //	change broker URl in system properties
-	    System.setProperty("BrokerURL", getMasterConnectorURI(broker).toString());
-	    
-	    RunnableClient client1 = 
-	    		new RunnableClient(this, getMasterConnectorURI(broker), "NoOpAnnotatorQueue");
-	    BaseUIMAAsynchronousEngine_impl engine = client1.getUimaAsClient();
-	    deployService(engine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-
-	    final BrokerService broker2 = setupSecondaryBroker(true);
-	    //	change broker URl in system properties
-	    System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
-	    
-	    RunnableClient client2 = 
-	    		new RunnableClient(this, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
-	    BaseUIMAAsynchronousEngine_impl engine2 = client2.getUimaAsClient();
-	    deployService(engine2, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-
-	    
-	    for( int x = 0; x < 100; x++) {
-		    List<Future<?>> list = new ArrayList<Future<?>>();
-		    String b;
-		    if ( x % 2 == 0 ) {
-		    	b = getMasterConnectorURI(broker);
-		    } else {
-		    	b = broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString();
-		    }
-		    for (int i = 0; i < 50; i++) {
-			    RunnableClient client = 
-			    		new RunnableClient(this, b, "NoOpAnnotatorQueue");
-			    list.add(executor.submit(client));;
-		    }
-		    for (int i = 0; i < 50; i++) {
-		    	list.get(i).get();
-		    }
-	    }
-	    executor.shutdownNow();
-	    while( !executor.isShutdown() ) {
-	    	synchronized(broker) {
-	    		broker.wait(0);
-	    	}
-	    }
-	    broker2.stop();
-	}
 
   
   
@@ -3404,6 +3316,141 @@ public class TestUimaASExtended extends BaseTestSupport {
               "TopLevelTaeQueue", 1, PROCESS_LATCH);
     }
   }
+  public void testMultipleASClients() throws Exception  {
+	    System.out.println("-------------- testMultipleSyncClientsWithMultipleBrokers -------------");
+	    
+	    class RunnableClient implements Runnable {
+	    	String brokerURL;
+	    	BaseTestSupport testSupport;
+          BaseUIMAAsynchronousEngine_impl uimaAsEngine;
+          String serviceEndpoint;
+          
+          
+          RunnableClient(BaseTestSupport testSupport, String brokerURL,String serviceEndpoint) {
+	    		this.brokerURL = brokerURL;
+	    		this.testSupport = testSupport;
+	    		this.serviceEndpoint = serviceEndpoint;
+	    		uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	    	}
+	    	public BaseUIMAAsynchronousEngine_impl getUimaAsClient() {
+	    		return uimaAsEngine;
+	    	}
+	    	public void initialize() throws Exception {
+	    		@SuppressWarnings("unchecked")
+			  Map<String, Object> appCtx = buildContext(brokerURL, serviceEndpoint);
+	    		appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+		  	  appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+		  	  testSupport.initialize(getUimaAsClient(), appCtx);
+		  	  waitUntilInitialized();
+		  	  
+	    	}
+			public void run() {
+				try {
+					initialize();
+					System.out.println("Thread:"+Thread.currentThread().getId()+" Completed GetMeta() broker:"+brokerURL);
+				} catch( Exception e) {
+					e.printStackTrace();
+				} finally {
+					try {
+				        uimaAsEngine.stop();
+					} catch( Exception e) {
+						e.printStackTrace();
+					}
+				}
+
+			}
+	    	
+	    }
+	    
+	    ExecutorService executor = Executors.newCachedThreadPool();
+      String serviceId1;
+      String serviceId2;
+
+	    //	change broker URl in system properties
+	    System.setProperty("BrokerURL", getMasterConnectorURI(broker).toString());
+	    
+	    RunnableClient client1 = 
+	    		new RunnableClient(this, getMasterConnectorURI(broker), "NoOpAnnotatorQueue");
+	    BaseUIMAAsynchronousEngine_impl engine = client1.getUimaAsClient();
+	    serviceId1 = deployService(engine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+
+	    final BrokerService broker2 = setupSecondaryBroker(true);
+	    //	change broker URl in system properties
+	    System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
+	    
+	    RunnableClient client2 = 
+	    		new RunnableClient(this, "failover:tcp://f5n633:51514,tcp://f12n1133:51514","NoOpAnnotatorQueue");//broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+	    		//new RunnableClient(this, "failover:ssl://f5n6:51514,ssl://f12n11:51514","NoOpAnnotatorQueue");//broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+	    BaseUIMAAsynchronousEngine_impl engine2 = client2.getUimaAsClient();
+//	    serviceId2 = deployService(engine2, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+
+	    
+	    for( int x = 0; x < 100; x++) {
+		    List<Future<?>> list1 = new ArrayList<Future<?>>();
+		    List<Future<?>> list2 = new ArrayList<Future<?>>();
+		    String b;
+		  /*
+		    if ( x % 2 == 0 ) {
+		    	b = getMasterConnectorURI(broker);
+		    } else {
+		    	b = "failover:ssl://f5n6:51514,ssl://f12n11:51514";//broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString();
+		    }
+		    */
+		    List<Future<?>> list = new ArrayList<Future<?>>();
+		    for (int i = 0; i < 20; i++) {
+		    	  if ( i % 2 == 0 ) {
+				    	b = getMasterConnectorURI(broker);
+				    	list = list1;
+				    } else {
+				    	b = "failover:tcp://f5n633:51514,tcp://f12n1133:51514?maxReconnectAttempts=2&timeout=300&transport.maxReconnectAttempts=2&transport.timeout=300&startupMaxReconnectAttempts=1";//broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString();
+//				    	b = "failover:ssl://f5n6:51514,ssl://f12n11:51514?maxReconnectAttempts=2&timeout=300&transport.maxReconnectAttempts=2&transport.timeout=300&startupMaxReconnectAttempts=1";//broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString();
+				    	list = list2;
+				    }
+			    RunnableClient client = 
+			    		new RunnableClient(this, b, "NoOpAnnotatorQueue");
+			    list.add(executor.submit(client));;
+		    }
+		    /*
+		    
+			for (int i = 0; i < 10; i++) {
+		    	try {
+			    	list.get(i).get();//1, TimeUnit.SECONDS);
+		    	} catch( Exception e) {
+		    		e.printStackTrace();
+			    	list.get(i).cancel(true);
+		    	}
+		    }
+		    */
+
+	    Worker worker1 = new Worker(list1);
+	    Worker worker2 = new Worker(list1);
+	    Thread t1 = new Thread(worker1);
+	    Thread t2 = new Thread(worker2);
+	    t1.start();
+	    t2.start();
+	    
+	    t1.join();
+	    t2.join();
+	    
+	    list.clear();
+	    
+	    }
+	//    engine2.undeploy(serviceId2);
+	    engine.undeploy(serviceId1);
+	    
+	    //engine2.stop();
+	    executor.shutdownNow();
+	    while( !executor.isShutdown() ) {
+	    	synchronized(broker) {
+	    		broker.wait(100);
+	    	}
+	    }
+	    broker2.stop();
+	    broker2.waitUntilStopped();
+	    //broker.stop();
+	    //broker.waitUntilStopped();
+	    //System.out.println("Done");
+	}
 
   private Exception getCause(Throwable e) {
     Exception cause = (Exception) e;
@@ -3553,5 +3600,28 @@ public class TestUimaASExtended extends BaseTestSupport {
     public void run() {
       System.out.println("Stopping TestListener Callback Listener Thread");
     }
+  }
+  
+  private class Worker implements Runnable {
+
+	  
+	List<Future<?>> list = new ArrayList<Future<?>>();
+	
+	public Worker(List<Future<?>> list ) {
+		this.list = list;
+	}
+	@Override
+	public void run() {
+		for (int i = 0; i < list.size(); i++) {
+	    	try {
+		    	list.get(i).get();//1, TimeUnit.SECONDS);
+	    	} catch( Exception e) {
+	    		e.printStackTrace();
+		    	list.get(i).cancel(true);
+	    	}
+	    }
+
+	}
+	  
   }
 }
