@@ -567,7 +567,7 @@ From: 'The Apache Software Foundation' (http://www.apache.org/)
     License: Apache License  (LICENSE.txt)
 
 From: 'XStream' (http://xstream.codehaus.org)
-  - XStream Core (http://codehaus.org/xstream-parent/xstream/) com.thoughtworks.xstream:xstream:jar:1.4.7
+  - XStream Core (http://codehaus.org/xstream-parent/xstream/) com.thoughtworks.xstream:xstream:jar:1.4.8
     License: BSD style  (http://xstream.codehaus.org/license.html)
 
 ====================================================================
@@ -593,11 +593,11 @@ From: 'an unknown organization'
 ====================================================================
 
 From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - Apache Shiro :: Core (http://shiro.apache.org/shiro-core/) org.apache.shiro:shiro-core:bundle:1.2.2
+  - Apache Shiro :: Core (http://shiro.apache.org/shiro-core/) org.apache.shiro:shiro-core:bundle:1.2.4
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Apache Shiro :: Support :: Spring (http://shiro.apache.org/shiro-spring/) org.apache.shiro:shiro-spring:bundle:1.2.2
+  - Apache Shiro :: Support :: Spring (http://shiro.apache.org/shiro-spring/) org.apache.shiro:shiro-spring:bundle:1.2.4
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Apache Shiro :: Web (http://shiro.apache.org/shiro-web/) org.apache.shiro:shiro-web:bundle:1.2.2
+  - Apache Shiro :: Web (http://shiro.apache.org/shiro-web/) org.apache.shiro:shiro-web:bundle:1.2.4
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 
@@ -703,10 +703,10 @@ From: 'The Apache Software Foundation' (http://www.apache.org/)
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
          
 ===================================================================         
-===== SPRING FRAMEWORK 3.2.11.RELEASE SUBCOMPONENTS:
+===== SPRING FRAMEWORK 4.1.9.RELEASE SUBCOMPONENTS:
 ===================================================================         
 
-Spring Framework 3.2.11.RELEASE includes a number of subcomponents
+Spring Framework 4.1.9.RELEASE includes a number of subcomponents
 with separate copyright notices and license terms. The product that
 includes this file does not necessarily use all the open source
 subcomponents referred to below. Your use of the source
@@ -835,7 +835,7 @@ Title to copyright in this software and any associated documentation will at all
 times remain with copyright holders.
          
 =======================================================================
-=== Jetty jetty-all-server-8.1.16.v20140903.jar (about.html)
+=== Jetty jetty-server-9.2.13.v20150730.jar (about.html)
 =======================================================================         
 19 May, 2009
 License
