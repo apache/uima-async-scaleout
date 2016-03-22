@@ -461,6 +461,10 @@
         	<executions>
           		<execution>
             		<id>default-cli</id>
+
+                        <goals><goal>check</goal></goals>
+                        <phase>verify</phase>
+
             		<configuration>
               			<excludes combine.children="append">
               			    
