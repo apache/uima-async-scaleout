@@ -23,7 +23,7 @@ For more details, please see http://uima.apache.org/building-uima.html
 
 1. What's New in 2.8.1
 ====================== 
-  - Replaced Activemq 5.7.0 with 5.12.1 
+  - Replaced Activemq 5.7.0 with 5.13.2 
     Starting with AMQ 5.8.0, the jmx MBean query syntax has changed. New code using jmx to
     query a broker must follow new convention. Please refer to http://activemq.apache.org/activemq-580-release.html
     for details.
@@ -42,8 +42,8 @@ The Apache UIMA-AS binary distribution includes
   - Apache UIMA Java SDK version 2.8.1
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
-  - Apache ActiveMQ version 5.12.1
-  - Spring Framework version 3.2.11
+  - Apache ActiveMQ version 5.13.2
+  - Spring Framework version 4.1.9
   - XMLBeans
 
 It includes the base UIMA binary distribution which it depends on.
