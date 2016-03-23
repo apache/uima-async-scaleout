@@ -255,8 +255,8 @@
 
 		<!-- Jetty -->
         <dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-server</artifactId>
+				<groupId>org.eclipse.jetty.aggregate</groupId>
+				<artifactId>jetty-all</artifactId>
 		</dependency>
 		
         <dependency>
