@@ -400,13 +400,13 @@ From: 'QOS.ch' (http://www.qos.ch)
     License: MIT License  (http://www.opensource.org/licenses/mit-license.php)
 
 From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - ActiveMQ :: Client (http://activemq.apache.org/activemq-client) org.apache.activemq:activemq-client:jar:5.12.1
+  - ActiveMQ :: Client (http://activemq.apache.org/activemq-client) org.apache.activemq:activemq-client:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-  - ActiveMQ :: JAAS (http://activemq.apache.org/activemq-jaas) org.apache.activemq:activemq-jaas:jar:5.12.1
+  - ActiveMQ :: JAAS (http://activemq.apache.org/activemq-jaas) org.apache.activemq:activemq-jaas:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.12.1
+  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
   - Xalan Java Serializer (http://xml.apache.org/xalan-j/) xalan:serializer:jar:2.7.2
@@ -470,13 +470,13 @@ From: 'The Apache Software Foundation' (http://www.apache.org/)
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
   - ActiveIO :: Core (http://activemq.apache.org/activeio-core/) org.apache.activemq:activeio-core:bundle:3.1.4
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Broker (http://activemq.apache.org/activemq-broker) org.apache.activemq:activemq-broker:jar:5.12.1
+  - ActiveMQ :: Broker (http://activemq.apache.org/activemq-broker) org.apache.activemq:activemq-broker:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Client (http://activemq.apache.org/activemq-client) org.apache.activemq:activemq-client:jar:5.12.1
+  - ActiveMQ :: Client (http://activemq.apache.org/activemq-client) org.apache.activemq:activemq-client:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: KahaDB Store (http://activemq.apache.org/activemq-kahadb-store) org.apache.activemq:activemq-kahadb-store:jar:5.12.1
+  - ActiveMQ :: KahaDB Store (http://activemq.apache.org/activemq-kahadb-store) org.apache.activemq:activemq-kahadb-store:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.12.1
+  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
   - ActiveMQ Protocol Buffers Implementation and Compiler (http://activemq.apache.org/activemq-protobuf) org.apache.activemq.protobuf:activemq-protobuf:maven-plugin:1.1
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
@@ -547,17 +547,17 @@ From: 'SpringSource' (http://springsource.org/spring-framework)
 
 From: 'The Apache Software Foundation' (http://www.apache.org/)
   - Commons Codec (http://commons.apache.org/codec/) commons-codec:commons-codec:jar:1.6
-- ActiveMQ :: Generic JMS Pool (http://activemq.apache.org/activemq-jms-pool) org.apache.activemq:activemq-jms-pool:bundle:5.12.1
+- ActiveMQ :: Generic JMS Pool (http://activemq.apache.org/activemq-jms-pool) org.apache.activemq:activemq-jms-pool:bundle:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: MQTT Protocol (http://activemq.apache.org/activemq-mqtt) org.apache.activemq:activemq-mqtt:jar:5.12.1
+  - ActiveMQ :: MQTT Protocol (http://activemq.apache.org/activemq-mqtt) org.apache.activemq:activemq-mqtt:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.12.1
+  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Pool (http://activemq.apache.org/activemq-pool) org.apache.activemq:activemq-pool:jar:5.12.1
+  - ActiveMQ :: Pool (http://activemq.apache.org/activemq-pool) org.apache.activemq:activemq-pool:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Spring (http://activemq.apache.org/activemq-spring) org.apache.activemq:activemq-spring:jar:5.12.1
+  - ActiveMQ :: Spring (http://activemq.apache.org/activemq-spring) org.apache.activemq:activemq-spring:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: STOMP Protocol (http://activemq.apache.org/activemq-stomp) org.apache.activemq:activemq-stomp:jar:5.12.1
+  - ActiveMQ :: STOMP Protocol (http://activemq.apache.org/activemq-stomp) org.apache.activemq:activemq-stomp:jar:5.13.2
     License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
   - ActiveMQ Protocol Buffers Implementation and Compiler (http://activemq.apache.org/activemq-protobuf) org.apache.activemq.protobuf:activemq-protobuf:maven-plugin:1.1
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
