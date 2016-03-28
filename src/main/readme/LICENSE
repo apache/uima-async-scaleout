@@ -533,15 +533,15 @@ From: 'Mort Bay Consulting' (http://www.mortbay.com)
 
 
 From: 'SpringSource' (http://springsource.org/spring-framework)
-  - Spring AOP (https://github.com/SpringSource/spring-framework) org.springframework:spring-aop:jar:3.2.11.RELEASE
+  - Spring AOP (https://github.com/SpringSource/spring-framework) org.springframework:spring-aop:jar:4.1.9.RELEASE
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Beans (https://github.com/SpringSource/spring-framework) org.springframework:spring-beans:jar:3.2.11.RELEASE
+  - Spring Beans (https://github.com/SpringSource/spring-framework) org.springframework:spring-beans:jar:4.1.9.RELEASE
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Context (https://github.com/SpringSource/spring-framework) org.springframework:spring-context:jar:3.2.11.RELEASE
+  - Spring Context (https://github.com/SpringSource/spring-framework) org.springframework:spring-context:jar:4.1.9RELEASE
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Core (https://github.com/SpringSource/spring-framework) org.springframework:spring-core:jar:3.2.11.RELEASE
+  - Spring Core (https://github.com/SpringSource/spring-framework) org.springframework:spring-core:jar:4.1.9.RELEASE
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Expression Language (SpEL) (https://github.com/SpringSource/spring-framework) org.springframework:spring-expression:jar:3.2.11.RELEASE
+  - Spring Expression Language (SpEL) (https://github.com/SpringSource/spring-framework) org.springframework:spring-expression:jar:4.1.9.RELEASE
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 
