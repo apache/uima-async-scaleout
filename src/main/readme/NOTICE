@@ -26,6 +26,14 @@ This product includes software, Apache ActiveMQ, developed
 at the Apache Software Foundation (http://www.apache.org/).
 
 =========================================================================
+==  Protocol Buffers Notice                                            ==
+=========================================================================
+
+This product includes software developed by the Protocol Buffers
+project (http://code.google.com/apis/protocolbuffers).
+
+
+=========================================================================
 ==  Spring Notice                                                      ==
 =========================================================================
 
@@ -149,24 +157,6 @@ Some portions of the code are Copyright:
   2006 Tim Vernum
   1999 Jason Gilbert.
       
-===============================================================
-==     JmDNS Notice                                          ==
-===============================================================
-
-Java Multicast Domain Name Server (JmDNS)
-
-This project was originally developed by Arthur van Hoff under the GNU
-Lesser General Public License as jRendevous.  It was moved to Sourceforge
-by Rick Blair and renamed to JmDNS with the Arthur's kind permission.
-
-Currently it has  been re-released under the Apache License, Version 2.0.
-
-Details of the Apache License, Version 2.0 can be found at:
-http://www.apache.org/licenses/
-
-Portions of this software were originally based on the following:
-     - software copyright (c) 2000-2003, BEA Systems, <http://www.bea.com/>.
-
 =====================================
 ==== Apache Commons Codec NOTICE
 =====================================

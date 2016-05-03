@@ -376,8 +376,38 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
          
          
+=======================================================================
+==== This distribution includes jars from ActiveMQ version 5.13.2 
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+    From: 'Apache Software Foundation' (http://www.apache.org)
 =========================================================================
-==== ActiveMQ :: Broker
+
+activemq-kahadb-store-5.13.2.jar
+activemq-leveldb-store-5.13.2.jar
+activemq-console-5.13.2.jar
+activemq-mqtt-5.13.2.jar
+activemq-log4j-appender-5.13.2.jar
+activemq-amqp-5.13.2.jar
+activemq-shiro-5.13.2.jar
+activemq-spring-5.13.2.jar
+activemq-jaas-5.13.2.jar
+activemq-stomp-5.13.2.jar
+activemq-camel-5.13.2.jar
+activemq-client-5.13.2.jar
+activemq-broker-5.13.2.jar
+activemq-pool-5.13.2.jar
+activemq-runtime-config-5.13.2.jar
+activemq-jms-pool-5.13.2.jar
+activemq-partition-5.13.2.jar
+activemq-http-5.13.2.jar
+activemq-openwire-legacy-5.13.2.jar
+activemq-protobuf-1.1.jar
+jcl-over-slf4j-1.7.13.jar
+slf4j-log4j12-1.7.13.jar
+log4j-1.2.17.jar
+
+=========================================================================
+==== ActiveMQ :: activemq-broker-5.13.2.jar (DEPENDENCIES)
 =========================================================================
 
 From: 'Apache Software Foundation' (http://www.apache.org)
@@ -387,377 +417,165 @@ From: 'Apache Software Foundation' (http://www.apache.org)
   - JMS 1.1 (http://geronimo.apache.org/specs/geronimo-jms_1.1_spec) org.apache.geronimo.specs:geronimo-jms_1.1_spec:jar:1.1.1
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-From: 'Apache Software Foundation' (http://www.apache.org/)
-  - XML Commons External Components XML APIs (http://xml.apache.org/commons/components/external/) xml-apis:xml-apis:jar:1.3.04
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
 From: 'FuseSource, Corp.' (http://fusesource.com/)
   - hawtbuf (http://hawtbuf.fusesource.org/hawtbuf) org.fusesource.hawtbuf:hawtbuf:bundle:1.11
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 From: 'QOS.ch' (http://www.qos.ch)
-  - SLF4J API Module (http://www.slf4j.org) org.slf4j:slf4j-api:jar:1.7.10
+  - SLF4J API Module (http://www.slf4j.org) org.slf4j:slf4j-api:jar:1.7.13
     License: MIT License  (http://www.opensource.org/licenses/mit-license.php)
 
-From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - ActiveMQ :: Client (http://activemq.apache.org/activemq-client) org.apache.activemq:activemq-client:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-  - ActiveMQ :: JAAS (http://activemq.apache.org/activemq-jaas) org.apache.activemq:activemq-jaas:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-  - Xalan Java Serializer (http://xml.apache.org/xalan-j/) xalan:serializer:jar:2.7.2
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-  - Xalan Java (http://xml.apache.org/xalan-j/) xalan:xalan:jar:2.7.2
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-         
 =========================================================================================
-==== ActiveMQ :: Client
+==== ActiveMQ :: activemq-console-5.13.2.jar (DEPENDENCIES)
 =========================================================================================
-From: 'JmDNS' (http://jmdns.sourceforge.net/)
-  - JmDNS (http://sourceforge.net/projects/jmdns/) javax.jmdns:jmdns:jar:3.4.1
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-
-From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - Commons Net (http://commons.apache.org/proper/commons-net/) commons-net:commons-net:jar:3.3
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-         
-
-=========================================================================================
-==== ActiveMQ :: JMS Pool
-=========================================================================================
-
-  - J2EE Connector 1.5 (http://geronimo.apache.org/specs/geronimo-j2ee-connector_1.5_spec) org.apache.geronimo.specs:geronimo-j2ee-connector_1.5_spec:jar:2.0.0
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-
-
-=========================================================================================
-==== ActiveMQ :: Console
-=========================================================================================
-
-From: 'FasterXML' (http://fasterxml.com/)
-  - Jackson-annotations (http://wiki.fasterxml.com/JacksonHome) com.fasterxml.jackson.core:jackson-annotations:bundle:2.4.3
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Jackson-core (http://wiki.fasterxml.com/JacksonHome) com.fasterxml.jackson.core:jackson-core:bundle:2.4.3
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - jackson-databind (http://wiki.fasterxml.com/JacksonHome) com.fasterxml.jackson.core:jackson-databind:bundle:2.4.3
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-From: 'FuseSource, Corp.' (http://fusesource.com/)
-  - hawtbuf-proto (http://hawtbuf.fusesource.org/hawtbuf-proto) org.fusesource.hawtbuf:hawtbuf-proto:bundle:1.11
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 From: 'The Apache Software Foundation' (http://www.apache.org)
   - Apache XBean :: Spring (http://geronimo.apache.org/maven/xbean/3.18/xbean-spring) org.apache.xbean:xbean-spring:bundle:3.18
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - Commons Collections (http://commons.apache.org/collections/) commons-collections:commons-collections:jar:3.2.1
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Commons Daemon (http://commons.apache.org/daemon/) commons-daemon:commons-daemon:jar:1.0.15
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Commons Lang (http://commons.apache.org/lang/) commons-lang:commons-lang:jar:2.6
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Commons Logging (http://commons.apache.org/proper/commons-logging/) commons-logging:commons-logging:jar:1.1.3
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Commons Net (http://commons.apache.org/proper/commons-net/) commons-net:commons-net:jar:3.3
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveIO :: Core (http://activemq.apache.org/activeio-core/) org.apache.activemq:activeio-core:bundle:3.1.4
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Broker (http://activemq.apache.org/activemq-broker) org.apache.activemq:activemq-broker:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Client (http://activemq.apache.org/activemq-client) org.apache.activemq:activemq-client:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: KahaDB Store (http://activemq.apache.org/activemq-kahadb-store) org.apache.activemq:activemq-kahadb-store:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ Protocol Buffers Implementation and Compiler (http://activemq.apache.org/activemq-protobuf) org.apache.activemq.protobuf:activemq-protobuf:maven-plugin:1.1
+  - Commons Logging (http://commons.apache.org/proper/commons-logging/) commons-logging:commons-logging:jar:1.1.1
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
   - Apache Commons Pool (http://commons.apache.org/proper/commons-pool/) org.apache.commons:commons-pool2:jar:2.4.2
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Apache ServiceMix :: Bundles :: josql (http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.josql/) org.apache.servicemix.bundles:org.apache.servicemix.bundles.josql:bundle:1.5_5
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Apache Velocity (http://velocity.apache.org/engine/devel/) org.apache.velocity:velocity:jar:1.7
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+    From: commons-pool2-2.4.2.jar
+     APACHE COMMONS POOL DERIVATIVE WORKS:
 
-From: 'The JASYPT team' (http://www.jasypt.org)
-  - JASYPT: Java Simplified Encryption (http://www.jasypt.org) org.jasypt:jasypt:jar:1.9.2
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
+     The LinkedBlockingDeque implementation is based on an implementation written by
+     Doug Lea with assistance from members of JCP JSR-166 Expert Group and released
+     to the public domain, as explained at
+     http://creativecommons.org/licenses/publicdomain
 
 ====================================================================================
-==== ActiveMQ :: HTTP Protocol Support
+==== ActiveMQ :: activemq-http-5.13.2.jar (DEPENDENCIES)
 ====================================================================================
-
 
 From: 'an unknown organization'
-  - AOP alliance (http://aopalliance.sourceforge.net) aopalliance:aopalliance:jar:1.0
-    License: Public Domain 
-  - Hamcrest Core (https://github.com/hamcrest/JavaHamcrest/hamcrest-core) org.hamcrest:hamcrest-core:jar:1.3
-    License: New BSD License  (http://www.opensource.org/licenses/bsd-license.php)
   - XML Pull Parsing API (http://www.xmlpull.org) xmlpull:xmlpull:jar:1.1.3.1
     License: Public Domain  (http://www.xmlpull.org/v1/download/unpacked/LICENSE.txt)
 
-From: 'Apache Software Foundation' (http://www.apache.org/)
-  - JTA (http://geronimo.apache.org/geronimo-jta_1.0.1B_spec) org.apache.geronimo.specs:geronimo-jta_1.0.1B_spec:jar:1.0.1
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
 From: 'Extreme! Lab, Indiana University' (http://www.extreme.indiana.edu/)
   - MXP1: Xml Pull Parser 3rd Edition (XPP3) (http://www.extreme.indiana.edu/xgws/xsoap/xpp/mxp1/) xpp3:xpp3_min:jar:1.1.4c
-    License: Indiana University Extreme! Lab Software License, vesion 1.1.1  (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)    License: Public Domain  (http://creativecommons.org/licenses/publicdomain)
-
-From: 'FuseSource, Corp.' (http://fusesource.com/)
-  - hawtdispatch (http://hawtdispatch.fusesource.org/hawtdispatch/) org.fusesource.hawtdispatch:hawtdispatch:bundle:1.21
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - hawtdispatch-transport (http://hawtdispatch.fusesource.org/hawtdispatch-transport/) org.fusesource.hawtdispatch:hawtdispatch-transport:bundle:1.21
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - mqtt-client (http://mqtt-client.fusesource.org/mqtt-client/) org.fusesource.mqtt-client:mqtt-client:bundle:1.12
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-From: 'JUnit' (http://www.junit.org)
-  - JUnit (http://junit.org) junit:junit:jar:4.11
-    License: Common Public License Version 1.0  (http://www.opensource.org/licenses/cpl1.0.txt)
+    License: Indiana University Extreme! Lab Software License, vesion 1.1.1  (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)    
+    License: Public Domain  (http://creativecommons.org/licenses/publicdomain)
 
 From: 'Mort Bay Consulting' (http://www.mortbay.com)
-  - Jetty :: Aggregate :: All core Jetty (http://www.eclipse.org/jetty) org.eclipse.jetty.aggregate:jetty-all:jar:8.1.16.v20140903
-    License: Apache Software License - Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)    License: Eclipse Public License - Version 1.0  (http://www.eclipse.org/org/documents/epl-v10.php)
-  - Jetty Orbit :: Servlet API (http://www.eclipse.org/jetty/jetty-orbit/javax.servlet) org.eclipse.jetty.orbit:javax.servlet:orbit:3.0.0.v201112011016
-    License: Apache Software License - Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)    License: Eclipse Public License - Version 1.0  (http://www.eclipse.org/org/documents/epl-v10.php)
+  - Jetty :: Aggregate :: All core Jetty (http://www.eclipse.org/jetty) org.eclipse.jetty.aggregate:jetty-all:jar:9.2.13.v20150730
+    License: Apache Software License - Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)    
+    License: Eclipse Public License - Version 1.0  (http://www.eclipse.org/org/documents/epl-v10.php)
+    
+    from jetty-all-9.2.13.v20150730.jar (about.html - detagged)
+    ----------------------------------------------------------
+    The Eclipse Foundation makes available all content in this plug-in (&quot;Content&quot;).  The Content is dual licensed and is 
+    provided to you under the terms and conditions of the Eclipse Public License Version 1.0 (&quot;EPL&quot;) as well as the Apache 
+    Software License Version 2.0.  A copy of the EPL is available at href=http://www.eclipse.org/legal/epl-v10.html. A copy of the ASL 
+    is available at href=http://www.apache.org/licenses/LICENSE-2.0.html. For purposes of the EPL, "Program" will mean the Content.
 
+    If you did not receive this Content directly from the Eclipse Foundation, the Content is being redistributed by another party 
+    "Redistributor" and different terms and conditions may apply to your use of any object code in the Content.  Check the Redistributor's 
+    license that was provided with the Content.  If no such license exists, contact the Redistributor.  Unless otherwise indicated below, 
+    the terms and conditions of the EPL still apply to any source code in the Content and such source code may be obtained at 
+    href=http://www.eclipse.org.
 
-From: 'SpringSource' (http://springsource.org/spring-framework)
-  - Spring AOP (https://github.com/SpringSource/spring-framework) org.springframework:spring-aop:jar:4.1.9.RELEASE
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Beans (https://github.com/SpringSource/spring-framework) org.springframework:spring-beans:jar:4.1.9.RELEASE
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Context (https://github.com/SpringSource/spring-framework) org.springframework:spring-context:jar:4.1.9RELEASE
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Core (https://github.com/SpringSource/spring-framework) org.springframework:spring-core:jar:4.1.9.RELEASE
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Spring Expression Language (SpEL) (https://github.com/SpringSource/spring-framework) org.springframework:spring-expression:jar:4.1.9.RELEASE
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
+    jetty-util artifact only:
+    The UnixCrypt.java code implements the one way cryptography used by Unix systems for simple password protection.  Copyright 1996 Aki Yoshida,
+    modified April 2001  by Iris Van den Broeke, Daniel Deville.
+    Permission to use, copy, modify and distribute UnixCrypt for non-commercial or commercial purposes and without fee is granted provided that 
+    copyright notice appears in all copies.
 
 From: 'The Apache Software Foundation' (http://www.apache.org/)
   - Commons Codec (http://commons.apache.org/codec/) commons-codec:commons-codec:jar:1.6
-- ActiveMQ :: Generic JMS Pool (http://activemq.apache.org/activemq-jms-pool) org.apache.activemq:activemq-jms-pool:bundle:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: MQTT Protocol (http://activemq.apache.org/activemq-mqtt) org.apache.activemq:activemq-mqtt:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Openwire Legacy Support (http://activemq.apache.org/activemq-openwire-legacy) org.apache.activemq:activemq-openwire-legacy:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Pool (http://activemq.apache.org/activemq-pool) org.apache.activemq:activemq-pool:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: Spring (http://activemq.apache.org/activemq-spring) org.apache.activemq:activemq-spring:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ :: STOMP Protocol (http://activemq.apache.org/activemq-stomp) org.apache.activemq:activemq-stomp:jar:5.13.2
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - ActiveMQ Protocol Buffers Implementation and Compiler (http://activemq.apache.org/activemq-protobuf) org.apache.activemq.protobuf:activemq-protobuf:maven-plugin:1.1
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
  - HttpClient (http://hc.apache.org/httpcomponents-client) org.apache.httpcomponents:httpclient:jar:4.5.1
     License: Apache License  (LICENSE.txt)
   - HttpCore (http://hc.apache.org/httpcomponents-core-ga) org.apache.httpcomponents:httpcore:jar:4.4.4
     License: Apache License  (LICENSE.txt)
 
+    From httpcore-4.4.4.jar (LICENSE):
+    ------------------------
+This project contains annotations in the package org.apache.http.annotation which are derived from JCIP-ANNOTATIONS
+Copyright (c) 2005 Brian Goetz and Tim Peierls.
+See http://www.jcip.net and the Creative Commons Attribution License
+(http://creativecommons.org/licenses/by/2.5)
+Full text: http://creativecommons.org/licenses/by/2.5/legalcode
+
+License
+
+THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS OF THIS CREATIVE COMMONS PUBLIC LICENSE ("CCPL" OR "LICENSE"). THE WORK IS PROTECTED BY COPYRIGHT AND/OR OTHER APPLICABLE LAW. ANY USE OF THE WORK OTHER THAN AS AUTHORIZED UNDER THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+
+BY EXERCISING ANY RIGHTS TO THE WORK PROVIDED HERE, YOU ACCEPT AND AGREE TO BE BOUND BY THE TERMS OF THIS LICENSE. THE LICENSOR GRANTS YOU THE RIGHTS CONTAINED HERE IN CONSIDERATION OF YOUR ACCEPTANCE OF SUCH TERMS AND CONDITIONS.
+
+1. Definitions
+
+    "Collective Work" means a work, such as a periodical issue, anthology or encyclopedia, in which the Work in its entirety in unmodified form, along with a number of other contributions, constituting separate and independent works in themselves, are assembled into a collective whole. A work that constitutes a Collective Work will not be considered a Derivative Work (as defined below) for the purposes of this License.
+    "Derivative Work" means a work based upon the Work or upon the Work and other pre-existing works, such as a translation, musical arrangement, dramatization, fictionalization, motion picture version, sound recording, art reproduction, abridgment, condensation, or any other form in which the Work may be recast, transformed, or adapted, except that a work that constitutes a Collective Work will not be considered a Derivative Work for the purpose of this License. For the avoidance of doubt, where the Work is a musical composition or sound recording, the synchronization of the Work in timed-relation with a moving image ("synching") will be considered a Derivative Work for the purpose of this License.
+    "Licensor" means the individual or entity that offers the Work under the terms of this License.
+    "Original Author" means the individual or entity who created the Work.
+    "Work" means the copyrightable work of authorship offered under the terms of this License.
+    "You" means an individual or entity exercising rights under this License who has not previously violated the terms of this License with respect to the Work, or who has received express permission from the Licensor to exercise rights under this License despite a previous violation.
+
+2. Fair Use Rights. Nothing in this license is intended to reduce, limit, or restrict any rights arising from fair use, first sale or other limitations on the exclusive rights of the copyright owner under copyright law or other applicable laws.
+
+3. License Grant. Subject to the terms and conditions of this License, Licensor hereby grants You a worldwide, royalty-free, non-exclusive, perpetual (for the duration of the applicable copyright) license to exercise the rights in the Work as stated below:
+
+    to reproduce the Work, to incorporate the Work into one or more Collective Works, and to reproduce the Work as incorporated in the Collective Works;
+    to create and reproduce Derivative Works;
+    to distribute copies or phonorecords of, display publicly, perform publicly, and perform publicly by means of a digital audio transmission the Work including as incorporated in Collective Works;
+    to distribute copies or phonorecords of, display publicly, perform publicly, and perform publicly by means of a digital audio transmission Derivative Works.
+
+    For the avoidance of doubt, where the work is a musical composition:
+        Performance Royalties Under Blanket Licenses. Licensor waives the exclusive right to collect, whether individually or via a performance rights society (e.g. ASCAP, BMI, SESAC), royalties for the public performance or public digital performance (e.g. webcast) of the Work.
+        Mechanical Rights and Statutory Royalties. Licensor waives the exclusive right to collect, whether individually or via a music rights agency or designated agent (e.g. Harry Fox Agency), royalties for any phonorecord You create from the Work ("cover version") and distribute, subject to the compulsory license created by 17 USC Section 115 of the US Copyright Act (or the equivalent in other jurisdictions).
+    Webcasting Rights and Statutory Royalties. For the avoidance of doubt, where the Work is a sound recording, Licensor waives the exclusive right to collect, whether individually or via a performance-rights society (e.g. SoundExchange), royalties for the public digital performance (e.g. webcast) of the Work, subject to the compulsory license created by 17 USC Section 114 of the US Copyright Act (or the equivalent in other jurisdictions).
+
+The above rights may be exercised in all media and formats whether now known or hereafter devised. The above rights include the right to make such modifications as are technically necessary to exercise the rights in other media and formats. All rights not expressly granted by Licensor are hereby reserved.
+
+4. Restrictions.The license granted in Section 3 above is expressly made subject to and limited by the following restrictions:
+
+    You may distribute, publicly display, publicly perform, or publicly digitally perform the Work only under the terms of this License, and You must include a copy of, or the Uniform Resource Identifier for, this License with every copy or phonorecord of the Work You distribute, publicly display, publicly perform, or publicly digitally perform. You may not offer or impose any terms on the Work that alter or restrict the terms of this License or the recipients' exercise of the rights granted hereunder. You may not sublicense the Work. You must keep intact all notices that refer to this License and to the disclaimer of warranties. You may not distribute, publicly display, publicly perform, or publicly digitally perform the Work with any technological measures that control access or use of the Work in a manner inconsistent with the terms of this License Agreement. The above applies to the Work as incorporated in a Collective Work, but this does not require the Collective Work apart from the Work itself to be made subject to the terms of this License. If You create a Collective Work, upon notice from any Licensor You must, to the extent practicable, remove from the Collective Work any credit as required by clause 4(b), as requested. If You create a Derivative Work, upon notice from any Licensor You must, to the extent practicable, remove from the Derivative Work any credit as required by clause 4(b), as requested.
+    If you distribute, publicly display, publicly perform, or publicly digitally perform the Work or any Derivative Works or Collective Works, You must keep intact all copyright notices for the Work and provide, reasonable to the medium or means You are utilizing: (i) the name of the Original Author (or pseudonym, if applicable) if supplied, and/or (ii) if the Original Author and/or Licensor designate another party or parties (e.g. a sponsor institute, publishing entity, journal) for attribution in Licensor's copyright notice, terms of service or by other reasonable means, the name of such party or parties; the title of the Work if supplied; to the extent reasonably practicable, the Uniform Resource Identifier, if any, that Licensor specifies to be associated with the Work, unless such URI does not refer to the copyright notice or licensing information for the Work; and in the case of a Derivative Work, a credit identifying the use of the Work in the Derivative Work (e.g., "French translation of the Work by Original Author," or "Screenplay based on original Work by Original Author"). Such credit may be implemented in any reasonable manner; provided, however, that in the case of a Derivative Work or Collective Work, at a minimum such credit will appear where any other comparable authorship credit appears and in a manner at least as prominent as such other comparable authorship credit.
+
+5. Representations, Warranties and Disclaimer
+
+UNLESS OTHERWISE MUTUALLY AGREED TO BY THE PARTIES IN WRITING, LICENSOR OFFERS THE WORK AS-IS AND MAKES NO REPRESENTATIONS OR WARRANTIES OF ANY KIND CONCERNING THE WORK, EXPRESS, IMPLIED, STATUTORY OR OTHERWISE, INCLUDING, WITHOUT LIMITATION, WARRANTIES OF TITLE, MERCHANTIBILITY, FITNESS FOR A PARTICULAR PURPOSE, NONINFRINGEMENT, OR THE ABSENCE OF LATENT OR OTHER DEFECTS, ACCURACY, OR THE PRESENCE OF ABSENCE OF ERRORS, WHETHER OR NOT DISCOVERABLE. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF IMPLIED WARRANTIES, SO SUCH EXCLUSION MAY NOT APPLY TO YOU.
+
+6. Limitation on Liability. EXCEPT TO THE EXTENT REQUIRED BY APPLICABLE LAW, IN NO EVENT WILL LICENSOR BE LIABLE TO YOU ON ANY LEGAL THEORY FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL, PUNITIVE OR EXEMPLARY DAMAGES ARISING OUT OF THIS LICENSE OR THE USE OF THE WORK, EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+7. Termination
+
+    This License and the rights granted hereunder will terminate automatically upon any breach by You of the terms of this License. Individuals or entities who have received Derivative Works or Collective Works from You under this License, however, will not have their licenses terminated provided such individuals or entities remain in full compliance with those licenses. Sections 1, 2, 5, 6, 7, and 8 will survive any termination of this License.
+    Subject to the above terms and conditions, the license granted here is perpetual (for the duration of the applicable copyright in the Work). Notwithstanding the above, Licensor reserves the right to release the Work under different license terms or to stop distributing the Work at any time; provided, however that any such election will not serve to withdraw this License (or any other license that has been, or is required to be, granted under the terms of this License), and this License will continue in full force and effect unless terminated as stated above.
+
+8. Miscellaneous
+
+    Each time You distribute or publicly digitally perform the Work or a Collective Work, the Licensor offers to the recipient a license to the Work on the same terms and conditions as the license granted to You under this License.
+    Each time You distribute or publicly digitally perform a Derivative Work, Licensor offers to the recipient a license to the original Work on the same terms and conditions as the license granted to You under this License.
+    If any provision of this License is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this License, and without further action by the parties to this agreement, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
+    No term or provision of this License shall be deemed waived and no breach consented to unless such waiver or consent shall be in writing and signed by the party to be charged with such waiver or consent.
+    This License constitutes the entire agreement between the parties with respect to the Work licensed here. There are no understandings, agreements or representations with respect to the Work not specified here. Licensor shall not be bound by any additional provisions that may appear in any communication from You. This License may not be modified without the mutual written agreement of the Licensor and You.
+
+
 From: 'XStream' (http://xstream.codehaus.org)
   - XStream Core (http://codehaus.org/xstream-parent/xstream/) com.thoughtworks.xstream:xstream:jar:1.4.8
     License: BSD style  (http://xstream.codehaus.org/license.html)
 
-====================================================================
-=== ActiveMQ :: Camel
-====================================================================
-From: 'Oracle Corporation' (http://www.oracle.com/)
-  - Old JAXB Core (http://jaxb.java.net/jaxb-bundles/jaxb-core) com.sun.xml.bind:jaxb-core:jar:2.2.11
-    License: CDDL+GPL License  (http://glassfish.java.net/public/CDDL+GPL_1_1.html)
-  - Old JAXB Runtime (http://jaxb.java.net/jaxb-bundles/jaxb-impl) com.sun.xml.bind:jaxb-impl:jar:2.2.11
-    License: CDDL+GPL License  (http://glassfish.java.net/public/CDDL+GPL_1_1.html)
-
-
-====================================================================
-== ActiveMQ :: Runtime Configuration
-====================================================================
-From: 'an unknown organization'
-  - JAXB2 Basics - Runtime (http://static.highsource.org/jaxb2-basics/jaxb2-basics-runtime) org.jvnet.jaxb2_commons:jaxb2-basics-runtime:jar:0.6.4
-    License: BSD-Style License  (http://confluence.highsource.org/display/J2B/License)
-
-
-====================================================================
-=== ActiveMQ :: Shiro
-====================================================================
-
-From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - Apache Shiro :: Core (http://shiro.apache.org/shiro-core/) org.apache.shiro:shiro-core:bundle:1.2.4
+=======================================================================
+==== This distribution includes jars from Spring Framework version 4.1.9
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Apache Shiro :: Support :: Spring (http://shiro.apache.org/shiro-spring/) org.apache.shiro:shiro-spring:bundle:1.2.4
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Apache Shiro :: Web (http://shiro.apache.org/shiro-web/) org.apache.shiro:shiro-web:bundle:1.2.4
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+    From: 'Apache Software Foundation' (http://www.apache.org)
+=========================================================================
 
-
-====================================================================
-=== ActiveMQ :: JAAS
-====================================================================
-
-From: 'The JASYPT team' (http://www.jasypt.org)
-  - JASYPT: Java Simplified Encryption (http://www.jasypt.org) org.jasypt:jasypt:jar:1.9.2
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-
-====================================================================
-=== ActiveMQ :: PARTITION MANAGEMENT
-====================================================================
-
-From: 'an unknown organization'
- - JLine (http://jline.sourceforge.net) jline:jline:jar:0.9.94
-    License: BSD  (LICENSE.txt)
-  - zookeeper  org.apache.zookeeper:zookeeper:pom:3.4.6
-  - linkedin-utils (http://github.com/linkedin/linkedin-utils) org.linkedin:org.linkedin.util-core:jar:1.4.0
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
-  - linkedin-utils (http://github.com/linkedin/linkedin-utils) org.linkedin:org.linkedin.util-groovy:jar:1.7.1
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
-  - linkedin-zookeeper (http://github.com/linkedin/linkedin-utils) org.linkedin:org.linkedin.zookeeper-impl:jar:1.4.0
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
-
-From: 'The Netty Project' (http://netty.io/)
-  - The Netty Project (http://netty.io/) io.netty:netty:bundle:3.7.0.Final
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
-
-
-
-====================================================================
-==== ActiveMQ :: KahaDB Store
-====================================================================
-
-
-From: 'codehaus'
-  - Jettison (http://codehaus.org/jettison/) org.codehaus.jettison:jettison:bundle:1.3.7
-    License: Apache License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)
-  - StAX API (http://stax.codehaus.org/) stax:stax-api:jar:1.0.1
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-From: 'Apache Software Foundation' (http://www.apache.org)
-  - Annotation 1.0 (http://geronimo.apache.org/specs/geronimo-annotation_1.0_spec) org.apache.geronimo.specs:geronimo-annotation_1.0_spec:jar:1.1.1
- - J2EE JACC 1.1 (http://geronimo.apache.org/specs/geronimo-jacc_1.1_spec) org.apache.geronimo.specs:geronimo-jacc_1.1_spec:jar:1.0.1
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-- XML Commons External Components XML APIs (http://xml.apache.org/commons/components/external/) xml-apis:xml-apis:jar:1.3.04
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-         
-====================================================================
-==== ActiveMQ :: Spring
-====================================================================
-
-
-From: 'an unknown organization'
-  - FindBugs-jsr305 (http://findbugs.sourceforge.net/) com.google.code.findbugs:jsr305:jar:1.3.9
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Guava: Google Core Libraries for Java (http://code.google.com/p/guava-libraries/guava) com.google.guava:guava:jar:12.0
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - hadoop-core  org.apache.hadoop:hadoop-core:jar:1.0.0
-  - leveldb (http://github.com/dain/leveldb/leveldb) org.iq80.leveldb:leveldb:jar:0.6
-    License: Apache License 2.0  (http://www.apache.org/licenses/LICENSE-2.0.html)
-  - leveldb-api (http://github.com/dain/leveldb/leveldb-api) org.iq80.leveldb:leveldb-api:jar:0.6
-    License: Apache License 2.0  (http://www.apache.org/licenses/LICENSE-2.0.html)
-  - snappy (http://github.com/dain/snappy) org.iq80.snappy:snappy:jar:0.2
-    License: Apache License 2.0  (http://www.apache.org/licenses/LICENSE-2.0.html)
-
-From: 'FuseSource, Corp.' (http://fusesource.com/)
- - hawtdispatch-scala-2.11 (http://hawtdispatch.fusesource.org/hawtdispatch-scala-2.11/) org.fusesource.hawtdispatch:hawtdispatch-scala-2.11:bundle:1.21
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-- HawtJNI Runtime (http://hawtjni.fusesource.org/hawtjni-runtime) org.fusesource.hawtjni:hawtjni-runtime:jar:1.9
-    License: Eclipse Public License - v 1.0  (http://www.eclipse.org/legal/epl-v10.html)    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
- - leveldbjni (http://leveldbjni.fusesource.org/leveldbjni) org.fusesource.leveldbjni:leveldbjni:jar:1.8
-    License: The BSD 3-Clause License  (http://www.opensource.org/licenses/BSD-3-Clause)
-
-From: 'LAMP/EPFL' (http://lamp.epfl.ch/)
-  - Scala Library (http://www.scala-lang.org/) org.scala-lang:scala-library:jar:2.11.0
-    License: BSD 3-Clause  (http://www.scala-lang.org/license.html)
-
-From: 'ObjectWeb HOWL' (http://forge.objectweb.org/projects/howl)
-  - HOWL logger (http://forge.objectweb.org/projects/howl/) org.objectweb.howl:howl:jar:1.0.1-1
-    License: BSD 
-
-From: 'The Apache Software Foundation' (http://commons.apache.org/)
-  - Commons Configuration (http://commons.apache.org/${pom.artifactId.substring(8)}/) commons-configuration:commons-configuration:jar:1.6
-    License: The Apache Software License, Version 2.0  (/LICENSE.txt)
-
-From: 'The Apache Software Foundation' (http://jakarta.apache.org)
-  - Digester (http://jakarta.apache.org/commons/digester/) commons-digester:commons-digester:jar:1.8
-    License: The Apache Software License, Version 2.0  (/LICENSE.txt)
-
-From: 'The Apache Software Foundation' (http://www.apache.org)
-  - Geronimo TxManager :: Transaction (http://geronimo.apache.org/maven/txmanager/2.2.1/geronimo-transaction) org.apache.geronimo.components:geronimo-transaction:bundle:2.2.1
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-
-From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - Commons BeanUtils (http://commons.apache.org/beanutils/) commons-beanutils:commons-beanutils:jar:1.8.3
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-  - Commons BeanUtils Core (http://commons.apache.org/beanutils/) commons-beanutils:commons-beanutils-core:jar:1.8.0
-    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
-         
-===================================================================         
-===== SPRING FRAMEWORK 4.1.9.RELEASE SUBCOMPONENTS:
-===================================================================         
-
-Spring Framework 4.1.9.RELEASE includes a number of subcomponents
-with separate copyright notices and license terms. The product that
-includes this file does not necessarily use all the open source
-subcomponents referred to below. Your use of the source
-code for these subcomponents is subject to the terms and
-conditions of the following licenses.
-
-
->>> ASM 4.0 (org.ow2.asm:asm:4.0, org.ow2.asm:asm-commons:4.0):
-
-Copyright (c) 2000-2011 INRIA, France Telecom
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holders nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-THE POSSIBILITY OF SUCH DAMAGE.
-
-Copyright (c) 1999-2009, OW2 Consortium <http://www.ow2.org/>
-
-
->>> CGLIB 3.0 (cglib:cglib:3.0):
-
-Per the LICENSE file in the CGLIB JAR distribution downloaded from
-http://sourceforge.net/projects/cglib/files/cglib3/3.0/cglib-3.0.jar/download,
-CGLIB 3.0 is licensed under the Apache License, version 2.0, the text of which
-is included above.
-
+spring-core-4.1.9.RELEASE.jar
+spring-beans-4.1.9.RELEASE.jar
+spring-jms-4.1.9.RELEASE.jar
+spring-tx-4.1.9.RELEASE.jar
+spring-expression-4.1.9.RELEASE.jar
+spring-aop-4.1.9.RELEASE.jar
+spring-context-4.1.9.RELEASE.jar
 
 =======================================================================
+From spring-core-4.1.9.RELEASE.jar (license.txt)
+
 
 To the extent any open source subcomponents are licensed under the EPL and/or
 other similar licenses that require the source code and/or modifications to
@@ -833,28 +651,4 @@ The name and trademarks of copyright holders may NOT be used in advertising or
 publicity pertaining to the software without specific, written prior permission. 
 Title to copyright in this software and any associated documentation will at all 
 times remain with copyright holders.
-         
-=======================================================================
-=== Jetty jetty-server-9.2.13.v20150730.jar (about.html)
-=======================================================================         
-19 May, 2009
-License
-
-The Eclipse Foundation makes available all content in this plug-in ("Content"). The Content is dual licensed and is provided 
-to you under the terms and conditions of the Eclipse Public License Version 1.0 ("EPL") as well as the Apache Software 
-License Version 2.0. A copy of the EPL is available at http://www.eclipse.org/legal/epl-v10.html. A copy of the ASL is 
-available at http://www.apache.org/licenses/LICENSE-2.0.html. For purposes of the EPL, "Program" will mean the Content.
-
-If you did not receive this Content directly from the Eclipse Foundation, the Content is being redistributed by another 
-party ("Redistributor") and different terms and conditions may apply to your use of any object code in the Content. Check 
-the Redistributor's license that was provided with the Content. If no such license exists, contact the Redistributor. 
-Unless otherwise indicated below, the terms and conditions of the EPL still apply to any source code in the Content and 
-such source code may be obtained at http://www.eclipse.org.
-
-jetty-util artifact only:
-
-The UnixCrypt.java code implements the one way cryptography used by Unix systems for simple password protection. 
-Copyright 1996 Aki Yoshida, modified April 2001 by Iris Van den Broeke, Daniel Deville. Permission to use, copy, 
-modify and distribute UnixCrypt for non-commercial or commercial purposes and without fee is granted provided that 
-the copyright notice appears in all copies.         
          
