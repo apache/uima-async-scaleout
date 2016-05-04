@@ -80,8 +80,7 @@
 				<include>org.apache.activemq:activemq-partition</include>
 				<include>org.apache.activemq:activemq-runtime-config</include>
 				<include>org.apache.activemq:activemq-shiro</include>
-				<include>org.apache.activemq:activemq-openwire-legacy</include>
-				<include>org.apache.activemq.protobuf:activemq-protobuf</include>
+
                                 <!-- Spring Framework -->
 				<include>org.springframework:spring-aop</include>
 				<include>org.springframework:spring-core</include>

@@ -152,7 +152,12 @@ run the base Eclipse using Java 7 (or later), as well.
 
 3.1 Starting the ActiveMQ Broker
 --------------------------------
+UIMA AS includes a partial distribution of Apache ActiveMQ to support core functionality of
+the broker. This includes a single broker support, network of brokers with fixed URLs, stomp, persistence,
+http, ssl, openwire, springframework integration, and jetty. If you need additional broker functionality you 
+need to download and install a complete version of  ActiveMQ from http://activemq.apache.org/download.html.
 
+  
 UIMA AS services require an ActiveMQ broker to be available with which to create/register 
 the service request queue. If no broker is available, start a new broker on the same machine 
 the services will run on or another machine; this is done by first setting an env parameter
