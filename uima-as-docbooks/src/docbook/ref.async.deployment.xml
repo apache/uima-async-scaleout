@@ -49,6 +49,16 @@ under the License.
     
     <para>The application can include both Java and non-Java components; the deployment descriptors are slightly
       different for non-Java components.</para>
+
+    <para>Since the UIMA system property <code>uima.framework_impl</code> can be used to provide a custom
+    implementation of the UIMAFramework class which may include an XML parser for pre-processing
+    descriptors, it may be necessary to provide a custom parser for Saxon to use when processing the
+    UIMA-AS descriptors.  This can be accomplished by including in the classpath a class whose name
+    is formed by adding the suffix <code>_SAXParser</code> to the name of the class specified in the
+    <code>uima.framework_impl</code> system property.  If such a class exists it will be passed to the Saxon
+    Transform class via the -x option.  The class should implement the <code>org.xml.sax.XMLReader</code>
+    or the <code>javax.xml.parsers.SAXParserFactory</code> interface, or extend <code>org.xml.sax.XMLFilterImpl</code>.
+	</para>
     
   </section>
   
