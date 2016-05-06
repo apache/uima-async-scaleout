@@ -972,7 +972,7 @@ under the License.
                 If the zipFile name ends in '.zip' the name is assumed to be a fully rooted or relative file path,
                 else the name is assumed to be in the classpath with '.zip' appended.
                 For compressed binary, the first entry in the zipfile must be typesystem.xml containing
-                the full typesystem of the serialed CASes.</entry>
+                the full typesystem of the serialized CASes.</entry>
             </row>
             <row>
               <entry>Service input queue prefetch</entry>
