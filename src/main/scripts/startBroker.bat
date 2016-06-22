@@ -53,5 +53,5 @@ REM   under the License.
   copy "%ACTIVEMQ_HOME%\conf\*" "%ACTIVEMQ_BASE%\conf"
 )
 
-call "%ACTIVEMQ_HOME%\bin\activemq.bat" "console" "xbean:file:%ACTIVEMQ_BASE%/conf/activemq-nojournal.xml"
+call "%ACTIVEMQ_HOME%\bin\activemq.bat" "start" "xbean:file:%ACTIVEMQ_BASE%/conf/activemq-nojournal.xml"
 :EXIT
