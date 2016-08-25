@@ -845,7 +845,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       running = true;
       throw e;
     } finally {
-      disposeContextFiles(springContext);
+	String uimaAsDebug = (String) anApplicationContext.get(UimaAsynchronousEngine.UimaEeDebug);
+	if ( null == uimaAsDebug || uimaAsDebug.equals("")) {
+           disposeContextFiles(springContext);
+	}
     }
   }
   private void disposeContextFiles(String ...contextFiles) {
@@ -889,7 +892,12 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       running = true;
       throw e;
     } finally {
-      disposeContextFiles(springContextFiles);
+	String uimaAsDebug = (String) anApplicationContext.get(UimaAsynchronousEngine.UimaEeDebug);
+	if ( null == uimaAsDebug || uimaAsDebug.equals("")) {
+           disposeContextFiles(springContextFiles);
+	}
+
+	//      disposeContextFiles(springContextFiles);
     }
 
   }
