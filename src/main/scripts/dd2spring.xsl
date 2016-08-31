@@ -86,7 +86,7 @@
     
   <xsl:output method="xml" indent="yes"
     doctype-public="-//Spring//DTD BEAN//EN"
-    doctype-system="http://www.springframework.org/dtd/spring-beans.dtd" 
+    doctype-system="http://www.springframework.org/dtd/spring-beans-2.0.dtd" 
     />
  
   <xsl:param name="useRelativePaths"/>
