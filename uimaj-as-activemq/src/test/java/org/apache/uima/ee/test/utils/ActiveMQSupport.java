@@ -27,27 +27,27 @@ import java.util.concurrent.Semaphore;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
 
 import junit.framework.TestCase;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
-import org.apache.activemq.broker.BrokerStoppedException;
 import org.apache.activemq.broker.TransportConnector;
 import org.apache.activemq.broker.region.policy.PolicyEntry;
 import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.store.memory.MemoryPersistenceAdapter;
-import org.apache.log4j.BasicConfigurator;
+import org.apache.camel.Exchange;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.apache.uima.UIMAFramework;
-import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
-import org.apache.uima.util.Level;
+import org.springframework.jms.listener.DefaultMessageListenerContainer;
+import org.springframework.util.ErrorHandler;
 
 public class ActiveMQSupport extends TestCase {
   private static final Class CLASS_NAME = ActiveMQSupport.class;
@@ -106,6 +106,11 @@ public class ActiveMQSupport extends TestCase {
     //System.out.println("Broker Version:"+broker.getBroker().)
     //    broker.setMasterConnectorURI(uri);
     addHttpConnector(DEFAULT_HTTP_PORT);
+
+    
+    //broker.getConnectorByName("http").connectionCount()
+    
+    
     if ( System.getProperty(DEFAULT_BROKER_URL_KEY) != null) {
       System.clearProperty(DEFAULT_BROKER_URL_KEY);
     }
@@ -160,7 +165,7 @@ public class ActiveMQSupport extends TestCase {
         } catch ( NoSuchMethodException e) {
           //  Ignore, this is not AMQ 5.2
         }
-        System.out.println("Adding HTTP Connector:" + httpConnector.getConnectUri());
+        System.out.println("Adding HTTP Connector:" + httpConnector.getConnectUri()+" Name:"+httpConnector.getName());
         httpConnector.start();
         return httpConnector.getUri().toString();
       } catch ( BindException e) { 
@@ -306,5 +311,59 @@ public class ActiveMQSupport extends TestCase {
     System.clearProperty("BrokerURL");
     stopBroker();
   }
+  
+  public class UimaASErrorHandler implements ErrorHandler {
 
+	@Override
+	public void handleError(Throwable arg0) {
+	}
+  }
+  
+  public class TestDefaultMessageListenerContainer extends DefaultMessageListenerContainer 
+  implements ExceptionListener {
+	  volatile boolean  failed = false;
+	  String reason = "";
+	  public TestDefaultMessageListenerContainer() {
+		  super();
+		  setExceptionListener(this);
+	  }
+	  protected void recoverAfterListenerSetupFailure() {
+	  }
+	  protected void handleListenerSetupFailure(Throwable t, boolean alreadyHandled) {
+		  if ( !failed && !broker.isStopped()) {
+			  try {
+
+				  stopSharedConnection();
+				  stop();
+				  System.out.println("JMS Listener.shutdown() called");
+				  //stop();
+				  failed = true;
+				  reason = t.getMessage();
+			  } catch( Exception e) {
+				  
+			  }
+		  }
+	  }
+	  public boolean failed() { 
+		  return failed;
+	  }
+	  public String getReasonForFailure() {
+		  return reason;
+	  }
+      protected void handleListenerException(Throwable ex) {
+      }
+      public void afterPropertiesSet() {
+	    super.afterPropertiesSet();
+      }
+      public void onException(JMSException exception) {
+      }
+  }
+
+  
+  public class UimaASExceptionHandler implements ExceptionListener {
+
+	@Override
+	public void onException(JMSException arg0) {
+	}
+  }
 }

@@ -46,6 +46,7 @@ import javax.jms.Session;
 
 import junit.framework.Assert;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.broker.BrokerStoppedException;
@@ -60,8 +61,10 @@ import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.adapter.jms.activemq.JmsInputChannel;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
+import org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -83,6 +86,7 @@ import org.apache.uima.resourceSpecifier.factory.ServiceContext;
 import org.apache.uima.resourceSpecifier.factory.UimaASPrimitiveDeploymentDescriptor;
 import org.apache.uima.resourceSpecifier.factory.impl.ServiceContextImpl;
 import org.apache.uima.util.XMLInputSource;
+import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.xml.sax.SAXException;
 
 public class TestUimaASExtended extends BaseTestSupport {
@@ -605,7 +609,61 @@ public class TestUimaASExtended extends BaseTestSupport {
 	}
   
 
-  
+  /**
+   * This tests if broker keep-alive protocol is working. With AMQ 5.13.2 the test
+   * fails due to broker bug. What happens is that when a jms client uses http
+   * protocol, the connection is made but the keep-alive chat between broker and
+   * client is not causing a timeout and an exception. 
+   * 
+   * The exception is internal to the broker but it also happens within amq
+   * client code. To get to this, a custom spring based listener is deployed 
+   * with some of its exception handling methods overriden to capture an exception. 
+   *  
+   * @throws Exception
+   */
+  public void testServiceWithHttpListeners() throws Exception {
+	    System.out.println("-------------- testServiceWithHttpListeners -------------");
+	    // Need java monitor object on which to sleep
+	    Object waitObject = new Object();
+	    // Custom spring listener with handleListenerSetupFailure() overriden to 
+	    // capture AMQ exception.
+	    TestDefaultMessageListenerContainer c = new TestDefaultMessageListenerContainer();
+	    c.setConnectionFactory(new ActiveMQConnectionFactory("http://localhost:18888"));
+	    c.setDestinationName("TestQ");
+	    c.setConcurrentConsumers(2);
+	    c.setBeanName("TestBean");
+	    c.setMessageListener(new JmsInputChannel());
+	    c.initialize();
+	    c.start();
+	    
+	    if ( c.isRunning() ) {
+		    System.out.println("... Listener Ready");
+	    	
+	    }
+	    // Keep-alive has a default 30 secs timeout. Sleep for bit longer than that
+	    // If there is an exception due to keep-alive, an exception handler will be
+	    // called on the TestDefaultMessageListenerContainer instance where we 
+	    // capture the error.
+	    System.out.println("... Waiting for 40 secs");
+	    try {
+	    	synchronized(waitObject) {
+	    		waitObject.wait(40000);
+	    	}
+	    	// had there been broker issues relateds to keep-alive the listener's failed
+	    	// flag would have been set by now. Check it and fail the test 
+	    	if ( c.failed() ) {
+		    	fail("Broker Failed - Reason:"+c.getReasonForFailure());
+	    	} else {
+	    		System.out.println("Stopping Listener");
+	    		c.stop();
+	    	}
+	    } catch( Exception e) {
+	    	e.printStackTrace();
+	    	fail(e.getMessage());
+	    }
+	    
+  }
+
   
   public void testAggregateHttpTunnelling() throws Exception {
     System.out.println("-------------- testAggregateHttpTunnelling -------------");
@@ -620,8 +678,11 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
             10, CPC_LATCH);
   }
+
+  
+  
   public void testClientHttpTunnellingToAggregate() throws Exception {
-    System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
+	  System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
     // Add HTTP Connector to the broker. 
     String httpURI = getHttpURI();
     // Create Uima-AS Client
