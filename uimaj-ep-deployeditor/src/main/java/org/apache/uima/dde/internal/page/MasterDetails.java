@@ -23,8 +23,8 @@ import org.apache.uima.aae.deployment.AEDeploymentDescription;
 import org.apache.uima.dde.internal.DeploymentDescriptorEditor;
 import org.apache.uima.dde.internal.Messages;
 import org.apache.uima.dde.internal.details.DetailsPageProvider;
-import org.apache.uima.dde.internal.hover.HoverManager;
 import org.apache.uima.dde.internal.hover.DDEInformationControl;
+import org.apache.uima.dde.internal.hover.HoverManager;
 import org.apache.uima.dde.internal.provider.DDTreeContentProvider;
 import org.apache.uima.dde.internal.provider.DDTreeLabelProvider;
 import org.apache.uima.taeconfigurator.TAEConfiguratorPlugin;
@@ -39,8 +39,6 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -152,8 +150,8 @@ public class MasterDetails extends MasterDetailsBlock { // implements Listener {
     };
     haction.setChecked(true);
     haction.setToolTipText("Horizontal Orientation");
-    haction.setImageDescriptor(TAEConfiguratorPlugin.getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_HORIZONTAL));
-    haction.setDisabledImageDescriptor(TAEConfiguratorPlugin
+    haction.setImageDescriptor(AbstractHeaderPage.getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_HORIZONTAL));
+    haction.setDisabledImageDescriptor(AbstractHeaderPage
             .getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_HORIZONTAL));
 
     Action vaction = new Action("ver", Action.AS_RADIO_BUTTON) { //$NON-NLS-1$
@@ -164,8 +162,8 @@ public class MasterDetails extends MasterDetailsBlock { // implements Listener {
     };
     vaction.setChecked(false);
     vaction.setToolTipText("Vertical Orientation");
-    vaction.setImageDescriptor(TAEConfiguratorPlugin.getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_VERTICAL));
-    vaction.setDisabledImageDescriptor(TAEConfiguratorPlugin
+    vaction.setImageDescriptor(AbstractHeaderPage.getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_VERTICAL));
+    vaction.setDisabledImageDescriptor(AbstractHeaderPage
             .getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_VERTICAL));
     form.getToolBarManager().add(haction);
     form.getToolBarManager().add(vaction);

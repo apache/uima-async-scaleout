@@ -19,9 +19,12 @@
 
 package org.apache.uima.dde.internal.page;
 
+import java.net.URL;
+
 import org.apache.uima.taeconfigurator.TAEConfiguratorPlugin;
 import org.apache.uima.tools.images.internal.ImageLoader;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -36,6 +39,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ImageHyperlink;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.ui.forms.widgets.Section;
+import org.osgi.framework.BundleReference;
 
 
 /**
@@ -121,9 +125,8 @@ public abstract class AbstractHeaderPage extends FormPage {
     };
     haction.setChecked(selectHorizontal);
     haction.setToolTipText("Horizontal Orientation");
-    haction.setImageDescriptor(TAEConfiguratorPlugin.getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_HORIZONTAL));
-    haction.setDisabledImageDescriptor(TAEConfiguratorPlugin
-            .getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_HORIZONTAL));
+    haction.setImageDescriptor(getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_HORIZONTAL));
+    haction.setDisabledImageDescriptor(getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_HORIZONTAL));
 
     Action vaction = new Action("ver", Action.AS_RADIO_BUTTON) { //$NON-NLS-1$
       public void run() {
@@ -133,12 +136,19 @@ public abstract class AbstractHeaderPage extends FormPage {
     };
     vaction.setChecked(!selectHorizontal);
     vaction.setToolTipText("Vertical Orientation");
-    vaction.setImageDescriptor(TAEConfiguratorPlugin.getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_VERTICAL));
-    vaction.setDisabledImageDescriptor(TAEConfiguratorPlugin
-            .getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_VERTICAL));
+    vaction.setImageDescriptor(getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_VERTICAL));
+    vaction.setDisabledImageDescriptor(getImageDescriptor(TAEConfiguratorPlugin.IMAGE_TH_VERTICAL));
     form.getToolBarManager().add(haction);
     form.getToolBarManager().add(vaction);
     form.updateToolBar();
   }
 
+  public static ImageDescriptor getImageDescriptor(String imageFile) {
+    ClassLoader cl = TAEConfiguratorPlugin.class.getClassLoader();
+    if (cl instanceof BundleReference) {
+      URL url = ((BundleReference) cl).getBundle().getEntry("icons/" + imageFile);    
+      return ImageDescriptor.createFromURL(url);
+    }
+    return null;
+  }
 } // AbstractHeaderPage
