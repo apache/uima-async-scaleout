@@ -1241,7 +1241,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                   "handleAction", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_killing_process__INFO", new Object[] { getComponentName() });
-          System.exit(1);
+          System.exit(0);
       }
 
     } else if (ErrorHandler.DISABLE.equalsIgnoreCase(anAction)) {

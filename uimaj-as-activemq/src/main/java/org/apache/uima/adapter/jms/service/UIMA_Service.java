@@ -280,7 +280,7 @@ public class UIMA_Service implements ApplicationListener {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "startMonitor", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAJMS_no_jmx_port__WARNING", new Object[]{});
-        System.exit(1);
+        System.exit(0);
       }
     }
 
@@ -428,7 +428,7 @@ public class UIMA_Service implements ApplicationListener {
       SpringContainerDeployer serviceDeployer = service.deploy(contextFiles);
       if (serviceDeployer == null) {
         System.out.println(">>> Failed to Deploy UIMA Service. Check Logs for Details");
-        System.exit(1);
+        System.exit(0);
       }
       // remove temporary spring context files generated from DD
       for( String contextFile: contextFiles) {
