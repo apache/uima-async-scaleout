@@ -121,9 +121,9 @@
 		<uimaScmRoot>uima-as</uimaScmRoot>
 		<uimaScmProject>${project.artifactId}</uimaScmProject>
 		<!-- level of uimaj sdk this release depends on -->
-		<uimajDependencyVersion>2.8.1</uimajDependencyVersion>
+		<uimajDependencyVersion>2.9.0</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
-		<org.apache.activemq.version>5.13.2</org.apache.activemq.version>
+		<org.apache.activemq.version>5.14.0</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
 		<org.springframework.version>4.1.9.RELEASE</org.springframework.version>
 
@@ -148,10 +148,6 @@
 		
 		<slf4j.version>1.7.13</slf4j.version>
 		
-		<!-- http.client.version>4.5.1</http.client.version>
-		
-		<http.core.version>4.4.4</http.core.version-->
-
 		<xpp3.version>1.1.4c</xpp3.version>
 		
 		<http.client.version>4.5.1</http.client.version>
