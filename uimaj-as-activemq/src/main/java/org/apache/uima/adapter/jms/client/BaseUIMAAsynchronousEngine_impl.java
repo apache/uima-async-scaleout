@@ -832,11 +832,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * 
    */
   public String deploy(String aDeploymentDescriptor, Map anApplicationContext) throws Exception {
-    String springContext = generateSpringContext(aDeploymentDescriptor, anApplicationContext);
+	  String springContext = null;
+	  try {
+		springContext = generateSpringContext(aDeploymentDescriptor, anApplicationContext);
 
-    SpringContainerDeployer springDeployer = new SpringContainerDeployer(springContainerRegistry, this);
-    try {
-      String id = springDeployer.deploy(springContext);
+        SpringContainerDeployer springDeployer = new SpringContainerDeployer(springContainerRegistry, this);
+
+    	String id = springDeployer.deploy(springContext);
       if ( springDeployer.isInitialized() ) {
         springDeployer.startListeners();
       }
@@ -845,10 +847,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       running = true;
       throw e;
     } finally {
-	String uimaAsDebug = (String) anApplicationContext.get(UimaAsynchronousEngine.UimaEeDebug);
-	if ( null == uimaAsDebug || uimaAsDebug.equals("")) {
+	  String uimaAsDebug = (String) anApplicationContext.get(UimaAsynchronousEngine.UimaEeDebug);
+	  if ( springContext != null && (null == uimaAsDebug || uimaAsDebug.equals("") ) ) {
            disposeContextFiles(springContext);
-	}
+	  }
     }
   }
   private void disposeContextFiles(String ...contextFiles) {
