@@ -968,6 +968,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	    List<UimaDefaultMessageListenerContainer> ll = getListeners();
 	    for (UimaDefaultMessageListenerContainer listenerObject : ll) {
 		      listenerObject.closeConnection();
+		      System.out.println("................. JmsInputChannel.terminate() - Listener -"+listenerObject.getDestinationName());
 		 }  
 	
 	 } catch( Exception e) {
@@ -980,7 +981,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   public synchronized void stop(int channelsToClose, boolean shutdownNow) throws Exception {
 	  List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
       List<UimaDefaultMessageListenerContainer> ll = getListeners();
- 	  
+      String msg = ">>>>>>>>>>>> JmsInputChannel. stop() - Controller:"+controller.getComponentName()+ " Listener Count:"+ll.size();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stop",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { msg });
+      }
+
       for (UimaDefaultMessageListenerContainer listenerObject : ll) {
 
        if (listenerObject != null && doCloseChannel(listenerObject, channelsToClose)) {
