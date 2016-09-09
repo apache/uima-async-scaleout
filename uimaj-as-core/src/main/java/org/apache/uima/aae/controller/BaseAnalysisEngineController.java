@@ -559,35 +559,40 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       String loadedJars = getLoadedJars();  
       DateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss ");
 
-      StringBuffer platformInfo = new StringBuffer();
-      platformInfo.append("\n+------------------------------------------------------------------");
-      platformInfo.append("\n                   Starting UIMA AS Service - PID: " + processPid);
-      platformInfo.append("\n+------------------------------------------------------------------");
-      platformInfo.append("\n+ Service Name:" + serviceName);
-      platformInfo.append("\n+ Service Queue Name:" + endpointName);
-      platformInfo.append("\n+ Service Start Time:" + df.format(bean.getStartTime()));
-      platformInfo.append("\n+ UIMA AS Version:" + uimaAsVersion.getVersionString());
-      platformInfo.append("\n+ UIMA Core Version:" + UIMAFramework.getVersionString());
-      if ( System.getenv(JMS_PROVIDER_HOME) != null) {
-        platformInfo.append("\n+ JMS Provider Home:" + System.getenv(JMS_PROVIDER_HOME));
+      // The EXTENDED_TESTS is set in UIMA-AS JUnit test harness to prevent excessive
+      // logging. 
+      if ( System.getProperty("EXTENDED_TESTS") == null || System.getProperty("EXTENDED_TESTS").trim().length() == 0) {
+          StringBuffer platformInfo = new StringBuffer();
+          platformInfo.append("\n+------------------------------------------------------------------");
+          platformInfo.append("\n                   Starting UIMA AS Service - PID: " + processPid);
+          platformInfo.append("\n+------------------------------------------------------------------");
+          platformInfo.append("\n+ Service Name:" + serviceName);
+          platformInfo.append("\n+ Service Queue Name:" + endpointName);
+          platformInfo.append("\n+ Service Start Time:" + df.format(bean.getStartTime()));
+          platformInfo.append("\n+ UIMA AS Version:" + uimaAsVersion.getVersionString());
+          platformInfo.append("\n+ UIMA Core Version:" + UIMAFramework.getVersionString());
+          if ( System.getenv(JMS_PROVIDER_HOME) != null) {
+            platformInfo.append("\n+ JMS Provider Home:" + System.getenv(JMS_PROVIDER_HOME));
+          }
+          platformInfo.append("\n+ OS Name:" + osBean.getName());
+          platformInfo.append("\n+ OS Version:" + osBean.getVersion());
+          platformInfo.append("\n+ OS Architecture:" + osBean.getArch());
+          platformInfo.append("\n+ OS CPU Count:" + osBean.getAvailableProcessors());
+          platformInfo.append("\n+ JVM Vendor:" + bean.getVmVendor());
+          platformInfo.append("\n+ JVM Name:" + bean.getVmName());
+          platformInfo.append("\n+ JVM Version:" + bean.getVmVersion());
+          platformInfo.append("\n+ JVM Input Args:" + bean.getInputArguments());
+          platformInfo.append("\n+ JVM Classpath:" + bean.getClassPath());
+          if ( loadedJars != null && loadedJars.length() > 0 ) {
+            platformInfo.append("\n+ JVM Loaded Jars:" + loadedJars);
+          }
+          platformInfo.append("\n+ JVM LIB_PATH:" + bean.getLibraryPath());
+          platformInfo.append("\n+------------------------------------------------------------------");
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                  "logPlatformInfo", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_show_platform_info__INFO", new Object[] { platformInfo.toString() });
+    	  
       }
-      platformInfo.append("\n+ OS Name:" + osBean.getName());
-      platformInfo.append("\n+ OS Version:" + osBean.getVersion());
-      platformInfo.append("\n+ OS Architecture:" + osBean.getArch());
-      platformInfo.append("\n+ OS CPU Count:" + osBean.getAvailableProcessors());
-      platformInfo.append("\n+ JVM Vendor:" + bean.getVmVendor());
-      platformInfo.append("\n+ JVM Name:" + bean.getVmName());
-      platformInfo.append("\n+ JVM Version:" + bean.getVmVersion());
-      platformInfo.append("\n+ JVM Input Args:" + bean.getInputArguments());
-      platformInfo.append("\n+ JVM Classpath:" + bean.getClassPath());
-      if ( loadedJars != null && loadedJars.length() > 0 ) {
-        platformInfo.append("\n+ JVM Loaded Jars:" + loadedJars);
-      }
-      platformInfo.append("\n+ JVM LIB_PATH:" + bean.getLibraryPath());
-      platformInfo.append("\n+------------------------------------------------------------------");
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-              "logPlatformInfo", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAEE_show_platform_info__INFO", new Object[] { platformInfo.toString() });
     }
   }
 
