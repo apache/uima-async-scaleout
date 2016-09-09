@@ -106,6 +106,7 @@
           <array>
             <string>java.lang.IndexOutOfBoundsException</string>
             <string>org.apache.uima.aae.error.MessageTimeoutException</string>
+            <string>org.apache.uima.aae.error.UimaEEServiceException</string>
           </array>
         </value>
       </nameValuePair>
