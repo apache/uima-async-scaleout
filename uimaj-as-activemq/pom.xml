@@ -268,6 +268,10 @@
                <groupId>org.apache.httpcomponents</groupId>
                <artifactId>httpcore</artifactId>
         </dependency>
+        <dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+</dependency>
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}</finalName>
@@ -313,28 +317,40 @@
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<version>2.7.2</version>
+						<!-- artifactId>maven-failsafe-plugin</artifactId>
+						<version>2.7.2</version-->
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>2.10</version>
 						<executions>
 							<execution>
-								<id>integration-test</id>
+								<!-- >id>integration-test</id-->
+								<id>surefire-integration</id>
 								<goals>
-									<goal>integration-test</goal>
+									<!-- goal>integration-test</goal-->
+									<goal>test</goal>
 								</goals>
 							</execution>
-							<execution>
+							<!-- >execution>
 								<id>verify</id>
 								<goals>
 									<goal>verify</goal>
 								</goals>
-							</execution>
+							</execution-->
 						</executions>
 						<configuration>
-							<argLine>-Xmx1024M -XX:MaxPermSize=128m</argLine>
+						<runOrder>alphabetical</runOrder>
+							<argLine>-Xmx1024M -XX:MaxPermSize=128m  "-Dlog4j.configuration=${UIMA_HOME}/apache-activemq/conf/log4j.properties" "-Djava.util.logging.config.file=${UIMA_HOME}/config/Logger.properties"</argLine>
 							<encoding>UTF-8</encoding>
 							<includes>
 								<include>**/TestUimaASExtended.java</include>
 							</includes>
+							<forkMode>once</forkMode>
+							<properties>
+            <!-- property>
+                <name>listener</name>
+                <value>org.apache.uima.ee.test.utils.UimaASJunitTestFailFastListener</value>
+            </property-->
+        </properties>
 						</configuration>
 					</plugin>
 				</plugins>
