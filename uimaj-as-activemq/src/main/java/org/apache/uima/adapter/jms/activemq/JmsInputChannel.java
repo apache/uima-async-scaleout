@@ -968,7 +968,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	    List<UimaDefaultMessageListenerContainer> ll = getListeners();
 	    for (UimaDefaultMessageListenerContainer listenerObject : ll) {
 		      listenerObject.closeConnection();
-		      System.out.println("................. JmsInputChannel.terminate() - Listener -"+listenerObject.getDestinationName());
+		      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+		        String msg = "................. JmsInputChannel.terminate() - Listener -"+listenerObject.getDestinationName();
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "terminate",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { msg });
+              }
+		      
 		 }  
 	
 	 } catch( Exception e) {
