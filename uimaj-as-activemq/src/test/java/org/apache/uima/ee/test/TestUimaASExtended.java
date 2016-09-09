@@ -37,7 +37,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import javax.jms.Connection;
 import javax.jms.Message;
@@ -49,8 +48,8 @@ import junit.framework.Assert;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQMessageConsumer;
 import org.apache.activemq.broker.BrokerService;
-import org.apache.activemq.broker.BrokerStoppedException;
 import org.apache.activemq.command.ActiveMQDestination;
+import org.apache.log4j.Logger;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.UimaClassFactory;
@@ -64,7 +63,6 @@ import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsInputChannel;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
-import org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -76,6 +74,7 @@ import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.ee.test.utils.BaseTestSupport;
+import org.apache.uima.ee.test.utils.UimaASTestRunner;
 import org.apache.uima.internal.util.XMLUtils;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
@@ -86,9 +85,11 @@ import org.apache.uima.resourceSpecifier.factory.ServiceContext;
 import org.apache.uima.resourceSpecifier.factory.UimaASPrimitiveDeploymentDescriptor;
 import org.apache.uima.resourceSpecifier.factory.impl.ServiceContextImpl;
 import org.apache.uima.util.XMLInputSource;
-import org.springframework.jms.listener.DefaultMessageListenerContainer;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xml.sax.SAXException;
 
+@RunWith(UimaASTestRunner.class)
 public class TestUimaASExtended extends BaseTestSupport {
 
   private CountDownLatch getMetaCountLatch = null;
@@ -107,6 +108,13 @@ public class TestUimaASExtended extends BaseTestSupport {
    * bring up testing for compressed binary serialization
    */
   
+/*
+  public static void main(String[] args ) {
+	  JUnitCore core= new JUnitCore();
+	    core.addListener(new UimaASJunitTestFailFastListener());
+	    core.run(TestUimaASExtended.class);
+  }
+  */
   
     private String getMasterConnectorURI(BrokerService b) {
 
@@ -149,18 +157,19 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
-  public void testJmsServiceAdapter() throws Exception {
-    System.out.println("-------------- testJmsServiceAdapter -------------");
-    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    @Test
+    public void testJmsServiceAdapter() throws Exception {
+	  Logger.getLogger(this.getClass()).info("-------------- testJmsServiceAdapter -------------");
+	  //setUp();
+	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     try {
         deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
         deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
-
         runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
-                10, PROCESS_LATCH);
-    	
+                0, PROCESS_LATCH);
+       
     } catch( Exception e ) {
-   	
+    	throw e;
     }
   }
   /*
@@ -170,7 +179,9 @@ public class TestUimaASExtended extends BaseTestSupport {
    * placeholder string, retrieves the name (defaultBrokerURL) and uses it to look
    * up tha actual broker URL in System properties.
    */
-  public void testJmsServiceAdapterWithPlaceholder() throws Exception {
+
+    @Test
+    public void testJmsServiceAdapterWithPlaceholder() throws Exception {
     System.out.println("-------------- testJmsServiceAdapterWithPlaceholder -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -187,6 +198,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testJmsServiceAdapterWithOverride() throws Exception {
     System.out.println("-------------- testJmsServiceAdapterWithOverride -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -196,6 +208,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             10, PROCESS_LATCH);
   }
 
+  @Test
   public void testJmsServiceAdapterWithException() throws Exception {
     System.out.println("-------------- testJmsServiceAdapterWithException -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -218,6 +231,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     eeUimaEngine.stop();
   }
 
+  @Test
   public void testJmsServiceAdapterWithProcessTimeout() throws Exception {
     System.out.println("-------------- testJmsServiceAdapterWithProcessTimeout -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -228,6 +242,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   }
 
+  @Test
   public void testJmsServiceAdapterWithGetmetaTimeout() throws Exception {
     System.out.println("-------------- testJmsServiceAdapterWithGetmetaTimeout -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -247,6 +262,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testCompressedTypeFiltering() throws Exception {
     System.out.println("-------------- testCompressedTypeFiltering -------------");
     // Instantiate Uima-AS Client
@@ -269,12 +285,14 @@ public class TestUimaASExtended extends BaseTestSupport {
   /**
    * Tests Broker startup and shutdown
    */
+  @Test
   public void testBrokerLifecycle() {
     System.out.println("-------------- testBrokerLifecycle -------------");
     System.out.println("UIMA_HOME=" + System.getenv("UIMA_HOME")
             + System.getProperty("file.separator") + "bin" + System.getProperty("file.separator")
             + "dd2spring.xsl");
   }
+  @Test
   public void testForHang() throws Exception {
 		System.out
 		            .println("-------------- testForHang -------------");
@@ -291,6 +309,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testGenerateAndDeployPrimitiveDD() throws Exception {
 	    System.out.println("-------------- testGenerateAndDeployPrimitiveDD -------------");
 	  File directory = new File (".");
@@ -346,6 +365,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	  
 	  
   }
+  @Test
   public void testDeployAggregateServiceWithFailingCollocatedCM() throws Exception {
     System.out.println("-------------- testDeployAggregateServiceWithFailingCollocatedCM -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -365,6 +385,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
   
   
+ 
   public void getLargeCAS(CAS aCAS, File xmiFile) throws IOException, CollectionException {
 	    FileInputStream inputStream = new FileInputStream(xmiFile);
 	    try {
@@ -377,6 +398,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    
 	  }
   /*
+  @Test
   public void testLargeCAS() {
 	    System.out.println("-------------- testLargeCAS -------------");
 	    try {
@@ -422,6 +444,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testQuiesceAndStop() throws Exception {
     System.out.println("-------------- testQuiesceAndStop -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -447,6 +470,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     //eeUimaEngine.stop();
   }
 /*
+  @Test
   public void testQuiesceAndStop2() throws Exception {
 	    System.out.println("-------------- testQuiesceAndStop -------------");
 	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -471,6 +495,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   
   
   
+  @Test
   public void testStopNow() throws Exception {
     System.out.println("-------------- testAggregateWithFailedRemoteDelegate -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -491,6 +516,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
             "TopLevelTaeQueue", 10, EXCEPTION_LATCH);
   }
+  @Test
   public void testSendAndReceive() throws Exception  {
       BaseUIMAAsynchronousEngine_impl uimaAsEngine 
       	= new BaseUIMAAsynchronousEngine_impl();
@@ -509,10 +535,10 @@ public class TestUimaASExtended extends BaseTestSupport {
       for (int i = 0; i < 15; i++) {
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+  //      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaAsEngine.sendAndReceiveCAS(cas,componentMetricsList);
-          System.out.println("-------> Client Received Performance Metrics of Size:"+componentMetricsList.size());
+  //        System.out.println("-------> Client Received Performance Metrics of Size:"+componentMetricsList.size());
         } catch( Exception e) {
           errorCount++;
         } finally {
@@ -522,6 +548,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       uimaAsEngine.stop();
   }
+  @Test
   public void testMultipleSyncClientsWithMultipleBrokers() throws Exception  {
 	    System.out.println("-------------- testMultipleSyncClientsWithMultipleBrokers -------------");
 	    
@@ -551,7 +578,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 		            for (int i = 0; i < 1000; i++) {
 			              CAS cas = uimaAsEngine.getCAS();
 			              cas.setDocumentText("Some Text");
-			              System.out.println("UIMA AS Client#"+ Thread.currentThread().getId()+" Sending CAS#"+(i + 1) + " Request to a Service Managed by Broker:"+brokerURL);
+		//	              System.out.println("UIMA AS Client#"+ Thread.currentThread().getId()+" Sending CAS#"+(i + 1) + " Request to a Service Managed by Broker:"+brokerURL);
 			              try {
 				                uimaAsEngine.sendAndReceiveCAS(cas);
 			              } catch( Exception e) {
@@ -621,6 +648,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    *  
    * @throws Exception
    */
+  @Test
   public void testServiceWithHttpListeners() throws Exception {
 	    System.out.println("-------------- testServiceWithHttpListeners -------------");
 	    // Need java monitor object on which to sleep
@@ -656,15 +684,16 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    	} else {
 	    		System.out.println("Stopping Listener");
 	    		c.stop();
+
 	    	}
 	    } catch( Exception e) {
 	    	e.printStackTrace();
 	    	fail(e.getMessage());
 	    }
-	    
   }
 
   
+  @Test
   public void testAggregateHttpTunnelling() throws Exception {
     System.out.println("-------------- testAggregateHttpTunnelling -------------");
     // Create Uima-AS Client
@@ -681,6 +710,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   
   
+  @Test
   public void testClientHttpTunnellingToAggregate() throws Exception {
 	  System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
     // Add HTTP Connector to the broker. 
@@ -694,6 +724,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     System.out.println("-------- Connecting Client To Service: "+httpURI);
     runTest(null, eeUimaEngine, httpURI, "TopLevelTaeQueue", 1, CPC_LATCH);
   }
+  @Test
   public void testClientHttpTunnelling() throws Exception {
     System.out.println("-------------- testClientHttpTunnelling -------------");
     String httpURI = getHttpURI();
@@ -707,6 +738,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
 
+  @Test
   public void testClientHttpTunnellingWithDoubleByteText() throws Exception {
     System.out.println("-------------- testClientHttpTunnellingWithDoubleByteText -------------");
 
@@ -769,6 +801,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testBrokerFailoverSupportUsingHTTP() throws Exception  {
     System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
      // Instantiate Uima AS Client
@@ -789,7 +822,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       for (int i = 0; i < 15; i++) {
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+      //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaAsEngine.sendAndReceiveCAS(cas);
         } catch( Exception e) {
@@ -816,6 +849,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testBrokerFailoverSupportUsingTCP() throws Exception  {
     System.out.println("-------------- testBrokerFailoverSupportUsingTCP -------------");
      // Instantiate Uima AS Client
@@ -833,7 +867,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       for (int i = 0; i < 15; i++) {
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+      //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaAsEngine.sendAndReceiveCAS(cas);
         } catch( Exception e) {
@@ -858,6 +892,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
   
+  @Test
   public void testSyncClientRecoveryFromBrokerStop() throws Exception  {
     System.out.println("-------------- testSyncClientRecoveryFromBrokerStop -------------");
      // Instantiate Uima AS Client
@@ -882,7 +917,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+     //   System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaAsEngine.sendAndReceiveCAS(cas);
         } catch( Exception e) {
@@ -907,6 +942,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * sending 11th CAS the test starts the broker again and sends 10 more CASes 
    * @throws Exception
    */
+  @Test
   public void testSyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testSyncClientRecoveryFromBrokerStopAndRestart -------------");
      // Instantiate Uima AS Client
@@ -939,7 +975,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+      //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaAsEngine.sendAndReceiveCAS(cas);
         } catch( Exception e) {
@@ -973,6 +1009,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testMultipleSyncClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testMultipleSyncClientsRecoveryFromBrokerStopAndRestart -------------");
     final BrokerService broker2 = setupSecondaryBroker(true);
@@ -994,13 +1031,13 @@ public class TestUimaASExtended extends BaseTestSupport {
             appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
             initialize(uimaAsEngine, appCtx);
             waitUntilInitialized();
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 500; i++) {
               if ( i == 5 ) {
                 latch.countDown();   // indicate that some CASes were processed
               }
               CAS cas = uimaAsEngine.getCAS();
               cas.setDocumentText("Some Text");
-              System.out.println("UIMA AS Client#"+ Thread.currentThread().getId()+" Sending CAS#"+(i + 1) + " Request to a Service");
+//              System.out.println("UIMA AS Client#"+ Thread.currentThread().getId()+" Sending CAS#"+(i + 1) + " Request to a Service");
               try {
                 uimaAsEngine.sendAndReceiveCAS(cas);
               } catch( Exception e) {
@@ -1058,6 +1095,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testAsyncClientRecoveryFromBrokerStop() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStop -------------");
     
@@ -1081,7 +1119,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+       // System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         uimaAsEngine.sendCAS(cas);
       }
       
@@ -1092,6 +1130,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   }
   
+  @Test
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStopAndRestart -------------");
 
@@ -1113,14 +1152,14 @@ public class TestUimaASExtended extends BaseTestSupport {
           broker2.stop();
           broker2.waitUntilStopped();
 
-        } else if ( i == 20 ) {
+        } else if ( i == 15 ) {
           broker2 = setupSecondaryBroker(true);
           broker2.waitUntilStarted();
 
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+ //       System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         uimaAsEngine.sendCAS(cas);
       }
       
@@ -1149,6 +1188,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  @Test
   public void testMultipleClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testMultipleClientsRecoveryFromBrokerStopAndRestart -------------");
       
@@ -1192,7 +1232,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         } 
         CAS cas = uimaClient1.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client#1 Sending CAS#" + (i + 1) + " Request to a Service");
+       // System.out.println("UIMA AS Client#1 Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaClient1.sendAndReceiveCAS(cas);
         } catch( Exception e) {
@@ -1205,7 +1245,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       for (int i = 0; i < 4; i++) {
         CAS cas = uimaClient2.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client#2 Sending CAS#" + (i + 1) + " Request to a Service");
+  //      System.out.println("UIMA AS Client#2 Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaClient2.sendAndReceiveCAS(cas);
         } catch( Exception e) {
@@ -1235,6 +1275,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * to the delegate and processing continues.
    * @throws Exception
    */
+  @Test
   public void testAggregateRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAggregateRecoveryFromBrokerStopAndRestart -------------");
     runAggregateRecoveryFromBrokerStopAndRestart("Deploy_AggregateWithRemoteNoOpOnBroker8200.xml");
@@ -1249,10 +1290,12 @@ public class TestUimaASExtended extends BaseTestSupport {
    * the client sends a new CAS which forces creation of a new temp queue and new listener.
    * @throws Exception
    */
+  @Test
   public void testAggregateRecoveryFromBrokerStopAndRestartNoDelegateRetries() throws Exception  {
     System.out.println("-------------- testAggregateRecoveryFromBrokerStopAndRestartNoDelegateRetries -------------");
     runAggregateRecoveryFromBrokerStopAndRestart("Deploy_AggregateWithRemoteNoOpOnBroker8200NoRetry.xml");
   }
+  
   private void runAggregateRecoveryFromBrokerStopAndRestart(String aggregateDescriptor ) throws Exception {
     BrokerService broker2 = setupSecondaryBroker(false);
     System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
@@ -1287,10 +1330,10 @@ public class TestUimaASExtended extends BaseTestSupport {
         } 
         CAS cas = uimaClient1.getCAS();
         cas.setDocumentText("Some Text");
-        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+//        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaClient1.sendAndReceiveCAS(cas);
-          System.out.println("UIMA AS Client Received Reply For CAS#" + (i + 1) );
+   //       System.out.println("UIMA AS Client Received Reply For CAS#" + (i + 1) );
         } catch( Exception e) {
           errorCount++;
           System.out.println("UIMA AS Client Received Expected Error on CAS:"+(i+1));
@@ -1314,6 +1357,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    *   
    * @throws Exception
    */
+  @Test
   public void testCpcAfterCasTimeout() throws Exception  {
     System.out.println("-------------- testCpcAfterCasTimeout -------------");
      // Instantiate Uima AS Client
@@ -1335,6 +1379,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
       uimaAsEngine.stop();
   }
+  @Test
   public void testClientCRProcess() throws Exception {
 	    System.out.println("-------------- testClientCRProcess -------------");
 	    super.resetCASesProcessed();
@@ -1385,6 +1430,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    uimaAsEngine.stop();
 	  }
 
+  @Test
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
     
@@ -1403,7 +1449,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     for (int i = 0; i < 50; i++) {
       CAS cas = uimaAsEngine.getCAS();
       cas.setDocumentText("Some Text");
-      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+//      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
       uimaAsEngine.sendCAS(cas);
     }
     
@@ -1413,6 +1459,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
   
   
+  @Test
   public void testClientProcessTimeout() throws Exception {
     System.out
             .println("-------------- testClientProcessTimeout -------------");
@@ -1429,7 +1476,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     for (int i = 0; i < 1; i++) {
       CAS cas = uimaAsEngine.getCAS();
       cas.setDocumentText("Some Text");
-      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+ //     System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
       uimaAsEngine.sendCAS(cas);
     }
     
@@ -1440,6 +1487,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
   
   
+  @Test
   public void testClientBrokerPlaceholderSubstitution() throws Exception {
     System.out.println("-------------- testClientBrokerPlaceholderSubstitution -------------");
     // Instantiate Uima AS Client
@@ -1455,7 +1503,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     for (int i = 0; i < 10; i++) {
       CAS cas = uimaAsEngine.getCAS();
       cas.setDocumentText("Some Text");
-      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+ //     System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
       uimaAsEngine.sendCAS(cas);
     }
     uimaAsEngine.collectionProcessingComplete();
@@ -1463,6 +1511,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     
   }
 
+  @Test
   public void testClientEndpointPlaceholderSubstitution() throws Exception {
 	    System.out.println("-------------- testClientEndpointPlaceholderSubstitution -------------");
 	    // Instantiate Uima AS Client
@@ -1483,7 +1532,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    for (int i = 0; i < 10; i++) {
 	      CAS cas = uimaAsEngine.getCAS();
 	      cas.setDocumentText("Some Text");
-	      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+//	      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
 	      uimaAsEngine.sendCAS(cas);
 	    }
 	    uimaAsEngine.collectionProcessingComplete();
@@ -1491,6 +1540,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    
 	  }
   
+  @Test
   public void testClientCpcTimeout() throws Exception {
     System.out.println("-------------- testClientCpcTimeout -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1512,6 +1562,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testInvalidInitializeCall() throws Exception {
     System.out.println("-------------- testInvalidInitializeCall -------------");
     // Instantiate Uima-AS Client
@@ -1553,6 +1604,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDeployPrimitiveService() throws Exception {
     System.out.println("-------------- testDeployPrimitiveService -------------");
     // Instantiate Uima-AS Client
@@ -1562,6 +1614,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
             "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
   }
+  @Test
   public void testDeployPrimitiveServiceWithInitFailure() throws Exception {
 	    System.out.println("-------------- testDeployPrimitiveServiceWithInitFailure -------------");
 	    // Instantiate Uima-AS Client
@@ -1576,6 +1629,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    fail("Expected ResourceInitializationException Not Thrown from deployed Service.");
   }
   
+  @Test
   public void testTypeSystemMerge() throws Exception {
     System.out.println("-------------- testTypeSystemMerge -------------");
     // Instantiate Uima-AS Client
@@ -1628,6 +1682,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testMultiInstanceDeployFailureInPrimitiveService() throws Exception {
     System.out.println("-------------- testMultiInstanceDeployFailureInPrimitiveService -------------");
     // Instantiate Uima-AS Client
@@ -1645,6 +1700,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDeployAggregateWithDelegateCpCException() throws Exception {
     System.out.println("-------------- testDeployAggregateWithDelegateCpCException -------------");
     // Instantiate Uima-AS Client
@@ -1681,6 +1737,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   }
 
+  @Test
   public void testDeployPrimitiveServiceWithCpCException() throws Exception {
     System.out.println("-------------- testDeployPrimitiveServiceWithCpCException -------------");
     // Instantiate Uima-AS Client
@@ -1699,6 +1756,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testCpCWithNoCASesSent() throws Exception {
     System.out.println("-------------- testCpCWithNoCASesSent -------------");
     // Instantiate Uima-AS Client
@@ -1723,6 +1781,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testServiceInactivityTimeoutOnReplyQueue() throws Exception {
     System.out.println("-------------- testServiceInactivityTimeoutOnReplyQueue -------------");
     String sessionTimeoutOverride = System.getProperty("SessionTimeoutOverride");
@@ -1773,6 +1832,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDeployAggregateServiceWithFailingCollocatedComponent() throws Exception {
     System.out
             .println("-------------- testDeployAggregateServiceWithFailingCollocatedComponent -------------");
@@ -1787,6 +1847,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       fail("Expected ResourceInitializationException Instead Caught:" + e.getClass().getName());
     }
   }
+  @Test
   public void testClientProcessTimeoutWithAggregateMultiplier() throws Exception {
     System.out.println("-------------- testClientProcessTimeoutWithAggregateMultiplier -------------");
     addExceptionToignore(org.apache.uima.aae.error.UimaASProcessCasTimeout.class);
@@ -1817,6 +1878,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     uimaAsEngine.stop();
   }
 
+  @Test
   public void testDeployAggregateService() throws Exception {
     System.out.println("-------------- testDeployAggregateService -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1842,6 +1904,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDeployAggregateServiceWithScaledInnerNoOp() throws Exception {
 	    System.out.println("-------------- testDeployAggregateServiceWithScaledInnerNoOp -------------");
 	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1858,6 +1921,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            10, PROCESS_LATCH);
 	  }
+  @Test
   public void testDeployAggregateServiceWithDelegateTimeoutAndContinueOnError() throws Exception {
     System.out.println("-------------- testDeployAggregateServiceWithDelegateTimeoutAndContinueOnError -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1871,6 +1935,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
   
+  @Test
   public void testScaledSyncAggregateProcess() throws Exception {
     System.out.println("-------------- testScaledSyncAggregateProcess -------------");
     // Instantiate Uima-AS Client
@@ -1881,6 +1946,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             5, PROCESS_LATCH);
   }
 
+  @Test
   public void testAggregateWithFailedRemoteDelegate() throws Exception {
     System.out.println("-------------- testAggregateWithFailedRemoteDelegate -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1891,6 +1957,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
 
+  @Test
   public void testCMAggregateClientStopRequest() throws Exception {
     System.out.println("-------------- testCMAggregateClientStopRequest -------------");
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1928,6 +1995,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testCMAggregateClientStopRequest2() throws Exception {
     System.out.println("-------------- testCMAggregateClientStopRequest2 -------------");
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1966,6 +2034,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testAggregateCMWithFailedRemoteDelegate() throws Exception {
     System.out.println("-------------- testAggregateCMWithFailedRemoteDelegate -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1975,6 +2044,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, EXCEPTION_LATCH);
   }
 
+  @Test
   public void testAggregateCMWithFailedCollocatedDelegate() throws Exception {
     System.out.println("-------------- testAggregateCMWithFailedCollocatedDelegate -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1984,6 +2054,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, EXCEPTION_LATCH);
   }
 
+  @Test
   public void testComplexAggregateCMWithFailedCollocatedDelegate() throws Exception {
     System.out
             .println("-------------- testComplexAggregateCMWithFailedCollocatedDelegate -------------");
@@ -1994,6 +2065,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, EXCEPTION_LATCH);
   }
 
+  @Test
   public void testAggregateCMWithRemoteCMAndFailedRemoteDelegate() throws Exception {
     System.out
             .println("-------------- testAggregateCMWithRemoteCMAndFailedRemoteDelegate -------------");
@@ -2011,6 +2083,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDeployAggregateServiceWithBrokerPlaceholder() throws Exception {
     System.out
             .println("-------------- testDeployAggregateServiceWithBrokerPlaceholder -------------");
@@ -2071,6 +2144,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDelayedBrokerWithAggregateService() throws Exception {
     System.out.println("-------------- testDelayedBrokerWithAggregateService -------------");
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2137,6 +2211,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDeployAggregateServiceWithTempReplyQueue() throws Exception {
     System.out.println("-------------- testDeployAggregateServiceWithTempReplyQueue -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2152,6 +2227,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testProcessAggregateServiceWith1000Docs() throws Exception {
     System.out.println("-------------- testProcessAggregateServiceWith1000Docs -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2165,6 +2241,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   }
 
+  @Test
   public void testProcessAggregateWithInnerAggregateCM() throws Exception {
     System.out.println("-------------- testProcessAggregateWithInnerAggregateCM() -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2173,6 +2250,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
   }
+  @Test
   public void testAggregateWithInnerSynchAggregateCM() throws Exception {
 	    System.out.println("-------------- testAggregateWithInnerSynchAggregateCM() -------------");
 	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2188,6 +2266,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testExceptionOnPostInitializeCollectionReaderInjection() throws Exception {
     System.out
             .println("-------------- testExceptionOnPostInitializeCollectionReaderInjection -------------");
@@ -2221,6 +2300,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testTerminateOnFlowControllerExceptionOnDisable() throws Exception {
     System.out
             .println("-------------- testTerminateOnFlowControllerExceptionOnDisable -------------");
@@ -2237,6 +2317,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testTerminateOnFlowControllerExceptionOnInitialization() throws Exception {
     System.out
             .println("-------------- testTerminateOnFlowControllerExceptionOnInitialization -------------");
@@ -2266,6 +2347,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testTerminateOnFlowControllerExceptionOnInitializationWithDisabledDelegates()
           throws Exception {
     System.out
@@ -2293,6 +2375,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  @Test
   public void testPrimitiveServiceProcess() throws Exception {
     System.out.println("-------------- testPrimitiveServiceProcess -------------");
     // Instantiate Uima-AS Client
@@ -2309,6 +2392,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  @Test
   public void testSyncAggregateProcess() throws Exception {
     System.out.println("-------------- testSyncAggregateProcess -------------");
     // Instantiate Uima-AS Client
@@ -2325,6 +2409,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  @Test
   public void testPrimitiveServiceProcessPingFailure() throws Exception {
     System.out.println("-------------- testPrimitiveServiceProcessPingFailure -------------");
     // Instantiate Uima-AS Client
@@ -2378,6 +2463,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDelegateTimeoutAndDisable() throws Exception {
     System.out.println("-------------- testDelegateTimeoutAndDisable -------------");
     // Instantiate Uima-AS Client
@@ -2426,6 +2512,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDisableDelegateOnTimeoutWithCM() throws Exception {
     System.out.println("-------------- testDisableDelegateOnTimeoutWithCM -------------");
     // Instantiate Uima-AS Client
@@ -2471,6 +2558,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testSynchCallProcessWithMultipleThreads() throws Exception {
     System.out.println("-------------- testSynchCallProcessWithMultipleThreads -------------");
     int howManyCASesPerRunningThread = 100;
@@ -2483,6 +2571,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testPrimitiveProcessCallWithLongDelay() throws Exception {
     System.out.println("-------------- testPrimitiveProcessCallWithLongDelay -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2508,6 +2597,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testAggregateProcessCallWithLongDelay() throws Exception {
 
     System.out.println("-------------- testAggregateProcessCallWithLongDelay -------------");
@@ -2534,6 +2624,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testAggregateProcessCallWithLastCM() throws Exception {
     System.out.println("-------------- testAggregateProcessCallWithLastCM -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2550,6 +2641,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  @Test
   public void testTimeoutInSynchCallProcessWithMultipleThreads() throws Exception {
     System.out
             .println("-------------- testTimeoutInSynchCallProcessWithMultipleThreads -------------");
@@ -2569,6 +2661,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  @Test
   public void testTimeoutFailureInSynchCallProcessWithMultipleThreads() throws Exception {
     System.out
             .println("-------------- testTimeoutFailureInSynchCallProcessWithMultipleThreads -------------");
@@ -2586,6 +2679,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testProcessWithParallelFlow() throws Exception {
     System.out.println("-------------- testProcessWithParallelFlow -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2601,6 +2695,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDisableDelegateInParallelFlow() throws Exception {
     System.out.println("-------------- testDisableDelegateInParallelFlow -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2620,6 +2715,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testMutlipleDelegateTimeoutsInParallelFlows() throws Exception {
     System.out.println("-------------- testTimeoutDelegateInParallelFlows -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2639,6 +2735,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testTimeoutDelegateInParallelFlows() throws Exception {
     System.out.println("-------------- testTimeoutDelegateInParallelFlows -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2661,6 +2758,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testRemoteDelegateTimeout() throws Exception {
     System.out.println("-------------- testRemoteDelegateTimeout -------------");
     System.out.println("The Aggregate sends 2 CASes to the NoOp Annotator which");
@@ -2684,6 +2782,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDisableOnRemoteDelegatePingTimeout() throws Exception {
     System.out.println("-------------- testDisableOnRemoteDelegatePingTimeout -------------");
     System.out.println("The Aggregate sends 2 CASes to the NoOp Annotator which");
@@ -2706,6 +2805,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(appCtx, eeUimaEngine, null, null, 1, EXCEPTION_LATCH);
   }
 
+  @Test
   public void testDeployAggregateWithCollocatedAggregateService() throws Exception {
     System.out
             .println("-------------- testDeployAggregateWithCollocatedAggregateService -------------");
@@ -2716,6 +2816,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             10, PROCESS_LATCH);
   }
 
+  @Test
   public void testProcessWithAggregateUsingCollocatedMultiplier() throws Exception {
     System.out
             .println("-------------- testProcessWithAggregateUsingCollocatedMultiplier -------------");
@@ -2726,6 +2827,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testExistanceOfParentCasReferenceIdOnChildFailure() throws Exception {
 	  System.out
             .println("-------------- testExistanceOfParentCasReferenceIdOnChildFailure -------------");
@@ -2740,6 +2842,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     Assert.assertTrue(super.receivedExpectedParentReferenceId);
   }
 
+  @Test
   public void testProcessWithAggregateUsingRemoteMultiplier() throws Exception {
     System.out
             .println("-------------- testProcessWithAggregateUsingRemoteMultiplier -------------");
@@ -2753,6 +2856,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testParentProcessLast() throws Exception {
     System.out
             .println("-------------- testParentProcessLast -------------");
@@ -2771,6 +2875,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testProcessWithAggregateUsingRemoteMultiplierOnSeparateBroker() throws Exception {
     System.out
             .println("-------------- testProcessWithAggregateUsingRemoteMultiplierOnSeparateBroker -------------");
@@ -2804,6 +2909,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testProcessWithAggregateUsingCollocatedMerger() throws Exception {
     System.out.println("-------------- testProcessWithAggregateUsingRemoteMerger -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2812,6 +2918,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testProcessWithAggregateUsingRemoteMerger() throws Exception {
     System.out.println("-------------- testProcessWithAggregateUsingRemoteMerger -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2822,6 +2929,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
 
   
+  @Test
   public void testClientWithAggregateMultiplier() throws Exception {
     System.out.println("-------------- testClientWithAggregateMultiplier -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2838,6 +2946,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
             "TopLevelTaeQueue", 1, PROCESS_LATCH);
   }
+  @Test
   public void testClientProcessWithRemoteMultiplier() throws Exception {
     System.out.println("-------------- testClientProcessWithRemoteMultiplier -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2852,6 +2961,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             "TestMultiplierQueue", 1, PROCESS_LATCH);
   }
 
+  @Test
   public void testClientProcessWithComplexAggregateRemoteMultiplier() throws Exception {
 
     System.out
@@ -2865,6 +2975,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testProcessWithAggregateUsing2RemoteMultipliers() throws Exception {
     System.out
             .println("-------------- testProcessWithAggregateUsing2RemoteMultipliers -------------");
@@ -2877,6 +2988,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testProcessWithAggregateUsing2CollocatedMultipliers() throws Exception {
     System.out
             .println("-------------- testProcessWithAggregateUsing2CollocatedMultipliers -------------");
@@ -2887,6 +2999,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testProcessAggregateWithInnerCMAggregate() throws Exception {
     System.out.println("-------------- testProcessAggregateWithInnerCMAggregate -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2894,6 +3007,8 @@ public class TestUimaASExtended extends BaseTestSupport {
     runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
             1, PROCESS_LATCH);
   }
+
+  @Test
   public void testProcessAggregateWithInnerAggregateDelegateInitFailure() throws Exception {
     System.out.println("-------------- testProcessAggregateWithInnerAggregateDelegateInitFailure -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2905,6 +3020,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     }
   }
 
+  @Test
   public void testComplexDeployment() throws Exception {
     System.out.println("-------------- testComplexDeployment -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2924,6 +3040,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             "TopLevelTaeQueue", 10, PROCESS_LATCH);
   }
 
+  @Test
   public void testTypesystemMergeWithMultiplier() throws Exception {
     System.out.println("-------------- testTypesystemMergeWithMultiplier -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -2932,6 +3049,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testStopAggregateWithRemoteMultiplier() throws Exception {
     System.out.println("-------------- testStopAggregateWithRemoteMultiplier -------------");
     
@@ -2944,6 +3062,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, EXCEPTION_LATCH);
   }
 
+  @Test
   public void testCancelProcessAggregateWithCollocatedMultiplier() throws Exception {
     System.out
             .println("-------------- testCancelProcessAggregateWithCollocatedMultiplier -------------");
@@ -2956,6 +3075,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH);
   }
 
+  @Test
   public void testCancelProcessAggregateWithRemoteMultiplier() throws Exception {
     System.out.println("-------------- testStopAggregateWithRemoteMultiplier -------------");
     System.setProperty("BrokerURL", getMasterConnectorURI(broker));
@@ -2978,6 +3098,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testPrimitiveServiceResponseOnException() throws Exception {
     System.out.println("-------------- testPrimitiveServiceResponseOnException -------------");
     // Instantiate Uima-AS Client
@@ -2990,6 +3111,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             "NoOpAnnotatorQueue", 1, EXCEPTION_LATCH);
   }
 
+  @Test
   public void testProcessParallelFlowWithDelegateFailure() throws Exception {
     System.out.println("-------------- testProcessParallelFlowWithDelegateFailure -------------");
     // Create Uima-AS Client
@@ -3016,6 +3138,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testErrorThresholdWindow() throws Exception {
     System.out.println("-------------- testErrorThresholdWindow -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -3029,6 +3152,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             "TopLevelTaeQueue", 1, PROCESS_LATCH); // PC_LATCH);
   }
 
+  @Test
   public void testProcessParallelFlowWithDelegateDisable() throws Exception {
     System.out.println("-------------- testProcessParallelFlowWithDelegateDisable -------------");
     // Create Uima-AS Client
@@ -3041,6 +3165,7 @@ public class TestUimaASExtended extends BaseTestSupport {
             1, PROCESS_LATCH); // PC_LATCH);
   }
 
+  @Test
   public void testPrimitiveShutdownOnTooManyErrors() throws Exception {
     System.out.println("-------------- testPrimitiveShutdownOnTooManyErrors -------------");
     // Create Uima-AS Client
@@ -3062,6 +3187,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  @Test
   public void testCollectionReader() throws Exception {
     System.out.println("-------------- testCollectionReader -------------");
     // Instantiate Uima-AS Client
@@ -3097,6 +3223,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     eeUimaEngine.stop();
   }
 
+  @Test
   public void testAsynchronousTerminate() throws Exception {
     System.out.println("-------------- testAsynchronousTerminate -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -3127,6 +3254,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     
   }
 
+  @Test
   public void testCallbackListenerOnFailure() throws Exception {
     System.out.println("-------------- testCallbackListenerOnFailure -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -3165,6 +3293,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       eeUimaEngine.stop();
     }
   }
+  @Test
   public void testCauseOfInitializationFailure() throws Exception {
 	    System.out.println("-------------- testCauseOfInitializationFailure -------------");
 	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -3189,6 +3318,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    }
 	  }
 
+  @Test
   public void testTerminateOnInitializationFailure() throws Exception {
     System.out.println("-------------- testTerminateOnInitializationFailure -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -3220,6 +3350,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testTerminateOnInitializationFailureWithDelegateBrokerMissing() throws Exception {
     System.out
             .println("-------------- testTerminateOnInitializationFailureWithDelegateBrokerMissing -------------");
@@ -3258,6 +3389,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testTerminateOnInitializationFailureWithAggregateForcedShutdown() throws Exception {
     System.out
             .println("-------------- testTerminateOnInitializationFailureWithAggregateForcedShutdown -------------");
@@ -3294,6 +3426,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testDisableOnInitializationFailureWithDelegateBrokerMissing() throws Exception {
     System.out
             .println("-------------- testDisableOnInitializationFailureWithDelegateBrokerMissing() -------------");
@@ -3331,6 +3464,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * 
    * @throws Exception
    */
+  @Test
   public void testContinueOnRetryFailure() throws Exception {
     System.out.println("-------------- testContinueOnRetryFailure -------------");
     File tempDir = new File("target/temp");
@@ -3360,6 +3494,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 //    Thread.sleep(24 * 60 * 60 * 1000);  // sleep for one day
 //  }
   
+  @Test
   public void testDeployAgainAndAgain() throws Exception {
     System.out.println("-------------- testDeployAgainAndAgain -------------");
                                                                                           // in the
@@ -3377,6 +3512,7 @@ public class TestUimaASExtended extends BaseTestSupport {
               "TopLevelTaeQueue", 1, PROCESS_LATCH);
     }
   }
+  
   public void testMultipleASClients() throws Exception  {
 	    System.out.println("-------------- testMultipleSyncClientsWithMultipleBrokers -------------");
 	    
@@ -3685,4 +3821,5 @@ public class TestUimaASExtended extends BaseTestSupport {
 	}
 	  
   }
+ 
 }
