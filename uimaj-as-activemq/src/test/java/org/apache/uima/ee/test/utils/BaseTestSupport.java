@@ -32,6 +32,7 @@ import java.util.concurrent.Semaphore;
 
 import javax.jms.Message;
 
+import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
@@ -42,12 +43,14 @@ import org.apache.uima.aae.error.UimaASPingTimeout;
 import org.apache.uima.aae.error.UimaASProcessCasTimeout;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
+import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
+import org.apache.uima.util.Level;
 import org.apache.uima.util.ProcessTrace;
 import org.apache.uima.util.ProcessTraceEvent;
 import org.apache.uima.util.impl.ProcessTrace_impl;
@@ -55,6 +58,8 @@ import org.apache.uima.util.impl.ProcessTrace_impl;
 public abstract class BaseTestSupport extends ActiveMQSupport
 // implements UimaASStatusCallbackListener
 {
+  private static final Class CLASS_NAME = BaseTestSupport.class;
+  
   private static final char FS = System.getProperty("file.separator").charAt(0);
 
   protected String text = "IBM today elevated five employees to the title of IBM Fellow\n -- its most prestigious technical honor.\n The company also presented more than $2.8 million in cash awards to employees whose technical innovation have yielded exceptional value to the company and its customers.\nIBM conferred the accolades and awards at its 2003 Corporate Technical Recognition Event (CTRE) in Scottsdale, Ariz. CTRE is a 40-year tradition at IBM, established to recognize exceptional technical employees and reward them for extraordinary achievements and contributions to the company's technology leadership.\n Our technical employees are among the best and brightest innovators in the world.\n They share a passion for excellence that defines their work and permeates the products and services IBM delivers to its customers, said Nick Donofrio, senior vice president, technology and manufacturing for IBM.\n CTRE provides the means for us to honor those who have distinguished themselves as exceptional leaders among their peers.\nAmong the special honorees at the 2003 CTRE are five employees who earned the coveted distinction of IBM Fellow:- David Ferrucci aka Dave, Grady Booch, chief scientist of Rational Software, IBM Software Group.\n Recognized internationally for his innovative work on software architecture, modeling, and software engineering process. \nMr. Booch is one of the original authors of the Unified Modeling Language (UML), the industry-standard language of blueprints for software-intensive systems.- Dr. Donald Chamberlin, researcher, IBM Almaden Research Center. An expert in relational database languages, Dr. Chamberlin is co- inventor of SQL, the language that energized the relational database market. He has also";
@@ -113,7 +118,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           String aDeploymentDescriptorPath) throws Exception {
     String defaultBrokerURL = System.getProperty("BrokerURL");
     if (defaultBrokerURL != null) {
-      System.out.println(">>> runTest: Setting defaultBrokerURL to:" + defaultBrokerURL);
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+          String msg = ">>> runTest: Setting defaultBrokerURL to:" + defaultBrokerURL;
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "deployService",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { msg });
+      }
       System.setProperty("defaultBrokerURL", defaultBrokerURL);
     } else {
       System.setProperty("defaultBrokerURL", "tcp://localhost:8118");
@@ -468,7 +478,14 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         if (t2 != null) {
           t2.join();
           long endTime = System.currentTimeMillis();
-          System.out.println(">>>> Total Time in Service:" + (endTime - startTime));
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+              String msg = ">>>> Total Time in Service:" + (endTime - startTime);
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "runTest",
+                     JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                      new Object[] { msg });
+          }
+
+          
           if (!serviceShutdownException && !isStopped && !unexpectedException) {
             System.out.println("runTest: Sending CPC");
             aUimaEeEngine.collectionProcessingComplete();
@@ -482,6 +499,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           }
         }
 
+        System.out.println("Rev'd "+responseCounter + " Replies");
         // If have skipped CPC trip the latch
         if ((serviceShutdownException || unexpectedException) && cpcLatch != null) {
           cpcLatch.countDown();
@@ -502,11 +520,13 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     }
 */
     isStopping = true;
+    
     aUimaEeEngine.stop();
 
     // Finally fail test if unhappy ... must be last call as acts like "throw"
     if (unexpectedException) {
-      fail("Unexpected exception returned");
+      throw new RuntimeException("Unexpected exception returned");
+      
     }
   }
 
@@ -565,7 +585,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           t2.join();
 
           if (!serviceShutdownException && !isStopped && !unexpectedException) {
-            System.out.println("runTest: Sending CPC");
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+                String msg = "runTest: Sending CPC";
+                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stop",
+                       JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                        new Object[] { msg });
+            }
 
             // Send CPC
             aUimaEeEngine.collectionProcessingComplete();
@@ -580,9 +605,11 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       }
 
     }
+    System.out.println("Rev'd "+responseCounter + " Replies");
 
     isStopping = true;
-    aUimaEeEngine.stop();
+    //aUimaEeEngine.stop();
+    aUimaEeEngine.undeploy();
 
     // Finally fail test if unhappy ... must be last call as acts like "throw"
     if (unexpectedException) {
@@ -637,7 +664,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
    */
   protected void incrementCASesProcessed() {
     responseCounter++;
-    System.out.println("runTest: Client:::::::::::::: Received:" + responseCounter + " Reply");
+//    System.out.println("runTest: Client:::::::::::::: Received:" + responseCounter + " Reply");
 
   }
 
@@ -653,13 +680,13 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     private int pingTimeoutCount=0;
     
     public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
-      System.out.println("runTest: onBeforeProcessCAS() Notification - CAS:"
-              + status.getCasReferenceId()+" is being processed on machine:"+nodeIP+" by process (PID):"+pid);
+//      System.out.println("runTest: onBeforeProcessCAS() Notification - CAS:"
+//              + status.getCasReferenceId()+" is being processed on machine:"+nodeIP+" by process (PID):"+pid);
     }
     public synchronized void onBeforeMessageSend(UimaASProcessStatus status) {
       casSent = status.getCasReferenceId();
-      System.out.println("runTest: Received onBeforeMessageSend() Notification With CAS:"
-              + status.getCasReferenceId());
+//      System.out.println("runTest: Received onBeforeMessageSend() Notification With CAS:"
+//              + status.getCasReferenceId());
     }
     public void onUimaAsServiceExit(EventTrigger cause) {
         System.out.println("runTest: Received onUimaAsServiceExit() Notification With Cause:"
@@ -676,7 +703,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           append(metrics.getAnalysisTime()).
           append(" Cases Processed:").append(metrics.getNumProcessed());
       }
-      System.out.println(sb.toString());
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+    	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "entityProcessComplete",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { sb.toString() });
+      }
+
     }
     /**
      * Callback method which is called by Uima EE client when a reply to process CAS is received.
@@ -777,10 +809,10 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       // Not an exception
       else if (processCountLatch != null && aCAS != null) {
         if (parentCasReferenceId != null) {
-          System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId
-                  + " The Cas Was Generated From Parent Cas Id:" + parentCasReferenceId);
+        //  System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId
+        //          + " The Cas Was Generated From Parent Cas Id:" + parentCasReferenceId);
         } else {
-          System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId);
+          //System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId);
         }
 
         if (doubleByteText != null) {
@@ -803,11 +835,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         if (parentCasReferenceId == null) {
           processCountLatch.countDown();
         }
+        
         List eList = aProcessStatus.getProcessTrace().getEventsByComponentName("UimaEE", false);
         for (int i = 0; i < eList.size(); i++) {
           ProcessTraceEvent eEvent = (ProcessTraceEvent) eList.get(i);
-          System.out.println("runTest: Received Process Event - " + eEvent.getDescription()
-                  + " Duration::" + eEvent.getDuration() + " ms"); // / (float) 1000000);
+        //  System.out.println("runTest: Received Process Event - " + eEvent.getDescription()
+        //          + " Duration::" + eEvent.getDuration() + " ms"); // / (float) 1000000);
           // Check if the running test wants to check how long the processing of CAS took
           if (expectedProcessTime > 0
                   && "Total Time In Process CAS".equals(eEvent.getDescription())) {
@@ -826,10 +859,10 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         incrementCASesProcessed();
       } else if (aCAS != null) {
         if (parentCasReferenceId != null) {
-          System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId
-                  + " The Cas Was Generated From Parent Cas Id:" + parentCasReferenceId);
+//          System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId
+//                  + " The Cas Was Generated From Parent Cas Id:" + parentCasReferenceId);
         } else {
-          System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId);
+//          System.out.println("runTest: Received Reply Containing CAS:" + casReferenceId);
         }
         incrementCASesProcessed();
       }

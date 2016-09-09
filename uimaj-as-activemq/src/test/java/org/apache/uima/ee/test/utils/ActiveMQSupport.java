@@ -45,7 +45,12 @@ import org.apache.camel.Exchange;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.apache.uima.UIMAFramework;
+import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
+import org.apache.uima.util.Level;
+import org.junit.After;
+import org.junit.Before;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.util.ErrorHandler;
 
@@ -86,10 +91,11 @@ public class ActiveMQSupport extends TestCase {
   protected static TransportConnector httpConnector = null;
 
   public static Semaphore brokerSemaphore = new Semaphore(1);
-
-  protected synchronized void setUp() throws Exception {
+  @Before
+  public synchronized void setUp() throws Exception {
     super.setUp();
 	  //BasicConfigurator.configure();
+    /*
     ConsoleAppender console = new ConsoleAppender(); //create appender
     //configure the appender
     String PATTERN = "%d [%p|%c|%C{1}] %m%n";
@@ -98,7 +104,7 @@ public class ActiveMQSupport extends TestCase {
     console.activateOptions();
     //add appender to any Logger (here is root)
     Logger.getRootLogger().addAppender(console);
-    
+    */
     broker = createBroker();  // sets uri
     broker.setUseJmx(true);
     broker.getManagementContext().setConnectorPort(1098);
@@ -106,11 +112,6 @@ public class ActiveMQSupport extends TestCase {
     //System.out.println("Broker Version:"+broker.getBroker().)
     //    broker.setMasterConnectorURI(uri);
     addHttpConnector(DEFAULT_HTTP_PORT);
-
-    
-    //broker.getConnectorByName("http").connectionCount()
-    
-    
     if ( System.getProperty(DEFAULT_BROKER_URL_KEY) != null) {
       System.clearProperty(DEFAULT_BROKER_URL_KEY);
     }
@@ -121,15 +122,34 @@ public class ActiveMQSupport extends TestCase {
     System.setProperty(DEFAULT_HTTP_BROKER_URL_KEY, httpConnector.getConnectUri().toString());
     // define property so that UIMA AS error handler doesnt call System.exit() if the
     // error handler action=terminate.
-    System.setProperty("dontKill","");  
+    System.setProperty("dontKill","");
+    System.setProperty("EXTENDED_TESTS","TRUE");
   }
   
+
+  public void drainQueues() throws Exception {
+	  if ( broker != null ) {
+		  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+			  String msg = "............ Deleting ALL messages";
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "drainQueues",
+	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+	                  new Object[] { msg });
+	      }
+		  broker.deleteAllMessages();
+	  }
+  }
   protected void cleanBroker( BrokerService targetBroker) throws Exception {
     // Remove messages from all queues
    // targetBroker.deleteAllMessages();
     org.apache.activemq.broker.Connection[] connections = targetBroker.getRegionBroker().getClients();
     for( org.apache.activemq.broker.Connection connection : connections) {
       try {
+		  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+	    	  String msg = ".............. Forcing Connection Closure - Connection ID:"+connection.getConnectionId();
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "cleanBroker",
+	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+	                  new Object[] { msg });
+	      }
         connection.stop();
       } catch( Exception e) {
         e.printStackTrace();
@@ -165,7 +185,7 @@ public class ActiveMQSupport extends TestCase {
         } catch ( NoSuchMethodException e) {
           //  Ignore, this is not AMQ 5.2
         }
-        System.out.println("Adding HTTP Connector:" + httpConnector.getConnectUri()+" Name:"+httpConnector.getName());
+        Logger.getRootLogger().info("Adding HTTP Connector:" + httpConnector.getConnectUri()+" Name:"+httpConnector.getName());
         httpConnector.start();
         return httpConnector.getUri().toString();
       } catch ( BindException e) { 
@@ -247,7 +267,7 @@ public class ActiveMQSupport extends TestCase {
         BrokerFactory.createBroker(new URI("broker:()/" + hostName + "?persistent=false"));
       tcpConnector = addConnector(broker, "tcp",port);
       uri = tcpConnector.getUri().toString();
-      System.out.println(">>>> Starting Broker With URL:" + uri);
+      Logger.getRootLogger().info(">>>> Starting Broker With URL:" + uri);
 
       if ( secondaryBroker ) {
         broker.getManagementContext().setJmxDomainName(broker.getManagementContext().getJmxDomainName()+".test");      
@@ -281,6 +301,7 @@ public class ActiveMQSupport extends TestCase {
   }
   protected BrokerService setupSecondaryBroker(boolean addProperty) throws Exception {
     System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+
     BrokerService broker2 = createBroker(DEFAULT_BROKER_PORT_2, true, true);
     broker2.start();
     if ( addProperty ) {
@@ -290,25 +311,42 @@ public class ActiveMQSupport extends TestCase {
   }
   protected void stopBroker() throws Exception {
     if (broker != null) {
-      System.out.println(">>> Stopping Broker");
+	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+	      String msg = ">>> Stopping Broker";
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopBroker",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { msg });
+      }
       if (tcpConnector != null) {
         tcpConnector.stop();
         broker.removeConnector(tcpConnector);
-        System.out.println("Broker Connector:" + tcpConnector.getUri().toString() + " is stopped");
+        //Logger.getRootLogger().info(message);
+        Logger.getRootLogger().info("Broker Connector:" + tcpConnector.getUri().toString() + " is stopped");
       }
+      
       removeHttpConnector();
       broker.deleteAllMessages();
+
+    //  cleanBroker(broker);
       broker.stop();
       broker.waitUntilStopped();
 //      cleanBroker(broker);
-      System.out.println(">>> Broker Stopped");
+	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+	      String msg = ">>> Broker Stopped";
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopBroker",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { msg });
+      }
     }
   }
-
-  protected synchronized void tearDown() throws Exception {
+  @After
+  public synchronized void tearDown() throws Exception {
     super.tearDown();
     System.clearProperty("activemq.broker.jmx.domain");
     System.clearProperty("BrokerURL");
+  
+    wait(3000);
+    cleanBroker(broker);
     stopBroker();
   }
   
@@ -317,6 +355,7 @@ public class ActiveMQSupport extends TestCase {
 	@Override
 	public void handleError(Throwable arg0) {
 	}
+	  
   }
   
   public class TestDefaultMessageListenerContainer extends DefaultMessageListenerContainer 
@@ -335,7 +374,12 @@ public class ActiveMQSupport extends TestCase {
 
 				  stopSharedConnection();
 				  stop();
-				  System.out.println("JMS Listener.shutdown() called");
+				  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+					  String msg = "JMS Listener.shutdown() called";
+			          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "handleListenerSetupFailure",
+			                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+			                  new Object[] { msg });
+			      }
 				  //stop();
 				  failed = true;
 				  reason = t.getMessage();
@@ -350,13 +394,18 @@ public class ActiveMQSupport extends TestCase {
 	  public String getReasonForFailure() {
 		  return reason;
 	  }
-      protected void handleListenerException(Throwable ex) {
-      }
-      public void afterPropertiesSet() {
-	    super.afterPropertiesSet();
-      }
-      public void onException(JMSException exception) {
-      }
+@Override
+protected void handleListenerException(Throwable ex) {
+}
+@Override
+public void afterPropertiesSet() {
+	// TODO Auto-generated method stub
+	super.afterPropertiesSet();
+}
+@Override
+public void onException(JMSException exception) {
+	// TODO Auto-generated method stub
+}
   }
 
   
@@ -365,5 +414,6 @@ public class ActiveMQSupport extends TestCase {
 	@Override
 	public void onException(JMSException arg0) {
 	}
+	  
   }
 }
