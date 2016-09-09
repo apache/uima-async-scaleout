@@ -19,6 +19,7 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.UimaASCredentials;
 import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -848,8 +850,19 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * prefetch policy to the new CF based on what is found in the CF in the deployment descriptor.
    */
 
-  public void setConnectionFactory(ConnectionFactory aConnectionFactory) {
+  public void setConnectionFactory(ConnectionFactory aConnectionFactory)  {
     connectionFactory = aConnectionFactory;
+    if ( System.getProperty("uima.as.broker.credentials.file") != null ) {
+    	UimaASCredentials credentials = new UimaASCredentials();
+    	try {
+        	credentials.readCredentials(System.getProperty("uima.as.broker.credentials.file"));
+    	} catch( IOException e) {
+    		throw new RuntimeException(e);
+    	}
+    	((ActiveMQConnectionFactory)connectionFactory).setUserName(credentials.getUsername());
+        ((ActiveMQConnectionFactory)connectionFactory).setPassword(credentials.getPassword());
+    }
+    
     ConnectionFactoryIniter cfIniter =
             new ConnectionFactoryIniter((ActiveMQConnectionFactory)connectionFactory);
     cfIniter.whiteListPackages();
@@ -866,7 +879,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   **/
   public void closeConnection() throws Exception {
     try {
-      setRecoveryInterval(0);
+    	 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+   	    	String msg = ".................... ection() Called";
+             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "closeConnection",
+                    JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                     new Object[] { msg });
+         }
+    	setRecoveryInterval(0);
       setAutoStartup(false);
       if ( getSharedConnection() != null ) {
         ActiveMQConnection amqc = (ActiveMQConnection)getSharedConnection();
@@ -875,6 +894,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                 && !amqc.isClosing()
                 && !amqc.isTransportFailed()) {
           getSharedConnection().close();
+   	 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+       	String msg = ".................... - Stopped Shared Connection";
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "closeConnection",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { msg });
+      }
         }
       }
     } catch( AbstractJmsListeningContainer.SharedConnectionNotInitializedException e) {
@@ -1022,6 +1047,16 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       public void run() {
         try {
           if ( !__listenerRef.awaitingShutdown ) {
+        	  ActiveMQConnection amqc = (ActiveMQConnection)getSharedConnection();
+        	  if ( amqc != null ) {
+        		  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+            		  String msg = "......... Stopping Client ID:"+amqc.getConnectionInfo().getClientId();
+        	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "destroy.run",
+        	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+        	                  new Object[] { msg });
+        	      }
+        		  amqc.stop();
+        	  }
         	    awaitingShutdown = true;
               if (taskExecutor != null && taskExecutor instanceof ThreadPoolTaskExecutor) {
               	//	Modify task executor to terminate idle threads. While the thread terminates
@@ -1050,7 +1085,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           }
           String controllerName = (__listenerRef.controller == null) ? "" :__listenerRef.controller.getComponentName();
           __listenerRef.shutdown();
- 
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+        	  String msg = "................... Listener shutdown() - Called - Listener:"+getDestinationName();
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "destroy.run",
+                     JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                      new Object[] { msg });
+          }
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                        "destroy.run()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,

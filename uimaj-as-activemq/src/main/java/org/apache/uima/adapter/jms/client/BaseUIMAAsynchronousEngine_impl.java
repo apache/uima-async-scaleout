@@ -238,20 +238,81 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     // there is a dedicated shared connection for each broker URI
 	if ( brokerURI != null && (sharedConnection = lookupConnection(brokerURI)) != null) {
     	try {
+    		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+        		String msg = ":::::::::::::::: "+Thread.currentThread().getId()+" stopConnection() - acquiring semaphore";
+    	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+    	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+    	                  new Object[] { msg });
+    	    }
     		// use broker dedicated semaphore to lock the code for updates
         	sharedConnection.getSemaphore().acquire();
+    		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+        	  String msg =":::::::::::::::: "+Thread.currentThread().getId()+" stopConnection() - acquired semaphore";
+  	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+  	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+  	                  new Object[] { msg });
+  	        }
         	 
         	// Remove a client from registry
     	      sharedConnection.unregisterClient(this);
+    		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+          		String msg = ":::::::::::::::: "+Thread.currentThread().getId()+" stopConnection() - 1";
+    	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+    	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+    	                  new Object[] { msg });
+   	        }
+
     	      ActiveMQConnection amqc = (ActiveMQConnection)sharedConnection.getConnection();
-    	      if (initialized) {
+           		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+            		String msg = ":::::::::::::::: "+Thread.currentThread().getId()+" stopConnection() - 2";
+        	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+        	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+        	                  new Object[] { msg });
+       	        }
+
+        		if (initialized) {
+               		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+        	      		String msg = ":::::::::::::::: "+Thread.currentThread().getId()+" stopConnection() - 3";
+            	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+            	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+            	                  new Object[] { msg });
+           	        }
+
    	    	     try {
+   	    	    	if ( amqc != null ) {
+   	               		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+   	   	    	    		String msg = "................ Closing Client Connection client ID:"+amqc.getConnectionInfo().getClientId()+" Client Count:"+sharedConnection.getClientCount();
+   	            	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+   	            	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+   	            	                  new Object[] { msg });
+   	           	        }
+   	    	    		
+   	    	    	} else {
+   	               		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+   	   	    	      		String msg = ":::::::::::::::: "+Thread.currentThread().getId()+" stopConnection() - 5";
+   	            	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+   	            	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+   	            	                  new Object[] { msg });
+   	           	        }
+
+   	    	    	}
     	    		if ( amqc != null && amqc.isStarted() && 
     	    			 ((ActiveMQSession)consumerSession).isRunning() ) {
    	   	           		consumerSession.close();
      	    	   	    ((ActiveMQMessageConsumer)consumer).stop();
      	    	   	    consumer.close();
-   	   	        	}
+   	               		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+   	     	         		String msg = ":::::::::::::::: "+Thread.currentThread().getId()+" stopConnection() - 6";
+   	            	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stopConnection",
+   	            	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+   	            	                  new Object[] { msg });
+   	           	        }
+   	   	        		if ( sharedConnection.getClientCount() == 1 ) {
+   	   	        			
+   	   	        		   sharedConnection.destroy();
+   	   	        		   amqc.close();
+   	   	        		}
+    	    		}
    	   	         } catch (Exception exx) {exx.printStackTrace();}
     	   	  }
     	      // Delete client's temp reply queue from AMQ Broker 
@@ -276,44 +337,50 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     }
   }
 	public void stop() {
-      super.doStop();
-      if (!running) {
-        return;
-      }
-      running = false;
-	  if (super.serviceDelegate != null) {
-		// Cancel all timers and purge lists
-		super.serviceDelegate.cleanup();
-	  }
-      if (sender != null) {
-        sender.doStop();
-      }
-	  try {
-		stopConnection();
-		// Undeploy all containers
-		undeploy();
- 	    clientCache.clear();
-		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
-						Level.INFO)) {
-			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
-							CLASS_NAME.getName(), "stop",
-							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-							"UIMAJMS_undeployed_containers__INFO");
-		}
-		// unregister client
-		if (jmxManager != null) {
-			jmxManager.unregisterMBean(clientJmxObjectName);
-			jmxManager.destroy();
-		}
-	  } catch (Exception e) {
-		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
-						Level.WARNING)) {
-			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
-							CLASS_NAME.getName(), "stop",
-							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-							"UIMAJMS_exception__WARNING", e);
-		}
-	  }
+		try {
+		      super.doStop();
+		      if (!running) {
+		        return;
+		      }
+		      running = false;
+			  if (super.serviceDelegate != null) {
+				// Cancel all timers and purge lists
+				super.serviceDelegate.cleanup();
+			  }
+		      if (sender != null) {
+		        sender.doStop();
+		      }
+			  try {
+				stopConnection();
+				// Undeploy all containers
+				undeploy();
+		 	    clientCache.clear();
+				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+								Level.INFO)) {
+					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
+									CLASS_NAME.getName(), "stop",
+									JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+									"UIMAJMS_undeployed_containers__INFO");
+				}
+				// unregister client
+				if (jmxManager != null) {
+					jmxManager.unregisterMBean(clientJmxObjectName);
+					jmxManager.destroy();
+				}
+			  } catch (Exception e) {
+				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+								Level.WARNING)) {
+					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING,
+									CLASS_NAME.getName(), "stop",
+									JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+									"UIMAJMS_exception__WARNING", e);
+				}
+			  }
+				
+	//		}
+		} catch( Exception e) {
+			e.printStackTrace();
+		} 
 	}
 
   public void setCPCMessage(Message msg) throws Exception {
@@ -906,8 +973,20 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
   public void undeploy() throws Exception {
     Iterator containerIterator = springContainerRegistry.keySet().iterator();
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+        String msg ="undeploying "+springContainerRegistry.size()+" Containers";
+        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
+               JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                new Object[] { msg });
+    }
     while (containerIterator.hasNext()) {
       String containerId = (String) containerIterator.next();
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+          String msg = "Undeploying Container Id:"+containerId;
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
+                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                  new Object[] { msg });
+      }
       undeploy(containerId);
     }
   }
@@ -925,6 +1004,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if (aSpringContainerId == null  ) {
       return;
     }
+    
     UimaEEAdminSpringContext adminContext = null;
     if (!springContainerRegistry.containsKey(aSpringContainerId)) {
         return;
@@ -973,11 +1053,30 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
           if (ctrer instanceof AnalysisEngineController) {
             ((AnalysisEngineController) ctrer).getControllerLatch().release();
           }
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+              String msg = "++++++++++++++++++++++ calling terminate()-service:"+((AnalysisEngineController) ctrer).getComponentName();
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
+                     JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                      new Object[] { msg });
+          }
           switch (stop_level) {
             case SpringContainerDeployer.QUIESCE_AND_STOP:
+                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+                    String msg = "++++++++++++++++++++++ calling quiesceAndStop()";
+                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
+                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                            new Object[] { msg });
+                }
               ((AnalysisEngineController) ctrer).quiesceAndStop();
+
               break;
             case SpringContainerDeployer.STOP_NOW:
+                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+                    String msg = "++++++++++++++++++++++ calling terminate()";
+                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
+                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                            new Object[] { msg });
+                }
               ((AnalysisEngineController) ctrer).terminate();
               break;
           }
@@ -985,6 +1084,12 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       }
       if (ctx instanceof FileSystemXmlApplicationContext) {
         ((FileSystemXmlApplicationContext) ctx).destroy();
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+            String msg = "---------------------- Destroying Application Context:"+((FileSystemXmlApplicationContext) ctx).getApplicationName();
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
+                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                    new Object[] { msg });
+        }
       }
       // Remove the container from a local registry
       springContainerRegistry.remove(aSpringContainerId);
