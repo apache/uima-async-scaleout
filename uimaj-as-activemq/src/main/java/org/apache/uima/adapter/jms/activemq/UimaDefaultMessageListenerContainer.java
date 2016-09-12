@@ -47,7 +47,7 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
-import org.apache.uima.aae.UimaASCredentials;
+//import org.apache.uima.aae.UimaASCredentials;
 import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
