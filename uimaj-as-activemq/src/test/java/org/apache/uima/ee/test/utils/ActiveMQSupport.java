@@ -41,6 +41,8 @@ import org.apache.activemq.broker.region.policy.PolicyMap;
 import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.store.memory.MemoryPersistenceAdapter;
+import org.apache.activemq.usage.MemoryUsage;
+import org.apache.activemq.usage.SystemUsage;
 import org.apache.camel.Exchange;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
@@ -108,6 +110,11 @@ public class ActiveMQSupport extends TestCase {
     broker = createBroker();  // sets uri
     broker.setUseJmx(true);
     broker.getManagementContext().setConnectorPort(1098);
+    SystemUsage su = new SystemUsage();
+    MemoryUsage mu = new MemoryUsage();
+    mu.setPercentOfJvmHeap(50);
+    su.setMemoryUsage(mu);
+    broker.setSystemUsage(su);
     broker.start();
     //System.out.println("Broker Version:"+broker.getBroker().)
     //    broker.setMasterConnectorURI(uri);
