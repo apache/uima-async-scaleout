@@ -852,6 +852,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 
   public void setConnectionFactory(ConnectionFactory aConnectionFactory)  {
     connectionFactory = aConnectionFactory;
+    /*
     if ( System.getProperty("uima.as.broker.credentials.file") != null ) {
     	UimaASCredentials credentials = new UimaASCredentials();
     	try {
@@ -862,7 +863,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     	((ActiveMQConnectionFactory)connectionFactory).setUserName(credentials.getUsername());
         ((ActiveMQConnectionFactory)connectionFactory).setPassword(credentials.getPassword());
     }
-    
+    */
     ConnectionFactoryIniter cfIniter =
             new ConnectionFactoryIniter((ActiveMQConnectionFactory)connectionFactory);
     cfIniter.whiteListPackages();
