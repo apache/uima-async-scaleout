@@ -1069,7 +1069,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
     // Check if this is a reply for a Ping sent in response to a timeout
     if (serviceDelegate.isAwaitingPingReply()) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+     System.out.println("------------------------ Client Received GetMeta Ping Reply");
+    	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.INFO,
                 CLASS_NAME.getName(),
@@ -2385,6 +2386,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	          cpcReadySemaphore.release();
     	        }
     	        //	
+    	        System.out.println("isSynchronousCall="+isSynchronousCall+" serviceDelegate.getCasPendingReplyListSize()="+serviceDelegate.getCasPendingReplyListSize());
     	        if ( !isSynchronousCall && serviceDelegate.getCasPendingReplyListSize() > 0) {
     	            String nextOutstandingCasReferenceId = 
     	            		serviceDelegate.getOldestCasIdFromOutstandingList();
@@ -2392,6 +2394,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	        		cachedRequest = (ClientRequest) clientCache.get(nextOutstandingCasReferenceId);
     	        		if ( cachedRequest != null && cachedRequest.getCAS() != null ) {
         	        		try {
+        	        			System.out.println("Sending CAS Again");
         	            		sendCAS(cachedRequest.getCAS());
         	        		} catch( Exception e) {
         	        			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
@@ -2766,6 +2769,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             processTimeoutErrorCount++;
             clientSideJmxStats.incrementProcessTimeoutErrorCount();
           }
+          System.out.println("calling notifyOnTimeout() - Got Process Timeout ");
           uimaEEEngine.notifyOnTimout(cas, endpoint, timeOutKind, getCasReferenceId());
           timer.cancel();
           if (cas != null) {
@@ -2900,6 +2904,26 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         //  and Producer objects.
         //  System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.recoverSharedConnectionIfClosed() Got new connection");
         getDispatcher().setConnection(sharedConnection.getConnection());
+        
+        System.out.println("Uima-AS Client Recovered Broker Connection - Sending GetMeta Ping");
+        serviceDelegate.setAwaitingPingReply();
+
+        try {
+            sendMetaRequest();
+            // @@@@@@@@@@@@@@@ Changed on 4/20 serviceDelegate.cancelDelegateTimer();
+            // Start a timer for GetMeta ping and associate a cas id
+            // with this timer. The delegate is currently in a timed out
+            // state due to a timeout on a CAS with a given casReferenceId.
+            //  
+            String cid = serviceDelegate.getOldestCasIdFromOutstandingList();
+            if ( cid != null ) {
+                serviceDelegate.startGetMetaRequestTimer(cid);
+            } else {
+                serviceDelegate.startGetMetaRequestTimer();
+            }
+        } catch( Exception e) {
+        	
+        }
       }
       return true;
     }
