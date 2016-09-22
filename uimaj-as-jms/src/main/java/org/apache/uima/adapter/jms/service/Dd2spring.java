@@ -109,25 +109,29 @@ public class Dd2spring {
   public void convertDd2Spring(File tempFile, String ddFilePath, String dd2SpringXsltFilePath,
           URL saxonClasspathURL) throws Exception {
 
-    if (null == saxonClassLoader) {
-      URL[] classLoaderUrls = new URL[] { saxonClasspathURL };
-
-      // ClassLoader cl = new URLClassLoader(classLoaderUrls);
-      // use the bootstrap class loader as the parent
-
-      saxonClassLoader = new URLClassLoader(classLoaderUrls, Object.class.getClassLoader());
-    }
+    // UIMA-5117 - Add shutdown hook so can log when saxon gives up and calls exit :(
+    ShutdownHook shutdownHook = new ShutdownHook();
+    Runtime.getRuntime().addShutdownHook(shutdownHook);
+    
+    // In case the saxon jar is in the classpath first try without the special classloader
     Class<?> mainStartClass = null;
     try {
-      mainStartClass = Class.forName("net.sf.saxon.Transform", true, saxonClassLoader);
-    } catch (ClassNotFoundException e) {
-      System.err.println("Error - can't load Saxon jar from " + saxonClasspathURL
-              + " for dd2spring transformation.");
-      e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMA_dd2spring_saxon_missing_SEVERE");
-      throw e;
+      mainStartClass = Class.forName("net.sf.saxon.Transform");
+    } catch (ClassNotFoundException e1) {
+      // Use a classloader with the bootstrap class loader as the parent
+      if (null == saxonClassLoader) {
+        URL[] classLoaderUrls = new URL[] { saxonClasspathURL };
+        saxonClassLoader = new URLClassLoader(classLoaderUrls, Object.class.getClassLoader());
+      }
+      try {
+        mainStartClass = Class.forName("net.sf.saxon.Transform", true, saxonClassLoader);
+      } catch (ClassNotFoundException e) {
+        System.err.println("Error - can't load Saxon jar from " + saxonClasspathURL + " for dd2spring transformation.");
+        e.printStackTrace();
+        UIMAFramework.getLogger(THIS_CLASS).logrb(Level.SEVERE, THIS_CLASS.getName(), "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                "UIMA_dd2spring_saxon_missing_SEVERE");
+        throw e;
+      }
     }
 
     // args for saxon
@@ -156,47 +160,29 @@ public class Dd2spring {
 
     UIMAFramework.getLogger(THIS_CLASS).log(Level.INFO, "Saxon args: " + argsForSaxon);
 
-    Method mainMethod = null;
     try {
-      mainMethod = mainStartClass.getMethod("main", String[].class);
-    } catch (SecurityException e) {
-      e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
-              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMA_dd2spring_security_exception_calling_saxon");
-		throw e;
-    } catch (NoSuchMethodException e) {
-        e.printStackTrace();
-		throw e;
-    }
-
-    try {
+      Method mainMethod = mainStartClass.getMethod("main", String[].class);
       mainMethod.invoke(null,
               new Object[] { argsForSaxon.toArray(new String[argsForSaxon.size()]) });
-    } catch (IllegalArgumentException e) {
+    } catch (Exception e) {
+      System.err.println("Error - dd2spring transformation failed:");
       e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
-              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMA_dd2spring_internal_error_calling_saxon");
- 	  throw e;
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
-              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMA_dd2spring_internal_error_calling_saxon");
-	  throw e;
-    } catch (InvocationTargetException e) {
-      e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.SEVERE, THIS_CLASS.getName(),
               "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMA_dd2spring_internal_error_calling_saxon");
       throw e;
-    } catch( Exception e) {
-    	e.printStackTrace();
-		throw e;
     }
 
+    Runtime.getRuntime().removeShutdownHook(shutdownHook);
     return;
+  }
+
+  // Shutdown hook that reports when Saxon calls exit!
+  private class ShutdownHook extends Thread {
+    public void run() {
+      System.err.println("ERROR in dd2spring Saxon transformation ... System.exit called");
+      System.err.flush();
+    }
   }
 
 }
