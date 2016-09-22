@@ -1056,7 +1056,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
         }
         // Send a trigger to initiate shutdown.
         if (ctrer != null) {
-          if (ctrer instanceof AnalysisEngineController) {
+          if (ctrer instanceof AnalysisEngineController &&
+        		  ((AnalysisEngineController) ctrer).getControllerLatch() != null ) {
             ((AnalysisEngineController) ctrer).getControllerLatch().release();
           }
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
