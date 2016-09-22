@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.util.Level;
 
@@ -45,11 +46,16 @@ public class Dd2spring {
    * @param args
    */
   public static void main(String[] args) {
-    new Dd2spring().convertDd2Spring(args[0], args[1], args[2], args[3]);
+	  try {
+		    new Dd2spring().convertDd2Spring(args[0], args[1], args[2], args[3]);
+		  
+	  } catch ( Exception e) {
+		  e.printStackTrace();
+	  }
   }
 
   public File convertDd2Spring(String ddFilePath, String dd2SpringXsltFilePath,
-          String saxonClasspath, String uimaAsDebug) {
+          String saxonClasspath, String uimaAsDebug) throws Exception {
 
     URL urlForSaxonClassPath;
     try {
@@ -101,7 +107,7 @@ public class Dd2spring {
    *          classpath for saxon8.jar
    */
   public void convertDd2Spring(File tempFile, String ddFilePath, String dd2SpringXsltFilePath,
-          URL saxonClasspathURL) {
+          URL saxonClasspathURL) throws Exception {
 
     if (null == saxonClassLoader) {
       URL[] classLoaderUrls = new URL[] { saxonClasspathURL };
@@ -121,7 +127,7 @@ public class Dd2spring {
       UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
               "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMA_dd2spring_saxon_missing_SEVERE");
-      return;
+      throw e;
     }
 
     // args for saxon
@@ -155,16 +161,13 @@ public class Dd2spring {
       mainMethod = mainStartClass.getMethod("main", String[].class);
     } catch (SecurityException e) {
       e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
               "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMA_dd2spring_security_exception_calling_saxon");
-      return;
+		throw e;
     } catch (NoSuchMethodException e) {
-      e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
-              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMA_dd2spring_internal_error_calling_saxon");
-      return;
+        e.printStackTrace();
+		throw e;
     }
 
     try {
@@ -172,22 +175,25 @@ public class Dd2spring {
               new Object[] { argsForSaxon.toArray(new String[argsForSaxon.size()]) });
     } catch (IllegalArgumentException e) {
       e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
               "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMA_dd2spring_internal_error_calling_saxon");
-      return;
+ 	  throw e;
     } catch (IllegalAccessException e) {
       e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
               "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMA_dd2spring_internal_error_calling_saxon");
-      return;
+	  throw e;
     } catch (InvocationTargetException e) {
       e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.CONFIG, THIS_CLASS.getName(),
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.INFO, THIS_CLASS.getName(),
               "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
               "UIMA_dd2spring_internal_error_calling_saxon");
-      return;
+      throw e;
+    } catch( Exception e) {
+    	e.printStackTrace();
+		throw e;
     }
 
     return;
