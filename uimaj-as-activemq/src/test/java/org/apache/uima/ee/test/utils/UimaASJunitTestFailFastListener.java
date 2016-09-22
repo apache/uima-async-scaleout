@@ -45,7 +45,6 @@ public class UimaASJunitTestFailFastListener extends RunListener {
 		failure.getException().printStackTrace();
 		System.err.println("!!!!!!!!!!!!!!! - Test Failed: "+failure.getDescription()+" Header:"+failure.getTestHeader());
 		if ( runNotifier != null ) {
-			System.err.println("!!!!!!!!!!!!!!! Calling pleaseStop()");
 			this.runNotifier.pleaseStop();
 			
 		} else {
