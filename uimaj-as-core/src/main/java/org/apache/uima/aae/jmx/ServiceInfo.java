@@ -57,11 +57,18 @@ public class ServiceInfo implements ServiceInfoMBean {
   
   private AnalysisEngineController controller;
   
+  private boolean logCasEnabled = false;
+  
   public ServiceInfo(boolean isaCasMultiplier, AnalysisEngineController controller) {
     casMultiplier = isaCasMultiplier;
     this.controller = controller;
   }
-  
+  public boolean isLogCasEnabled() {
+	  return logCasEnabled;
+  }
+  public void setLogCasEnableed() {
+	  logCasEnabled = !logCasEnabled;  // toggle ON and OFF
+  }
   public void setCmRegisteredName(String uniqueName ) {
     cmUniqueName = uniqueName;
   }

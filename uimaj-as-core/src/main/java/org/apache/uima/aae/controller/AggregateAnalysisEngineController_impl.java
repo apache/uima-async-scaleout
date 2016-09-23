@@ -1281,6 +1281,20 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     Endpoint endpoint = null;
     try {
       String analysisEngineKey = aStep.getAnalysisEngineKey();
+      boolean logCas = false;
+
+      // iterate over the controller list to find one with a matching key
+      for( AnalysisEngineController c : childControllerList ) {
+    	  if ( analysisEngineKey.equals(c.getKey())) {
+    		  // from this controller's MBean determine if CAS logging
+    		  // should be done
+    		  if ( c.getServiceInfo() != null ) {
+    			 // lookup controller's MBean
+    			 logCas = c.getServiceInfo().isLogCasEnabled();
+    		  }
+    		  break;
+    	  }
+      }
       // Find the endpoint for the delegate
       endpoint = lookUpEndpoint(analysisEngineKey, true);
       CacheEntry cacheEntry = getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
@@ -1288,7 +1302,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         endpoint.setController(this);
         CasStateEntry casStateEntry = getLocalCache().lookupEntry(aCasReferenceId);
         casStateEntry.resetReplyReceived();
-        if (enableCasLogMap!=null && enableCasLogMap.containsKey(analysisEngineKey)) {
+        
+//        if (enableCasLogMap!=null && enableCasLogMap.containsKey(analysisEngineKey)) {
+        if ( logCas ) {	
           //  Get a CAS
           CAS cas = cacheEntry.getCas();
           logCasForEndpoint(analysisEngineKey, cas);
@@ -1376,6 +1392,16 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       tsd.toXML(os);
       os.close();
       enableCasLogMap.put(analysisEngineKey, true);
+      // iterate over the controller list to find one with a matching key
+      for( AnalysisEngineController c : childControllerList ) {
+    	  if ( analysisEngineKey.equals(c.getKey())) {
+    		  if ( c.getServiceInfo() != null ) {
+    			 // Enable CAS logging
+    			 c.getServiceInfo().setLogCasEnableed();
+    		  }
+    		  break;
+    	  }
+      }
     }
     // create XmiCas file name
     Long now = Long.valueOf((System.nanoTime()-initializationTime)/1000);

@@ -43,5 +43,7 @@ public interface ServiceInfoMBean extends Serializable {
   public String getCmRegisteredName();
   
   public String dumpState();
+  
+  public boolean isLogCasEnabled();
 
 }
