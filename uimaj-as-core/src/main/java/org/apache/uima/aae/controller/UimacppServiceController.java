@@ -40,6 +40,7 @@ import javax.management.ObjectName;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.UimaContext;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.jmx.JmxManagement;
@@ -850,6 +851,12 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
 public void warmUp(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception {
 	// TODO Auto-generated method stub
 	
+}
+
+@Override
+public UimaContext getUimaContext() {
+	// TODO Auto-generated method stub
+	return null;
 }
 }
 

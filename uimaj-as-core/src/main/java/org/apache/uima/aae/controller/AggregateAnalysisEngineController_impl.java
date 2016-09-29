@@ -37,6 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMARuntimeException;
+import org.apache.uima.UimaContextAdmin;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.InProcessCache;
@@ -1384,9 +1385,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   private void logCasForEndpoint(String analysisEngineKey, CAS cas) throws Exception {
     if (null == enableCasLogMap.get(analysisEngineKey)) {
       String dir = analysisEngineKey;
-      if (null != delegateKey) {
-        dir = delegateKey + "/" + analysisEngineKey;
-      }
+   	  if ( getUimaContext() != null ) {  // getUimaContext() = null for TLA
+  		  // Get this aggregate's fully rooted context
+          String ctxName = ((UimaContextAdmin)this.getUimaContext()).getQualifiedContextName();
+          // ctxName contains trailing '/'
+          dir = ctxName + analysisEngineKey;
+      } 
       dir = dir.replace('/', '-');
       setCasLoggingDirectory(analysisEngineKey, dir);
     }

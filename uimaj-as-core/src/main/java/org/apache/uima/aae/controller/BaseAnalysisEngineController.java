@@ -257,6 +257,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   
   private String serviceName=null;
   
+  protected UimaContext uimaContext=null;
+  
   public abstract void dumpState(StringBuffer buffer, String lbl1);
   
   protected abstract void doWarmUp(CAS cas, String casReferenceId) throws Exception;
@@ -430,6 +432,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       if ( childContext != null && childContext instanceof UimaContextAdmin ) {
         String qualifiedContextName = ((UimaContextAdmin)childContext).getQualifiedContextName();
       }
+      uimaContext = childContext;  // save this controller's context
       paramsMap.put(Resource.PARAM_UIMA_CONTEXT, childContext);
 
       initialize(resourceSpecifier, paramsMap);
@@ -490,6 +493,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       registerWithAgent(controller, jmxName);
     }
   }
+  public UimaContext getUimaContext() {
+	  return uimaContext;
+  }
+
   public String getPID() {
     return processPid;
   }

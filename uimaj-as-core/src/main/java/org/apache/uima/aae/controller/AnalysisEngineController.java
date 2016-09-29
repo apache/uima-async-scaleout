@@ -233,4 +233,6 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public String getPID();
   
   public void warmUp(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception;
+  
+  public UimaContext getUimaContext();
 }
