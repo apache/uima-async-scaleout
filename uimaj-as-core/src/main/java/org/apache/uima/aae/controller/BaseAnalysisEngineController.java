@@ -407,16 +407,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       // Override uima core jmx domain setting
       mbean.setName(getComponentName(), getUimaContextAdmin(), jmxManagement.getJmxDomain());
 
-      // check requested Cas logging
-      if (casLogComponents!= null && (this instanceof AggregateAnalysisEngineController)) {
-        String[] comps = casLogComponents.split(" ");
-        for (String comp : comps) {
-          String[] subcomps = comp.split("/");
-          if (1 == subcomps.length) {
-            ((AggregateAnalysisEngineController)this).setCasLoggingDirectory(comp, comp);
-          }
-        }
-      }
       if (resourceSpecifier instanceof AnalysisEngineDescription) {
         // Is this service a CAS Multiplier?
         if (((AnalysisEngineDescription) resourceSpecifier).getAnalysisEngineMetaData()
@@ -438,19 +428,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     } else {
       UimaContext childContext = parentController.getChildUimaContext(endpointName);
       if ( childContext != null && childContext instanceof UimaContextAdmin ) {
-        // check requested Cas logging
         String qualifiedContextName = ((UimaContextAdmin)childContext).getQualifiedContextName();
-        if (casLogComponents!= null && (this instanceof AggregateAnalysisEngineController) && 
-                casLogComponents.contains(anEndpointName)) {
-          String[] comps = casLogComponents.split(" ");
-          for (String comp : comps) {
-            String[] subcomps = comp.split("/");
-            if (1 < subcomps.length && subcomps[subcomps.length-2].equals(anEndpointName)) {
-              ((AggregateAnalysisEngineController)this).setCasLoggingDirectory(subcomps[subcomps.length-1],
-                      comp);
-            }
-          }
-        }
       }
       paramsMap.put(Resource.PARAM_UIMA_CONTEXT, childContext);
 

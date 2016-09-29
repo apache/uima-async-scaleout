@@ -66,7 +66,7 @@ public class ServiceInfo implements ServiceInfoMBean {
   public boolean isLogCasEnabled() {
 	  return logCasEnabled;
   }
-  public void setLogCasEnableed() {
+  public void setLogCasEnabled() {
 	  logCasEnabled = !logCasEnabled;  // toggle ON and OFF
   }
   public void setCmRegisteredName(String uniqueName ) {

@@ -38,14 +38,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMARuntimeException;
 import org.apache.uima.aae.AsynchAECasManager;
+import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
-import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.InputChannel;
-import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
-import org.apache.uima.aae.WarmUpDataProvider;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.ControllerDelegate;
 import org.apache.uima.aae.delegate.Delegate;
@@ -92,6 +90,7 @@ import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.apache.uima.util.CasCreationUtils;
 import org.apache.uima.util.Level;
+import org.apache.uima.util.Logger;
 import org.apache.uima.util.TypeSystemUtil;
 import org.apache.uima.util.XMLInputSource;
 
@@ -1285,14 +1284,14 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
       // iterate over the controller list to find one with a matching key
       for( AnalysisEngineController c : childControllerList ) {
-    	  if ( analysisEngineKey.equals(c.getKey())) {
+    	  if ( analysisEngineKey.equals(c.getServiceInfo().getServiceKey())) {
     		  // from this controller's MBean determine if CAS logging
     		  // should be done
     		  if ( c.getServiceInfo() != null ) {
     			 // lookup controller's MBean
     			 logCas = c.getServiceInfo().isLogCasEnabled();
+           break;
     		  }
-    		  break;
     	  }
       }
       // Find the endpoint for the delegate
@@ -1383,25 +1382,33 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    *   
    */
   private void logCasForEndpoint(String analysisEngineKey, CAS cas) throws Exception {
+    if (null == enableCasLogMap.get(analysisEngineKey)) {
+      String dir = analysisEngineKey;
+      if (null != delegateKey) {
+        dir = delegateKey + "/" + analysisEngineKey;
+      }
+      dir = dir.replace('/', '-');
+      setCasLoggingDirectory(analysisEngineKey, dir);
+    }
     if (!((Boolean)enableCasLogMap.get(analysisEngineKey))) {
       // create dir and serialize typesystem
-      boolean status = new File((String)casLogDirMap.get(analysisEngineKey)).mkdir();
+      new File((String)casLogDirMap.get(analysisEngineKey)).mkdir();
       TypeSystemDescription tsd = TypeSystemUtil.typeSystem2TypeSystemDescription(cas.getTypeSystem());
       File tsd2xml = new File(((String)casLogDirMap.get(analysisEngineKey))+"/typesystem.xml");
       FileOutputStream os = new FileOutputStream(tsd2xml);
       tsd.toXML(os);
       os.close();
       enableCasLogMap.put(analysisEngineKey, true);
-      // iterate over the controller list to find one with a matching key
-      for( AnalysisEngineController c : childControllerList ) {
-    	  if ( analysisEngineKey.equals(c.getKey())) {
-    		  if ( c.getServiceInfo() != null ) {
-    			 // Enable CAS logging
-    			 c.getServiceInfo().setLogCasEnableed();
-    		  }
-    		  break;
-    	  }
+      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+        String logdir = (String)casLogDirMap.get(analysisEngineKey);
+        String[] dirs = logdir.split("/");
+        String comp = dirs[dirs.length-1];
+        comp = comp.replace('-', '/');
+        UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO, "UIMA_CASLOG: CAS logging started for "+ 
+                comp + " to " + logdir);
       }
+      // set initialization time to use for CasLogging
+      initializationTime=System.nanoTime();
     }
     // create XmiCas file name
     Long now = Long.valueOf((System.nanoTime()-initializationTime)/1000);
@@ -3256,6 +3263,76 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       }
     }
+
+    //document the CAS logging specification
+    if (isTopLevelComponent() && UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+      Logger logger = UIMAFramework.getLogger(CLASS_NAME);
+
+      String baseDir = System.getProperty("user.dir");
+      if (null != System.getProperty("UIMA_CASLOG_BASE_DIRECTORY")) {
+        baseDir = System.getProperty("UIMA_CASLOG_BASE_DIRECTORY");
+      }
+      logger.log(Level.INFO, "UIMA_CASLOG: Base CAS log directory = "+baseDir);
+      if (null != System.getProperty("UIMA_CASLOG_TYPE_NAME") || 
+              null != System.getProperty("UIMA_CASLOG_FEATURE_NAME")) {
+        if (null == System.getProperty("UIMA_CASLOG_TYPE_NAME") || 
+              null == System.getProperty("UIMA_CASLOG_FEATURE_NAME")) {
+          logger.log(Level.INFO, "UIMA_CASLOG: Invalid UIMA_CASLOG specification. Both type and feature names must be specified");
+        }
+        else {
+          String typeName = System.getProperty("UIMA_CASLOG_TYPE_NAME");
+          String featureName = System.getProperty("UIMA_CASLOG_FEATURE_NAME");
+          logger.log(Level.INFO, "UIMA_CASLOG: CAS file names defined by "+typeName+" and "+featureName);
+        }
+      }
+      if (null != System.getProperty("UIMA_CASLOG_VIEW_NAME")) {
+        logger.log(Level.INFO, "UIMA_CASLOG:    where FS is found in view "+System.getProperty("UIMA_CASLOG_VIEW_NAME"));
+      }
+
+      String casLogComponents = System.getProperty("UIMA_CASLOG_COMPONENT_ARRAY");
+      if (null != casLogComponents) {
+        logger.log(Level.INFO, "UIMA_CASLOG: The following delegates have CAS logging enabled: "+ casLogComponents);
+      }
+    }
+
+
+    // enable CAS logging for delegates in this aggregate
+    String casLogComponents = System.getProperty("UIMA_CASLOG_COMPONENT_ARRAY");
+    // check requested Cas logging
+    if (casLogComponents!= null) {
+      String[] comps = casLogComponents.split(" ");
+      for (String comp : comps) {
+        String[] subcomps = comp.split("/");
+        if (1 == subcomps.length) {
+          ((AggregateAnalysisEngineController)this).setCasLoggingDirectory(comp, comp);
+          // iterate over the controller list to find one with a matching key
+          for( AnalysisEngineController c : childControllerList ) {
+            if ( c.getServiceInfo() != null ) {
+              if ( comp.equals(c.getServiceInfo().getServiceKey())) {
+                // Enable CAS logging
+                c.getServiceInfo().setLogCasEnabled();
+                break;
+              }
+            }
+          }
+        }
+        else {
+          if (this.delegateKey.equals(subcomps[subcomps.length-2])) {
+            for( AnalysisEngineController c : childControllerList ) {
+              if ( c.getServiceInfo() != null ) {
+                if ( subcomps[subcomps.length-1].equals(c.getServiceInfo().getServiceKey())) {
+                  // Enable CAS logging
+                  setCasLoggingDirectory(subcomps[subcomps.length-1], comp);
+                  c.getServiceInfo().setLogCasEnabled();
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
   }
   
   public void changeCollocatedDelegateState( String delegateKey, ServiceState state ) throws Exception {
@@ -3346,7 +3423,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (enableCasLogMap == null)
       enableCasLogMap = new HashMap<String, Boolean>();
     enableCasLogMap.put(key, false);
-    initializationTime = System.nanoTime();
   }
   public int getServiceCasPoolSize() {
 	 return ((AsynchAECasManager_impl)casManager).getCasPoolSize();

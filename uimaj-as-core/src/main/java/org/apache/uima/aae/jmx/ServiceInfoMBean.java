@@ -46,4 +46,5 @@ public interface ServiceInfoMBean extends Serializable {
   
   public boolean isLogCasEnabled();
 
+  public void setLogCasEnabled();
 }
