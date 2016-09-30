@@ -1095,8 +1095,26 @@ under the License.
 	      <title>CAS Logging</title>
 	      <para>Within a UIMA AS asynchronous aggregate, CASes can be saved before sending to any local or remote 
 	        	delegate and later used to reproduce a problem in a simple unit testing environment.
-	        	Logging is currently not supported for delegates of a UIMA AS synchronous aggregate.
-	        	Control of CAS logging is done via Java properties:
+	        	Logging is currently not supported for delegates of a UIMA aggregate deployed synchronously.  
+	        	</para>
+
+	      <para>CASes are stored
+	        	in XmiCas format in a separate directory for each delegate with logging enabled. 
+	        	Along with the CAS files in each directory is a file "typesystem.xml" containing the complete CAS type system.
+	        	A delegate's directory name is the full delegate context with '/' chars converted to '-'.
+	        	If not specified, the base CAS logging directory is the process current directory.
+	      		By default the name of each CAS file is the time in milliseconds after CAS logging begins
+	            for a delegate. If a string exists in the CAS that should be used as the file name,
+	            it can be specified by {type, feature} found in a specific view.
+	      </para>
+
+	      <para>A list of delegates to enable for CAS logging can be specified as a Java property.
+	      		Logging can also be enabled/disabled dynamically via JMX. CAS logging control is
+	      		enabled in the "Annotator_Service Info" bean for each asynchonous delegate. 
+	      </para>
+
+	      <para>  	
+	        	Java properties used for CAS logging:
 	      </para>
 	        <informaltable frame="all">
 	          <tgroup cols="2" colsep="1" rowsep="1">

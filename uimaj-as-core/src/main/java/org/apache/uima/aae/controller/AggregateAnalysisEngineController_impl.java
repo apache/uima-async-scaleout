@@ -1383,36 +1383,42 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    *   
    */
   private void logCasForEndpoint(String analysisEngineKey, CAS cas) throws Exception {
-    if (null == enableCasLogMap.get(analysisEngineKey)) {
-      String dir = analysisEngineKey;
-   	  if ( getUimaContext() != null ) {  // getUimaContext() = null for TLA
-  		  // Get this aggregate's fully rooted context
-          String ctxName = ((UimaContextAdmin)this.getUimaContext()).getQualifiedContextName();
-          // ctxName contains trailing '/'
-          dir = ctxName + analysisEngineKey;
-      } 
-      dir = dir.replace('/', '-');
-      setCasLoggingDirectory(analysisEngineKey, dir);
-    }
-    if (!((Boolean)enableCasLogMap.get(analysisEngineKey))) {
-      // create dir and serialize typesystem
-      new File((String)casLogDirMap.get(analysisEngineKey)).mkdir();
-      TypeSystemDescription tsd = TypeSystemUtil.typeSystem2TypeSystemDescription(cas.getTypeSystem());
-      File tsd2xml = new File(((String)casLogDirMap.get(analysisEngineKey))+"/typesystem.xml");
-      FileOutputStream os = new FileOutputStream(tsd2xml);
-      tsd.toXML(os);
-      os.close();
-      enableCasLogMap.put(analysisEngineKey, true);
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        String logdir = (String)casLogDirMap.get(analysisEngineKey);
-        String[] dirs = logdir.split("/");
-        String comp = dirs[dirs.length-1];
-        comp = comp.replace('-', '/');
-        UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO, "UIMA_CASLOG: CAS logging started for "+ 
-                comp + " to " + logdir);
+    synchronized (enableCasLogMap) {
+      // synchronize the following two blocks because there may be multiple threads of an analysisEngine
+      if (null == enableCasLogMap.get(analysisEngineKey)) {
+        String dir = analysisEngineKey;
+        if ( getUimaContext() != null ) {  // getUimaContext() = null for TLA
+          // Get this aggregate's fully rooted context
+            String ctxName = ((UimaContextAdmin)this.getUimaContext()).getQualifiedContextName();
+            // ctxName contains trailing '/'
+            dir = ctxName + analysisEngineKey;
+            if (dir.startsWith("/")) {
+              dir = dir.substring(1);
+            }
+        } 
+        dir = dir.replace('/', '-');
+        setCasLoggingDirectory(analysisEngineKey, dir);
       }
-      // set initialization time to use for CasLogging
-      initializationTime=System.nanoTime();
+      if (!((Boolean)enableCasLogMap.get(analysisEngineKey))) {
+        // create dir and serialize typesystem
+        new File((String)casLogDirMap.get(analysisEngineKey)).mkdir();
+        TypeSystemDescription tsd = TypeSystemUtil.typeSystem2TypeSystemDescription(cas.getTypeSystem());
+        File tsd2xml = new File(((String)casLogDirMap.get(analysisEngineKey))+"/typesystem.xml");
+        FileOutputStream os = new FileOutputStream(tsd2xml);
+        tsd.toXML(os);
+        os.close();
+        enableCasLogMap.put(analysisEngineKey, true);
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          String logdir = (String)casLogDirMap.get(analysisEngineKey);
+          String[] dirs = logdir.split("/");
+          String comp = dirs[dirs.length-1];
+          comp = comp.replace('-', '/');
+          UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO, "UIMA_CASLOG: CAS logging started for "+ 
+                  comp + " to " + logdir);
+        }
+        // set initialization time to use for CasLogging
+        initializationTime=System.nanoTime();
+      }
     }
     // create XmiCas file name
     Long now = Long.valueOf((System.nanoTime()-initializationTime)/1000);
