@@ -21,7 +21,6 @@ package org.apache.uima.adapter.jms.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -109,31 +108,33 @@ public class Dd2spring {
   public void convertDd2Spring(File tempFile, String ddFilePath, String dd2SpringXsltFilePath,
           URL saxonClasspathURL) throws Exception {
 
+    // UIMA-5117 Check for saxon9.  If it is in the users's classpath an NPE is thrown in 
+    // net.sf.saxon.event.ReceivingContentHandler.getNodeName while handling a getMeta request.
+    try {
+      Class<?> saxonVersionClass = Class.forName("net.sf.saxon.Version");
+      Method versionMethod = saxonVersionClass.getMethod("getProductVersion");
+      String version = (String) versionMethod.invoke(null);
+      if (version.startsWith("9")) {
+        UIMAFramework.getLogger(THIS_CLASS).logrb(Level.SEVERE, THIS_CLASS.getName(), "convertDD2Spring", 
+                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__SEVERE",
+                new Object[] { "saxon9 must not be in classpath" });
+        throw new Dd2springException("saxon9 found in classpath - dd2spring transformation and UIMA-AS do not support saxon9");
+      }
+    } catch (ClassNotFoundException e) {
+      // OK - saxon not in classpath
+    }
+    
     // UIMA-5117 - Add shutdown hook so can log when saxon gives up and calls exit :(
     ShutdownHook shutdownHook = new ShutdownHook();
     Runtime.getRuntime().addShutdownHook(shutdownHook);
     
-    // In case the saxon jar is in the classpath first try without the special classloader
-    Class<?> mainStartClass = null;
-    try {
-      mainStartClass = Class.forName("net.sf.saxon.Transform");
-    } catch (ClassNotFoundException e1) {
-      // Use a classloader with the bootstrap class loader as the parent
-      if (null == saxonClassLoader) {
-        URL[] classLoaderUrls = new URL[] { saxonClasspathURL };
-        saxonClassLoader = new URLClassLoader(classLoaderUrls, Object.class.getClassLoader());
-      }
-      try {
-        mainStartClass = Class.forName("net.sf.saxon.Transform", true, saxonClassLoader);
-      } catch (ClassNotFoundException e) {
-        System.err.println("Error - can't load Saxon jar from " + saxonClasspathURL + " for dd2spring transformation.");
-        e.printStackTrace();
-        UIMAFramework.getLogger(THIS_CLASS).logrb(Level.SEVERE, THIS_CLASS.getName(), "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMA_dd2spring_saxon_missing_SEVERE");
-        throw e;
-      }
+    // Create a classloader with saxon8 that delegates to the user's classloader
+    ClassLoader currentClassloader = Thread.currentThread().getContextClassLoader();
+    if (null == saxonClassLoader) {
+      URL[] classLoaderUrls = new URL[] { saxonClasspathURL };
+      saxonClassLoader = new URLClassLoader(classLoaderUrls, currentClassloader);
     }
-
+      
     // args for saxon
     // -l -s deployment_descriptor} -o output_file_path dd2spring.xsl_file_path <-x sax_parser_class>
     // If a custom framework includes a custom XML parser we may also need a custom parser for Saxon,
@@ -144,7 +145,7 @@ public class Dd2spring {
     if (uimaFrameworkClass != null) {
       String saxonParserClass = uimaFrameworkClass + "_SAXParser";
       try {
-        ClassLoader.getSystemClassLoader().loadClass(saxonParserClass);
+        saxonClassLoader.loadClass(saxonParserClass);
         argsForSaxon.add("-x");
         argsForSaxon.add(saxonParserClass);
       } catch (ClassNotFoundException e) {
@@ -160,20 +161,30 @@ public class Dd2spring {
 
     UIMAFramework.getLogger(THIS_CLASS).log(Level.INFO, "Saxon args: " + argsForSaxon);
 
+    // Set the thread classloader so that all classes are loaded from this
+    Thread.currentThread().setContextClassLoader(saxonClassLoader);
+    Class<?> mainStartClass = null;
     try {
+      mainStartClass = Class.forName("net.sf.saxon.Transform", true, saxonClassLoader);
       Method mainMethod = mainStartClass.getMethod("main", String[].class);
-      mainMethod.invoke(null,
-              new Object[] { argsForSaxon.toArray(new String[argsForSaxon.size()]) });
+      mainMethod.invoke(null, new Object[] { argsForSaxon.toArray(new String[argsForSaxon.size()]) });
+    } catch (ClassNotFoundException e) {
+      System.err.println("Error - can't load Saxon jar from " + saxonClasspathURL + " for dd2spring transformation.");
+      e.printStackTrace();
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.SEVERE, THIS_CLASS.getName(), "convertDD2Spring", 
+              JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMA_dd2spring_saxon_missing_SEVERE");
+      throw e;
     } catch (Exception e) {
       System.err.println("Error - dd2spring transformation failed:");
       e.printStackTrace();
-      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.SEVERE, THIS_CLASS.getName(),
-              "convertDD2Spring", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMA_dd2spring_internal_error_calling_saxon");
+      UIMAFramework.getLogger(THIS_CLASS).logrb(Level.SEVERE, THIS_CLASS.getName(), "convertDD2Spring", 
+              JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMA_dd2spring_internal_error_calling_saxon");
       throw e;
+    } finally {
+      // Restore original classloader and remove used shutdown hook
+      Thread.currentThread().setContextClassLoader(currentClassloader);
+      Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
-
-    Runtime.getRuntime().removeShutdownHook(shutdownHook);
     return;
   }
 
