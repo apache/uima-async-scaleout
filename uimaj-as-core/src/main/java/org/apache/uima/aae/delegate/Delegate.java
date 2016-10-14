@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae.delegate;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -729,6 +730,9 @@ public abstract class Delegate {
     	  delegateEntry.setDelegateTimer(timer);
       } 
       timer.schedule(new TimerTask() {
+    	  public String getCurrentTimeStamp() {
+    		    return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
+    		}
         public void run() {
         	if ( delegateEntry.usesDedicatedTimerThread) {
           	  delegateEntry.getDelegateTimer().cancel();
