@@ -530,9 +530,12 @@ public class JmsOutputChannel implements OutputChannel {
                 //  Only one thread at a time is allowed here.
                 synchronized( masterEndpoint ) {
                   if ( masterEndpoint.getStatus() == Endpoint.FAILED ) {
+                	  
+                	String name =  anEndpoint.getDestination().toString();
                     //  Returns InputChannel if the Reply Listener for the delegate has previously failed.
                     //  If the listener hasnt failed the getReplyInputChannel returns null
-                    InputChannel iC = getAnalysisEngineController().getReplyInputChannel(anEndpoint.getDelegateKey());
+//                    InputChannel iC = getAnalysisEngineController().getReplyInputChannel(anEndpoint.getDelegateKey());
+                    InputChannel iC = getAnalysisEngineController().getReplyInputChannel(anEndpoint.getDestination().toString());
                     if ( iC != null ) { 
                       try {
                         // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
@@ -778,7 +781,7 @@ public class JmsOutputChannel implements OutputChannel {
 
 
   public void sendReply(CacheEntry entry, Endpoint anEndpoint) throws AsynchAEException {
-    try {
+	  try {
       anEndpoint.setReplyEndpoint(true);
       if (anEndpoint.isRemote()) {
         if (anEndpoint.getSerialFormat() == SerialFormat.XMI) {
@@ -1670,7 +1673,6 @@ public class JmsOutputChannel implements OutputChannel {
         // produced by the CAS Multiplier. The client will treat this CAS
         // differently from the input CAS.
         tm.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
-
         isRequest = true;
         // Save the id of the parent CAS
         tm.setStringProperty(AsynchAEMessage.InputCasReference, getTopParentCasReferenceId(entry

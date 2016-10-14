@@ -19,11 +19,9 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +36,7 @@ import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.ExceptionListener;
+import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
 import javax.jms.TemporaryQueue;
 
@@ -125,6 +124,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   //	 on listener failure log once and retry silently
   private volatile boolean logListenerFailure=true;
   
+  private static CountDownLatch recoveryLatch = new CountDownLatch(4);
   public UimaDefaultMessageListenerContainer() {
     super();
     // reset global static. This only effects unit testing as services are deployed 
@@ -132,7 +132,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     terminating = false;
     UIMAFramework.getLogger(CLASS_NAME).setLevel(Level.WARNING);
     __listenerRef = this;
-    setRecoveryInterval(30000);  // increase connection recovery to 30 sec
+    setRecoveryInterval(400);  // increase connection recovery to 30 sec
     setAcceptMessagesWhileStopping(true);
     setExceptionListener(this);
     threadGroup = new ThreadGroup("ListenerThreadGroup_"
@@ -166,7 +166,63 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     		          tcon = createConnection();
     		          JmsUtils.closeConnection(tcon);
     		        }
-    		        logger.info("Successfully refreshed JMS Connection");
+    		        String ctrlName = "";
+    		        if ( controller != null ) {
+    		        	ctrlName = "Controller: "+controller.getComponentName();
+    		        }
+    		        if ( super.getMessageSelector() != null ) {
+        		        logger.info(ctrlName+" Successfully refreshed JMS Connection - Selector "+super.getMessageSelector()+" Instance hashcode:"+this.hashCode());
+    		        	
+    		        } else {
+        		        logger.info(ctrlName+" Successfully refreshed JMS Connection ");
+    		        	
+    		        }
+    		        //if (controller != null && controller instanceof AggregateAnalysisEngineController) {
+    					//	If endpoint not set, this is a temp reply queue listener.
+    	               if (getDestination() != null && ((ActiveMQDestination)getDestination()).isTemporary()) {
+    	                   destroy();
+    	            	   logger.info("Controller:"+controller.getComponentName()+"... Destroyed Listener on a temp queue:"+getDestination());
+//    	                   ((JmsOutputChannel)controller.getOutputChannel()).setFreeCasQueue(getDestination());
+    	            	 
+    	            	   if ( freeCasQueueListener ) {
+       	            		logger.info("Controller:"+controller.getComponentName()+" ------------------- Creating new listener for the FreeCas temp queue");
+       	            		try {
+       	                	    ((JmsInputChannel)getMessageListener()).createListenerOnTempQueue(getConnectionFactory(), true);
+       	                		logger.info("Controller:"+controller.getComponentName()+"------------------- New listener on FreeCas temp queue is ready");
+       	            		} catch( Exception e) {
+       	            	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+       	            	              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+       	            	                      "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+       	            	                      "UIMAJMS_exception__WARNING", e);
+       	            	            }
+       	            		}
+    	                   }
+    	                   
+    	                       	            	/*  
+    	               	if ( getMessageListener() instanceof JmsInputChannel ) {
+    	            		System.out.println("------------------- Creating new listener for the temp queue");
+    	            		try {
+    	                	((JmsInputChannel)getMessageListener()).createListenerOnTempQueue(getConnectionFactory());
+    	                		System.out.println("------------------- New listener on temp queue is ready");
+    	            		} catch( Exception e) {
+    	                		System.out.println("------------------- Error while creating new listener on temp queue");
+    	            	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+    	            	              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+    	            	                      "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+    	            	                      "UIMAJMS_exception__WARNING", e);
+    	            	            }
+    	            			
+    	            		}
+    	            	}
+*/
+    	               
+    	               }
+    	               
+    	  /*
+    	               String delegateKey = ((AggregateAnalysisEngineController) controller)
+    	                .lookUpDelegateKey(endpoint.getEndpoint());
+    		*/
+    		        //}
     		        break;
     		      }
     		      catch (Exception ex) {
@@ -186,8 +242,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     		        }
     		      }
     		     // sleepInbetweenRecoveryAttempts();
-    		      setRecoveryInterval(10);
-    		    }	    
+   // 		      setRecoveryInterval(10);
+    		}	    
     	}
     } catch( IllegalStateException e ) {
     }
@@ -243,7 +299,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         } else {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                        "handleTempQueueFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                        "handleListenerFailure", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAJMS_unable_to_lookup_input_channel__INFO", queueName);
           }
         }
@@ -291,6 +347,24 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       
     } catch( Exception exx ) { // shared connection  may not exist yet if a broker is not up
     }
+    if (t instanceof InvalidDestinationException ) {
+    	destroy();
+    	if ( getMessageListener() instanceof JmsInputChannel ) {
+    		try {
+        	//	((JmsInputChannel)getMessageListener()).createListenerOnTempQueue(getConnectionFactory());
+    		} catch( Exception e) {
+    	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+    	              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+    	                      "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+    	                      "UIMAJMS_exception__WARNING", e);
+    	            }
+    			
+    		}
+    	}
+    	return;
+    }
+
+    
     if ( (conn != null && conn.isTransportFailed() ) || 
             t instanceof javax.jms.IllegalStateException
             && t.getMessage().equals("The Consumer is closed")) {
@@ -340,6 +414,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
     } else if (disableListener(t)) {
       handleQueueFailure(t);
+    } else {
     }
   }
 
@@ -442,7 +517,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
     
     
-    setRecoveryInterval(0);
+    setRecoveryInterval(1);
 
     // Spin a shutdown thread to terminate listener.
     new Thread() {
@@ -886,7 +961,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                     JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
                      new Object[] { msg });
          }
-    	setRecoveryInterval(0);
+    	setRecoveryInterval(1);
       setAutoStartup(false);
       if ( getSharedConnection() != null ) {
         ActiveMQConnection amqc = (ActiveMQConnection)getSharedConnection();

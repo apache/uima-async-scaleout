@@ -522,7 +522,10 @@ public class ProcessResponseHandler extends HandlerBase {
                         getController().getEventListener());
               } else {
                 // Callback to notify that the cache is empty
-                getController().getEventListener().onCacheEmpty();
+            	  
+            	  // !!!!!!!!!!!!!!! WHY DO WE NEED TO CALL onCacheEmpty() IF CAS IS ABORTED?
+            	  // !!!!!!!!!!!!!!!!!!!!!! ?????????????????????????????????
+//                getController().getEventListener().onCacheEmpty();
               }
             }
 

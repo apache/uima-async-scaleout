@@ -174,7 +174,7 @@ public class ClientServiceDelegate extends Delegate {
                       try {
                         clientUimaAsEngine.handleException(new UimaASProcessCasTimeout("Service Not Responding to Ping - CAS:"+de.getCasReferenceId(), new UimaASPingTimeout("Forced Timeout on CAS in PendingDispatch list. The CAS Has Not Been Dispatched since the Service Appears to be Unavailable")), de.getCasReferenceId(), null,cachedRequest, !cachedRequest.isSynchronousInvocation(), false);
                       } catch( Exception ex) {
-                        ex.printStackTrace();
+                        //ex.printStackTrace();
                       }
                     }
                     if ( clientUimaAsEngine.running ) {

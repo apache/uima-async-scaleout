@@ -145,9 +145,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   protected long errorCount = 0;
 
-  protected List inputChannelList = new ArrayList();
+  protected List<InputChannel> inputChannelList = new ArrayList<InputChannel>();
 
-  protected ConcurrentHashMap inputChannelMap = new ConcurrentHashMap();
+  protected ConcurrentHashMap<String, InputChannel> inputChannelMap = new ConcurrentHashMap<String, InputChannel>();
 
   private UimaEEAdminContext adminContext;
 
@@ -1088,7 +1088,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public void addInputChannel(InputChannel anInputChannel) {
     if (!inputChannelMap.containsKey(anInputChannel.getInputQueueName())) {
       inputChannelMap.put(anInputChannel.getInputQueueName(), anInputChannel);
-      if (inputChannelList.contains(anInputChannel)) {
+      if (!inputChannelList.contains(anInputChannel)) {
         inputChannelList.add(anInputChannel);
       }
     }
@@ -2410,13 +2410,34 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     return null;
   }
 
-  public InputChannel getReplyInputChannel(String aDelegateKey) {
-    for (int i = 0; inputChannelList != null && i < inputChannelList.size(); i++) {
-      if (((InputChannel) inputChannelList.get(i)).isFailed(aDelegateKey)) {
-        return (InputChannel) inputChannelList.get(i);
+//  public InputChannel getReplyInputChannel(String aDelegateKey) {
+  public InputChannel getReplyInputChannel(String aDestination) {
+	  InputChannel IC = null;
+	  if ( inputChannelMap.containsKey(aDestination) ) {
+		  return inputChannelMap.get(aDestination);
+	  }
+/*
+	  for( InputChannel inputChannel : inputChannelList) {
+//		  if ( inputChannel.get)
+	    	if ( inputChannel.isFailed(aDelegateKey)) {
+	    		System.out.println("BaseAnalysisEngineController.gerReplyInputChannel()-Found InputChannel for Delegate:"+aDelegateKey+" hashCode="+inputChannel.hashCode());
+	    		IC = inputChannel;
+	      }
+			System.out.println("BaseAnalysisEngineController.gerReplyInputChannel()-Next Input Channel - hashcode="+inputChannel.hashCode());
+
+	  }
+	  */
+/*
+	  for (int i = 0; inputChannelList != null && i < inputChannelList.size(); i++) {
+
+    	if (((InputChannel) inputChannelList.get(i)).isFailed(aDelegateKey)) {
+    		System.out.println("BaseAnalysisEngineController.gerReplyInputChannel()-Found InputChannel for Delegate:"+aDelegateKey);
+    		return (InputChannel) inputChannelList.get(i);
       }
+		System.out.println("BaseAnalysisEngineController.gerReplyInputChannel()-Next Input Channel - hashcode="+);
     }
-    return null;
+    */
+    return IC;
 
   }
 

@@ -33,6 +33,13 @@ public class TempDestinationResolver implements DestinationResolver {
 
   private Object mutex = new Object();
 
+  private String serviceName = "";
+  
+  public TempDestinationResolver() {
+  }
+  public TempDestinationResolver(String name) {
+	  serviceName = name;
+  }
   /**
    * This method is called by the Spring listener code. It creates a single temp queue for all
    * listener instances. If the Spring listener is configured with more than one concurrentConsumer,
@@ -41,7 +48,6 @@ public class TempDestinationResolver implements DestinationResolver {
    */
   public Destination resolveDestinationName(Session session, String destinationName,
           boolean pubSubDomain) throws JMSException {
-
     synchronized (mutex) {
       if (destination == null) {
         destination = session.createTemporaryQueue();

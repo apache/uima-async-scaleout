@@ -27,12 +27,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
 import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.command.ActiveMQMessage;
 import org.apache.uima.UIMAFramework;
@@ -57,6 +59,7 @@ import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.util.Level;
 import org.springframework.jms.listener.SessionAwareMessageListener;
+import org.springframework.jms.support.destination.DestinationResolver;
 
 /**
  * Thin adapter for receiving JMS messages from Spring. It delegates processing of all messages to
@@ -1041,7 +1044,61 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       }
     }
   }
+  public void createListenerOnTempQueue(ConnectionFactory cf, boolean isFreeCasDestination ) throws Exception {
+	  TempDestinationResolver resolver = new TempDestinationResolver(controller.getComponentName());
+	  UimaDefaultMessageListenerContainer connector = new UimaDefaultMessageListenerContainer(true);
+	  connector.setConnectionFactory(cf);
+	  resolver.setListener(connector);
+	  connector.setConcurrentConsumers(1);
+	  connector.setDestinationResolver(resolver);
+	  connector.setController(getController());
+	  connector.setMessageListener(this);
+	  connector.initializeContainer();
+	  connector.getDestination();
+	  connector.afterPropertiesSet(false);
+	  UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,getController().getComponentName()+"-JmsInputChannel.createListenerOnTempQueue()-starting new Listener" );
+	  connector.start();
+	  boolean log = true;
+	  synchronized (mux) {
+		  while (connector.getListenerEndpoint() == null) {
+			  try {
+				  if ( log ) {
+					  log = false;
+					  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+						  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+								  "createListenerOnTempQueue", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+								  "UIMAJMS_temp_destination_not_available_retrying__INFO",
+								  new Object[] { getController().getComponentName(), "5"});
+					  }
+				  }
+				  mux.wait(5000);
+				  
+			  } catch (InterruptedException e) {
+			  }
+		  }
 
+	  }
+
+	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+		  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+				  "createListenerOnTempQueue", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+				  "UIMAJMS_temp_destination_available__INFO",
+				  new Object[] { getController().getComponentName(), connector.getListenerEndpoint(), isFreeCasDestination});
+	  }
+
+	  if ( isFreeCasDestination ) {
+		  ((JmsOutputChannel) getController().getOutputChannel())
+          .setFreeCasQueue(connector.getListenerEndpoint());
+	  }
+      setListenerContainer(connector);
+
+	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
+		  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
+				  "createListenerOnTempQueue", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+				  "UIMAJMS_activated_fcq__CONFIG",
+				  new Object[] { getController().getComponentName(), connector.getEndpointName() });
+	  }
+  }
   public void createListener(String aDelegateKey, Endpoint endpointToUpdate) throws Exception {
     if (getController() instanceof AggregateAnalysisEngineController) {
       Delegate delegate = ((AggregateAnalysisEngineController) getController())
@@ -1056,7 +1113,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         newListener.setMessageListener(this);
         newListener.setController(getController());
 
-        TempDestinationResolver resolver = new TempDestinationResolver();
+        TempDestinationResolver resolver = new TempDestinationResolver(controller.getComponentName());
         resolver.setConnectionFactory(f);
         resolver.setListener(newListener);
         newListener.setDestinationResolver(resolver);

@@ -353,8 +353,10 @@ public class ActiveMQSupport extends TestCase {
     System.clearProperty("BrokerURL");
   
     wait(3000);
-    cleanBroker(broker);
-    stopBroker();
+    if ( !broker.isStopped()) {
+        cleanBroker(broker);
+        stopBroker();
+    }
   }
   
   public class UimaASErrorHandler implements ErrorHandler {

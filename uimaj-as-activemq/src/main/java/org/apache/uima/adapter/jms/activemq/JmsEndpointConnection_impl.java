@@ -19,12 +19,9 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,7 +40,9 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.ActiveMQMessageProducer;
 import org.apache.activemq.ActiveMQSession;
+import org.apache.activemq.AsyncCallback;
 import org.apache.activemq.ConnectionFailedException;
 import org.apache.activemq.advisory.ConsumerEvent;
 import org.apache.activemq.advisory.ConsumerListener;
@@ -96,7 +95,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 
   private volatile boolean retryEnabled;
 
-  private AnalysisEngineController controller = null;
+  protected AnalysisEngineController controller = null;
 
   private volatile boolean connectionAborted = false;
 
@@ -277,7 +276,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            				  conn.close();
 		            			  } catch( Exception ee) {}
 		            		  }
-		            		//  if ( logConnectionProblem ) {
+		            		  if ( jex.getCause() != null && logConnectionProblem ) {
 		            			  logConnectionProblem = false;   // log once
 			            		  // Check if unable to connect to the broker and retry ...
 		            			  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -289,8 +288,15 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
 		            		                  "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 		            		                  "UIMAJMS_exception__WARNING", jex);
+		            		          
+		            		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+		            		                  "openChannel", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+		            		                  "UIMAEE_service_lost_connectivity_WARNING",
+		            		                  new Object[] { controller.getComponentName(), brokerUri});
+		            		          
+		            		          
 		            		        }
-		            	//	  } 
+		            		  } 
 		            		 this.wait(1000);  // wait between retries 
 		            	  } catch ( Exception ee) {
 		            		  ee.printStackTrace();
@@ -668,7 +674,12 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
         }
         logMessageSize(aMessage, msgSize, destinationName);
         synchronized (producer) {
-          producer.send((Destination) delegateEndpoint.getDestination(), aMessage);
+            // create amq async callback listener to detect jms msg delivery problems
+        	AsyncCallback onComplete = createAMQCallbackListener(command, aMessage);
+        	// if the msg cannot be delivered due to invalid destination, the send does
+        	// not fail since we are using AMQ async sends. To detect delivery issues
+        	// we use callback listener where such conditions are detected and handled
+        	((ActiveMQMessageProducer)producer).send((Destination) delegateEndpoint.getDestination(), aMessage, onComplete);
         }
       } else {
         destinationName = ((ActiveMQQueue) producer.getDestination()).getPhysicalName();
@@ -678,22 +689,27 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
                   new Object[] { destinationName });
         }
         logMessageSize(aMessage, msgSize, destinationName);
-  	  // If in ParallelStep its possible to receive a reply from one of the delegates in parallel 
-  	  // step *before* a CAS is dispatched to all of the delegates. This can cause a problem
-  	  // as replies are merged which causes the CAS to be in an inconsistent state.
-  	  // The following code calls dispatchCasToParallelDelegate() which count down
-  	  // a java latch. The same latch is used when receiving replies. If the latch is non zero
-  	  // the code blocks a thread from performing deserialization.
-  	  if ( msgType == AsynchAEMessage.Request && command == AsynchAEMessage.Process ) {
+   	    // If in ParallelStep its possible to receive a reply from one of the delegates in parallel 
+  	    // step *before* a CAS is dispatched to all of the delegates. This can cause a problem
+  	    // as replies are merged which causes the CAS to be in an inconsistent state.
+  	    // The following code calls dispatchCasToParallelDelegate() which count down
+  	    // a java latch. The same latch is used when receiving replies. If the latch is non zero
+  	    // the code blocks a thread from performing deserialization.
+  	    if ( msgType == AsynchAEMessage.Request && command == AsynchAEMessage.Process ) {
   		  String casReferenceId = aMessage.getStringProperty(AsynchAEMessage.CasReference);
   		  CasStateEntry casStateEntry = controller.getLocalCache().lookupEntry(casReferenceId);
   		  if ( casStateEntry.getNumberOfParallelDelegates() > 0) {
   			  casStateEntry.dispatchedCasToParallelDelegate();
   		  }
-  	  }
+  	    }
 
         synchronized (producer) {
-          producer.send(aMessage);
+            // create amq async callback listener to detect jms msg delivery problems
+        	AsyncCallback onComplete = createAMQCallbackListener(command, aMessage);
+        	// if the msg cannot be delivered due to invalid destination, the send does
+        	// not fail since we are using AMQ async sends. To detect delivery issues
+        	// we use callback listener where such conditions are detected and handled
+        	((ActiveMQMessageProducer)producer).send(aMessage, onComplete);
         }
 
       }
@@ -709,7 +725,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
       // to find inactive sessions.
 	  lastDispatchTimestamp.set(System.currentTimeMillis());
       // Succeeded sending the CAS
-      return true;
+	  return true;
     } catch (Exception e) {
     	
     	 // if a client terminates with an outstanding request, the service will not
@@ -805,6 +821,20 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     return false;
   }
 
+  public AsyncCallback createAMQCallbackListener(int command, Message aMessage) throws Exception {
+  	String cid="";
+  	CasStateEntry casStateEntry = null;
+  	AsyncCallback onComplete = null;
+  	if ( command == AsynchAEMessage.Process) {
+  		cid = aMessage.getStringProperty(AsynchAEMessage.CasReference);
+		casStateEntry = controller.getLocalCache().lookupEntry(cid);
+		onComplete = new UimaAsAsyncCallbackListener(casStateEntry);
+  	} else {
+		onComplete = new UimaAsAsyncCallbackListener(command);
+  	}
+  	return onComplete;
+  }
+  
   private void logMessageSize(Message aMessage, long msgSize, String destinationName) {
     if (UIMAFramework.getLogger().isLoggable(Level.FINE)) {
       boolean isReply = false;
@@ -921,4 +951,72 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 //    brokerDestinations.getConnectionTimer().stopTimer();
   }
 
+  private class UimaAsAsyncCallbackListener implements AsyncCallback {
+	CasStateEntry casState=null;
+	int command;
+	
+	public UimaAsAsyncCallbackListener(int command) {
+		this.command = command;
+	}
+	public UimaAsAsyncCallbackListener( CasStateEntry casState ) {
+		this.casState = casState;
+	}
+	public void onException(JMSException exception) {
+		if ( casState != null ) {
+			
+			if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+				UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+						"UimaAsAsyncCallbackListener.onException()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+						"UIMAEE_unable_to_deliver_msg__INFO",
+						new Object[] { controller.getComponentName(), casState.getCasReferenceId(),exception.getMessage() });
+		    }
+			casState.setDeliveryToClientFailed();
+			if ( casState.isSubordinate()) {
+				try {
+					
+					String inputCasId = casState.getInputCasReferenceId();
+					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+								"UimaAsAsyncCallbackListener.onException()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+								"UIMAEE_force_cas_abort__INFO",
+								new Object[] { controller.getComponentName(), "parent", inputCasId });
+				    }
+					
+					
+					CasStateEntry parentCasStateEntry = controller.getLocalCache().lookupEntry(inputCasId);
+					//parentCasStateEntry.setDeliveryToClientFailed();
+					parentCasStateEntry.setFailed();
+					controller.addAbortedCasReferenceId(inputCasId);
+					if ( controller instanceof AggregateAnalysisEngineController ) {
+						List<AnalysisEngineController> controllers = 
+								((AggregateAnalysisEngineController)controller).getChildControllerList();
+						for( AnalysisEngineController ctrl : controllers) {
+							ctrl.addAbortedCasReferenceId(inputCasId);
+						}
+					}
+					
+				} catch( Exception e) {
+					e.printStackTrace();
+				}
+				controller.releaseNextCas(casState.getCasReferenceId());
+			}
+			
+			if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+							"UimaAsAsyncCallbackListener.onException()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+							"UIMAEE_release_cas_req__FINE",
+							new Object[] { controller.getComponentName(), casState.getCasReferenceId() });
+			}
+		} else {
+	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                  "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAEE_service_delivery_exception__WARNING",new Object[] { controller.getComponentName(), "", endpointName});
+
+		}
+	}
+
+	public void onSuccess() {
+	}
+	  
+  }
 }

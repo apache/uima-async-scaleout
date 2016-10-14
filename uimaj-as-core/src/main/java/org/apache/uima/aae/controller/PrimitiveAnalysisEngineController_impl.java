@@ -1034,6 +1034,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             
               //	Check for delivery failure. The client may have terminated while an input CAS was being processed
             if ( childCasStateEntry.deliveryToClientFailed() ) {
+              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "process",
+                            UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_delivery_to_client_failed_INFO",
+                            new Object[] { getComponentName(), aCasReferenceId });
+              }
               clientUnreachable = true;
               if ( cmOutstandingCASes.containsKey(childCasStateEntry.getCasReferenceId())) {
               	  cmOutstandingCASes.remove(childCasStateEntry.getCasReferenceId());

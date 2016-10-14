@@ -21,6 +21,8 @@ package org.apache.uima.adapter.jms.client;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -41,6 +43,7 @@ import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
@@ -49,6 +52,8 @@ import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
+import org.apache.activemq.DestinationDoesNotExistException;
+import org.apache.activemq.transport.TransportListener;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMARuntimeException;
 import org.apache.uima.UIMA_IllegalStateException;
@@ -1498,8 +1503,15 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       TextMessage msg = createTextMessage();
       msg.setText("");
       setReleaseCASMessage(msg, casReferenceId);
-      // Create Message Producer for the Destination
-      MessageProducer msgProducer = getMessageProducer(freeCASNotificationDestination);
+  	MessageProducer msgProducer = null;
+  	try {
+        // Create Message Producer for the Destination
+        msgProducer = getMessageProducer(freeCASNotificationDestination);
+  		
+  	} catch( DestinationDoesNotExistException ee) {
+  		
+  	}
+
       if (msgProducer != null) {
         try {
           // Send FreeCAS message to a Cas Multiplier
@@ -3136,10 +3148,13 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //System.out.println("------------------------ stop2? "+stop);
       //  This loop attempts to recover broker connection every 5 seconds and ends when all clients 
       //  using this shared object terminate or a connection is recovered
+      boolean log = true;
       while( !stop ) {
-          //System.out.println("------------------------ clientList.size()- "+clientList.size());
         if ( clientList.size() == 0 ) {
           break; // no more active clients - break out of connection recovery
+        } else {
+        	BaseUIMAAsynchronousEngineCommon_impl c =
+        			clientList.get(0);
         }
         try {
           //  Attempt a new connection to a broker
@@ -3154,8 +3169,22 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           }
           break;
         } catch( Exception e) {
-        	e.printStackTrace();
-          synchronized( stateMonitor ) {
+        	
+    		if ( log ) {
+                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "retryConnectionUntilSuccessfull",
+                          JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_connection_retry__INFO",
+                          new Object[] { brokerURL });
+                }
+        		if ( e instanceof JMSException && e.getMessage().endsWith("Connection refused") ) {
+        			log = false;
+            		System.out.println("Uima AS Client:"+e.getMessage()+" Retrying every 5 seconds until successfull");
+                    
+        	    } else {
+            	    e.printStackTrace();
+        	    }
+    		}
+           synchronized( stateMonitor ) {
             try {
               stateMonitor.wait(5000); // retry every 5 secs
             } catch( InterruptedException ie) {}
@@ -3263,6 +3292,33 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         }
         return false;
       }
+  }
+  public static class UimaAsTransportListener implements TransportListener {
+
+	@Override
+	public void onCommand(Object arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onException(IOException arg0) {
+		System.out.println("!!!!!!!!!!!!!!!!!! UimaAsTransportListener.onException() - lost connectipon to broker");
+		
+	}
+
+	@Override
+	public void transportInterupted() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void transportResumed() {
+		// TODO Auto-generated method stub
+		
+	}
+	  
   }
   public static class UimaASShutdownHook implements Runnable {
     UimaAsynchronousEngine asEngine=null;

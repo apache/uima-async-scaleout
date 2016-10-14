@@ -319,7 +319,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     	      if ( amqc != null && !amqc.isClosed() && !amqc.isClosing() && consumerDestination != null && 
     	           consumerDestination instanceof ActiveMQTempDestination ) {
     	        try {
-    	          amqc.deleteTempDestination((ActiveMQTempDestination)consumerDestination);
+    	        	if ( !amqc.isClosed() && !amqc.isTransportFailed()) {
+    	    	          amqc.deleteTempDestination((ActiveMQTempDestination)consumerDestination);
+    	        	}
     	        } catch( Exception e) {
     	          e.printStackTrace();
     	        }
@@ -351,6 +353,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		        sender.doStop();
 		      }
 			  try {
+				  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
 				stopConnection();
 				// Undeploy all containers
 				undeploy();

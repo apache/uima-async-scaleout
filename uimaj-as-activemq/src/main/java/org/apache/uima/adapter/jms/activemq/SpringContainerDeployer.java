@@ -55,7 +55,7 @@ import org.springframework.jms.support.destination.DestinationResolver;
 public class SpringContainerDeployer implements ControllerCallbackListener {
   private static final Class CLASS_NAME = SpringContainerDeployer.class;
 
-  private static final int MAX_PREFETCH_FOR_CAS_NOTIFICATION_Q = 10;
+  public static final int MAX_PREFETCH_FOR_CAS_NOTIFICATION_Q = 10;
 
   public static final int QUIESCE_AND_STOP = 1000;
 
