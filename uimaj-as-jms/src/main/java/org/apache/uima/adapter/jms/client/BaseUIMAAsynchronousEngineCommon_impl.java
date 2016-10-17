@@ -2909,8 +2909,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           //  will retry until successful or the client is not running
         }
       }
+       
       //  if still running inject new connection
-      if ( running ) {
+      if ( running && sharedConnection.getClientCount() > 0) {
         //  Inject a new Connection object into an object that sends 
         //  messages to a service. This call invalidates all Session
         //  and Producer objects.
@@ -3204,7 +3205,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         client.state = ClientState.RUNNING;
       }
     }
-    
+    public void stop() {
+    	stop = true;
+    }
     public void start() throws Exception {
       if ( connectionValidator != null && connectionValidator.connectionClosedOrInvalid(connection) ) {
         throw new ResourceInitializationException(new Exception("Unable to start JMS connection that is not open."));

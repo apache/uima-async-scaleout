@@ -274,6 +274,14 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
       }
       //  blocks until the connection is re-established with a broker
       engine.recoverSharedConnectionIfClosed();
+      
+      SharedConnection sharedConnection = 
+    		  engine.lookupConnection(engine.getBrokerURI());
+
+      if ( !engine.running || sharedConnection.getClientCount() == 0) {
+    	  break;
+      }
+     
       //  get the producer initialized from a valid connection
       producer = getMessageProducer();
       //  Check if the request should be rejected. It would be the case if the connection was invalid and

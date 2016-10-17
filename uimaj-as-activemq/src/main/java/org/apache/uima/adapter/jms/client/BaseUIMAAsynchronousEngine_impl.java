@@ -340,6 +340,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 	public void stop() {
 		try {
+			  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
+			  stopConnection();
+
 		      super.doStop();
 		      if (!running) {
 		        return;
@@ -353,8 +356,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		        sender.doStop();
 		      }
 			  try {
-				  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
-				stopConnection();
+//				  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
+//				stopConnection();
 				// Undeploy all containers
 				undeploy();
 		 	    clientCache.clear();
