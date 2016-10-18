@@ -237,7 +237,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		              
 		              // recover lost connection indefinitely while the service is running
 		              while( !controller.isStopped() ) {
-
+		            	  System.out.println("Service ...................... controller.isStopped() - false");
 		            	  try {
 				              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
 				              // White list packages for deserialization 
@@ -297,7 +297,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            		          
 		            		        }
 		            		  } 
-		            		 this.wait(1000);  // wait between retries 
+		            		 lock.wait(1000);  // wait between retries 
 		            	  } catch ( Exception ee) {
 		            		  ee.printStackTrace();
 		            		  if ( conn != null  ) {
@@ -307,6 +307,8 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            		  }
 		            	  }
 		              } //while
+	            	  System.out.println("Service ...................... controller.isStopped() >>>> "+controller.isStopped());
+
 		              if ( logConnectionProblem == false )  { // we had conectivity problem. Log the fact that it was recovered
 		            	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
