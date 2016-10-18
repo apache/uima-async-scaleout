@@ -237,7 +237,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		              
 		              // recover lost connection indefinitely while the service is running
 		              while( !controller.isStopped() ) {
-		            	  System.out.println("Service ...................... controller.isStopped() - false");
+
 		            	  try {
 				              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
 				              // White list packages for deserialization 
