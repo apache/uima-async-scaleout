@@ -316,7 +316,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		              } //while
 
 	            	  if ( retryCount == 0) {   // failed recovering a connection
-	            		  Thread.currentThread().dumpStack();
+//	            		  Thread.currentThread().dumpStack();
 	            		  throw new ConnectException("Unable to Create Connection to Broker:"+brokerUri);
 	            	  }
 		              if ( logConnectionProblem == false )  { // we had conectivity problem. Log the fact that it was recovered

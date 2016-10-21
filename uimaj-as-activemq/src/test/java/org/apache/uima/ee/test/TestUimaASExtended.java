@@ -124,7 +124,22 @@ public class TestUimaASExtended extends BaseTestSupport {
 
 	return b.getDefaultSocketURIString();
     }  
-    
+    @Test
+    public void testClient() throws Exception {
+      System.out.println("-------------- testClientRecoveryFromBrokerFailure -------------");
+      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
+
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine2 = new BaseUIMAAsynchronousEngine_impl();
+      
+      String sid1= deployService(uimaAsEngine1, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
+      String sid2 = deployService(uimaAsEngine2, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
+
+      uimaAsEngine1.undeploy(sid1);
+      
+      uimaAsEngine2.undeploy(sid2);
+      
+    }
     
     /**
      * Tests error handling of the client. It deploys Aggregate service Cas Multiplier. initializes
@@ -136,6 +151,7 @@ public class TestUimaASExtended extends BaseTestSupport {
      *
      * @throws Exception
      */
+    /*
     @Test
     public void testClientRecoveryFromBrokerFailure() throws Exception {
       System.out.println("-------------- testClientRecoveryFromBrokerFailure -------------");
@@ -203,15 +219,16 @@ public class TestUimaASExtended extends BaseTestSupport {
               cas.release();
             }
       }
-      if ( timeoutCount != 3) {
+       if ( timeoutCount != 3) {
           uimaAsEngine.stop();
     	  fail("Expected 3 Errors Due to Timeout, Instead Got "+timeoutCount+" Timeouts");
       } else {
+  		System.out.println("Client .............. Stopping");
           uimaAsEngine.stop();
       }
 
  }
-    
+    */
     @Test
     public void testBrokerRestartWithAggregateMultiplier() throws Exception {
       System.out.println("-------------- testBrokerRestartWithAggregateMultiplier -------------");
@@ -3430,6 +3447,8 @@ broker.waitUntilStarted();
 //    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
     runTest(appCtx, eeUimaEngine,burl,
             "TopLevelTaeQueue", 1, PROCESS_LATCH);
+    
+    
   }
   @Test
   public void testClientProcessWithRemoteMultiplier() throws Exception {
