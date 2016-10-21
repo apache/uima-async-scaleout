@@ -19,6 +19,7 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
+import java.net.ConnectException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -169,13 +170,13 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     return false;
   }
 
-  private void openChannel() throws AsynchAEException, ServiceShutdownException {
+  private void openChannel() throws AsynchAEException, ServiceShutdownException, ConnectException {
     openChannel(getServerUri(), componentName, endpoint, controller);
   }
 
   private void openChannel(String brokerUri, String aComponentName,
           String anEndpointName, AnalysisEngineController aController) throws AsynchAEException,
-          ServiceShutdownException {
+          ServiceShutdownException, ConnectException {
 	  synchronized (lock) {
 		    try {
 
@@ -234,10 +235,16 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		              }
 		              // log connectivity problem once and retry
 		              boolean logConnectionProblem=true;
-		              
-		              // recover lost connection indefinitely while the service is running
-		              while( !controller.isStopped() ) {
 
+		              int retryCount = 4;  // 
+		              // recover lost connection indefinitely while the service is running
+//		              while( !controller.isStopped() ) {
+		              while( retryCount > 0 ) {
+		            	  retryCount--;
+		            	  if ( controller.isStopped() ) {
+		            		  break;
+		            	  }
+		            	  
 		            	  try {
 				              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
 				              // White list packages for deserialization 
@@ -297,7 +304,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            		          
 		            		        }
 		            		  } 
-		            		 lock.wait(1000);  // wait between retries 
+		            		 lock.wait(5000);  // wait between retries 
 		            	  } catch ( Exception ee) {
 		            		  ee.printStackTrace();
 		            		  if ( conn != null  ) {
@@ -307,8 +314,11 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            		  }
 		            	  }
 		              } //while
-	            	  System.out.println("Service ...................... controller.isStopped() >>>> "+controller.isStopped());
 
+	            	  if ( retryCount == 0) {   // failed recovering a connection
+	            		  Thread.currentThread().dumpStack();
+	            		  throw new ConnectException("Unable to Create Connection to Broker:"+brokerUri);
+	            	  }
 		              if ( logConnectionProblem == false )  { // we had conectivity problem. Log the fact that it was recovered
 		            	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             		          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
@@ -403,25 +413,27 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                  "openChannel", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 		                  "UIMAJMS_exception__WARNING", e);
 		        }
+		        if ( e instanceof ConnectException ) {
+		            throw (ConnectException)e;
+		        }
 
 		        if (e instanceof JMSException) {
 		          rethrow = handleJmsException((JMSException) e);
-
-		        }
+		        } 
+		        
 		        if (rethrow) {
 		          throw new AsynchAEException(e);
 		        }
 		      }
-		  
-	  }
+	  }  // synchronized
   }
 
-  public synchronized void open() throws AsynchAEException, ServiceShutdownException {
+  public synchronized void open() throws AsynchAEException, ServiceShutdownException, ConnectException {
     open(delegateEndpoint.getEndpoint(), serverUri);
   }
 
   public synchronized void open( String anEndpointName, String brokerUri) throws AsynchAEException,
-          ServiceShutdownException {
+          ServiceShutdownException, ConnectException {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "open",
               JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_open__FINE",
@@ -484,7 +496,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     this.serverUri = serverUri;
   }
 
-  public TextMessage produceTextMessage(String aTextMessage) throws AsynchAEException {
+  public TextMessage produceTextMessage(String aTextMessage) throws AsynchAEException, ConnectException {
 	synchronized( lock ) {
 		  if ( producerSession == null ) {
 		      throw new AsynchAEException("Controller:"+controller.getComponentName()+" Unable to create JMS Message. Producer Session Not Initialized (Null)");
@@ -495,7 +507,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		       } else {
 		          return producerSession.createTextMessage(aTextMessage);
 		       }
-		     } catch (javax.jms.IllegalStateException e) {
+		    } catch (javax.jms.IllegalStateException e) {
 		        try {
 		          open();
 		        } catch (ServiceShutdownException ex) {
@@ -511,14 +523,15 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		        } catch (AsynchAEException ex) {
 		          throw ex;
 		        }
-		      } catch (Exception e) {
+		     
+		    } catch (Exception e) {
 		        throw new AsynchAEException(e);
 		    }
 		    throw new AsynchAEException(new InvalidMessageException("Unable to produce Message Object"));
 	}
   }
 
-  public BytesMessage produceByteMessage(byte[] aSerializedCAS) throws AsynchAEException {
+  public BytesMessage produceByteMessage(byte[] aSerializedCAS) throws AsynchAEException, ConnectException {
     synchronized( lock ) {
         if ( producerSession == null ) {
             throw new AsynchAEException("Controller:"+controller.getComponentName()+" Unable to create JMS Message. Producer Session Not Initialized (Null)");

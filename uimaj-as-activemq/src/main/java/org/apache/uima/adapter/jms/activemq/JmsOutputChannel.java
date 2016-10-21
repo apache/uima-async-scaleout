@@ -149,6 +149,9 @@ public class JmsOutputChannel implements OutputChannel {
     }
 
   }
+  public boolean isStopping() {
+	  return aborting;
+  }
   /**
    * Sets the ActiveMQ Broker URI
    */
@@ -632,7 +635,8 @@ public class JmsOutputChannel implements OutputChannel {
 
     
     
-    } catch (InterruptedException e) {
+    }
+    catch (InterruptedException e) {
       } finally {
 	    connectionSemaphore.release();	  
       }
@@ -1711,10 +1715,12 @@ public class JmsOutputChannel implements OutputChannel {
     } catch (ServiceShutdownException e) {
       throw e;
     } catch (AsynchAEException e) {
-      throw e;
+    	throw e;
+    } catch (ConnectException e) {
+		  casStateEntry.setDeliveryToClientFailed();
     } catch (Exception e) {
-      throw new AsynchAEException(e);
-    }
+        throw new AsynchAEException(e);
+      }
 
   }
 

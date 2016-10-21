@@ -2174,6 +2174,36 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     	if ( cmOutstandingCASes.containsKey(casStateEntry.getCasReferenceId())) {
         	  cmOutstandingCASes.remove(casStateEntry.getCasReferenceId());
     	}
+		if ( casStateEntry.isSubordinate()) {
+			try {
+				
+				String inputCasId = casStateEntry.getInputCasReferenceId();
+				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+							"sendReplyToRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+							"UIMAEE_force_cas_abort__INFO",
+							new Object[] { getComponentName(), "parent", inputCasId });
+			    }
+				
+				CasStateEntry parentCasStateEntry = getLocalCache().lookupEntry(inputCasId);
+				parentCasStateEntry.setFailed();
+				addAbortedCasReferenceId(inputCasId);
+				List<AnalysisEngineController> controllers = 
+							getChildControllerList();
+				for( AnalysisEngineController ctrl : controllers) {
+					ctrl.addAbortedCasReferenceId(inputCasId);
+				}
+			} catch( Exception e) {
+		        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+		                "sendReplyToRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+		                "UIMAEE_service_exception_WARNING", getComponentName());
+		        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+		                "sendReplyToRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+		                "UIMAEE_exception__WARNING", e);
+
+			}
+		}
+
     	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
            UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.FINE,
@@ -2894,6 +2924,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             flowControllerDescriptor, analysisEngineMetaDataMap, getUimaContextAdmin(),
             ((AnalysisEngineDescription) getResourceSpecifier()).getSofaMappings(), super
                     .getManagementInterface());
+//    super.addUimaObject(flowControllerContainer.getMBean().getUniqueMBeanName());
+    
     if (isTopLevelComponent()) {
       //  Add FC's meta
       getCasManagerWrapper().addMetadata((ProcessingResourceMetaData)flowControllerContainer.getMetaData());
