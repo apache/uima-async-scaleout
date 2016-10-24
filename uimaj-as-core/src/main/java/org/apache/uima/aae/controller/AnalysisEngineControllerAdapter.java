@@ -433,4 +433,10 @@ public abstract class AnalysisEngineControllerAdapter implements AnalysisEngineC
   public ServiceState getState() {
     return null;
   }
+  
+  public void addUimaObject(String objectName ) throws Exception {
+	  
+  }
+   
+  
 }

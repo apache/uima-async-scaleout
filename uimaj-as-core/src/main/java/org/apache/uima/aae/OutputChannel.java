@@ -51,5 +51,7 @@ public interface OutputChannel extends Channel {
   public void stop();
 
   public void cancelTimers();
+  
+  public boolean isStopping();
 
 }

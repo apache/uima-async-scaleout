@@ -97,7 +97,9 @@ public class EECasManager_impl extends CasManager_impl {
     }
     return theSize;
   }
-
+  public void destroy() throws Throwable {
+	  finalize();
+  }
   protected void finalize() throws Throwable {
     super.finalize();
     getCasToCasPoolMap().clear();

@@ -2924,7 +2924,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             flowControllerDescriptor, analysisEngineMetaDataMap, getUimaContextAdmin(),
             ((AnalysisEngineDescription) getResourceSpecifier()).getSofaMappings(), super
                     .getManagementInterface());
-//    super.addUimaObject(flowControllerContainer.getMBean().getUniqueMBeanName());
+    super.addUimaObject(flowControllerContainer.getMBean().getUniqueMBeanName());
     
     if (isTopLevelComponent()) {
       //  Add FC's meta

@@ -47,14 +47,15 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.UimaContext;
 import org.apache.uima.UimaContextAdmin;
 import org.apache.uima.aae.AsynchAECasManager;
+import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.EECasManager_impl;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
+import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
-import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.UimaClassFactory;
@@ -799,7 +800,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       return parentContext + ",p" + index + "=";
     }
   }
-
+  public void addUimaObject(String objectName ) throws Exception {
+	  jmxManagement.addObject(objectName);
+  }
   /**
    * Register a component with a given name with JMX MBeanServer
    * 
@@ -1882,6 +1885,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (!isStopped()) {
       setStopped();
     }
+    try {
+        // Remove all MBeans registered by this service
+        jmxManagement.destroy();
+      } catch (Exception e) {
+      }
+
     /*
      * Send an exception to the client if this is a top level service
      */
@@ -1963,11 +1972,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     } else {
       // Stop output channel
       getOutputChannel().stop();
-      try {
-        // Remove all MBeans registered by this service
-        jmxManagement.destroy();
-      } catch (Exception e) {
-      }
       
       try {
         getInProcessCache().destroy();
@@ -1996,6 +2000,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       unregisteredDelegateList.clear();
     }
     if (casManager != null) {
+
+    	if ( casManager instanceof EECasManager_impl) {
+    		try {
+        		((EECasManager_impl)casManager).destroy();
+    		} catch( Throwable t) {}
+    	} else if ( casManager instanceof AsynchAECasManager_impl ) {
+    		((AsynchAECasManager_impl)casManager).destroy();
+    	}
       casManager = null;
     }
     if (transports != null) {

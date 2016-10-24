@@ -235,4 +235,10 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public void warmUp(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception;
   
   public UimaContext getUimaContext();
+  
+  public void addUimaObject(String objectName ) throws Exception;
+  
 }
+  
+  
+  

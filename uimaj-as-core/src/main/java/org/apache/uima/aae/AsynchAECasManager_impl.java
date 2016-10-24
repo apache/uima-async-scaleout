@@ -202,4 +202,9 @@ public class AsynchAECasManager_impl implements AsynchAECasManager {
   public boolean getDisableJCasCache() {
     return disableJCasCache;
   }
+  public void destroy() {
+	  try {
+		  ((EECasManager_impl)casManager).destroy();
+	  } catch( Throwable t) {}
+  }
 }

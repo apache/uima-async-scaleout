@@ -264,6 +264,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
       AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
    
+      super.addUimaObject(ae.getManagementInterface().getUniqueMBeanName());
       //  Call to produceAnalysisEngine() may take a long time to complete. While this
         //  method was executing, the service may have been stopped. Before continuing 
         //  check if the service has been stopped. If so, destroy AE instance and return.
