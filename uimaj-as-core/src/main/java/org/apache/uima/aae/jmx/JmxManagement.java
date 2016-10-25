@@ -84,4 +84,7 @@ public interface JmxManagement {
    * @throws Exception
    */
   public void destroy() throws Exception;
+ 
+  public void addObject(String objectName) throws Exception;
+ 
 }

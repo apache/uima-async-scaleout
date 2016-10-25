@@ -21,11 +21,16 @@ package org.apache.uima.aae.jmx;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.management.MBeanServer;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
+
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.internal.util.JmxMBeanAgent;
 import org.apache.uima.util.Level;
@@ -33,6 +38,8 @@ import org.apache.uima.util.Level;
 public class JmxManager implements JmxManagement {
   private String jmxDomain = "";
 
+  private List<ObjectName> mbeanList = new
+		  ArrayList<ObjectName>();
   public JmxManager(String aDomain) {
     jmxDomain = aDomain;
   }
@@ -85,7 +92,10 @@ public class JmxManager implements JmxManagement {
     }
     return (MBeanServer) platformMBeanServer;
   }
-
+  public void addObject(String objectName) throws Exception {
+	    ObjectName objName = new ObjectName(objectName);
+	    mbeanList.add(objName);
+  }
   public void registerMBean(Object anMBeanToRegister, ObjectName aName) throws Exception {
     if (!isInitialized()) {
       return;
@@ -97,7 +107,10 @@ public class JmxManager implements JmxManagement {
         if (((MBeanServer) platformMBeanServer).isRegistered(aName)) {
           ((MBeanServer) platformMBeanServer).unregisterMBean(aName);
         }
-        ((MBeanServer) platformMBeanServer).registerMBean(anMBeanToRegister, aName);
+        ObjectInstance oi =
+        		((MBeanServer) platformMBeanServer).registerMBean(anMBeanToRegister, aName);
+        mbeanList.add(oi.getObjectName());
+//        System.out.println("Service ...................... Registered MBean "+oi.getObjectName());
       }
     } catch (Exception e) {
       UIMAFramework.getLogger()
@@ -124,6 +137,7 @@ public class JmxManager implements JmxManagement {
         return;
       }
       try {
+//    	  System.out.println("Service .................. Unregister MBean:"+anMBeanToUnregister);
         if (((MBeanServer) platformMBeanServer).isRegistered(anMBeanToUnregister)) {
           ((MBeanServer) platformMBeanServer).unregisterMBean(anMBeanToUnregister);
         }
@@ -136,7 +150,16 @@ public class JmxManager implements JmxManagement {
   }
 
   public void destroy() throws Exception {
-    unregisterDomainObjects("org.apache.uima:type=ee.jms.services,*");
+   
+	  for( ObjectName oi : mbeanList ) {
+		  try {
+			  unregisterMBean(oi);
+		  } catch( Exception e) {
+			  
+		  }
+	  }
+	  mbeanList.clear();
+	  // unregisterDomainObjects("org.apache.uima:type=ee.jms.services,*");
   }
 
   public void initialize(Map anInitMap) throws Exception {
