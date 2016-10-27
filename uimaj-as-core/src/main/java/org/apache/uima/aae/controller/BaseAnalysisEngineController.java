@@ -116,6 +116,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   
   private static final long DoNotProcessTTL = 30 * 60 * 1000; // 30 minute time to live
 
+  private static int serviceInstance=0;
+  
   protected volatile ControllerLatch latch = new ControllerLatch(this);
 
   protected ConcurrentHashMap<String,Long> statsMap = new ConcurrentHashMap<String,Long>();
@@ -384,7 +386,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
     paramsMap = new HashMap();
     if (aJmxManagement == null) {
-      jmxManagement = new JmxManager(getJMXDomain());
+    	if ( isTopLevelComponent()) {
+        	serviceInstance++;
+    	}
+      jmxManagement = new JmxManager(getJMXDomain(serviceInstance));
     } else {
       jmxManagement = aJmxManagement;
       if (jmxManagement.getMBeanServer() != null) {
@@ -407,8 +412,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       initialize(resourceSpecifier, paramsMap);
       AnalysisEngineManagementImpl mbean = (AnalysisEngineManagementImpl) getUimaContextAdmin()
               .getManagementInterface();
-      // Override uima core jmx domain setting
-      mbean.setName(getComponentName(), getUimaContextAdmin(), jmxManagement.getJmxDomain());
+      if (this instanceof AggregateAnalysisEngineController) {
+          // Override uima core jmx domain setting
+          mbean.setName(getComponentName(), getUimaContextAdmin(), jmxManagement.getJmxDomain());
+      }
 
       if (resourceSpecifier instanceof AnalysisEngineDescription) {
         // Is this service a CAS Multiplier?
@@ -700,14 +707,27 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    */
 
   public String getJMXDomain() {
+	  return getJMXDomain(serviceInstance);
+	  /*
     // Keep calling controllers until the top level component is reached
     if (!isTopLevelComponent()) {
       return parentController.getJMXDomain();
     } else {
+    	serviceInstance++;
       // The domain includes the name of the top level component
-      return "org.apache.uima:type=ee.jms.services,s=" + getComponentName() + " Uima EE Service,";
+      return "org.apache.uima:type=ee.jms.services,s=" + getComponentName() + " Uima EE Service "+serviceInstance+",";
     }
+    */
   }
+  public String getJMXDomain(int sequence) {
+	    // Keep calling controllers until the top level component is reached
+	    if (!isTopLevelComponent()) {
+	      return parentController.getJMXDomain();
+	    } else {
+	      // The domain includes the name of the top level component
+	      return "org.apache.uima:type=ee.jms.services,s=" + getComponentName() + " Uima EE Service "+sequence+",";
+	    }
+	  }
 
   public JmxManagement getManagementInterface() {
     return jmxManagement;
@@ -769,9 +789,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    * registry.
    */
   public String getJmxContext() {
+	  String si = "";
+  	if ( serviceInstance > 1 ) {
+  		si = String.valueOf(serviceInstance);
+  	}
     if (isTopLevelComponent()) {
+    	
       if (this instanceof AggregateAnalysisEngineController) {
-        return "p0=" + getComponentName() + " Components";
+        return "p0=" + getComponentName() +si+ " Components";
       } else if (this instanceof PrimitiveAnalysisEngineController) {
         return "p0=" + getComponentName() + " Uima EE";
       }
@@ -795,7 +820,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         thisComponentName = ((AggregateAnalysisEngineController) parentController)
                 .lookUpDelegateKey(endpointName);
       }
-      return parentContext + ",p" + index + "=" + thisComponentName + " Components";
+      return parentContext + ",p" + index + "=" + thisComponentName +si+ " Components";
     } else {
       return parentContext + ",p" + index + "=";
     }
