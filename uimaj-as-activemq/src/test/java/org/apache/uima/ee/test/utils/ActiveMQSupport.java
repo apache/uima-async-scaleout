@@ -108,8 +108,12 @@ public class ActiveMQSupport extends TestCase {
     Logger.getRootLogger().addAppender(console);
     */
     broker = createBroker();  // sets uri
-    broker.setUseJmx(true);
-    broker.getManagementContext().setConnectorPort(1098);
+    /*
+    broker.setUseJmx(false);
+    if ( broker.isUseJmx()) {
+        broker.getManagementContext().setConnectorPort(1098);
+    }
+    */
     SystemUsage su = new SystemUsage();
     MemoryUsage mu = new MemoryUsage();
     mu.setPercentOfJvmHeap(50);
@@ -265,26 +269,35 @@ public class ActiveMQSupport extends TestCase {
   }
 
   public BrokerService createBroker() throws Exception {
-    return createBroker(DEFAULT_BROKER_PORT, true, false);
+    return createBroker(DEFAULT_BROKER_PORT, false);
   }
 
-  protected BrokerService createBroker(int port, boolean useJmx, boolean secondaryBroker) throws Exception {
+  protected BrokerService createBroker(int port,boolean secondaryBroker) throws Exception {
       String hostName = "localhost"; 
       BrokerService broker = 
         BrokerFactory.createBroker(new URI("broker:()/" + hostName + "?persistent=false"));
       tcpConnector = addConnector(broker, "tcp",port);
       uri = tcpConnector.getUri().toString();
       Logger.getRootLogger().info(">>>> Starting Broker With URL:" + uri);
-
+      int defaultJMXPort = 1098;
       if ( secondaryBroker ) {
+    	  defaultJMXPort = 1097;
         broker.getManagementContext().setJmxDomainName(broker.getManagementContext().getJmxDomainName()+".test");      
         tcpConnector.setName(DEFAULT_BROKER_URL_KEY_2);
       } else {
         tcpConnector.setName(DEFAULT_BROKER_URL_KEY);
       }
-      broker.setUseJmx(useJmx);
-      if ( useJmx) {
-    	  broker.getManagementContext().setConnectorPort(1097);
+  	  boolean enableJMX = true;
+  	  String jmxFlag = System.getProperty("uima.as.enable.jmx");
+  	  if ( jmxFlag != null && jmxFlag.equalsIgnoreCase("false") ) {
+  		enableJMX = false;
+  	  }
+
+      if ( enableJMX ) {
+          broker.setUseJmx(enableJMX);
+    	  broker.getManagementContext().setConnectorPort(defaultJMXPort);
+      } else {
+    	  System.out.println("************** ACTIVEMQ JMX Connector Not Enabled ****************");
       }
       PolicyEntry policy = new PolicyEntry();
       policy.setDeadLetterStrategy(new SharedDeadLetterStrategy());
@@ -309,7 +322,7 @@ public class ActiveMQSupport extends TestCase {
   protected BrokerService setupSecondaryBroker(boolean addProperty) throws Exception {
     System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
 
-    BrokerService broker2 = createBroker(DEFAULT_BROKER_PORT_2, true, true);
+    BrokerService broker2 = createBroker(DEFAULT_BROKER_PORT_2, true);
     broker2.start();
     if ( addProperty ) {
       System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
