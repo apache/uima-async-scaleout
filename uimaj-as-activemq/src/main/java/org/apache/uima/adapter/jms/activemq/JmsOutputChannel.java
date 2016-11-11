@@ -35,6 +35,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -73,12 +75,14 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
+import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.util.Level;
+
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -131,6 +135,8 @@ public class JmsOutputChannel implements OutputChannel {
 
   private XStream xstream = new XStream();
 
+  private Lock xstreamLock = new ReentrantLock();
+
   private Semaphore connectionSemaphore = new Semaphore(1);
   
   public JmsOutputChannel() {
@@ -177,6 +183,7 @@ public class JmsOutputChannel implements OutputChannel {
    */
   public void setConnectionFactory(ActiveMQConnectionFactory connectionFactory) {
     this.connectionFactory = connectionFactory;
+//    this.connectionFactory.setTrustAllPackages(true);
   }
 
   public void setServiceInputEndpoint(String anEnpoint) {
@@ -1304,9 +1311,28 @@ public class JmsOutputChannel implements OutputChannel {
             CacheEntry entry = 
                     getAnalysisEngineController().getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
             //  getDelegateMetrics returns an empty list if no metrics are found
-            if ( entry.getDelegateMetrics().size() > 0 ) {
-              aTextMessage.setStringProperty(AsynchAEMessage.CASPerComponentMetrics, 
-                      xstream.toXML(entry.getDelegateMetrics()));
+
+            List<AnalysisEnginePerformanceMetrics> m = entry.getDelegateMetrics();
+
+            if ( m.size() > 0 ) {
+                String serializedPerformanceMetrics = "";
+
+                try {
+		          xstreamLock.lock();
+		          serializedPerformanceMetrics = xstream.toXML(m); 
+		          aTextMessage.setStringProperty(AsynchAEMessage.CASPerComponentMetrics, 
+						   serializedPerformanceMetrics);
+		         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+			        System.out.println("Thread:"+Thread.currentThread().getId()+" XStream Serialized Metrics:::\n"+serializedPerformanceMetrics);
+		         }
+                } catch( Exception e) {
+		    throw e;
+                } finally {
+		          xstreamLock.unlock();
+                }
+
+		//              aTextMessage.setStringProperty(AsynchAEMessage.CASPerComponentMetrics, 
+                //      xstream.toXML(entry.getDelegateMetrics()));
             }
           }
         } catch( Exception ex) {
