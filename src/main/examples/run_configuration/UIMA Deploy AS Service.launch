@@ -70,5 +70,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.apache.uima.adapter.jms.service.UIMA_Service"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-saxonURL &quot;file:${env_var:UIMA_HOME}/saxon/saxon8.jar&quot; -xslt &quot;${env_var:UIMA_HOME}/bin/dd2spring.xsl&quot; -dd &quot;${file_prompt:UIMA AS Deployment Descriptor}&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value=""/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dcom.sun.management.jmxremote.port=9001&#13;&#10;-Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false&#13;&#10; -Duima.jmx.monitor.interval=2000 -DDefaultBrokerURL=tcp://localhost:61616 -Xmx800M"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dcom.sun.management.jmxremote.port=9001&#13;&#10;-Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false&#13;&#10; -DDefaultBrokerURL=tcp://localhost:61616 -Xmx800M"/>
 </launchConfiguration>
