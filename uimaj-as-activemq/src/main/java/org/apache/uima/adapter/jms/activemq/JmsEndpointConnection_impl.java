@@ -248,10 +248,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		            	  try {
 				              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
 				              // White list packages for deserialization 
-				              ConnectionFactoryIniter cfIniter =
-				                   new ConnectionFactoryIniter(factory);
-				              cfIniter.whiteListPackages();
-
+				              factory.setTrustAllPackages(true);
 				              factory.setWatchTopicAdvisories(false);
 				              //  Create shared jms connection to a broker
 				              conn = factory.createConnection();

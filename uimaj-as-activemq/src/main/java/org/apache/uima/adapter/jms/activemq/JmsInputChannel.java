@@ -1109,6 +1109,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 
         testIfBrokerRunning(delegate.getEndpoint().getServerURI());
         ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(delegate.getEndpoint().getServerURI());
+        f.setTrustAllPackages(true);
         newListener.setConnectionFactory(f);
         newListener.setMessageListener(this);
         newListener.setController(getController());

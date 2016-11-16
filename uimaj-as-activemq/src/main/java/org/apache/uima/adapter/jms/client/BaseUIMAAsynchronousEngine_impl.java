@@ -424,9 +424,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		ActiveMQConnectionValidator connectionValidator = new ActiveMQConnectionValidator();
 		//Initalize the connection Factory
 		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(aBrokerURI);
-	    ConnectionFactoryIniter cfIniter =
-	            new ConnectionFactoryIniter(connectionFactory);
-	    cfIniter.whiteListPackages();
+		connectionFactory.setTrustAllPackages(true);
 		connectionFactory.setUserName(amqUser);
 		connectionFactory.setPassword(amqPassword);
 		// Create a singleton shared connection object

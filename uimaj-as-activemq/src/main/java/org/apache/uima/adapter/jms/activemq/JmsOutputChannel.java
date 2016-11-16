@@ -183,7 +183,7 @@ public class JmsOutputChannel implements OutputChannel {
    */
   public void setConnectionFactory(ActiveMQConnectionFactory connectionFactory) {
     this.connectionFactory = connectionFactory;
-//    this.connectionFactory.setTrustAllPackages(true);
+    this.connectionFactory.setTrustAllPackages(true);
   }
 
   public void setServiceInputEndpoint(String anEnpoint) {

@@ -942,7 +942,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     ConnectionFactoryIniter cfIniter =
             new ConnectionFactoryIniter((ActiveMQConnectionFactory)connectionFactory);
     cfIniter.whiteListPackages();
-
+    ((ActiveMQConnectionFactory)connectionFactory).setTrustAllPackages(true);
     super.setConnectionFactory(connectionFactory);
   }
 
