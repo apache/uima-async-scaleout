@@ -269,9 +269,9 @@
                <artifactId>httpcore</artifactId>
         </dependency>
         <dependency>
-    <groupId>junit</groupId>
-    <artifactId>junit</artifactId>
-</dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}</finalName>
@@ -339,7 +339,7 @@
 						</executions>
 						<configuration>
 						<runOrder>alphabetical</runOrder>
-							<argLine>-Xmx1024M -XX:MaxPermSize=128m  "-Dlog4j.configuration=${UIMA_HOME}/apache-activemq/conf/log4j.properties" "-Djava.util.logging.config.file=${UIMA_HOME}/config/Logger.properties"</argLine>
+							<argLine>-Xmx1024M -XX:MaxPermSize=128m  "-Dlog4j.configuration=${UIMA_HOME}/apache-activemq/conf/log4j.properties" "-Djava.util.logging.config.file=${UIMA_HOME}/config/Logger.properties" "-Duima.as.enable.jmx=false"</argLine>
 							<encoding>UTF-8</encoding>
 							<includes>
 								<include>**/TestUimaASExtended.java</include>
