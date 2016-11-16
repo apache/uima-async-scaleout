@@ -81,8 +81,6 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase {
   }
 
   public void collectionProcessComplete() throws AnalysisEngineProcessException {
-    System.out
-            .println("NoOpAnnotator.collectionProcessComplete() Called -------------------------------------");
 
     if (cpcDelay > 0) {
       try {
@@ -116,7 +114,8 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase {
                 + "th time, delaying Response For:" + processDelay + " millis");
         synchronized (this) {
           try {
-            wait(processDelay);
+           wait(processDelay);
+           // Thread.sleep((long)(Math.random() * processDelay));
           } catch (InterruptedException e) {
           }
         }

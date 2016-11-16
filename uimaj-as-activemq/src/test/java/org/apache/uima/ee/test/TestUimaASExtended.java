@@ -134,7 +134,23 @@ public class TestUimaASExtended extends BaseTestSupport {
       
       String sid1= deployService(uimaAsEngine1, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
       String sid2 = deployService(uimaAsEngine2, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
+      
+      uimaAsEngine1.undeploy(sid1);
+      
+      uimaAsEngine2.undeploy(sid2);
+    }
+    
+    @Test
+    public void testClientWithPrimitives() throws Exception {
+      System.out.println("-------------- testClientRecoveryFromBrokerFailure -------------");
+      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
 
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine2 = new BaseUIMAAsynchronousEngine_impl();
+
+      String sid1= deployService(uimaAsEngine1, relativePath + "/Deploy_NoOpAnnotator.xml");
+      String sid2 = deployService(uimaAsEngine2, relativePath + "/Deploy_NoOpAnnotator.xml");
+      
       uimaAsEngine1.undeploy(sid1);
       
       uimaAsEngine2.undeploy(sid2);
@@ -1061,7 +1077,13 @@ public class TestUimaASExtended extends BaseTestSupport {
   //      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaAsEngine.sendAndReceiveCAS(cas,componentMetricsList);
-  //        System.out.println("-------> Client Received Performance Metrics of Size:"+componentMetricsList.size());
+          System.out.println("-------> Client Received Performance Metrics of Size:"+componentMetricsList.size());
+          for( AnalysisEnginePerformanceMetrics m :componentMetricsList ) {
+        	  System.out.println(".............. Component:"+m.getName()+" AnalysisTime:"+m.getAnalysisTime());
+          }
+        	uimaAsEngine.sendCAS(cas);
+          System.out.println("----------------------------------------------------");
+          componentMetricsList.clear();
         } catch( Exception e) {
           errorCount++;
         } finally {
@@ -2420,6 +2442,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     deployService(eeUimaEngine, relativePath + "/Deploy_ScaledPrimitiveAggregateAnnotator.xml");
     runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
             5, PROCESS_LATCH);
+    System.out.println(eeUimaEngine.getPerformanceReport());
   }
 
   @Test
