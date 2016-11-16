@@ -39,6 +39,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 
+import java.util.Collections;
+import java.util.Comparator;
+
 import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -1199,10 +1202,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     }
   }
   @SuppressWarnings("unchecked")
-  protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand, String serializedComponentStats) {
+      protected void notifyListeners(CAS aCAS, EntityProcessStatus aStatus, int aCommand, List<AnalysisEnginePerformanceMetrics> ml ) { //String serializedComponentStats) {
     if ( aCommand == AsynchAEMessage.Process) {
       ((UimaASProcessStatusImpl)aStatus).
-        setPerformanceMetrics(UimaSerializer.deserializePerformanceMetrics(serializedComponentStats));
+	  setPerformanceMetrics(ml); //UimaSerializer.deserializePerformanceMetrics(serializedComponentStats));
       for (int i = 0; listeners != null && i < listeners.size(); i++) {
         UimaAsBaseCallbackListener statCL = (UimaAsBaseCallbackListener) listeners.get(i);
         statCL.entityProcessComplete(aCAS, aStatus);
@@ -1685,7 +1688,33 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     handleException(exception, casReferenceId, inputCasReferenceId, cachedRequest, doNotify);
   }
 
-  
+    private void dumpMetrics(List<AnalysisEnginePerformanceMetrics> ml, String casReferenceId ) {
+	StringBuffer sb = new StringBuffer();
+	sb.append(">>>> Client performance metrics Deserialized by XStream CAS ID:").append(casReferenceId).append("\n\t");
+	for(AnalysisEnginePerformanceMetrics met: ml ) {
+	    sb.append("AE:").append(met.getUniqueName()).append(" AnalysisTime:").append(met.getAnalysisTime()).append("\n\t");
+	}
+	System.out.println(sb.toString());
+	  
+    }
+    private List<AnalysisEnginePerformanceMetrics> getMetrics(String metrics, String casReferenceId, boolean dump) {
+	if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+	    UIMAFramework.getLogger(CLASS_NAME).logrb(
+						      Level.FINEST,
+						      CLASS_NAME.getName(),
+						      "getMetrics",
+						      JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+						      "UIMAJMS_dump_metrics__FINEST",
+						      new Object[] { casReferenceId, metrics });
+	}
+	//System.out.println("Client performance metrics (before XStream)\n"+metrics);
+    List<AnalysisEnginePerformanceMetrics> ml = 
+	UimaSerializer.deserializePerformanceMetrics(metrics);
+    if ( dump ) {
+	dumpMetrics(ml, casReferenceId);
+    }
+    return ml;
+    }
   private void completeProcessingReply(CAS cas, String casReferenceId, int payload,
           boolean doNotify, Message message, ClientRequest cachedRequest, ProcessTrace pt)
           throws Exception {
@@ -1707,18 +1736,34 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
             status = new UimaASProcessStatusImpl(pt, cas, casReferenceId);
           }
           if ( message.propertyExists(AsynchAEMessage.CASPerComponentMetrics)) {
-            // Add CAS identifier to enable matching replies with requests
-            notifyListeners(cas, status, AsynchAEMessage.Process, message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics));
+ 
+	      List<AnalysisEnginePerformanceMetrics> ml = 
+		  getMetrics(message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics), casReferenceId, UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST));
+
+
+           // Add CAS identifier to enable matching replies with requests
+	      notifyListeners(cas, status, AsynchAEMessage.Process, ml); //message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics));
           } else {
             // Add CAS identifier to enable matching replies with requests
             notifyListeners(cas, status, AsynchAEMessage.Process);
           }
         } else {  // synchronous sendAndReceive() was used
             if (casReferenceId != null && message.propertyExists(AsynchAEMessage.CASPerComponentMetrics) ) {
+
                 cachedRequest = (ClientRequest) clientCache.get(casReferenceId);
                 if ( cachedRequest != null && cachedRequest.getComponentMetricsList() != null ) {
-                	cachedRequest.getComponentMetricsList().
-                		addAll(UimaSerializer.deserializePerformanceMetrics(message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics)));
+
+		    List<AnalysisEnginePerformanceMetrics> ml = 
+			getMetrics(message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics), casReferenceId, false);
+		    cachedRequest.getComponentMetricsList().clear();
+		    cachedRequest.getComponentMetricsList().addAll(ml);
+		    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+			   dumpMetrics(cachedRequest.getComponentMetricsList(), casReferenceId);
+		    }
+
+
+		    //                	cachedRequest.getComponentMetricsList().
+		    //		addAll(UimaSerializer.deserializePerformanceMetrics(message.getStringProperty(AsynchAEMessage.CASPerComponentMetrics)));
                 }
             }
         }

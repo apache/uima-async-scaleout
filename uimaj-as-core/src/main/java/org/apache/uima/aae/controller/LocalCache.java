@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
@@ -246,7 +247,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     // reply from the 1st delegate.
     private CountDownLatch latch=null;
     
-    protected HashMap<String, AEMetrics > casMetrics = new HashMap<String, AEMetrics>();
+    protected Map<String, AEMetrics > casMetrics = new TreeMap<String, AEMetrics>();
     
     public boolean waitingForChildrenToFinish() {
     	return waitingForChildren;

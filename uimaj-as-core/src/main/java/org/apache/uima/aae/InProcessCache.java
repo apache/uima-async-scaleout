@@ -27,8 +27,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
+import java.util.Collections;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController;
@@ -617,15 +619,8 @@ public class InProcessCache implements InProcessCacheMBean {
 		//  via ThreadLocal var
     private Semaphore threadCompletionSemaphore;
     
-//    private Map<String,List<AnalysisEnginePerformanceMetrics>> delegateMetrics =
-//            new ConcurrentHashMap<String, List<AnalysisEnginePerformanceMetrics>>();
-
     private Map<String,AEMetrics> delegateMetrics =
-            new ConcurrentHashMap<String, AEMetrics>();
-
-    
-    private List<AnalysisEnginePerformanceMetrics> performanceBreakdownList = 
-  		  new ArrayList<AnalysisEnginePerformanceMetrics>();
+	  Collections.synchronizedMap(new TreeMap<String, AEMetrics>());
 
     public Semaphore getThreadCompletionSemaphore() {
       return threadCompletionSemaphore;
