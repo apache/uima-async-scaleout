@@ -32,6 +32,7 @@ For more details, please see http://uima.apache.org/building-uima.html
   - Fixed example runtime configurations
   - "Pinned" JMX MBeans to a specific deployment to enable orderly cleanup
   - Fixed support of AMQ white listing of packages
+  - Added support to disable JMX via a new argument -Duima.as.enable.jmx=false
   - Fixed dd2spring issues
   - Other Bug fixes 
   
@@ -346,6 +347,11 @@ Connect a jConsole to this JMX service as described in 3.7 above using the appro
          $JAVA_HOME/bin/jconsole service:jmx:rmi:///jndi/rmi://localhost:8009/jmxrmi
 
 Under the MBeans tab, expand org.apache.uima in the left panel to view UIMA components enabled for JMX monitoring.
+
+NOTE:
+In case when opening an RMI port for JMX monitoring is not possile due to security concerns, you can disable
+JMX via optional argument -Duima.as.enable.jmx=false. With this setting, the UIMA-AS will start with no
+JMX support and an RMI port will not be opened.
 
 3.9 Stopping UIMA AS service
 ----------------------------
