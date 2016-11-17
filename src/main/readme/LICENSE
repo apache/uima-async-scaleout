@@ -406,33 +406,33 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =======================================================================
          
 =========================================================================
-==== This distribution includes jars from ActiveMQ version 5.13.2 
+==== This distribution includes jars from ActiveMQ version 5.14.0 
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
     From: 'Apache Software Foundation' (http://www.apache.org)
 =========================================================================
 
-activemq-kahadb-store-5.13.2.jar
-activemq-leveldb-store-5.13.2.jar
-activemq-console-5.13.2.jar
-activemq-mqtt-5.13.2.jar
-activemq-log4j-appender-5.13.2.jar
-activemq-amqp-5.13.2.jar
-activemq-shiro-5.13.2.jar
-activemq-spring-5.13.2.jar
-activemq-jaas-5.13.2.jar
-activemq-stomp-5.13.2.jar
-activemq-camel-5.13.2.jar
-activemq-client-5.13.2.jar
-activemq-broker-5.13.2.jar
-activemq-pool-5.13.2.jar
-activemq-runtime-config-5.13.2.jar
-activemq-jms-pool-5.13.2.jar
-activemq-partition-5.13.2.jar
-activemq-http-5.13.2.jar
+activemq-kahadb-store-5.14.0.jar
+activemq-leveldb-store-5.14.0.jar
+activemq-console-5.14.0.jar
+activemq-mqtt-5.14.0.jar
+activemq-log4j-appender-5.14.0.jar
+activemq-amqp-5.14.0.jar
+activemq-shiro-5.14.0.jar
+activemq-spring-5.14.0.jar
+activemq-jaas-5.14.0.jar
+activemq-stomp-5.14.0.jar
+activemq-camel-5.14.0.jar
+activemq-client-5.14.0.jar
+activemq-broker-5.14.0.jar
+activemq-pool-5.14.0.jar
+activemq-runtime-config-5.14.0.jar
+activemq-jms-pool-5.14.0.jar
+activemq-partition-5.14.0.jar
+activemq-http-5.14.0.jar
 log4j-1.2.17.jar
 
 =========================================================================
-==== ActiveMQ :: activemq-broker-5.13.2.jar (DEPENDENCIES)
+==== ActiveMQ :: activemq-broker-5.14.0.jar (DEPENDENCIES)
 =========================================================================
 
 From: 'Apache Software Foundation' (http://www.apache.org)
@@ -453,7 +453,7 @@ From: 'QOS.ch' (http://www.qos.ch)
 *********SEE ABOVE (jcl-over-slf4j-1.7.13.jar section ) FOR THE FULL TEXT OF MIT LICENSE TEXT ************
      
 =========================================================================================
-==== ActiveMQ :: activemq-console-5.13.2.jar (DEPENDENCIES)
+==== ActiveMQ :: activemq-console-5.14.0.jar (DEPENDENCIES)
 =========================================================================================
 
 From: 'The Apache Software Foundation' (http://www.apache.org)
@@ -496,7 +496,7 @@ or otherwise exploited by anyone for any purpose, commercial or non-commercial, 
 
 
 ====================================================================================
-==== ActiveMQ :: activemq-http-5.13.2.jar (DEPENDENCIES)
+==== ActiveMQ :: activemq-http-5.14.0.jar (DEPENDENCIES)
 ====================================================================================
 
 From: 'an unknown organization'
@@ -553,7 +553,7 @@ From: 'Mort Bay Consulting' (http://www.mortbay.com)
     copyright notice appears in all copies.
 
 From: 'The Apache Software Foundation' (http://www.apache.org/)
-  - Commons Codec (http://commons.apache.org/codec/) commons-codec:commons-codec:jar:1.6
+  - Commons Codec (http://commons.apache.org/codec/) commons-codec:commons-codec:jar:1.9
 
  - HttpClient (http://hc.apache.org/httpcomponents-client) org.apache.httpcomponents:httpclient:jar:4.5.1
     License: Apache License  (LICENSE.txt)

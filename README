@@ -1,4 +1,4 @@
-     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.8.1 README
+     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.9.0 README
      ----------------------------------------------------------------
      
 0. Building from the Source Distribution
@@ -21,28 +21,29 @@ Look for the result in the two artifacts:
 
 For more details, please see http://uima.apache.org/building-uima.html   
 
-1. What's New in 2.8.1
+1. What's New in 2.9.0
 ====================== 
-  - Replaced Activemq 5.7.0 with 5.13.2 
-    Starting with AMQ 5.8.0, the jmx MBean query syntax has changed. New code using jmx to
-    query a broker must follow new convention. Please refer to http://activemq.apache.org/activemq-580-release.html
-    for details.
-  - Added dependency on UIMA SDK 2.8.1
-  - Fixed per CAS Performance Metrics breakdown for async deployments 
-  - Added new feature to allow warm up of a JVM service instance before real processing begins,
-    by feeding it a specified set of CASes before the instance connects to the service input queue.
-  - Requires Java 1.7 or later
-  - Few Bug fixes 
+  - Updated to use Activemq 5.14.0 
+  - Added dependency on UIMA SDK 2.9.0
+  - Fixed http based service connectivity  
+  - Added support for automatic recovery of temp queues after broker restart.
+  - Fixed per CAS Performance Metrics breakdown 
+  - Fixed per process CPU & RSS reporting 
+  - Fixed example runtime configurations
+  - "Pinned" JMX MBeans to a specific deployment to enable orderly cleanup
+  - Fixed support of AMQ white listing of packages
+  - Fixed dd2spring issues
+  - Other Bug fixes 
   
 
 1.1 Contents of Apache UIMA-AS binary distribution
 --------------------------------------------------
 
 The Apache UIMA-AS binary distribution includes
-  - Apache UIMA Java SDK version 2.8.1
+  - Apache UIMA Java SDK version 2.9.0
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
-  - Apache ActiveMQ version 5.13.2
+  - Apache ActiveMQ version 5.14.0
   - Spring Framework version 4.1.9
   - XMLBeans
 
@@ -402,20 +403,22 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.8.1
+5. Known problems/limitations with Release 2.9.0
 ================================================
 
-  1. No automatic refresh for broken connections with temp reply queues.
-  
-  2. When connecting to an AMQ broker behind a firewall, avoid using the maxInactivityDuration=0 
+  1. When connecting to an AMQ broker behind a firewall, avoid using the maxInactivityDuration=0 
      decoration on the brokerURL (see: http://activemq.apache.org/configuring-wire-formats.html)
      as it turns off AMQ 'keep alive' messaging. Without these, a firewall may assume a connection
      has become stale and close its ports. 
 
-  3. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
+  2. To monitor multiple UIMA AS services on the same machine, each must be assigned a unique 
      JMX port (see section 3.8).
 
-  5. JCAS caching Enable/Disable not supported in the Deployment Editor GUI.   
+  3. JCAS caching Enable/Disable not supported in the Deployment Editor GUI.   
+  
+  4. In cases where Analysis Engine deployed in UIMA AS servic throws a user-defined exception, an 
+     application hosting UIMA AS client must include such exception class in its classpath. Otherwise,
+     ClassNotFoundException is thrown in the UIMA AS client while deserializing a reply. 
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
 http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12327044&styleName=Html&projectId=12310570

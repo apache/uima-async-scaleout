@@ -135,7 +135,6 @@
 
 		<org.apache.geronimo.servlet.specs.version>1.0</org.apache.geronimo.servlet.specs.version>
 
-		<!-- jetty.version>8.1.16.v20140903</jetty.version -->
 		<jetty.version>9.2.13.v20150730</jetty.version>
 
 		<commons-pool.version>2.4.2</commons-pool.version>
