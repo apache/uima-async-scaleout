@@ -30,6 +30,7 @@ For more details, please see http://uima.apache.org/building-uima.html
   - Fixed per CAS Performance Metrics breakdown 
   - Fixed per process CPU & RSS reporting 
   - Fixed example runtime configurations
+  - Fixed error recovery on exception while deserializing a CAS
   - "Pinned" JMX MBeans to a specific deployment to enable orderly cleanup
   - Fixed support of AMQ white listing of packages
   - Added support to disable JMX via a new argument -Duima.as.enable.jmx=false
