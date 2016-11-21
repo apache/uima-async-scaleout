@@ -211,31 +211,42 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       
       UimaSerializer uimaSerializer = SerializerCache.lookupSerializerByThreadId();
       byte[] binarySource = aMessageContext.getByteMessage();
-
-      switch (serialFormat) {
-      case XMI:
-        // Fetch serialized CAS from the message
-        String xmi = aMessageContext.getStringMessage();
-        deserSharedData = new XmiSerializationSharedData();
-        uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
-        break;
-      case BINARY:
-        // *************************************************************************
-        // Register the CAS with a local cache
-        // *************************************************************************
-        // CacheEntry entry = getController().getInProcessCache().register(cas, aMessageContext,
-        // deserSharedData, casReferenceId);
-        // BINARY format may be COMPRESSED etc, so update it upon reading
-        serialFormat = uimaSerializer.deserializeCasFromBinary(binarySource, cas);
-        // BINARY format may be COMPRESSED etc, so update it upon reading
-        endpoint.setSerialFormat(serialFormat);
-        break;
-      case COMPRESSED_FILTERED:
-        ByteArrayInputStream bais = new ByteArrayInputStream(binarySource);
-        reuseInfo = Serialization.deserializeCAS(cas, bais, endpoint.getTypeSystemImpl(), null).getReuseInfo();
-        break;
-      default:
-        throw new RuntimeException("Never Happen");
+      boolean failed = false;
+      Exception cachedException = null;
+      try {
+          switch (serialFormat) {
+          case XMI:
+            // Fetch serialized CAS from the message
+            String xmi = aMessageContext.getStringMessage();
+            deserSharedData = new XmiSerializationSharedData();
+            uimaSerializer.deserializeCasFromXmi(xmi, cas, deserSharedData, true, -1);
+            break;
+          case BINARY:
+            // *************************************************************************
+            // Register the CAS with a local cache
+            // *************************************************************************
+            // CacheEntry entry = getController().getInProcessCache().register(cas, aMessageContext,
+            // deserSharedData, casReferenceId);
+            // BINARY format may be COMPRESSED etc, so update it upon reading
+            serialFormat = uimaSerializer.deserializeCasFromBinary(binarySource, cas);
+            // BINARY format may be COMPRESSED etc, so update it upon reading
+            endpoint.setSerialFormat(serialFormat);
+            break;
+          case COMPRESSED_FILTERED:
+            ByteArrayInputStream bais = new ByteArrayInputStream(binarySource);
+            reuseInfo = Serialization.deserializeCAS(cas, bais, endpoint.getTypeSystemImpl(), null).getReuseInfo();
+            break;
+          default:
+            throw new RuntimeException("Never Happen");
+          }
+    	  
+      } catch( Exception ex) {
+          // When de-serialization fails we still need to create a cache entry for the CAS.
+    	  // Code downstream tries to lookup an entry even for a CAS that failed. Cache the
+    	  // fact that there was a failure and the cause. Once the entry is properly setup
+    	  // rethrow the exception to  handle the failure.
+    	  failed = true;
+    	  cachedException = ex;
       }
 
       // *************************************************************************
@@ -243,7 +254,7 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // *************************************************************************
       boolean acceptsDeltaCas = false;
       Marker marker = null;
-      if (aMessageContext.propertyExists(AsynchAEMessage.AcceptsDeltaCas)) {
+      if (!failed && aMessageContext.propertyExists(AsynchAEMessage.AcceptsDeltaCas)) {
         acceptsDeltaCas = aMessageContext.getMessageBooleanProperty(AsynchAEMessage.AcceptsDeltaCas);
         if (acceptsDeltaCas) {
           marker = cas.createMarker();
@@ -256,7 +267,10 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // deserSharedData, casReferenceId);
       entry = getController().getInProcessCache().register(cas, aMessageContext, deserSharedData, reuseInfo,
               casReferenceId, marker, acceptsDeltaCas);
-      
+     
+      if ( failed ) {
+    	  entry.setFailed(true);
+      }
       /*
 		Lazily create a Semaphore that will be used to throttle CAS ingestion from service
 		input queue. This only applies to async aggregates. The semaphore is initialized
@@ -350,10 +364,16 @@ public class ProcessRequestHandler_impl extends HandlerBase {
                 new Object[] { aMessageContext.getEndpoint().getEndpoint() });
       }
       cacheProcessCommandInClientEndpoint();
-       
+      
+      if ( failed ) {
+    	  throw cachedException;
+      }
     } catch( Exception e) {
       if ( cas != null ) {
         cas.release();
+        if ( entry != null ) {
+            entry.releasedCAS();
+        }
       }
       throw e;
     }
@@ -393,6 +413,8 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       return; // No XMI just return
     }
 
+    CasStateEntry inputCasStateEntry = null;
+
     try {
 
       String newCASProducedBy = null;
@@ -408,7 +430,6 @@ public class ProcessRequestHandler_impl extends HandlerBase {
       // Destination where Free Cas Notification will be sent if the CAS came from a Cas Multiplier
       Endpoint freeCasEndpoint = null;
 
-      CasStateEntry inputCasStateEntry = null;
 
       // CASes generated by a Cas Multiplier will have a CasSequence property set.
       if (aMessageContext.propertyExists(AsynchAEMessage.CasSequence)) {
@@ -527,9 +548,16 @@ public class ProcessRequestHandler_impl extends HandlerBase {
             }
           }
         }
-
-        entry = deserializeCASandRegisterWithCache(casReferenceId, freeCasEndpoint,
-                newCASProducedBy, aMessageContext);
+        try {
+            entry = deserializeCASandRegisterWithCache(casReferenceId, freeCasEndpoint,
+                    newCASProducedBy, aMessageContext);
+        } catch( Exception ex) {
+            // Mark this CAS as failed.
+        	if ( cse != null ) {
+        		cse.setFailed();
+        	}
+        	throw ex;
+        }
         if (getController().isStopped() || entry == null || entry.getCas() == null) {
           if (entry != null) {
             // The Controller is in shutdown state, release the CAS

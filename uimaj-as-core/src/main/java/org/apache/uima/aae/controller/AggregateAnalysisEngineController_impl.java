@@ -1114,7 +1114,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         super.stopCasMultipliers();
       }
       try {
-        CacheEntry entry = getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+    	CacheEntry entry = null;
+    	if ( getInProcessCache().entryExists(aCasReferenceId) ) {
+    	     entry = getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
+    	}
         CasStateEntry casStateEntry = getLocalCache().lookupEntry(aCasReferenceId);
         // Check if this CAS should be aborted due to previous error on this CAS or its
         // parent. If this is the case the method will move the CAS to the final state
@@ -1123,6 +1126,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         if (abortProcessingCas(casStateEntry, entry)) {
           // This CAS was aborted, we are done here
           return;
+        }
+        if ( entry == null ) {
+        	throw new AsynchAEException("Cas Not Found In CasManager Cache. CasReferenceId::"
+                    + aCasReferenceId + " is Invalid");
         }
         // Check if this is an input CAS from the client. If not, check if last
         // delegate handling this CAS was a Cas Multiplier configured to process

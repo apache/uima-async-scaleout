@@ -1471,8 +1471,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
       if (cas != null) {
         int casHashCode = cas.hashCode();
-        dropCAS(cas);
-
+        if ( entry == null || entry.releaseCAS() ) {
+            dropCAS(cas);
+        }
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "dropCAS",
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_released_cas__FINE",

@@ -534,6 +534,7 @@ public class InProcessCache implements InProcessCacheMBean {
     
     private volatile boolean failed = false;;
     
+	private volatile boolean release = true;
 	
 	private CAS cas;
 
@@ -624,6 +625,13 @@ public class InProcessCache implements InProcessCacheMBean {
 
     public Semaphore getThreadCompletionSemaphore() {
       return threadCompletionSemaphore;
+    }
+    
+    public boolean releaseCAS() {
+    	return release;
+    }
+    public void releasedCAS() {
+    	release = false;
     }
     public boolean isFailed() {
   		return failed;
