@@ -28,20 +28,20 @@
 	<!-- >groupId>org.apache.uima</groupId -->
 	<artifactId>uima-as-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>2.9.0</version>
+	<version>3.0.0-SNAPSHOT</version>
 	<name>Apache UIMA-AS: ${project.artifactId}</name>
 	<description>The common parent pom for uima-as</description>
 	<url>${uimaWebsiteUrl}</url>
 
 	<scm>
 		<connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.9.0/uima-as-parent
+      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-parent
     </connection>
 		<developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.9.0/uima-as-parent
+      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-parent
     </developerConnection>
 		<url>
-      http://svn.apache.org/viewvc/uima/uima-as/tags/uima-as-2.9.0/uima-as-parent
+      http://svn.apache.org/viewvc/uima/uima-as/trunk/uima-as-parent
     </url>
 	</scm>
 
