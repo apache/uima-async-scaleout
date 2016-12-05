@@ -95,7 +95,7 @@
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/jetty-all-9.2.13.v20150730.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/log4j-1.2.17.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/xmlpull-1.1.3.1.jar"/>
-	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/xpp3-1.1.4.c.jar"/>
+	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/xpp3-1.1.4c.jar"/>
 	<classpathentry kind="var" path="UIMA_HOME/apache-activemq/lib/optional/xstream-1.4.8.jar"/>
 	<classpathentry kind="lib" path="resources"/>
 	<classpathentry kind="output" path="bin"/>
