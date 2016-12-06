@@ -35,8 +35,11 @@ For more details, please see http://uima.apache.org/building-uima.html
   - Fixed support of AMQ white listing of packages
   - Added support to disable JMX via a new argument -Duima.as.enable.jmx=false
   - Fixed dd2spring issues
-  - Updated version checker to test compatibility with UIMA SDK. Code terminates
-    if UIMA-AS major version matches but a minor version of the UIMA SDK is less than
+  - Updated version checker to test compatibility with UIMA SDK. The UIMA-AS runtime
+    works with UIMA SDK 2.9.0 and future release of SDK 2.9.X, 2.10.X, etc. It will
+    fail if the UIMA SDK major version does not match UIMA-AS major version, or the SDK
+    is older than 2.9.0.
+    matches but a minor version of the UIMA SDK is less than
     the minor version of UIMA-AS. The UIMA-AS runtime will work with SDK 2.9.X, 2.10.X,
     etc but will not work with SDK 3.X.X nor SDK 2.8.X or lower.  
   - Other Bug fixes 
