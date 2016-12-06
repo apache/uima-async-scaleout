@@ -60,6 +60,7 @@ import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.UimaEEAdminContext;
+import org.apache.uima.aae.VersionCompatibilityChecker;
 import org.apache.uima.aae.WarmUpDataProvider;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
@@ -354,20 +355,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       //  this adds the handler to every thread
       Thread.setDefaultUncaughtExceptionHandler(new UimaAsUncaughtExceptionHandler(getComponentName()));
       // Check the version of uimaj that UIMA AS was built with, against the UIMA Core version. If not the same throw Exception
-      if (UimaAsVersion.getMajorVersion() != UimaVersion.getMajorVersion()) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.WARNING,
-                CLASS_NAME.getName(),
-                "BaseAnalysisEngineController",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_incompatible_version_WARNING",
-                new Object[] { getComponentName(), UimaAsVersion.getUimajFullVersionString(),
-                  UimaVersion.getFullVersionString() });
-        throw new ResourceInitializationException(new AsynchAEException(
-                "Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version is built to depend on Core UIMA version:"
-                        + UimaAsVersion.getUimajFullVersionString() + " but is running with version:"
-                        + UimaVersion.getFullVersionString()));
-      }
+
+      // throws an exception if verions of UIMA-AS is not compatible with UIMA SDK
+      VersionCompatibilityChecker.check(CLASS_NAME, getComponentName(),"BaseAnalysisEngineController()");
+      
       logPlatformInfo(getComponentName());
     } else {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {

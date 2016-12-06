@@ -57,6 +57,7 @@ import org.apache.uima.UIMA_IllegalArgumentException;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.VersionCompatibilityChecker;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.UimaASApplicationExitEvent;
 import org.apache.uima.aae.UimaAsVersion;
@@ -694,6 +695,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     shutdownHookThread = new Thread(new UimaASShutdownHook(this));
     Runtime.getRuntime().addShutdownHook(shutdownHookThread);
            
+    // throws an exception if verions of UIMA-AS is not compatible with UIMA SDK
+    VersionCompatibilityChecker.check(CLASS_NAME, "UIMA AS Client", "initialize");
+/*
     // Check for compatibility with a version of uima sdk. Only check major versions.
     if (UimaAsVersion.getMajorVersion() != UimaVersion.getMajorVersion() ) {
       UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -709,7 +713,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
                       + UimaAsVersion.getUimajFullVersionString() + " but is running with version:"
                       + UimaVersion.getFullVersionString()));
     }
-
+*/
     if (running) {
       throw new ResourceInitializationException(new UIMA_IllegalStateException());
     }

@@ -1059,11 +1059,11 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testSendAndReceive() throws Exception  {
       BaseUIMAAsynchronousEngine_impl uimaAsEngine 
       	= new BaseUIMAAsynchronousEngine_impl();
-      
-      deployService(uimaAsEngine, relativePath + "/Deploy_MeetingDetectorAggregate.xml");
+      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+      deployService(uimaAsEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
       // Deploy Uima AS Primitive Service
  //     deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-      Map<String, Object> appCtx = buildContext(getMasterConnectorURI(broker).toString(),"MeetingDetectorQueue");
+      Map<String, Object> appCtx = buildContext(getMasterConnectorURI(broker).toString(),"TopLevelTaeQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
