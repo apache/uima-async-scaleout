@@ -35,6 +35,10 @@ For more details, please see http://uima.apache.org/building-uima.html
   - Fixed support of AMQ white listing of packages
   - Added support to disable JMX via a new argument -Duima.as.enable.jmx=false
   - Fixed dd2spring issues
+  - Updated version checker to test compatibility with UIMA SDK. Code terminates
+    if UIMA-AS major version matches but a minor version of the UIMA SDK is less than
+    the minor version of UIMA-AS. The UIMA-AS runtime will work with SDK 2.9.X, 2.10.X,
+    etc but will not work with SDK 3.X.X nor SDK 2.8.X or lower.  
   - Other Bug fixes 
   
 
@@ -350,7 +354,7 @@ Connect a jConsole to this JMX service as described in 3.7 above using the appro
 Under the MBeans tab, expand org.apache.uima in the left panel to view UIMA components enabled for JMX monitoring.
 
 NOTE:
-In case when opening an RMI port for JMX monitoring is not possile due to security concerns, you can disable
+In case when opening an RMI port for JMX monitoring is not possible due to security concerns, you can disable
 JMX via optional argument -Duima.as.enable.jmx=false. With this setting, the UIMA-AS will start with no
 JMX support and an RMI port will not be opened.
 
@@ -423,7 +427,7 @@ An example of this kind of migration is embodied by the sample descriptors:
 
   3. JCAS caching Enable/Disable not supported in the Deployment Editor GUI.   
   
-  4. In cases where Analysis Engine deployed in UIMA AS servic throws a user-defined exception, an 
+  4. In cases where Analysis Engine deployed in UIMA AS service throws a user-defined exception, an 
      application hosting UIMA AS client must include such exception class in its classpath. Otherwise,
      ClassNotFoundException is thrown in the UIMA AS client while deserializing a reply. 
  
