@@ -173,6 +173,25 @@
       <artifactId>org.eclipse.jdt.ui</artifactId>
       <version>[3.2.0,4.0.0]</version>
       <scope>provided</scope>
+      <!-- https://issues.apache.org/jira/browse/UIMA-5374 -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.swt</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.ui.workbench</artifactId>
+        </exclusion>       
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.search</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.ui.ide</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- misc -->
@@ -188,6 +207,33 @@
       <artifactId>org.eclipse.pde.ui</artifactId>
       <version>[3.2.0,4.0.0]</version>
       <scope>provided</scope>
+      <!-- https://issues.apache.org/jira/browse/UIMA-5374 -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.swt</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.ui.workbench</artifactId>
+        </exclusion>       
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.search</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.ui.ide</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.ui.intro</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.platform</groupId>
+          <artifactId>org.eclipse.ant.ui</artifactId>
+        </exclusion>
+      </exclusions>      
     </dependency>
 
     <dependency>
