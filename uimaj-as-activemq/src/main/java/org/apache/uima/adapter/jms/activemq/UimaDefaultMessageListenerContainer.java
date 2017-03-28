@@ -650,6 +650,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if (awaitingShutdown) {
       return;
     }
+    /*
     String endpointName = (getDestination() == null) ? ""
             : ((ActiveMQDestination) getDestination()).getPhysicalName();
 
@@ -659,6 +660,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
               "UIMAJMS_jms_listener_failed_WARNING",
               new Object[] { endpointName, getBrokerUrl(), t });
     }
+    */
     super.handleListenerException(t);
   }
 
@@ -1041,6 +1043,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if (awaitingShutdown) {
       return;
     }
+    
     String endpointName = (getDestination() == null) ? ""
             : ((ActiveMQDestination) getDestination()).getPhysicalName();
 
