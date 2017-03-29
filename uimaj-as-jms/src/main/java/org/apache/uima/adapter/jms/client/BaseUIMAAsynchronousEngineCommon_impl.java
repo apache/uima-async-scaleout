@@ -536,13 +536,20 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
         // Unblock threads
         if (threadMonitorMap.size() > 0) {
-          Iterator it = threadMonitorMap.keySet().iterator();
+          Iterator<?> it = threadMonitorMap.keySet().iterator();
           while (it.hasNext()) {
             long key = ((Long) it.next()).longValue();
             ThreadMonitor threadMonitor = (ThreadMonitor) threadMonitorMap.get(key);
             if (threadMonitor == null || threadMonitor.getMonitor() == null) {
               continue;
             }
+            // convey that the semaphore was released from stop(). 
+            // Any thread waiting in sendAndReceive() will check for this
+            // and throw an exception back to the client. This would have 
+            // a similar effect to an Interrupt. A thread in blocked in 
+            // sendAndReceive() until a reply comes or stop() clears the
+            // threadMonitor semaphore.
+            threadMonitor.calledFromStopMethod();
             threadMonitor.getMonitor().release();
           }
         }
@@ -2211,6 +2218,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           // CAS reply is received. Ping reply logic does not change
           // this flag.
           threadMonitor.getMonitor().acquire();
+          // if the semaphore was cleared in the stop() method, the client
+          // must be in a shutdown mode. Throw an exception back to the
+          // caller. The CAS reply has not come back yet.
+          if ( threadMonitor.wasCalledFromStopMethod()) {
+        	  throw new ResourceProcessException(new UimaAsClientStoppingException("Client is stopping - sendAndReceive() has been interrupted"));
+          }
           // Send thread was awoken by either process reply or ping reply
           // If the service is in the ok state and the CAS is in the
           // list of CASes pending dispatch, remove the CAS from the list
@@ -2902,13 +2915,20 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   protected static class ThreadMonitor {
     private long threadId;
-
+    private volatile boolean calledFromStop = false;
+    
     private Semaphore monitor = new Semaphore(1);
 
     public ThreadMonitor(long aThreadId) {
       threadId = aThreadId;
     }
 
+    public void calledFromStopMethod() {
+    	calledFromStop = true;
+    }
+    public boolean wasCalledFromStopMethod() {
+    	return calledFromStop;
+    }
     public long getThreadId() {
       return threadId;
     }
