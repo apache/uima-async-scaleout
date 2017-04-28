@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -280,7 +282,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(2));
       runTest(appCtx, eeUimaEngine,burl,
               "TopLevelTaeQueue", 1, PROCESS_LATCH);
-      eeUimaEngine.stop();
+  //    eeUimaEngine.stop();
  }
     
     /**
@@ -353,6 +355,8 @@ public class TestUimaASExtended extends BaseTestSupport {
 
 
       }
+      s.shutdownNow();
+      s.awaitTermination(10, TimeUnit.HOURS);
       uimaAsEngine.stop();
  }
 
@@ -415,6 +419,8 @@ public class TestUimaASExtended extends BaseTestSupport {
 
 
       }
+      s.shutdownNow();
+      s.awaitTermination(10, TimeUnit.HOURS);
       uimaAsEngine.stop();
       
       
@@ -442,7 +448,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   	    c.setConnectionFactory(new ActiveMQConnectionFactory("http://localhost:18888"));
   	    c.setDestinationName("TestQ");
   	    c.setConcurrentConsumers(2);
-  	    c.setBeanName("TestBean");
+  	    c.setBeanName("testServiceWithHttpListeners() - JUnit Test Listener");
   	    c.setMessageListener(new JmsInputChannel());
   	    c.initialize();
   	    c.start();
@@ -467,7 +473,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   	    	} else {
   	    		System.out.println("Stopping Listener");
   	    		c.stop();
-
+  	    		c.shutdown();
   	    	}
   	    } catch( Exception e) {
   	    	e.printStackTrace();
@@ -1081,7 +1087,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           for( AnalysisEnginePerformanceMetrics m :componentMetricsList ) {
         	  System.out.println(".............. Component:"+m.getName()+" AnalysisTime:"+m.getAnalysisTime());
           }
-        	uimaAsEngine.sendCAS(cas);
+//        	uimaAsEngine.sendCAS(cas);
           System.out.println("----------------------------------------------------");
           componentMetricsList.clear();
         } catch( Exception e) {
@@ -1917,7 +1923,20 @@ public class TestUimaASExtended extends BaseTestSupport {
 	    System.clearProperty("DefaultBrokerURL");
 	    uimaAsEngine.stop();
 	  }
-
+private class Killer {
+	Timer timer;
+	public Killer(int secs) {
+		timer = new Timer();
+		timer.schedule(new KillerTask(), secs*1000);
+	}
+	class KillerTask extends TimerTask {
+		public void run() {
+			System.out.println("----------------- KillerTask calling System.exit()");
+			timer.cancel();
+			System.exit(0);
+		}
+	}
+}
   @Test
   public void testClientProcess() throws Exception {
     System.out.println("-------------- testClientProcess -------------");
@@ -1931,6 +1950,8 @@ public class TestUimaASExtended extends BaseTestSupport {
     appCtx.put(UimaAsynchronousEngine.Timeout, 0);
     appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
     appCtx.put(UimaAsynchronousEngine.CasPoolSize,2);
+    appCtx.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "xmi");
+    
     initialize(uimaAsEngine, appCtx);
     waitUntilInitialized();
 
@@ -3435,6 +3456,17 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateMultiplier.xml");
+
+    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
+            "TopLevelTaeQueue");
+    appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
+    appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(1));
+    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+            "TopLevelTaeQueue", 1, PROCESS_LATCH);
+    
+    /*
     broker.stop();
     broker.waitUntilStopped();
 
@@ -3443,17 +3475,24 @@ public class TestUimaASExtended extends BaseTestSupport {
     broker = createBroker();
     broker.start();
     broker.waitUntilStarted();
+*/
 
-    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateMultiplier.xml");
+    
+/*    
+    
+    appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
+    appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(1));
+    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+            "TestMultiplierQueue", 1, PROCESS_LATCH);
 
+    
     String burl = broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString();
     Map<String, Object> appCtx = 
     buildContext(burl, "TopLevelTaeQueue");
-
+*/
 //    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
   //          "TopLevelTaeQueue");
-
+/*
 broker.stop();
 broker.waitUntilStopped();
 
@@ -3462,8 +3501,8 @@ broker.waitUntilStopped();
 broker = createBroker();
 broker.start();
 broker.waitUntilStarted();
-
-
+*/
+/*
     // reduce the cas pool size and reply window
     appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
     appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(2));
@@ -3471,7 +3510,8 @@ broker.waitUntilStarted();
     runTest(appCtx, eeUimaEngine,burl,
             "TopLevelTaeQueue", 1, PROCESS_LATCH);
     
-    
+    eeUimaEngine.stop();
+  */
   }
   @Test
   public void testClientProcessWithRemoteMultiplier() throws Exception {

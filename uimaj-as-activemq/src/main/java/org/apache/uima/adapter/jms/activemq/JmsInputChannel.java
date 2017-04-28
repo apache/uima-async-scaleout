@@ -19,6 +19,7 @@
 
 package org.apache.uima.adapter.jms.activemq;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,12 +35,12 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.ActiveMQPrefetchPolicy;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.command.ActiveMQMessage;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
+import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
@@ -54,12 +55,12 @@ import org.apache.uima.aae.jmx.RemoteJMXServer;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.MessageWrapper;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
 import org.apache.uima.util.Level;
 import org.springframework.jms.listener.SessionAwareMessageListener;
-import org.springframework.jms.support.destination.DestinationResolver;
 
 /**
  * Thin adapter for receiving JMS messages from Spring. It delegates processing of all messages to
@@ -558,6 +559,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 			   validEndpoint(messageContext) &&  
 			   isReplyRequired((Message)messageContext.getRawMessage()) );
   }
+  public void onMessage(MessageWrapper wrapper) {
+	  onMessage((Message)wrapper.getMessage(), (Session)wrapper.getSession());
+  }
   /**
    * Receives Messages from the JMS Provider. It checks the message header to determine the type of
    * message received. Based on the type, a MessageContext is created to facilitate access to the
@@ -810,10 +814,11 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	    }
 	    return ll;
   }
-  public synchronized void setListenerContainer(UimaDefaultMessageListenerContainer messageListener) {
-    this.messageListener = messageListener;
+  public synchronized void setListenerContainer(UimaDefaultMessageListenerContainer jmsL) {
+    this.messageListener = jmsL;
     System.setProperty("BrokerURI", messageListener.getBrokerUrl());
-    if ( messageListener.getMessageSelector() !=null && messageListener.getMessageSelector().equals("Command=2001") ) {
+   
+    if ( jmsL.isGetMetaListener() ) {
       brokerURL = messageListener.getBrokerUrl();
       getController().getOutputChannel().setServerURI(brokerURL);
     }
@@ -825,8 +830,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         getController().addInputChannel(this);
         messageListener.setController(getController());
       } catch (Exception e) {
+    	  e.printStackTrace();
       }
-    }
+    } 
   }
 
   public ActiveMQConnectionFactory getConnectionFactory() {
@@ -1097,6 +1103,61 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 				  "createListenerOnTempQueue", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 				  "UIMAJMS_activated_fcq__CONFIG",
 				  new Object[] { getController().getComponentName(), connector.getEndpointName() });
+	  }
+  }
+  public void createListenerForTargetedMessages() throws Exception {
+	  List<UimaDefaultMessageListenerContainer> listeners =
+			  getListeners();
+	  // the TargetServiceId property value will become part of a jms selector. 
+	  String targetStringSelector = "";
+	  if ( System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty) != null ) {
+		  targetStringSelector = System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty);
+	  } else {
+		  // the default selector is IP:PID 
+		  String ip = InetAddress.getLocalHost().getHostAddress();
+		  targetStringSelector = ip+":"+controller.getPID();
+	  }
+	  // find a listener instance which handles Process requests. The targeted 
+	  // listener created here will share a Connection Factory and ThreadFactory.
+	  // 
+	  for(UimaDefaultMessageListenerContainer listener : listeners ) {
+	      // Is this a Process listener instance? Check the selector
+		  if ( listener.getMessageSelector().endsWith(UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX) ) {
+	          // this will be a dedicated listener which handles targeted messages
+			  UimaDefaultMessageListenerContainer targetedListener = new UimaDefaultMessageListenerContainer();
+	          // setup jms selector
+			  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+			  // use shared ConnectionFactory
+	          targetedListener.setConnectionFactory(listener.getConnectionFactory());
+	          // mark the listener as a 'Targeted' listener
+	          targetedListener.setTargetedListener();
+	          targetedListener.setController(getController());
+	          // there will only be one AMQ delivery thread. Its job will be to
+	          // add a targeted message to a BlockingQueue. Such thread will block
+	          // in an enqueue if a dequeue is not available. This will be prevent
+	          // the overwhelming the service with messages.
+	          targetedListener.setConcurrentConsumers(1);
+			  if ( listener.getMessageListener() instanceof PriorityMessageHandler ) {
+				  // the targeted listener will use the same message handler as the
+				  // Process listener. This handler will add a message wrapper 
+				  // to enable prioritizing messages. 
+				  targetedListener.setMessageListener(listener.getMessageListener());
+			  }
+			  // Same queue as the Process queue
+			  targetedListener.setDestination(listener.getDestination());
+	          registerListener(targetedListener);
+	          targetedListener.afterPropertiesSet();
+	          targetedListener.initialize();
+	          targetedListener.start();
+	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+	                    "createListenerForTargetedMessages", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                    "UIMAJMS_TARGET_LISTENER__INFO",
+	                    new Object[] {listener.getMessageSelector(), controller.getComponentName() });
+	          }
+	          break;
+
+	      }
 	  }
   }
   public void createListener(String aDelegateKey, Endpoint endpointToUpdate) throws Exception {

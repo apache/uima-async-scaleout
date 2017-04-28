@@ -205,6 +205,9 @@ public interface UimaAsynchronousEngine {
    */
   public static final String TimerPerCAS = "TimerPerCAS";
   
+  
+  public static final String TargetSelectorProperty ="TargetServiceId";
+  
   /**
    * Initializes UIMA asynchronous client using configuration parameters provided in a Map object.
    * It creates a connection to a service queue managed by a Broker as specified in the parameters.

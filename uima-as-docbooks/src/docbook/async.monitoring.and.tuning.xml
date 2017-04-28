@@ -896,7 +896,7 @@ under the License.
     </section>
   
   <section id="ugr.async.mt.jmx_disable">
-    <title>Disabling JMX in UIMA-AS</title>
+    <title>Disabling JMX in UIMA-AS JUnit tests</title>
 	<para>When opening JMX RMI port is not possible due to security concerns, the UIMA-AS can start
 	without JMX support. To disable JMX please add the following as a JVM argument -Duima.as.enable.jmx=false 
 	</para>

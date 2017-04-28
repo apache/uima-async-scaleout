@@ -22,6 +22,7 @@ package org.apache.uima.aae;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.MessageWrapper;
 
 public interface InputChannel extends Channel {
   public int getSessionAckMode();
@@ -44,6 +45,8 @@ public interface InputChannel extends Channel {
 
   public void createListener(String aDelegateKey, Endpoint endpointToUpdate) throws Exception;
 
+  public void createListenerForTargetedMessages() throws Exception;
+  
   public boolean isFailed(String aDelegateKey);
 
   public boolean isListenerForDestination(String anEndpointName);
@@ -55,4 +58,6 @@ public interface InputChannel extends Channel {
   public void terminate();
   
   public void disconnectListenersFromQueue() throws Exception;
+  
+  public void onMessage(MessageWrapper message);
 }

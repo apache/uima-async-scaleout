@@ -648,7 +648,6 @@ public class JmsOutputChannel implements OutputChannel {
 	    connectionSemaphore.release();	  
       }
     
-    //System.out.println("+++++++++++++++++++++ ConnectionMap Size:"+connectionMap.size());
     return endpointConnection;
   }
 

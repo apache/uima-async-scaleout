@@ -137,6 +137,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   protected static Lock globalLock = new ReentrantLock();
   
+  private String serviceTargetSelector = null;
+  
   public BaseUIMAAsynchronousEngine_impl() {
 	  super();
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
@@ -219,7 +221,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
           SerialFormat serialFormat) throws ResourceProcessException {
     try {
       msg.setStringProperty(AsynchAEMessage.MessageFrom, consumerDestination.getQueueName());
-
+      // check if this message should target specific service instance
+      if ( serviceTargetSelector != null ) {
+          msg.setStringProperty(UimaAsynchronousEngine.TargetSelectorProperty,serviceTargetSelector);
+      }
       msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
       msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
       msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.Process);
@@ -697,23 +702,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
            
     // throws an exception if verions of UIMA-AS is not compatible with UIMA SDK
     VersionCompatibilityChecker.check(CLASS_NAME, "UIMA AS Client", "initialize");
-/*
-    // Check for compatibility with a version of uima sdk. Only check major versions.
-    if (UimaAsVersion.getMajorVersion() != UimaVersion.getMajorVersion() ) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(
-              Level.WARNING,
-              CLASS_NAME.getName(), 
-              "initialize",
-              UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAEE_incompatible_version_WARNING",
-              new Object[] { "UIMA AS Client", UimaAsVersion.getUimajFullVersionString(),
-                UimaVersion.getFullVersionString() });
-      throw new ResourceInitializationException(new AsynchAEException(
-              "Version of UIMA-AS is Incompatible with a Version of UIMA Core. UIMA-AS Version is built to depend on Core UIMA version:"
-                      + UimaAsVersion.getUimajFullVersionString() + " but is running with version:"
-                      + UimaVersion.getFullVersionString()));
-    }
-*/
+
     if (running) {
       throw new ResourceInitializationException(new UIMA_IllegalStateException());
     }
@@ -758,7 +747,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
               .intValue();
       clientSideJmxStats.setCasPoolSize(casPoolSize);
     }
-
+    if ( anApplicationContext.containsKey(UimaAsynchronousEngine.TargetSelectorProperty) ) {
+        serviceTargetSelector = 
+        		(String)anApplicationContext.get(UimaAsynchronousEngine.TargetSelectorProperty);
+    }
+    
     if (anApplicationContext.containsKey(UimaAsynchronousEngine.Timeout)) {
       processTimeout = ((Integer) anApplicationContext.get(UimaAsynchronousEngine.Timeout))
               .intValue();

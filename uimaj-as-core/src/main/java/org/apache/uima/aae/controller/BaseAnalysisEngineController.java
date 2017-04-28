@@ -94,7 +94,6 @@ import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.analysis_engine.metadata.SofaMapping;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReaderDescription;
-import org.apache.uima.impl.UimaVersion;
 import org.apache.uima.resource.PearSpecifier;
 import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceCreationSpecifier;
@@ -1105,6 +1104,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
 
   public void addInputChannel(InputChannel anInputChannel) {
+	  inputChannelLatch.countDown();
     if (!inputChannelMap.containsKey(anInputChannel.getInputQueueName())) {
       inputChannelMap.put(anInputChannel.getInputQueueName(), anInputChannel);
       if (!inputChannelList.contains(anInputChannel)) {
@@ -2536,8 +2536,16 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         ((ControllerCallbackListener) controllerListeners.get(i)).notifyOnInitializationFailure(
                 this, e);
       } else if ( this.isTopLevelComponent() ) {
-        ((ControllerCallbackListener) controllerListeners.get(i))
-                .notifyOnInitializationSuccess(this);
+    	 
+              InputChannel ic = getInputChannel();
+              try {
+                  ic.createListenerForTargetedMessages();
+                  ((ControllerCallbackListener) controllerListeners.get(i))
+                  .notifyOnInitializationSuccess(this);
+              } catch( Exception ex) {
+                  ((ControllerCallbackListener) controllerListeners.get(i)).notifyOnInitializationFailure(
+                          this, ex);
+              }
       }
     }
   }
