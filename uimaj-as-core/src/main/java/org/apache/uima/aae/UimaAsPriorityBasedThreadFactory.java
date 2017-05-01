@@ -65,7 +65,7 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
   
   private InputChannel ic;
   
-  private final List<Thread> tList = new ArrayList<>();
+  private final List<Thread> tList = new ArrayList<Thread>();
   
   public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup) {
     this(tGroup,null);
