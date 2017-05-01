@@ -33,7 +33,7 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
 public class PriorityMessageHandler implements SessionAwareMessageListener {
 
 	private PriorityBlockingQueue<MessageWrapper> queue =
-			new PriorityBlockingQueue<>();
+			new PriorityBlockingQueue<MessageWrapper>();
 
 
     public BlockingQueue<MessageWrapper> getQueue() {
