@@ -355,6 +355,7 @@
 		      <goal>javadoc</goal>
 		  </goals>
 		  <configuration>
+		     
                       <quiet>true</quiet>
                       <failOnError>false</failOnError>
                       <source>7</source>
@@ -372,6 +373,7 @@
 		      <excludePackageNames>*.aae.*</excludePackageNames>
 		      <!-- add a few classes in impl packages that are directly used by user code -->
                       <additionalparam>
+                          -Xdoclint:none
                           ${javadoc.opts}
                           ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/BasicUimaJmxMonitorListener.java
                           ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/JmxMonitorListener.java
