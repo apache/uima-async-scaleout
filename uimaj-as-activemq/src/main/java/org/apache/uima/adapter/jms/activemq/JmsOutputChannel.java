@@ -364,16 +364,17 @@ public class JmsOutputChannel implements OutputChannel {
   private void invalidateConnectionAndEndpoints(BrokerConnectionEntry brokerConnectionEntry ) {
     Connection conn = brokerConnectionEntry.getConnection();
     try {
-       if ( conn != null && ((ActiveMQConnection)conn).isClosed()) {
+    	if ( conn != null)
+       if ( conn != null && !((ActiveMQConnection)conn).isClosed()) {
            for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerConnectionEntry.endpointMap
                    .entrySet()) {
               endpoints.getValue().close(); // close session and producer
            }
-           brokerConnectionEntry.getConnection().stop();
            brokerConnectionEntry.getConnection().close();
            brokerConnectionEntry.setConnection(null);
        }
     } catch (Exception e) {
+    	e.printStackTrace();
       // Ignore this for now. Attempting to close connection that has been closed
       // Ignore we are shutting down
     } finally {

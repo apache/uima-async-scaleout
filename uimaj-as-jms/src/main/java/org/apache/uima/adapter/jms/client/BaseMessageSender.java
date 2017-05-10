@@ -20,6 +20,7 @@
 package org.apache.uima.adapter.jms.client;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.jms.Connection;
@@ -93,6 +94,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
   
   private MessageProducer producer = null;
   
+  private CountDownLatch stopLatch = new CountDownLatch(1);
 
   public BaseMessageSender(BaseUIMAAsynchronousEngineCommon_impl anEngine) {
     messageQueue = anEngine.pendingMessageQueue;
@@ -110,9 +112,27 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
    */
   public void doStop() {
     done = true;
+    System.out.println("BaseMessageSender.doStop() called............................");
+    
     // Create an empty message to deliver to the queue that is blocking
     PendingMessage emptyMessage = new PendingMessage(0);
+    
     messageQueue.add(emptyMessage);
+    synchronized(emptyMessage) {
+    	try {
+    		emptyMessage.wait(200);
+    	} catch( Exception ee) {
+    		
+    	}
+    	
+    }
+    messageQueue.add(emptyMessage);
+    System.out.println("BaseMessageSender.doStop() added empty message to force stop ............................");
+    try {
+        stopLatch.await();
+    } catch( InterruptedException e) {
+    	
+    }
   }
 
   /**
@@ -216,6 +236,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
    */
   public void run() {
     String destination = null;
+    System.out.println("BaseMessageSender.run() - starting Dispatcher Thread................");
     //  by default, add time to live to each message
     boolean addTimeToLive = true;
     // Check the environment for existence of NoTTL tag. If present,
@@ -261,7 +282,9 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
       } catch (InterruptedException e) {
       }
       if (done) {
-        break; // done in this loop
+    	  System.out.println("BaseMessageSender.run() - Exiting Dispatch Thread............");
+          stopLatch.countDown();
+    	  break; // done in this loop
       }
       //  Check if the request should be rejected. If the connection to the broker is invalid and the request
       //  is not GetMeta Ping, reject the request after the connection is made. The reject() method created
@@ -430,6 +453,10 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     }
     try {
       cleanup();
+      if ( stopLatch.getCount() > 0) {
+    	  stopLatch.countDown();
+      }
+      stopLatch.countDown();
     } catch (Exception e) {
       handleException(e, destination);
     }

@@ -227,7 +227,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		              }
 		              if ( brokerDestinations.getConnection() != null ) {
 		                try {
-		                  //  Close the connection to avoid leaks in the broker
+		                	//  Close the connection to avoid leaks in the broker
 		                  brokerDestinations.getConnection().close();
 		                } catch( Exception e) {
 		                  //  Ignore exceptions on a close of a bad connection
@@ -249,7 +249,9 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 				              ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUri);
 				              // White list packages for deserialization 
 				              factory.setTrustAllPackages(true);
+				              factory.setConnectionIDPrefix("JmsOutputChannel");
 				              factory.setWatchTopicAdvisories(false);
+				              
 				              //  Create shared jms connection to a broker
 				              conn = factory.createConnection();
 				              factory.setDispatchAsync(true);

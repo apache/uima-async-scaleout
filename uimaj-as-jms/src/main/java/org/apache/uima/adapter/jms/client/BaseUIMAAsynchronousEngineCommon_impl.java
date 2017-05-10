@@ -3149,9 +3149,20 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - ConnectionFactory is null");
         throw new InstantiationException("UIMA AS Client Unable to Initialize SharedConnection Object. ConnectionFactory Has Not Been Provided");
       }
+      if ( connection != null ) {
+    	  System.out.println("BaseUimaCommonClient.create()- connection !NULL - creating a new one - previous connection closed? "+((ActiveMQConnection)connection).isClosed());
+    	  try {
+    		  connection.close();
+        	  System.out.println("BaseUimaCommonClient.create()- closed old connection");
+    	  } catch( Exception eee) {
+    		  
+    	  }
+      }
       //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Creating new Connection");
       //  Create shared jms connection to a broker
       connection = connectionFactory.createConnection();
+      System.out.println("BaseUimaCommonClient.create()- creating new AMQ Connection");
+      connection.setClientID("ClientListener");
       state = ConnectionState.OPEN;
       stop = false;      
       //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Created New Connection");
@@ -3216,17 +3227,32 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //  using this shared object terminate or a connection is recovered
       boolean log = true;
       while( !stop ) {
+    	  
+    	  BaseUIMAAsynchronousEngineCommon_impl c = null;
         if ( clientList.size() == 0 ) {
           break; // no more active clients - break out of connection recovery
         } else {
-        	BaseUIMAAsynchronousEngineCommon_impl c =
-        			clientList.get(0);
+        	
+        	c = clientList.get(0);
+        	if ( !c.running) {
+        		break;
+        	} else {
+             	  System.out.println(".................. Client running ............");
+             	 
+        	}
         }
         try {
+        	
           //  Attempt a new connection to a broker
           create();
+          if ( c != null && !c.running) {
+        	  break;
+          }
           //  Got it, start the connection
           start();
+          if ( c != null && !c.running) {
+        	  break;
+          }
           //  Forces clients to drop old Session, Temp Queue, and Consumer objects and create 
           //  new ones. This is needs to be done after a new Connection is created.
           reinitializeClientListeners();

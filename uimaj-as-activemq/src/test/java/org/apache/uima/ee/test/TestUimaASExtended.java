@@ -1582,48 +1582,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
     }
 }
-  /**
-   * This test starts a secondary broker, starts NoOp Annotator, and
-   * using asynchronous send() sends a total of 15 CASes for analysis. After processing 11th
-   * the test stops the secondary broker and sends 4 more CASes which fails due to broker not running.
-   * 
-   * @throws Exception
-   */
-  @Test
-  public void testAsyncClientRecoveryFromBrokerStop() throws Exception  {
-    System.out.println("-------------- testAsyncClientRecoveryFromBrokerStop -------------");
-    
-    BrokerService broker2 = setupSecondaryBroker(true);
-     // Instantiate Uima AS Client
-      BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      Map<String, Object> appCtx = 
-      buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
-      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
-      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
-      initialize(uimaAsEngine, appCtx);
-      waitUntilInitialized();
-      
-      for (int i = 0; i < 15; i++) {
-        
-        if ( i == 10 ) {
-          broker2.stop();
-          broker2.waitUntilStopped();
-
-        }
-        CAS cas = uimaAsEngine.getCAS();
-        cas.setDocumentText("Some Text");
-       // System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
-        uimaAsEngine.sendCAS(cas);
-      }
-      
-      uimaAsEngine.stop();
-      super.cleanBroker(broker2);
-      broker2.stop();
-      broker2.waitUntilStopped();
-
-  }
-  
   @Test
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStopAndRestart -------------");
@@ -1632,15 +1590,16 @@ public class TestUimaASExtended extends BaseTestSupport {
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       // Deploy Uima AS Primitive Service
-      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+      String id = deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+      String brokerUri = broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString();
       Map<String, Object> appCtx = 
-        buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+        buildContext(brokerUri, "NoOpAnnotatorQueue");
 
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
       initialize(uimaAsEngine, appCtx);
       waitUntilInitialized();
-
+   
       for (int i = 0; i < 150; i++) {
         if ( i == 10 ) {
           broker2.stop();
@@ -1657,7 +1616,10 @@ public class TestUimaASExtended extends BaseTestSupport {
         uimaAsEngine.sendCAS(cas);
       }
       
+      
       uimaAsEngine.stop();
+
+//      uimaAsEngine.undeploy(id);
       super.cleanBroker(broker2);
 
       broker2.stop();
@@ -1776,6 +1738,47 @@ public class TestUimaASExtended extends BaseTestSupport {
 
   }
   /**
+   * This test starts a secondary broker, starts NoOp Annotator, and
+   * using asynchronous send() sends a total of 15 CASes for analysis. After processing 11th
+   * the test stops the secondary broker and sends 4 more CASes which fails due to broker not running.
+   * 
+   * @throws Exception
+   */
+  @Test
+  public void testAsyncClientRecoveryFromBrokerStop() throws Exception  {
+    System.out.println("-------------- testAsyncClientRecoveryFromBrokerStop -------------");
+    
+    BrokerService broker2 = setupSecondaryBroker(true);
+     // Instantiate Uima AS Client
+      BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+      Map<String, Object> appCtx = 
+      buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      initialize(uimaAsEngine, appCtx);
+      waitUntilInitialized();
+      
+      for (int i = 0; i < 15; i++) {
+        
+        if ( i == 10 ) {
+          broker2.stop();
+          broker2.waitUntilStopped();
+
+        }
+        CAS cas = uimaAsEngine.getCAS();
+        cas.setDocumentText("Some Text");
+       // System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+        uimaAsEngine.sendCAS(cas);
+      }
+      
+      uimaAsEngine.stop();
+      super.cleanBroker(broker2);
+      broker2.stop();
+      broker2.waitUntilStopped();
+
+  }
+/**
    * Tests ability of an aggregate to recover from a Broker restart. The broker managing
    * delegate's input queue is stopped after 1st CAS is fully processed. As part of error
    * handling the listener on delegate temp reply queue is stopped and a delegate marked 
@@ -2966,13 +2969,13 @@ private class Killer {
     
     try {
       runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
-              "PersonTitleAnnotatorQueue", 500, EXCEPTION_LATCH);
+              "PersonTitleAnnotatorQueue", 1000, EXCEPTION_LATCH);
     } catch (RuntimeException e) {
       System.out.println(">>> runtest generated exception: " + e);
       e.printStackTrace(System.out);
     }
     super.countPingRetries=false;
-
+ //   eeUimaEngine.stop();
   }
 
   /**

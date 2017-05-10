@@ -139,6 +139,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   private String serviceTargetSelector = null;
   
+  protected volatile boolean stopped = false;
   public BaseUIMAAsynchronousEngine_impl() {
 	  super();
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
@@ -313,12 +314,16 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    	            	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
    	            	                  new Object[] { msg });
    	           	        }
-   	   	        		if ( sharedConnection.getClientCount() == 1 ) {
+   	   	        		if ( sharedConnection.getClientCount() <= 1 ) {
    	   	        			
    	   	        		   sharedConnection.destroy();
    	   	        		   amqc.close();
    	   	        		}
-    	    		}
+    	    		} else if ( sharedConnection.getClientCount() <= 1 ) {
+	   	        			
+	   	        		   sharedConnection.destroy();
+	   	        		   amqc.close();
+	   	        		}
    	   	         } catch (Exception exx) {exx.printStackTrace();}
     	   	  }
     	      // Delete client's temp reply queue from AMQ Broker 
@@ -346,6 +351,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 	public void stop() {
 		try {
+		     
+		      //stopped = true;
 			  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
 			  stopConnection();
 
@@ -358,8 +365,12 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 				// Cancel all timers and purge lists
 				super.serviceDelegate.cleanup();
 			  }
+
 		      if (sender != null) {
+				    System.out.println("BaseUIMAAsynchronousEngine.stop() calling sender doStop()............................");
 		        sender.doStop();
+		      } else {
+				    System.out.println("BaseUIMAAsynchronousEngine.stop() sender is NULL............................");
 		      }
 			  try {
 //				  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
@@ -424,6 +435,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	}
 
 	private SharedConnection createAndInitializeAMQConnection( Semaphore semaphore, String aBrokerURI) throws Exception {
+		if ( stopped ) {
+			return null;
+		}
 		// This only effects Consumer
 		// Create AMQ specific connection validator. It uses
 		// AMQ specific approach to test the state of the connection

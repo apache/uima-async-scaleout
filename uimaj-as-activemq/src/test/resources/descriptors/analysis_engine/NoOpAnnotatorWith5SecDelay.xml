@@ -60,7 +60,7 @@
           <nameValuePair>
         <name>ProcessDelay</name>
         <value>
-          <integer>500000000</integer>
+          <integer>5000</integer>
         </value>
       </nameValuePair>
     
