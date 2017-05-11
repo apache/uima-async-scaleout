@@ -1619,7 +1619,6 @@ public class TestUimaASExtended extends BaseTestSupport {
       
       uimaAsEngine.stop();
 
-//      uimaAsEngine.undeploy(id);
       super.cleanBroker(broker2);
 
       broker2.stop();

@@ -3150,10 +3150,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         throw new InstantiationException("UIMA AS Client Unable to Initialize SharedConnection Object. ConnectionFactory Has Not Been Provided");
       }
       if ( connection != null ) {
-    	  System.out.println("BaseUimaCommonClient.create()- connection !NULL - creating a new one - previous connection closed? "+((ActiveMQConnection)connection).isClosed());
     	  try {
     		  connection.close();
-        	  System.out.println("BaseUimaCommonClient.create()- closed old connection");
     	  } catch( Exception eee) {
     		  
     	  }
@@ -3161,11 +3159,9 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Creating new Connection");
       //  Create shared jms connection to a broker
       connection = connectionFactory.createConnection();
-      System.out.println("BaseUimaCommonClient.create()- creating new AMQ Connection");
       connection.setClientID("ClientListener");
       state = ConnectionState.OPEN;
       stop = false;      
-      //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Created New Connection");
     }
     private void reinitializeClientListeners() {
       for( BaseUIMAAsynchronousEngineCommon_impl client : clientList ) {

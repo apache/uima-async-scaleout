@@ -351,8 +351,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 	public void stop() {
 		try {
-		     
-		      //stopped = true;
 			  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
 			  stopConnection();
 
@@ -365,12 +363,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 				// Cancel all timers and purge lists
 				super.serviceDelegate.cleanup();
 			  }
-
 		      if (sender != null) {
-				    System.out.println("BaseUIMAAsynchronousEngine.stop() calling sender doStop()............................");
 		        sender.doStop();
-		      } else {
-				    System.out.println("BaseUIMAAsynchronousEngine.stop() sender is NULL............................");
 		      }
 			  try {
 //				  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
