@@ -23,6 +23,11 @@ For more details, please see http://uima.apache.org/building-uima.html
 
 1. What's New in 2.9.0
 ====================== 
+  - Added support to UIMA-AS client to send messages to a specific service instance.
+    See Section 5 in this document for more details.
+
+
+
   - Updated to use Activemq 5.14.0 
   - Added dependency on UIMA SDK 2.9.0
   - Fixed http based service connectivity  
@@ -417,7 +422,32 @@ An example of this kind of migration is embodied by the sample descriptors:
      $UIMA_HOME/examples/deploy/as/Deploy_MeetingFinder.xml
 
 
-5. Known problems/limitations with Release 2.9.0
+5. Service Targeting (New Feature)
+==================================
+Service targeting allows an application client to send CASes to a specific instance of UIMA-AS service. This
+feature can be used to determine if a service is viable or not. When a service starts, it creates a new 
+listener on its input queue which handles messages containing property 'TargetServiceId'. By default, the
+property value has a format <IP>:<PID>. If an incoming message contains the property with a value matching
+service <IP>:<PID>, the listener will dequeue the message and process a CAS contained therein. Optionally, the 
+UIMA-AS service deployer may choose a different value for the 'TargetServiceId' property. To override the default
+include -DTargetServiceId=<value> on the service command line. The <value> may be an arbitrary string with
+no spaces.
+
+To target a specific service instance, an application client must add 'TargetServiceId'
+property to a Map which is used to initialize UIMA-AS client as shown in below code snippet: 
+
+UIMAAsynchronousEngine client = new BaseUIMAAsynchronousEngine_impl();
+Map<String, Object> appCtx = new HashMap<String, Object>();
+appCtx.put(UimaAsynchronousEngine.TargetSelectorProperty, target);
+...
+client.initialize(appCtx);
+
+where constant UimaAsynchronousEngine.TargetSelectorProperty = 'TargetServiceId'.
+
+The value in 'target' variable above must match the value of -DTargetServiceId property used to launch a service or
+it should match service <IP>:<PID> in case the property is missing from a command line.
+
+6. Known problems/limitations with Release 2.9.0
 ================================================
 
   1. When connecting to an AMQ broker behind a firewall, avoid using the maxInactivityDuration=0 
