@@ -196,6 +196,11 @@ public class RunRemoteAsyncAE {
             cpc_timeout = Integer.parseInt(args[++i]);
           } else if (args[i].equals(UimaAsynchronousEngine.UimaEeDebug)) {
             appCtx.put(UimaAsynchronousEngine.UimaEeDebug, args[++i]);
+          } else if (args[i].equals("-"+UimaAsynchronousEngine.TargetSelectorProperty)) {
+        	  String selector = args[++i];
+        	  System.out.println("... Target Selector:"+selector);
+               // when a service is internally deployed (-d option) it will use a selector defined below
+              System.setProperty(UimaAsynchronousEngine.TargetSelectorProperty,selector);
           } else {
             System.err.println("Unknown switch " + args[i]);
             printUsageAndExit();
@@ -253,6 +258,11 @@ public class RunRemoteAsyncAE {
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, casPoolSize);
     appCtx.put(UIMAFramework.CAS_INITIAL_HEAP_SIZE, Integer.valueOf(fsHeapSize / 4).toString());
 
+    // if configured to use service targeting, tell the client which service to use
+    String target = null;
+    if ( (target = System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty) ) != null ) {
+    	appCtx.put(UimaAsynchronousEngine.TargetSelectorProperty, target);
+    }
     // initialize
     uimaEEEngine.initialize(appCtx);
 

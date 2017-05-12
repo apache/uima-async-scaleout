@@ -281,6 +281,11 @@ under the License.
             <para>password:(Optional) to authenticate user with ActiveMQ broker. Default = null </para>
           </listitem>
 
+          <listitem>
+            <para>TargetServiceId:(Optional) to target specific service instance. Default = null </para>
+          </listitem>
+
+
         </itemizedlist></para>
       
     </section>
@@ -412,12 +417,12 @@ uimaAsEngine.addStatusCallbackListener(new MyStatusCallbackListener());
       The following code shows how to establish connection to an existing service:
         <programlisting>//create Map to pass server URI and Endpoint parameters
 Map&lt;String,Object&gt; appCtx = new HashMap&lt;String,Object&gt;();
-// Add Broker URI on local machine
-appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://localhost:61616");
-// Add Queue Name
-appCtx.put(UimaAsynchronousEngine.Endpoint, "RoomNumberAnnotatorQueue");
-// Add the Cas Pool Size
-appCtx.put(UimaAsynchronousEngine.CasPoolSize, 2);
+	// Add Broker URI on local machine
+	appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://localhost:61616");
+	// Add Queue Name
+	appCtx.put(UimaAsynchronousEngine.Endpoint, "RoomNumberAnnotatorQueue");
+	// Add the Cas Pool Size
+	appCtx.put(UimaAsynchronousEngine.CasPoolSize, 2);
 
 //initialize
 uimaAsEngine.initialize(appCtx);
@@ -490,6 +495,36 @@ uimaAsEngine.deploy(service, appCtx);
       
     </section>
 
+<section id="ugr.ref.async.api.usage_targetservice">
+    <title>Targeting specific service instance with the Client API</title>
+    <para>
+      Service targeting allows an application client to send CASes to a specific instance of UIMA-AS service. This
+feature can be used to determine if a service is viable or not. When a service starts, it creates a  
+listener on its input queue which handles messages containing property 'TargetServiceId'. By default, the
+property value has a format &lt;IP&gt;:&lt;PID&gt;. If an incoming message contains the property with a value matching
+service &lt;IP&gt;:&lt;PID&gt;, the listener will dequeue the message and process a CAS contained therein. Optionally, the 
+UIMA-AS service deployer may choose a different value for the 'TargetServiceId' property. To override the default
+include -DTargetServiceId=&lt;value&gt; on the service command line. The &lt;value&gt; may be an arbitrary string with
+no spaces.
+
+The following shows how a client can target specific instance of a service deployed with a default targeting 
+support:
+<programlisting>// Add Broker URI on local machine
+	appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://localhost:61616");
+	// Add Queue Name
+	appCtx.put(UimaAsynchronousEngine.Endpoint, "RoomNumberAnnotatorQueue");
+	// Add the Cas Pool Size
+	appCtx.put(UimaAsynchronousEngine.CasPoolSize, 2);
+    // Add Service Target using default &lt;IP&gt;:&lt;PID&gt; format
+	appCtx.put(UimaAsynchronousEngine.TargetSelectorProperty, 
+	           "111.111.111.11:333");
+
+    //initialize
+    uimaAsEngine.initialize(appCtx);
+    </programlisting>
+    </para>
+  </section>
+  
   <section id="ugr.ref.async.api.usage_undeployservice">
     <title>Undeploying a Service with the Client API</title>
     <para>
