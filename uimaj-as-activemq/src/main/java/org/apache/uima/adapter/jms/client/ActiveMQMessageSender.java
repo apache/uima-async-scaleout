@@ -24,14 +24,13 @@ import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
+import javax.jms.IllegalStateException;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
-import org.apache.activemq.ActiveMQMessageProducer;
-import org.apache.activemq.ActiveMQSession;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
@@ -48,7 +47,7 @@ import org.apache.uima.util.Level;
  * 
  */
 public class ActiveMQMessageSender extends BaseMessageSender {
-  private static final Class CLASS_NAME = ActiveMQMessageSender.class;
+  private static final Class<?> CLASS_NAME = ActiveMQMessageSender.class;
 
   private volatile Connection connection = null;
 
@@ -176,20 +175,46 @@ public class ActiveMQMessageSender extends BaseMessageSender {
     return producer;
   }
 
-  public TextMessage createTextMessage() throws Exception {
-    if (session == null) {
-    //	Force initialization of Producer
-      initializeProducer();
-    }
-    return session.createTextMessage("");
-  }
+	public TextMessage createTextMessage() throws Exception {
+		synchronized (ActiveMQMessageSender.class) {
+			if (session == null) {
+				// Force initialization of Producer
+				initializeProducer();
+			}
+			// return session.createTextMessage("");
+			TextMessage msg = null;
+			try {
+				msg = session.createTextMessage("");
+			} catch (IllegalStateException e) {
+				// stale Session
+				session = null;
+				initializeProducer();
+				msg = session.createTextMessage("");
+			}
+			return msg;
+		}
+
+	}
 
   public BytesMessage createBytesMessage() throws Exception {
-    if (session == null) {
-    //	Force initialization of Producer
-      initializeProducer();
-    }
-    return session.createBytesMessage();
+		synchronized (ActiveMQMessageSender.class) {
+		    if (session == null) {
+		        //	Force initialization of Producer
+		          initializeProducer();
+		    }
+		    BytesMessage msg = null;
+		    try {
+				msg = session.createBytesMessage();
+			} catch (IllegalStateException e) {
+				// stale Session
+				session = null;
+				initializeProducer();
+				msg = session.createBytesMessage();
+			}
+			return msg;
+		}
+
+ //   return session.createBytesMessage();
   }
 
   /**
