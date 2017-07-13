@@ -353,17 +353,17 @@ public class ActiveMQSupport extends TestCase {
       }
       
       removeHttpConnector();
-      MBeanServer jmxServer = 
-    		  broker.getManagementContext().getMBeanServer();
-      if ( jmxServer != null ) {
-    	  Set<ObjectInstance> instances = jmxServer.queryMBeans(null, null);
-          Iterator<ObjectInstance> iterator = instances.iterator();
-          while (iterator.hasNext()) { 
-        	  ObjectInstance instance = iterator.next();
-        	  System.out.println("-------------- Object Name:t" + instance.getObjectName());
-  	  
-          }
-      }
+//      MBeanServer jmxServer = 
+//    		  broker.getManagementContext().getMBeanServer();
+//      if ( jmxServer != null ) {
+//    	  Set<ObjectInstance> instances = jmxServer.queryMBeans(null, null);
+//          Iterator<ObjectInstance> iterator = instances.iterator();
+//          while (iterator.hasNext()) { 
+//        	  ObjectInstance instance = iterator.next();
+//        	  System.out.println("-------------- Object Name:t" + instance.getObjectName());
+//  	  
+//          }
+//      }
       broker.deleteAllMessages();
 
     //  cleanBroker(broker);
