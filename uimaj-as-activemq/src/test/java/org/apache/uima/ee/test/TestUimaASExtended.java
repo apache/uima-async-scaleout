@@ -302,7 +302,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   }
     @Test
     public void testClient() throws Exception {
-      System.out.println("-------------- testClientRecoveryFromBrokerFailure -------------");
+      System.out.println("-------------- testClient -------------");
       System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
 
       BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
@@ -318,7 +318,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     
     @Test
     public void testClientWithPrimitives() throws Exception {
-      System.out.println("-------------- testClientRecoveryFromBrokerFailure -------------");
+      System.out.println("-------------- testClientWithPrimitives -------------");
       System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
 
       BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
@@ -1584,6 +1584,8 @@ public class TestUimaASExtended extends BaseTestSupport {
           //  Stop the broker
           broker2.stop();
           broker2.waitUntilStopped();
+          Timer timer = new Timer();
+		  timer.schedule(new StartBrokerTask(broker2, this),10000);
         }
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
@@ -1597,7 +1599,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           cas.release();
         }
       }
-      
+     
       uimaAsEngine.stop();
       //  expecting 5 failures due to broker missing
       if ( errorCount != 5 ) {
