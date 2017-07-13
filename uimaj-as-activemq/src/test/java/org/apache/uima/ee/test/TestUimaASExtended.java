@@ -126,6 +126,180 @@ public class TestUimaASExtended extends BaseTestSupport {
 
 	return b.getDefaultSocketURIString();
     }  
+    
+    
+    /**
+     * This test starts a secondary broker, starts NoOp Annotator, and
+     * using synchronous sendAndReceive() sends 5 CASes for analysis. Before sending 6th, the test
+     * stops the secondary broker and sends 5 more CASes. All CASes sent after
+     * the broker shutdown result in GetMeta ping and a subsequent timeout. Before
+     * sending 11th CAS the test starts the broker again and sends 10 more CASes 
+     * @throws Exception
+     */
+    @Test
+    public void testSyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
+      System.out.println("-------------- testSyncClientRecoveryFromBrokerStopAndRestart -------------");
+      System.setProperty("uima.as.enable.jmx","false");  
+      // Instantiate Uima AS Client
+        BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+        BrokerService broker2 = setupSecondaryBroker(true);
+        // Deploy Uima AS Primitive Service
+        deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+        
+        Map<String, Object> appCtx = 
+        buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+        appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+        appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+        appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
+        initialize(uimaAsEngine, appCtx);
+        waitUntilInitialized();
+        int errorCount=0;
+        int delay = 1;
+        for (int i = 0; i < 20; i++) {
+          
+          if ( i == 5 ) {
+            broker2.stop();
+            broker2.waitUntilStopped();
+        	  System.out.println("..... Stopped broker ............................");
+        	  Timer timer = new Timer();
+  		  timer.schedule(new StartBrokerTask(broker2, this),500);
+  		  delay = 200;
+          } 
+          
+          synchronized(appCtx) {
+          	try {
+          		appCtx.wait(delay);
+          	} catch( InterruptedException eee) {
+          		
+          	}
+          }
+          /*
+          else if ( i == 10 ) {
+            //  restart the broker 
+            System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+            broker2 = setupSecondaryBroker(true);
+            
+            broker2.start();
+            broker2.waitUntilStarted();
+
+          }
+          */
+          CAS cas = uimaAsEngine.getCAS();
+          cas.setDocumentText("Some Text");
+        //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+          try {
+            uimaAsEngine.sendAndReceiveCAS(cas);
+          } catch( Exception e) {
+            errorCount++;
+            System.out.println("Client Received Expected Error on CAS:"+(i+1));
+          } finally {
+            cas.release();
+          }
+        }
+        
+        uimaAsEngine.stop();
+        super.cleanBroker(broker2);
+
+        broker2.stop();
+
+        //  expecting 5 failures due to broker missing
+//        if ( errorCount != 5 ) {
+//          fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
+//        }
+        broker2.waitUntilStopped();
+
+    }
+    /**
+     * This test creates 4 UIMA AS clients and runs each in a separate thread. There is a single 
+     * shared jms connection to a broker that each client uses. After initialization a client
+     * sends 1000 CASes to a remote service. While clients are processing the test kills 
+     * the broker, waits for 4 seconds and restarts it. While the broker is down, clients
+     * keep trying sending CASes, receiving Ping timeouts. Once the broker is available again
+     * all clients should recover and begin processing CASes again. This tests recovery of a 
+     * shared connection.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void testMultipleSyncClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
+      System.out.println("-------------- testMultipleSyncClientsRecoveryFromBrokerStopAndRestart -------------");
+      System.setProperty("uima.as.enable.jmx","false"); 
+      final BrokerService broker2 = setupSecondaryBroker(true);
+      final CountDownLatch latch = new CountDownLatch(8);
+      Thread[] clientThreads = new Thread[8];
+      
+      //  Create 4 Uima AS clients each running in a separate thread
+      for(int i=0; i < 8; i++) {
+        clientThreads[i] = new Thread() {
+          public void run() {
+            BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+            try {
+              // Deploy Uima AS Primitive Service
+              deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+              Map<String, Object> appCtx = 
+                buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
+
+              appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+              appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+              initialize(uimaAsEngine, appCtx);
+              waitUntilInitialized();
+              for (int i = 0; i < 500; i++) {
+                if ( i == 5 ) {
+                  latch.countDown();   // indicate that some CASes were processed
+                }
+                CAS cas = uimaAsEngine.getCAS();
+                cas.setDocumentText("Some Text");
+//                System.out.println("UIMA AS Client#"+ Thread.currentThread().getId()+" Sending CAS#"+(i + 1) + " Request to a Service");
+                try {
+                  uimaAsEngine.sendAndReceiveCAS(cas);
+                } catch( Exception e) {
+                  System.out.println("Client Received Expected Error on CAS:"+(i+1));
+                } finally {
+                  cas.release();
+                }
+                synchronized(uimaAsEngine) {
+              	  uimaAsEngine.wait(100);
+                }
+              }
+              System.out.println("Thread:"+Thread.currentThread().getId()+" Completed run()");
+              uimaAsEngine.stop();
+            } catch( Exception e) {
+              e.printStackTrace();
+              return;
+            }
+          }
+        };
+        clientThreads[i].start();
+      }
+      BrokerService broker3 =  null;
+      try {
+        latch.await();  // wait for all threads to process a few CASes
+
+        broker2.stop();
+        System.out.println("Stopping Broker - wait ...");
+        broker2.waitUntilStopped();
+
+        System.out.println("Restarting Broker - wait ...");
+        //  restart the broker 
+        broker3 = setupSecondaryBroker(true);
+        broker3.waitUntilStarted();
+
+      } catch ( Exception e ) {
+        
+      } finally {
+        for(int i=0; i < 4; i++ ) {
+          clientThreads[i].join();
+        }
+        System.out.println("Stopping Broker - wait ...");
+        if ( broker3 != null ) {
+          super.cleanBroker(broker3);
+
+          broker3.stop();
+          broker3.waitUntilStopped();
+
+        }
+      }
+  }
     @Test
     public void testClient() throws Exception {
       System.out.println("-------------- testClientRecoveryFromBrokerFailure -------------");
@@ -1389,7 +1563,8 @@ public class TestUimaASExtended extends BaseTestSupport {
   @Test
   public void testSyncClientRecoveryFromBrokerStop() throws Exception  {
     System.out.println("-------------- testSyncClientRecoveryFromBrokerStop -------------");
-     // Instantiate Uima AS Client
+    System.setProperty("uima.as.enable.jmx","false"); 
+    // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       BrokerService broker2 = setupSecondaryBroker(true);
       // Deploy Uima AS Primitive Service
@@ -1397,8 +1572,9 @@ public class TestUimaASExtended extends BaseTestSupport {
       Map<String, Object> appCtx = 
       buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 1100);
-      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.Timeout, 0);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 300);
+      appCtx.put(UimaAsynchronousEngine.CasPoolSize,15);
       initialize(uimaAsEngine, appCtx);
       waitUntilInitialized();
       int errorCount = 0;
@@ -1428,165 +1604,12 @@ public class TestUimaASExtended extends BaseTestSupport {
         fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
       }
   }
-  /**
-   * This test starts a secondary broker, starts NoOp Annotator, and
-   * using synchronous sendAndReceive() sends 5 CASes for analysis. Before sending 6th, the test
-   * stops the secondary broker and sends 5 more CASes. All CASes sent after
-   * the broker shutdown result in GetMeta ping and a subsequent timeout. Before
-   * sending 11th CAS the test starts the broker again and sends 10 more CASes 
-   * @throws Exception
-   */
-  @Test
-  public void testSyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
-    System.out.println("-------------- testSyncClientRecoveryFromBrokerStopAndRestart -------------");
-     // Instantiate Uima AS Client
-      BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-      BrokerService broker2 = setupSecondaryBroker(true);
-      // Deploy Uima AS Primitive Service
-      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-      
-      Map<String, Object> appCtx = 
-      buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
-      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
-      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
-      appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
-      initialize(uimaAsEngine, appCtx);
-      waitUntilInitialized();
-      int errorCount=0;
-      for (int i = 0; i < 20; i++) {
-        
-        if ( i == 5 ) {
-          broker2.stop();
-          broker2.waitUntilStopped();
-        } else if ( i == 10 ) {
-          //  restart the broker 
-          System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-          broker2 = setupSecondaryBroker(true);
-          
-          broker2.start();
-          broker2.waitUntilStarted();
 
-        }
-        CAS cas = uimaAsEngine.getCAS();
-        cas.setDocumentText("Some Text");
-      //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
-        try {
-          uimaAsEngine.sendAndReceiveCAS(cas);
-        } catch( Exception e) {
-          errorCount++;
-          System.out.println("Client Received Expected Error on CAS:"+(i+1));
-        } finally {
-          cas.release();
-        }
-      }
-      
-      uimaAsEngine.stop();
-      super.cleanBroker(broker2);
-
-      broker2.stop();
-
-      //  expecting 5 failures due to broker missing
-      if ( errorCount != 5 ) {
-        fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
-      }
-      broker2.waitUntilStopped();
-
-  }
-  /**
-   * This test creates 4 UIMA AS clients and runs each in a separate thread. There is a single 
-   * shared jms connection to a broker that each client uses. After initialization a client
-   * sends 1000 CASes to a remote service. While clients are processing the test kills 
-   * the broker, waits for 4 seconds and restarts it. While the broker is down, clients
-   * keep trying sending CASes, receiving Ping timeouts. Once the broker is available again
-   * all clients should recover and begin processing CASes again. This tests recovery of a 
-   * shared connection.
-   * 
-   * @throws Exception
-   */
-  @Test
-  public void testMultipleSyncClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
-    System.out.println("-------------- testMultipleSyncClientsRecoveryFromBrokerStopAndRestart -------------");
-    final BrokerService broker2 = setupSecondaryBroker(true);
-    final CountDownLatch latch = new CountDownLatch(4);
-    Thread[] clientThreads = new Thread[4];
-    
-    //  Create 4 Uima AS clients each running in a separate thread
-    for(int i=0; i < 4; i++) {
-      clientThreads[i] = new Thread() {
-        public void run() {
-          BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-          try {
-            // Deploy Uima AS Primitive Service
-            deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-            Map<String, Object> appCtx = 
-              buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
-
-            appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
-            appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
-            initialize(uimaAsEngine, appCtx);
-            waitUntilInitialized();
-            for (int i = 0; i < 500; i++) {
-              if ( i == 5 ) {
-                latch.countDown();   // indicate that some CASes were processed
-              }
-              CAS cas = uimaAsEngine.getCAS();
-              cas.setDocumentText("Some Text");
-//              System.out.println("UIMA AS Client#"+ Thread.currentThread().getId()+" Sending CAS#"+(i + 1) + " Request to a Service");
-              try {
-                uimaAsEngine.sendAndReceiveCAS(cas);
-              } catch( Exception e) {
-                System.out.println("Client Received Expected Error on CAS:"+(i+1));
-              } finally {
-                cas.release();
-              }
-              synchronized(uimaAsEngine) {
-            	  uimaAsEngine.wait(100);
-              }
-            }
-            System.out.println("Thread:"+Thread.currentThread().getId()+" Completed run()");
-            uimaAsEngine.stop();
-          } catch( Exception e) {
-            e.printStackTrace();
-            return;
-          }
-        }
-      };
-      clientThreads[i].start();
-    }
-    BrokerService broker3 =  null;
-    try {
-      latch.await();  // wait for all threads to process a few CASes
-
-      broker2.stop();
-      System.out.println("Stopping Broker - wait ...");
-      broker2.waitUntilStopped();
-
-      System.out.println("Restarting Broker - wait ...");
-      //  restart the broker 
-      broker3 = setupSecondaryBroker(true);
-      broker3.waitUntilStarted();
-
-    } catch ( Exception e ) {
-      
-    } finally {
-      for(int i=0; i < 4; i++ ) {
-        clientThreads[i].join();
-      }
-      System.out.println("Stopping Broker - wait ...");
-      if ( broker3 != null ) {
-        super.cleanBroker(broker3);
-
-        broker3.stop();
-        broker3.waitUntilStopped();
-
-      }
-    }
-}
   @Test
   public void testAsyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testAsyncClientRecoveryFromBrokerStopAndRestart -------------");
 
-    BrokerService broker2 = setupSecondaryBroker(true);
+     BrokerService broker2 = setupSecondaryBroker(true);
      // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       // Deploy Uima AS Primitive Service
@@ -1595,24 +1618,41 @@ public class TestUimaASExtended extends BaseTestSupport {
       Map<String, Object> appCtx = 
         buildContext(brokerUri, "NoOpAnnotatorQueue");
 
-      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.Timeout, 200);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 200);
       initialize(uimaAsEngine, appCtx);
       waitUntilInitialized();
-   
-      for (int i = 0; i < 150; i++) {
+      int delay = 1;
+      for (int i = 0; i < 50; i++) {
         if ( i == 10 ) {
           broker2.stop();
           broker2.waitUntilStopped();
+      	  System.out.println("..... Stopped broker ............................");
+      	  Timer timer = new Timer();
+		  timer.schedule(new StartBrokerTask(broker2, this),500);
+		  delay = 200;
+	     }
+        synchronized(appCtx) {
+        	try {
+        		appCtx.wait(delay);
+        	} catch( InterruptedException eee) {
+        		
+        	}
+        }
+/*
 
         } else if ( i == 15 ) {
           broker2 = setupSecondaryBroker(true);
           broker2.waitUntilStarted();
+      	System.out.println("..... Restarted broker ............................");
 
         }
+        
+       */
         CAS cas = uimaAsEngine.getCAS();
         cas.setDocumentText("Some Text");
- //       System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         uimaAsEngine.sendCAS(cas);
       }
       
@@ -1623,7 +1663,6 @@ public class TestUimaASExtended extends BaseTestSupport {
 
       broker2.stop();
       broker2.waitUntilStopped();
-
   }
 
   /**
@@ -1657,6 +1696,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 400);
       initialize(uimaClient1, appCtx);
       waitUntilInitialized();
       
@@ -1668,6 +1708,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       
       appCtx2.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx2.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      appCtx2.put(UimaAsynchronousEngine.GetMetaTimeout, 400);
       initialize(uimaClient2, appCtx2);
       waitUntilInitialized();
       
@@ -1687,9 +1728,11 @@ public class TestUimaASExtended extends BaseTestSupport {
         } 
         CAS cas = uimaClient1.getCAS();
         cas.setDocumentText("Some Text");
-       // System.out.println("UIMA AS Client#1 Sending CAS#" + (i + 1) + " Request to a Service");
+        System.out.println("UIMA AS Client#1 Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaClient1.sendAndReceiveCAS(cas);
+          System.out.println("UIMA AS Client#1 Received Reply For CAS:"+(i+1));
+
         } catch( Exception e) {
           errorCount++;
           System.out.println("UIMA AS Client#1 Received Expected Error on CAS:"+(i+1));
@@ -1697,11 +1740,14 @@ public class TestUimaASExtended extends BaseTestSupport {
           cas.release();
         }
       }
+      System.out.println("Done with UIMA AS Client#1");
+
       for (int i = 0; i < 4; i++) {
         CAS cas = uimaClient2.getCAS();
         cas.setDocumentText("Some Text");
-  //      System.out.println("UIMA AS Client#2 Sending CAS#" + (i + 1) + " Request to a Service");
+        System.out.println("UIMA AS Client#2 Sending CAS#" + (i + 1) + " Request to a Service");
         try {
+ 
           uimaClient2.sendAndReceiveCAS(cas);
         } catch( Exception e) {
           errorCount++;
@@ -1755,6 +1801,8 @@ public class TestUimaASExtended extends BaseTestSupport {
       buildContext(broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
       appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
       appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CasPoolSize, 15);
+
       initialize(uimaAsEngine, appCtx);
       waitUntilInitialized();
       
@@ -4391,5 +4439,27 @@ broker.waitUntilStarted();
 	}
 	  
   }
- 
+  class StartBrokerTask extends TimerTask {
+	  BrokerService broker = null;
+	  TestUimaASExtended testSuiteRef = null;
+	  StartBrokerTask(BrokerService broker, TestUimaASExtended testSuiteRef) {
+		this.broker = broker;  
+		this.testSuiteRef = testSuiteRef;
+	  }
+	@Override
+	public void run() {
+		try {
+			broker = testSuiteRef.setupSecondaryBroker(true);
+	        broker.waitUntilStarted();
+	      	System.out.println("..... Restarted broker ............................");
+
+		} catch( Exception e ) {
+			throw new RuntimeException(e);
+			
+		}
+		
+	}
+
+	  
+  }
 }

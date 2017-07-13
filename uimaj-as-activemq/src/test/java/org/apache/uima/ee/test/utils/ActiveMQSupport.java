@@ -23,12 +23,16 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.BindException;
 import java.net.URI;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
+import javax.management.MBeanServer;
+import javax.management.ObjectInstance;
 
 import junit.framework.TestCase;
 
@@ -274,6 +278,12 @@ public class ActiveMQSupport extends TestCase {
 
   protected BrokerService createBroker(int port,boolean secondaryBroker) throws Exception {
       String hostName = "localhost"; 
+  	  boolean enableJMX = true;
+  	  String jmxFlag = System.getProperty("uima.as.enable.jmx");
+  	  if ( jmxFlag != null && jmxFlag.equalsIgnoreCase("false") ) {
+  		enableJMX = false;
+  	  }
+
       BrokerService broker = 
         BrokerFactory.createBroker(new URI("broker:()/" + hostName + "?persistent=false"));
       tcpConnector = addConnector(broker, "tcp",port);
@@ -281,22 +291,20 @@ public class ActiveMQSupport extends TestCase {
       Logger.getRootLogger().info(">>>> Starting Broker With URL:" + uri);
       int defaultJMXPort = 1098;
       if ( secondaryBroker ) {
-    	  defaultJMXPort = 1097;
-        broker.getManagementContext().setJmxDomainName(broker.getManagementContext().getJmxDomainName()+".test");      
+    	  if ( enableJMX ) {
+        	  defaultJMXPort = 1097;
+              broker.getManagementContext().setJmxDomainName(broker.getManagementContext().getJmxDomainName()+".test");      
+    	  }
         tcpConnector.setName(DEFAULT_BROKER_URL_KEY_2);
       } else {
         tcpConnector.setName(DEFAULT_BROKER_URL_KEY);
       }
-  	  boolean enableJMX = true;
-  	  String jmxFlag = System.getProperty("uima.as.enable.jmx");
-  	  if ( jmxFlag != null && jmxFlag.equalsIgnoreCase("false") ) {
-  		enableJMX = false;
-  	  }
 
       if ( enableJMX ) {
           broker.setUseJmx(enableJMX);
     	  broker.getManagementContext().setConnectorPort(defaultJMXPort);
       } else {
+    	  broker.setUseJmx(false);
     	  System.out.println("************** ACTIVEMQ JMX Connector Not Enabled ****************");
       }
       PolicyEntry policy = new PolicyEntry();
@@ -320,7 +328,7 @@ public class ActiveMQSupport extends TestCase {
       return broker;
   }
   protected BrokerService setupSecondaryBroker(boolean addProperty) throws Exception {
-    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+    System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test2");
 
     BrokerService broker2 = createBroker(DEFAULT_BROKER_PORT_2, true);
     broker2.start();
@@ -345,6 +353,17 @@ public class ActiveMQSupport extends TestCase {
       }
       
       removeHttpConnector();
+      MBeanServer jmxServer = 
+    		  broker.getManagementContext().getMBeanServer();
+      if ( jmxServer != null ) {
+    	  Set<ObjectInstance> instances = jmxServer.queryMBeans(null, null);
+          Iterator<ObjectInstance> iterator = instances.iterator();
+          while (iterator.hasNext()) { 
+        	  ObjectInstance instance = iterator.next();
+        	  System.out.println("-------------- Object Name:t" + instance.getObjectName());
+  	  
+          }
+      }
       broker.deleteAllMessages();
 
     //  cleanBroker(broker);
@@ -370,6 +389,7 @@ public class ActiveMQSupport extends TestCase {
         cleanBroker(broker);
         stopBroker();
     }
+    System.out.println("..... Free Memory:"+Runtime.getRuntime().freeMemory()+" Total Memory:"+Runtime.getRuntime().totalMemory());
   }
   
   public class UimaASErrorHandler implements ErrorHandler {
