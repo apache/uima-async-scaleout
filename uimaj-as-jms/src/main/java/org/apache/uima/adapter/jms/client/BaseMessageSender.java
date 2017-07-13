@@ -86,7 +86,9 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
 
   // Releases resources
   protected abstract void cleanup() throws Exception;
-
+  
+  protected abstract void dispatchMessage(PendingMessage pm, BaseUIMAAsynchronousEngineCommon_impl engine, boolean casProcessRequest ) throws Exception;
+	  
   // Returns the name of the destination
   protected abstract String getDestinationEndpoint() throws Exception;
 
@@ -306,7 +308,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
       }
      
       //  get the producer initialized from a valid connection
-      producer = getMessageProducer();
+//      producer = getMessageProducer();
       //  Check if the request should be rejected. It would be the case if the connection was invalid and
       //  subsequently recovered. If it was invalid, we went through error handling and the request is stale.
       if ( !rejectRequest && engine.running) {
@@ -318,6 +320,24 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
                       "UIMAJMS_client_dispatching_getmeta_ping__INFO", new Object[] { });
             }
            }
+          
+          // NEW CODE 07/12/2017
+          while( engine.running ) {
+        	  try {
+        	      //  blocks until the connection is re-established with a broker
+        	      engine.recoverSharedConnectionIfClosed();
+        	      SharedConnection sc = 
+        	    		  engine.lookupConnection(engine.getBrokerURI());
+        	      dispatchMessage(pm,engine,isProcessRequest(pm));
+        	
+        		  break;
+        	  } catch( Exception exx) {
+        		  
+        	  }
+          }
+          
+          
+        /*  
            try {
              // Request JMS Message from the concrete implementation
              Message message = null;
@@ -329,7 +349,9 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
              } else {
                message = createTextMessage();
              }
-
+             //  get the producer initialized from a valid connection
+             producer = getMessageProducer();
+            
              initializeMessage(pm, message);
              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
                UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -448,7 +470,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
              }
              reject(pm,e);
            }
-
+*/
       }
     }
     try {
@@ -462,7 +484,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     }
   }
 
-  private void initializeMessage(PendingMessage aPm, Message anOutgoingMessage) throws Exception {
+  protected void initializeMessage(PendingMessage aPm, Message anOutgoingMessage) throws Exception {
     // Populate message properties based on outgoing message type
     switch (aPm.getMessageType()) {
       case AsynchAEMessage.GetMeta:

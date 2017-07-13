@@ -3264,7 +3264,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_connection_retry__INFO",
                           new Object[] { brokerURL });
                 }
-        		if ( e instanceof JMSException && e.getMessage().endsWith("Connection refused") ) {
+        		if ( e instanceof JMSException && e.getMessage().indexOf("Connection refused") > 0) {
         			log = false;
             		System.out.println("Uima AS Client:"+e.getMessage()+" Retrying every 5 seconds until successfull");
                     
