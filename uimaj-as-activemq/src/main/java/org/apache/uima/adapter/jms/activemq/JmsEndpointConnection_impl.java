@@ -757,7 +757,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     	  if ( command == AsynchAEMessage.ServiceInfo ) {
     		  return false;
     	  }
-    	  if ( (msgType == AsynchAEMessage.Response || msgType == AsynchAEMessage.Request ) &&
+     	  if ( (msgType == AsynchAEMessage.Response || msgType == AsynchAEMessage.Request ) &&
     			  command == AsynchAEMessage.Process ) {
     		  String casReferenceId="";
     		  try {
@@ -766,7 +766,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     		        String key = "";
     		        String endpointName = "";
     		        if ( delegateEndpoint != null ) {
-    		          delegateEndpoint.getDelegateKey();
+    		          key = delegateEndpoint.getDelegateKey();
     		          endpointName = ((ActiveMQDestination) delegateEndpoint.getDestination())
     		          .getPhysicalName();
     		        }
@@ -783,20 +783,22 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     	
     	
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        
+    	  
         String key = "";
         String endpointName = "";
         if ( delegateEndpoint != null ) {
-          delegateEndpoint.getDelegateKey();
+          key = delegateEndpoint.getDelegateKey();
           endpointName = ((ActiveMQDestination) delegateEndpoint.getDestination())
           .getPhysicalName();
-        }
+          
+            }
         if ( "Client".equals(target) ) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_service_delivery_to_client_exception__WARNING",
                   new Object[] { controller.getComponentName(),endpointName });
         } else {
+
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                   "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAEE_service_delivery_exception__WARNING",new Object[] { controller.getComponentName(), key, endpointName});
@@ -1023,8 +1025,8 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 			}
 		} else {
 	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-	                  "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-	                  "UIMAEE_service_delivery_exception__WARNING",new Object[] { controller.getComponentName(), "", endpointName});
+	                  "UimaAsAsyncCallbackListener.onException()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+	                  "UIMAEE_service_delivery_exception_WARNING",new Object[] { controller.getComponentName(), exception} );
 
 		}
 	}
