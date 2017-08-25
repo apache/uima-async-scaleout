@@ -41,6 +41,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jms.Connection;
 import javax.jms.Message;
@@ -86,6 +88,7 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
+import org.apache.uima.resource.metadata.TypePriorityList;
 import org.apache.uima.resourceSpecifier.factory.DeploymentDescriptorFactory;
 import org.apache.uima.resourceSpecifier.factory.ServiceContext;
 import org.apache.uima.resourceSpecifier.factory.UimaASPrimitiveDeploymentDescriptor;
@@ -1239,7 +1242,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testSendAndReceive() throws Exception  {
       BaseUIMAAsynchronousEngine_impl uimaAsEngine 
       	= new BaseUIMAAsynchronousEngine_impl();
-      deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+      String id = deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
       deployService(uimaAsEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
       // Deploy Uima AS Primitive Service
  //     deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -2469,6 +2472,34 @@ private class Killer {
 //    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
     runTest(appCtx, eeUimaEngine, "tcp://localhost:61616", "TopLevelTaeQueue",
             1, PROCESS_LATCH);
+  }
+  
+  
+  @Test
+  public void testAggregateTypePriorities() throws Exception {
+    System.out.println("-------------- testAggregateTypePriorities -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+    deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
+    
+    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
+//   		Map<String, Object> appCtx = buildContext("tcp://localhost:61616",
+            "TopLevelTaeQueue");
+    appCtx.put(UimaAsynchronousEngine.Timeout, 1000);
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
+    initialize(eeUimaEngine, appCtx);
+
+    waitUntilInitialized();
+    
+    ProcessingResourceMetaData meta = eeUimaEngine.getMetaData();
+    TypePriorityList[] pl = meta.getTypePriorities().getPriorityLists();
+    for( TypePriorityList tp : pl ) {
+    	String[] typeArray = tp.getTypes();
+    	Assert.assertEquals(true, typeArray[0].equals("uima.cas.TOP"));
+    	Assert.assertEquals(true, typeArray[1].equals("uima.tcas.Annotation"));
+     }
+    eeUimaEngine.stop();
   }
   /**
    * Sends total of 10 CASes to async aggregate configured to process 2 CASes at a time.
