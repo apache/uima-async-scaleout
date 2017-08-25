@@ -55,7 +55,10 @@ public class ClientServiceDelegate extends Delegate {
 
   private volatile boolean pingTimeout = false;
   
-  public ClientServiceDelegate(String serviceName, String anApplicationName,
+  private String freeCasSelector = "";
+  
+ 
+public ClientServiceDelegate(String serviceName, String anApplicationName,
           BaseUIMAAsynchronousEngineCommon_impl engine) {
     super.delegateKey = serviceName;
     clientUimaAsEngine = engine;
@@ -63,6 +66,13 @@ public class ClientServiceDelegate extends Delegate {
       applicationName = anApplicationName;
     }
   }
+public String getFreeCasSelector() {
+	return freeCasSelector;
+}
+
+public void setFreeCasSelector(String freeCasSelector) {
+	this.freeCasSelector = freeCasSelector;
+}
 
   public boolean isSynchronousAPI() {
     return usesSynchronousAPI;

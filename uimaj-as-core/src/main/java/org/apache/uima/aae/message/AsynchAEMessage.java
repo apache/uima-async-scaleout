@@ -37,6 +37,8 @@ public interface AsynchAEMessage {
   public static final String InputCasReference = "InputCasReference";
 
   public static final String MessageFrom = "MessageFrom";
+  
+  public static final String Destination = "Destination";
 
   // 5/2013 xcas not used as a serialization form
 //  public static final String XCASREFId = "XCASRefId";
@@ -151,4 +153,6 @@ public interface AsynchAEMessage {
   public static final String ErrorCause = "Cause";
 
   public static final int PingTimeout = 5001;
+  
+  public static final String TargetingSelector = "TargetingSelector";
 }

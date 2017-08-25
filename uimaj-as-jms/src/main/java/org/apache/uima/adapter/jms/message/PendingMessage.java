@@ -20,8 +20,10 @@ package org.apache.uima.adapter.jms.message;
 
 import java.util.HashMap;
 
-public class PendingMessage extends HashMap {
-  private int messageType;
+public class PendingMessage extends HashMap<Object, Object> {
+ 
+private static final long serialVersionUID = 3512718154731557413L;
+private int messageType;
 
   public PendingMessage(int aMessageType) {
     messageType = aMessageType;

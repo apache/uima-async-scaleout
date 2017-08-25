@@ -78,6 +78,7 @@ import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.ConnectionFactoryIniter;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
 import org.apache.uima.adapter.jms.activemq.UimaEEAdminSpringContext;
+import org.apache.uima.adapter.jms.message.PendingMessage;
 import org.apache.uima.adapter.jms.service.Dd2spring;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.cas.CAS;
@@ -99,7 +100,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
         implements UimaAsynchronousEngine, MessageListener, ControllerCallbackListener, ApplicationListener<ApplicationEvent>{
   private static final Class CLASS_NAME = BaseUIMAAsynchronousEngine_impl.class;
 
-  private MessageSender sender = null;
+  private ActiveMQMessageSender sender = null;
 
   private MessageProducer producer;
 
@@ -400,7 +401,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		} 
 	}
 
-  public void setCPCMessage(Message msg) throws Exception {
+  protected void setCPCMessage(Message msg) throws Exception {
     msg.setStringProperty(AsynchAEMessage.MessageFrom, consumerDestination.getQueueName());
     msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
     msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
@@ -412,7 +413,35 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       ((TextMessage) msg).setText("");
     }
   }
+  protected void setFreeCasMessage(Message msg, String aCasReferenceId, String selector) throws Exception {
+	    msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
+	    msg.setStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
+	    msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
+	    msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.ReleaseCAS);
+	    msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
+	    msg.setJMSReplyTo(consumerDestination);
+	    if ( selector != null ) {
+	        msg.setStringProperty(UimaAsynchronousEngine.TargetSelectorProperty,
+	        		selector);
+	    }
 
+	    if (msg instanceof TextMessage) {
+	      ((TextMessage) msg).setText("");
+	    }
+	  }
+  protected void setStopMessage(Message msg, String aCasReferenceId) throws Exception {
+	    msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
+	    msg.setStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
+	    msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
+	    msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.Stop);
+	    msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
+	    msg.setJMSReplyTo(consumerDestination);
+
+	    if (msg instanceof TextMessage) {
+	      ((TextMessage) msg).setText("");
+	    }
+
+  }
 	private boolean connectionClosedOrInvalid() {
 			SharedConnection sharedConnection = lookupConnection(brokerURI);
 			if (sharedConnection == null
@@ -1305,6 +1334,32 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
 //  private void stopProducingCases(ClientRequest clientCachedRequest) {
   private void stopProducingCases(String casReferenceId, Destination cmFreeCasQueue) {
+	     PendingMessage msg = new PendingMessage(AsynchAEMessage.Stop);
+	     msg.put(AsynchAEMessage.Destination, cmFreeCasQueue);
+		 msg.put(AsynchAEMessage.CasReference, casReferenceId);
+	     try {
+	    	 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+                         "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                         "UIMAJMS_client_sending_stop_to_service__INFO", new Object[] {casReferenceId,cmFreeCasQueue});
+             }
+		     sender.dispatchMessage(msg, this, false);
+ 
+	     } catch (Exception ex) {
+	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                      "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                      "UIMAJMS_exception__WARNING",
+	                      ex);
+	          }
+	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAJMS_client_unable_to_send_stop_to_cm__WARNING");
+              }
+	     }
+
+	  /*
     try {
 //      if (clientCachedRequest.getFreeCasNotificationQueue() != null) {
       if (cmFreeCasQueue != null) {
@@ -1351,6 +1406,18 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
                 "UIMAJMS_exception__WARNING", e);
       }
     }
+    */
+  }
+  protected void dispatchFreeCasRequest(String casReferenceId, Message message) throws Exception {
+     PendingMessage msg = new PendingMessage(AsynchAEMessage.ReleaseCAS);
+//     if ( message.getStringProperty(AsynchAEMessage.TargetingSelector) != null ) {
+//    	 msg.put(AsynchAEMessage.TargetingSelector,message.getStringProperty(AsynchAEMessage.TargetingSelector) );
+//     } else {
+//         msg.put(AsynchAEMessage.Destination, message.getJMSReplyTo());
+//     }
+     msg.put(AsynchAEMessage.Destination, message.getJMSReplyTo());
+	 msg.put(AsynchAEMessage.CasReference, casReferenceId);
+     sender.dispatchMessage(msg, this, false);
   }
   protected MessageSender getDispatcher() {
     return sender;

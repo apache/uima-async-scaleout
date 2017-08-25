@@ -80,6 +80,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         ExceptionListener {
   private static final Class<?> CLASS_NAME = UimaDefaultMessageListenerContainer.class;
   public static final String PROCESS_SELECTOR_SUFFIX = "(Command=2000 OR Command=2002)";
+  public static final String CM_PROCESS_SELECTOR_SUFFIX = "(Command=2000 OR Command=2002 OR Command=2005)";
   public static final String GETMETA_SELECTOR_SUFFIX = "(Command=2001)";
   
   public static final int HIGH_PRIORITY = 9;

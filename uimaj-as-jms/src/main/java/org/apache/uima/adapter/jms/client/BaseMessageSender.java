@@ -508,6 +508,19 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
       case AsynchAEMessage.CollectionProcessComplete:
         engine.setCPCMessage(anOutgoingMessage);
         break;
+        
+      case AsynchAEMessage.ReleaseCAS:
+          String casRefId = (String) aPm.get(AsynchAEMessage.CasReference);
+          String selector = 
+        			 (String) aPm.get(AsynchAEMessage.TargetingSelector) ;
+
+          engine.setFreeCasMessage(anOutgoingMessage, casRefId, selector);
+          break;
+          
+      case AsynchAEMessage.Stop:
+          String casRefId2 = (String) aPm.get(AsynchAEMessage.CasReference);
+          engine.setStopMessage(anOutgoingMessage, casRefId2);
+    	  break;
     }
   }
 

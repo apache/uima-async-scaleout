@@ -26,6 +26,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
+import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageWrapper;
 import org.springframework.jms.listener.SessionAwareMessageListener;
 
@@ -46,6 +47,12 @@ public class PriorityMessageHandler implements SessionAwareMessageListener {
      */
 	public void onMessage(Message message, Session session) throws JMSException {
 		Semaphore semaphore = new Semaphore(0);
+		int command = message
+	      .getIntProperty(AsynchAEMessage.Command);
+	      int type = message
+	      .getIntProperty(AsynchAEMessage.MessageType);
+	      String msgFrom = (String) message.getStringProperty(AsynchAEMessage.MessageFrom);
+		
 		MessageWrapper m = 
 				new MessageWrapper(message, session, semaphore, message.getJMSPriority());
 		// Add the message to a shared queue. This queue is shared with a custom thread

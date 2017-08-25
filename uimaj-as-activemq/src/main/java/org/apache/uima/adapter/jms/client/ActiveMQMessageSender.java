@@ -261,7 +261,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
         addTimeToLive = false;
       }
       try {
-    	  long t1 = System.currentTimeMillis();
+//    	  long t1 = System.currentTimeMillis();
     	  jmsSession = sc.getConnection().createSession(false, Session.AUTO_ACKNOWLEDGE);
           
           // Request JMS Message from the concrete implementation
@@ -276,7 +276,22 @@ public class ActiveMQMessageSender extends BaseMessageSender {
           }
           //  get the producer initialized from a valid connection
          // producer = getMessageProducer();
-          Destination d = jmsSession.createQueue(destinationName);
+          
+          Destination d = null;
+          String selector = null;
+          // UIMA-AS ver 2.10.0 + sends Free Cas request to a service targeted queue
+          // instead of a temp queue. Regular queues can be recovered in case of
+          // a broker restart. The test below will be true for UIMA-AS v. 2.10.0 +.
+          // Code in JmsOutputChannel will add the selector if the service is a CM.
+          if (pm.get(AsynchAEMessage.TargetingSelector) != null) {
+        	  selector = (String)pm.get(AsynchAEMessage.TargetingSelector);
+          }
+          if ( selector == null && (pm.getMessageType() == AsynchAEMessage.ReleaseCAS || pm.getMessageType() == AsynchAEMessage.Stop) ) {
+        	  d = (Destination)pm.get(AsynchAEMessage.Destination);
+              
+          } else {
+              d = jmsSession.createQueue(destinationName);
+          }
           MessageProducer mProducer = jmsSession.createProducer(d);
           mProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
           //System.out.println(">>>>>>> Time to create and initialize JMS Sesssion:"+(System.currentTimeMillis()-t1));

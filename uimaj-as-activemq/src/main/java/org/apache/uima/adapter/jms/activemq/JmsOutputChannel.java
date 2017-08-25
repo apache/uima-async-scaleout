@@ -850,10 +850,21 @@ public class JmsOutputChannel implements OutputChannel {
 	        // If this service is a Cas Multiplier add to the message a FreeCasQueue.
 	        // The client may need send Stop request to that queue.
 	        if (aCommand == AsynchAEMessage.ServiceInfo
-	                && getAnalysisEngineController().isCasMultiplier() && freeCASTempQueue != null) {
-	          // Attach a temp queue to the outgoing message. This a queue where
-	          // Free CAS notifications need to be sent from the client
-	          tm.setJMSReplyTo(freeCASTempQueue);
+	                && getAnalysisEngineController().isCasMultiplier() ) {
+	          if ( freeCASTempQueue != null ) {
+		        	// Attach a temp queue to the outgoing message. This a queue where
+		          // Free CAS notifications need to be sent from the client
+		          tm.setJMSReplyTo(freeCASTempQueue);
+	          }
+	          // new services will receive FreeCas request via a targeted queue
+	          StringBuffer selector = new StringBuffer().
+	        		  append("TargetServiceId = ").
+	        		  append("'").append(hostIP).append(":").
+	        		  append(getAnalysisEngineController().getPID()).
+	        		  append("' AND").
+	        		  append(UimaDefaultMessageListenerContainer.CM_PROCESS_SELECTOR_SUFFIX);
+	          tm.setStringProperty(AsynchAEMessage.TargetingSelector,selector.toString());
+	
 	        }
 	        //	Check if there was a failure while sending a message
 	        if ( !endpointConnection.send(tm, 0, false, notifyOnJmsException) && notifyOnJmsException ) {
@@ -1387,7 +1398,7 @@ public class JmsOutputChannel implements OutputChannel {
    */
   private void populateHeaderWithRequestContext(Message aMessage, Endpoint anEndpoint, int aCommand)
           throws Exception {
-    aMessage.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
+	  aMessage.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
     aMessage.setIntProperty(AsynchAEMessage.Command, aCommand);
     // TODO override default based on system property
     aMessage.setBooleanProperty(AsynchAEMessage.AcceptsDeltaCas, true);

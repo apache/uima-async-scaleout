@@ -1125,8 +1125,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 		  if ( listener.getMessageSelector().endsWith(UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX) ) {
 	          // this will be a dedicated listener which handles targeted messages
 			  UimaDefaultMessageListenerContainer targetedListener = new UimaDefaultMessageListenerContainer();
-	          // setup jms selector
-			  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+			  // setup jms selector
+			  if ( getController().isCasMultiplier()) {
+				  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.CM_PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+ 	          } else {
+ 				  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+ 	          }
+			  
 			  // use shared ConnectionFactory
 	          targetedListener.setConnectionFactory(listener.getConnectionFactory());
 	          // mark the listener as a 'Targeted' listener

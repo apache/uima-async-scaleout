@@ -38,7 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
-
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -246,8 +245,12 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
   abstract protected void setCASMessage(String casReferenceId, byte[] aSerializedCAS, Message msg)
           throws Exception;
+  
+  abstract protected void setFreeCasMessage(Message msg, String aCasReferenceId, String selector) throws Exception;
 
-  abstract public void setCPCMessage(Message msg) throws Exception;
+  abstract protected void setStopMessage(Message msg, String aCasReferenceId) throws Exception;
+
+  abstract protected void setCPCMessage(Message msg) throws Exception;
 
   abstract public void initialize(Map anApplicationContext) throws ResourceInitializationException;
 
@@ -264,6 +267,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   abstract protected void initializeConsumer(String aBrokerURI, Connection connection) throws Exception;
 
   abstract protected SharedConnection validateConnection(String aBrokerURI) throws Exception;
+  
+  abstract protected void dispatchFreeCasRequest(String casReferenceId, Message message) throws Exception;
 
   // enables/disable timer per CAS. Defaul is to use single timer for
   // all outstanding CASes
@@ -1507,11 +1512,35 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     // exists in the client's cache.
     // Fetch the input CAS Reference Id from which the CAS being processed was generated from
     String inputCasReferenceId = message.getStringProperty(AsynchAEMessage.InputCasReference);
-    // Fetch the destination for Free CAS notification
-    Destination freeCASNotificationDestination = message.getJMSReplyTo();
+    try {
+  	  String nodeIP = message.getStringProperty(AsynchAEMessage.ServerIP);
+	      String pid = message.getStringProperty(AsynchAEMessage.UimaASProcessPID);
+	       if ( message.getStringProperty(AsynchAEMessage.TargetingSelector) != null) {
+	        	  serviceDelegate.setFreeCasSelector(message.getStringProperty(AsynchAEMessage.TargetingSelector));
+	        	  System.out.println("+++++++++++++++++ Client Received Service Targeting Selector:"+
+	        			  message.getStringProperty(AsynchAEMessage.TargetingSelector));
+	          }
+//	      System.out.println("%%%%%%%%%%%%% CasMultiplier Sent IP:"+nodeIP+" PID:"+pid);
+    	// Free a given CAS in the remote CM
+        dispatchFreeCasRequest(casReferenceId, message);
+
+    } catch (Exception e) {
+    	e.printStackTrace();
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "handleProcessReplyFromCasMultiplier", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_error_while_sending_msg__WARNING",
+                    new Object[] { "Free Cas Temp Destination", e });
+          }
+        }
+     
+    /*
+     *     Destination freeCASNotificationDestination = message.getJMSReplyTo();
+
     if (freeCASNotificationDestination != null) {
       TextMessage msg = createTextMessage();
       msg.setText("");
+     dsa
       setReleaseCASMessage(msg, casReferenceId);
   	MessageProducer msgProducer = null;
   	try {
@@ -1546,7 +1575,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         }
       }
     }
-    
+    */
     // Fetch an entry from the client cache for a given input CAS id. This would be an id
     // of the CAS that the client sent out to the service.
     ClientRequest inputCasCachedRequest = (ClientRequest) clientCache.get(inputCasReferenceId);
