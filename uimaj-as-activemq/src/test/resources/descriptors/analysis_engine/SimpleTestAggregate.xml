@@ -58,6 +58,12 @@
         </languagesSupported>
       </capability>
     </capabilities>
+    <typePriorities>
+  <priorityList>
+    <type>uima.cas.TOP</type>
+    <type>uima.tcas.Annotation</type>
+  </priorityList>
+</typePriorities>
 	<operationalProperties>
 		<modifiesCas>true</modifiesCas>
 		<multipleDeploymentAllowed>true</multipleDeploymentAllowed>
