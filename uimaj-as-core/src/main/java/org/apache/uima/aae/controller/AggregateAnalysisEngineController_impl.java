@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -86,8 +87,12 @@ import org.apache.uima.flow.ParallelStep;
 import org.apache.uima.flow.SimpleStep;
 import org.apache.uima.flow.Step;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.apache.uima.resource.metadata.FsIndexCollection;
+import org.apache.uima.resource.metadata.FsIndexDescription;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.resource.metadata.ResourceMetaData;
+import org.apache.uima.resource.metadata.TypePriorities;
+import org.apache.uima.resource.metadata.TypePriorityList;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.apache.uima.util.CasCreationUtils;
 import org.apache.uima.util.Level;
@@ -2927,6 +2932,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
     AnalysisEngineDescription specifier = (AnalysisEngineDescription) super.getResourceSpecifier();
     aggregateMetadata = specifier.getAnalysisEngineMetaData();
+    
+//    String myCurrentDir = System.getProperty("user.dir");// + File.separator + System.getProperty("sun.java.command") .substring(0, System.getProperty("sun.java.command").lastIndexOf(".")) .replace(".", File.separator); 
+    System.out.println(">>>>!!!!! "+flowControllerDescriptor);
+
     flowControllerContainer = UimaClassFactory.produceAggregateFlowControllerContainer(specifier,
             flowControllerDescriptor, analysisEngineMetaDataMap, getUimaContextAdmin(),
             ((AnalysisEngineDescription) getResourceSpecifier()).getSofaMappings(), super
@@ -2934,15 +2943,23 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     super.addUimaObject(flowControllerContainer.getMBean().getUniqueMBeanName());
     
     if (isTopLevelComponent()) {
-      //  Add FC's meta
+      //  Merge FC's meta with meta from all delegates
       getCasManagerWrapper().addMetadata((ProcessingResourceMetaData)flowControllerContainer.getMetaData());
       // Top level component is the outer most component in the containment hierarchy.
       getCasManagerWrapper().initialize("AggregateContext");
-      aggregateMetadata.setTypeSystem(getCasManagerWrapper().getMetadata().getTypeSystem());
-      aggregateMetadata.setTypePriorities(getCasManagerWrapper().getMetadata().getTypePriorities());
 
-      aggregateMetadata.setFsIndexCollection(getCasManagerWrapper().getMetadata()
-              .getFsIndexCollection());
+      // merge this aggregate type system description with its delegate TSD's
+      TypeSystemDescription aggTypeDesc = mergeTypeSystem();
+      aggregateMetadata.setTypeSystem(aggTypeDesc);
+
+      // merge this aggregate type priorities with its delegate TP's
+      TypePriorities aggTypePriorities = mergeTypePriorities();
+      aggregateMetadata.setTypePriorities(aggTypePriorities);
+
+      // merge this aggregate FsIndexes with its delegate FS's
+      FsIndexCollection aggIndexColl = mergeFsIndexes();
+      aggregateMetadata.setFsIndexCollection(aggIndexColl);
+ 
     }
     if (disabledDelegateList.size() > 0) {
       flowControllerContainer.removeAnalysisEngines(disabledDelegateList);
@@ -2973,7 +2990,57 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     	startProcessing();
     }
   }
+  private TypeSystemDescription mergeTypeSystem() throws ResourceInitializationException {
+      List<TypeSystemDescription> tsl = 
+    		  new ArrayList<TypeSystemDescription>();
+      if ( aggregateMetadata.getTypeSystem() != null ) {
+    	  tsl.add(aggregateMetadata.getTypeSystem());
+      }
+      if ( getCasManagerWrapper().getMetadata().getTypeSystem() != null ) {
+    	  tsl.add(getCasManagerWrapper().getMetadata().getTypeSystem());
+      }
+ 
+      return CasCreationUtils.mergeTypeSystems(tsl,
+    		  getCasManagerWrapper().getResourceManager());
+  }
+  private FsIndexCollection mergeFsIndexes() throws ResourceInitializationException {
+	  FsIndexCollection aggIndexColl =
+			  getCasManagerWrapper().getMetadata()
+			  .getFsIndexCollection();
 
+	  if ( aggregateMetadata.getFsIndexes() != null ) {
+		  for ( FsIndexDescription fid : aggregateMetadata.getFsIndexes() ) {
+			  getCasManagerWrapper().getMetadata()
+			  .getFsIndexCollection().addFsIndex(fid);
+		  }
+		  List<FsIndexCollection> cl = new ArrayList<FsIndexCollection>();
+		  cl.add(getCasManagerWrapper().getMetadata().getFsIndexCollection());
+
+		  aggIndexColl = 
+				  CasCreationUtils.
+				  mergeFsIndexes(cl, getCasManagerWrapper().getResourceManager());
+
+	  }
+	  return aggIndexColl;
+  }
+  private TypePriorities mergeTypePriorities() throws ResourceInitializationException {
+	  TypePriorities aggTypePriorities =    
+			  getCasManagerWrapper().getMetadata().getTypePriorities();
+	  if ( aggregateMetadata.getTypePriorities() != null && aggregateMetadata.getTypePriorities().getPriorityLists() != null) {
+		  for( TypePriorityList pl : aggregateMetadata.getTypePriorities().getPriorityLists()) {
+	          getCasManagerWrapper().
+	        	getMetadata().
+	        		getTypePriorities().
+	        			addPriorityList(pl);
+	      }
+	      List<? extends TypePriorities> tpl =
+	    		  Arrays.asList(getCasManagerWrapper().getMetadata().getTypePriorities());
+	      aggTypePriorities = CasCreationUtils.mergeTypePriorities(tpl,
+	    		  getCasManagerWrapper().getResourceManager());
+	  }
+
+	  return aggTypePriorities;
+  }
   protected void startProcessing() throws Exception {
 	  
 	    // Open latch to allow messages to be processed. The
