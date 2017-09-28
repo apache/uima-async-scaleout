@@ -97,6 +97,7 @@ import org.apache.uima.util.XMLInputSource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 @RunWith(UimaASTestRunner.class)
 public class TestUimaASExtended extends BaseTestSupport {
@@ -310,7 +311,8 @@ public class TestUimaASExtended extends BaseTestSupport {
 
       BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
       BaseUIMAAsynchronousEngine_impl uimaAsEngine2 = new BaseUIMAAsynchronousEngine_impl();
-      
+      File directory = new File("./");
+      System.out.println(directory.getAbsolutePath());
       String sid1= deployService(uimaAsEngine1, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
       String sid2 = deployService(uimaAsEngine2, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
       
@@ -2464,7 +2466,7 @@ private class Killer {
     Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
 //   		Map<String, Object> appCtx = buildContext("tcp://localhost:61616",
             "TopLevelTaeQueue");
-    appCtx.put(UimaAsynchronousEngine.Timeout, 1000);
+    appCtx.put(UimaAsynchronousEngine.Timeout, 0);
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
     
     addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class); 
@@ -2474,6 +2476,23 @@ private class Killer {
             1, PROCESS_LATCH);
   }
   
+  @Test
+  public void testDeployAggregateServiceWithDoctype() throws Exception {
+    System.out.println("-------------- testDeployAggregateServiceWithDoctype -------------");
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
+
+    try {
+        deployService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithDOCTYPE.xml");
+    } catch( Exception e ) {
+    	if ( e.getMessage() != null && 
+    			e.getMessage().indexOf("disallow-doctype-decl") > 0 ) {
+    		System.out.println("---- Detected expected error during parsing of a deployment descriptor - SUCCESS ----");
+        	return; // success - detected expected error
+    	}
+    }
+    fail("This test should have failed with SAXParseException - Instead no error was detected");
+  }
   
   @Test
   public void testAggregateTypePriorities() throws Exception {
