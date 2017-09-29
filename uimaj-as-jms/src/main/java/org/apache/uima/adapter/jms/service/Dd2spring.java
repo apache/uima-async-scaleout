@@ -442,8 +442,6 @@ public class Dd2spring {
 					System.out.println(result);
 
 				}
-				String result = out.toString();
-				System.out.println(result);
 
 			} finally {
 				if ( writer != null ) {
