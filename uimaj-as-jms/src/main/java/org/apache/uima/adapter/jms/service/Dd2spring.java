@@ -373,9 +373,12 @@ public class Dd2spring {
 			 * settings
 			 */
 			/* *********************************************************************************** */
-
+/*
 			System.setProperty("javax.xml.parsers.SAXParserFactory",
-					"org.apache.xerces.jaxp.SAXParserFactoryImpl");
+					"SAXParserFactoryImpl");
+		//"org.apache.xerces.jaxp.SAXParserFactoryImpl");
+		 * 
+		 */
 			System.setProperty("javax.xml.transform.TransformerFactory",
 					"net.sf.saxon.TransformerFactoryImpl");
 
