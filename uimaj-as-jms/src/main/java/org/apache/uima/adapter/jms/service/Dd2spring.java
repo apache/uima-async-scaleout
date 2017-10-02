@@ -423,11 +423,13 @@ public class Dd2spring {
 				Transformer transformer = tFactory.newTransformer(xslSource);
 				// Need an absolute file path for the dd. This is fed to
 				// InputSource below
-				// Without absolute DD path, relative paths dont work.
 				File ddAbsFilePath = new File(saxonConfig.getDDFilePath());
 				// System.out.println("DD:"+ddAbsFilePath.getAbsolutePath());
+				// Must be URI otherwise the transform fails on windows with
+				// DynamicError. 
 				SAXSource source = new SAXSource(new InputSource(
-						ddAbsFilePath.getAbsolutePath()));
+						ddAbsFilePath.toURI().toString())); 
+
 				source.setXMLReader((XMLReader) xmlReaderObject);
 
 				transformer.transform(source, xmlResult);
