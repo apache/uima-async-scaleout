@@ -1,4 +1,4 @@
-     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.9.0 README
+     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.10.2 README
      ----------------------------------------------------------------
      
 0. Building from the Source Distribution
@@ -21,32 +21,15 @@ Look for the result in the two artifacts:
 
 For more details, please see http://uima.apache.org/building-uima.html   
 
-1. What's New in 2.9.0
+1. What's New in 2.10.2
 ====================== 
   - Added support to UIMA-AS client to send messages to a specific service instance.
     See Section 5 in this document for more details.
-
-
-
-  - Updated to use Activemq 5.14.0 
-  - Added dependency on UIMA SDK 2.9.0
-  - Fixed http based service connectivity  
-  - Added support for automatic recovery of temp queues after broker restart.
+  - Updated to use ActiveMQ 5.15.2  (requires Java 1.8+)
+  - Added dependency on UIMA SDK 2.10.2
+  - Fixed merging of type priorities
   - Fixed per CAS Performance Metrics breakdown 
-  - Fixed per process CPU & RSS reporting 
-  - Fixed example runtime configurations
-  - Fixed error recovery on exception while deserializing a CAS
-  - "Pinned" JMX MBeans to a specific deployment to enable orderly cleanup
-  - Fixed support of AMQ white listing of packages
-  - Added support to disable JMX via a new argument -Duima.as.enable.jmx=false
   - Fixed dd2spring issues
-  - Updated version checker to test compatibility with UIMA SDK. The UIMA-AS runtime
-    works with UIMA SDK 2.9.0 and future release of SDK 2.9.X, 2.10.X, etc. It will
-    fail if the UIMA SDK major version does not match UIMA-AS major version, or the SDK
-    is older than 2.9.0.
-    matches but a minor version of the UIMA SDK is less than
-    the minor version of UIMA-AS. The UIMA-AS runtime will work with SDK 2.9.X, 2.10.X,
-    etc but will not work with SDK 3.X.X nor SDK 2.8.X or lower.  
   - Other Bug fixes 
   
 
@@ -54,11 +37,11 @@ For more details, please see http://uima.apache.org/building-uima.html
 --------------------------------------------------
 
 The Apache UIMA-AS binary distribution includes
-  - Apache UIMA Java SDK version 2.9.0
+  - Apache UIMA Java SDK version 2.10.2
   - Apache UIMA Asynchronous Scaleout extensions
   - Saxon
-  - Apache ActiveMQ version 5.14.0
-  - Spring Framework version 4.1.9
+  - Apache ActiveMQ version 5.15.2
+  - Spring Framework version 4.3.9
   - XMLBeans
 
 It includes the base UIMA binary distribution which it depends on.
@@ -120,12 +103,11 @@ UIMA-AS components, in addition to those that come with base UIMA include:
 2.1 Supported Platforms
 -----------------------
 
-Apache UIMA-AS requires Java version 7 or later; it has been tested with Sun/Oracle Java SDK 7, and 8, 
-and IBM Java 7 and 8.
+Apache UIMA-AS requires Java version 8 or later; it has been tested with Sun/Oracle Java 8 and IBM 8.
 
-Running the Eclipse plugin tooling for UIMA requires you start Eclipse using a Java 7 or later, as well.
+Running the Eclipse plugin tooling for UIMA requires you start Eclipse using a Java 8 or later, as well.
 
-The supported platforms are: Windows, Linux, and Mac OS X. Other platforms and Java (7+) 
+The supported platforms are: Windows, Linux, and Mac OS X. Other platforms and Java (8+) 
 implementations should work, but have not been significantly tested.
 
 
@@ -156,10 +138,10 @@ procedure described in Chapter 3 of the Apache UIMA Overview and Setup guide,
 which you can find online at http://uima.apache.org; click on Documentation ->
 HTML Online Version -> Overview and Setup -> 3. Eclipse IDE setup for UIMA. 
 
-Since UIMA AS requires Java 7, you must be sure to set up your uimaj-examples Eclipse
-project to use a version 7 (or later) JRE, and you must set your compiler compliance level to 7.0.  To do
+Since UIMA AS requires Java 8, you must be sure to set up your uimaj-examples Eclipse
+project to use a version 8 (or later) JRE, and you must set your compiler compliance level to 8.0.  To do
 this go to Window->Preferences and navigate to the Java->Compiler page.  Remember to 
-run the base Eclipse using Java 7 (or later), as well.
+run the base Eclipse using Java 8 (or later), as well.
 
 
 3. Getting Started
@@ -292,7 +274,7 @@ Start two terminal windows, each with an environments setup as described in sect
          -d Deploy_MeetingDetectorTAE.xml \
          -c $UIMA_HOME/examples/descriptors/collection_reader/FileSystemCollectionReader.xml
 
-    If you get an UnsupportedClassVersionError, Java 5 is probably not being used.
+    If you get an UnsupportedClassVersionError, Java 8 is probably not being used.
     If the driver fails to find the input data, adjustExamplePaths was probably not run.
 
 3.5 Calling a UIMA AS Asynchronous Service from an Existing UIMA Application
@@ -447,7 +429,7 @@ where constant UimaAsynchronousEngine.TargetSelectorProperty = 'TargetServiceId'
 The value in 'target' variable above must match the value of -DTargetServiceId property used to launch a service or
 it should match service <IP>:<PID> in case the property is missing from a command line.
 
-6. Known problems/limitations with Release 2.9.0
+6. Known problems/limitations with Release 2.10.2
 ================================================
 
   1. When connecting to an AMQ broker behind a firewall, avoid using the maxInactivityDuration=0 
@@ -465,7 +447,7 @@ it should match service <IP>:<PID> in case the property is missing from a comman
      ClassNotFoundException is thrown in the UIMA AS client while deserializing a reply. 
  
 For up-to-date information on UIMA-AS issues, see our issue tracker:
-http://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12334303&styleName=Html&projectId=12310570
+https://issues.apache.org/jira/browse/UIMA-5385?filter=12317266&jql=project%20%3D%20UIMA%20AND%20component%20%3D%20%22Async%20Scaleout%22%20AND%20fixversion%3D2.10.2AS%20and%20status%3DClosed
 
 
 Crypto Notice
