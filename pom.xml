@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uima-as-parent</artifactId>
-    <version>2.9.1-SNAPSHOT</version>
+    <version>2.10.2-SNAPSHOT</version>
     <relativePath>uima-as-parent/pom.xml</relativePath>
   </parent>
 
@@ -59,7 +59,7 @@
   </scm>
 
   <properties>
-    <jiraVersion>12334303</jiraVersion> <!-- for 2.9.0AS -->  
+    <jiraVersion>12340230</jiraVersion> <!-- for 2.10.2AS -->  
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <assemblyFinalName>uima-as-${project.version}</assemblyFinalName> 
     <additionalparam>-Xdoclint:none</additionalparam> 
@@ -373,7 +373,6 @@
 		      <excludePackageNames>*.aae.*</excludePackageNames>
 		      <!-- add a few classes in impl packages that are directly used by user code -->
                       <additionalparam>
-                          -Xdoclint:none
                           ${javadoc.opts}
                           ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/BasicUimaJmxMonitorListener.java
                           ${basedir}/uimaj-as-core/src/main/java/org/apache/uima/aae/jmx/monitor/JmxMonitorListener.java
