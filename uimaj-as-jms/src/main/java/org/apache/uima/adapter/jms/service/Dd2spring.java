@@ -40,6 +40,7 @@ import javax.xml.transform.stream.StreamSource;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.internal.util.XMLUtils;
 import org.apache.uima.util.Level;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -262,10 +263,14 @@ public class Dd2spring {
 		public static SaxonInterface newSaxonInterface(	SaxonInputs saxonConfig) {
 			SaxonInterface saxon;
 			if (System.getProperty("uima.framework_impl") != null) {
+				UIMAFramework.getLogger(THIS_CLASS).log(Level.INFO,
+					     "Using Saxon command line interface - Java Vendor:"+System.getProperty("java.vendor"));
 				// The command line based Saxon interface is used to plug-in
 				// custom parser into Saxon
 				saxon = new SaxonCommandLineInterface(saxonConfig);
 			} else {
+				UIMAFramework.getLogger(THIS_CLASS).log(Level.INFO,
+				     "Using Saxon Java API - Java Vendor:"+System.getProperty("java.vendor"));
 				// Default, use java API based Saxon interface
 				saxon = new SaxonJavaInterface(saxonConfig);
 			}
@@ -344,26 +349,22 @@ public class Dd2spring {
 		SaxonJavaInterface(SaxonInputs saxonConfig) {
 			this.saxonConfig = saxonConfig;
 		}
-
+		private void setFeature(Method setFeatureMethod, Object xmlReaderObject, String feature, boolean flag) {
+			try{
+				setFeatureMethod.invoke(xmlReaderObject, feature, flag );
+			} catch( Exception e) {
+				UIMAFramework.getLogger(THIS_CLASS).log(Level.WARNING,"XMLReader didn't recognize feature "+feature);
+			}
+		}
 		private void configure(Object xmlReaderObject) throws Exception {
 			Class<?> xmlReaderClass = Class.forName("org.xml.sax.XMLReader",
 					true, saxonConfig.getSaxonClassLoader());
 			Method setFeatureMethod = xmlReaderClass.getMethod("setFeature",
 					new Class[] { String.class, boolean.class });
-			setFeatureMethod.invoke(xmlReaderObject,
-					"http://xml.org/sax/features/external-general-entities",
-					false);
-			setFeatureMethod.invoke(xmlReaderObject,
-					"http://xml.org/sax/features/external-parameter-entities",
-					false);
-			setFeatureMethod
-					.invoke(xmlReaderObject,
-							"http://apache.org/xml/features/nonvalidating/load-external-dtd",
-							false);
-			setFeatureMethod.invoke(xmlReaderObject,
-					"http://apache.org/xml/features/disallow-doctype-decl",
-					true);
-
+			setFeature(setFeatureMethod,xmlReaderObject,"http://xml.org/sax/features/external-general-entities", false);
+			setFeature(setFeatureMethod,xmlReaderObject,"http://xml.org/sax/features/external-parameter-entities", false);
+			setFeature(setFeatureMethod,xmlReaderObject,"http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+			setFeature(setFeatureMethod,xmlReaderObject,"http://apache.org/xml/features/disallow-doctype-decl", true);
 		}
 
 		private void beforeProcess() {
@@ -373,12 +374,7 @@ public class Dd2spring {
 			 * settings
 			 */
 			/* *********************************************************************************** */
-/*
-			System.setProperty("javax.xml.parsers.SAXParserFactory",
-					"SAXParserFactoryImpl");
-		//"org.apache.xerces.jaxp.SAXParserFactoryImpl");
-		 * 
-		 */
+
 			System.setProperty("javax.xml.transform.TransformerFactory",
 					"net.sf.saxon.TransformerFactoryImpl");
 
@@ -415,8 +411,9 @@ public class Dd2spring {
 				configure(xmlReaderObject);
 				StringWriter out = new StringWriter();
 
-				TransformerFactory tFactory = TransformerFactory.newInstance();
-
+				//TransformerFactory tFactory = TransformerFactory.newInstance();
+				TransformerFactory tFactory = 
+					XMLUtils.createSaxTransformerFactory();
 				StreamSource xslSource = new StreamSource(new File(
 						saxonConfig.getXSLTPath()));
 				StreamResult xmlResult = new StreamResult(out);
