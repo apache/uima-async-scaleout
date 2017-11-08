@@ -29,6 +29,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
@@ -50,64 +51,19 @@ import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.cas.impl.XmiCasDeserializer;
 import org.apache.uima.cas.impl.XmiCasSerializer;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
+import org.apache.uima.internal.util.XMLUtils;
 import org.apache.uima.util.XMLSerializer;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
-//import java.util.concurrent.ConcurrentHashMap;
 
 public class UimaSerializer {
   private final ThreadLocal<XMLReader> localXmlReader = new ThreadLocal<XMLReader>();
 
-//  /**
-//   * deserializes XCas into CAS
-//   * 
-//   * @param anXcas
-//   * @param aCas
-//   * @throws Exception
-//   */
-//  public OutOfTypeSystemData deSerialiazeFromXCAS(String anXcas, CAS aCas) throws Exception {
-//    OutOfTypeSystemData otsd = new OutOfTypeSystemData();
-//    TypeSystem typesToLoad2 = aCas.getTypeSystem();
-//    ByteArrayInputStream bis = new ByteArrayInputStream(anXcas.getBytes());
-//    XCASDeserializer deser2 = new XCASDeserializer(typesToLoad2);
-//    ContentHandler deserHandler2 = deser2.getXCASHandler(aCas, otsd);
-//
-//    SAXParserFactory fact2 = SAXParserFactory.newInstance();
-//    SAXParser parser2;
-//    parser2 = fact2.newSAXParser();
-//    XMLReader xmlReader2 = parser2.getXMLReader();
-//    xmlReader2.setContentHandler(deserHandler2);
-//    xmlReader2.parse(new InputSource(bis));
-//    return otsd;
-//  }
-
-//  /**
-//   * Serializes CAS into a given OutputStream in XCAS format
-//   * 
-//   * @param stream
-//   * @param aCAS
-//   * @param encoding
-//   * @param typeSystem
-//   * @throws IOException
-//   * @throws SAXException
-//   */
-//  public void serializeToXCAS(OutputStream stream, CAS aCAS, String encoding,
-//          TypeSystem typeSystem, OutOfTypeSystemData otsd) throws IOException, SAXException {
-//
-//    if (typeSystem == null)
-//      typeSystem = aCAS.getTypeSystem();
-//    XMLSerializer xmlSer = new XMLSerializer(stream, false);
-//    if (encoding != null)
-//      xmlSer.setOutputProperty(OutputKeys.ENCODING, encoding);
-//    XCASSerializer ser = new XCASSerializer(typeSystem);
-//    ser.serialize(aCAS, xmlSer.getContentHandler(), false, otsd);
-//  }
 
   /**
    * Serializes CAS into a given OutputStream in Xmi format
@@ -176,9 +132,9 @@ public class UimaSerializer {
           throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
 
     if (localXmlReader.get() == null) {
-      localXmlReader.set(XMLReaderFactory.createXMLReader());
+      localXmlReader.set(XMLUtils.createXMLReader());
     }
-    XMLReader xmlReader = XMLReaderFactory.createXMLReader(); // localXmlReader.get();
+    XMLReader xmlReader = XMLUtils.createXMLReader(); // localXmlReader.get();
 
     Reader reader = new StringReader(anXmlStr);
     XmiCasDeserializer deser = new XmiCasDeserializer(aCAS.getTypeSystem());
@@ -204,7 +160,7 @@ public class UimaSerializer {
           SAXException, IOException {
 
     if (localXmlReader.get() == null) {
-      localXmlReader.set(XMLReaderFactory.createXMLReader());
+      localXmlReader.set(XMLUtils.createXMLReader());
     }
     XMLReader xmlReader = localXmlReader.get();
     Reader reader = new StringReader(anXmlStr);
@@ -295,8 +251,14 @@ public class UimaSerializer {
       // return an empty list
       return new ArrayList<AnalysisEnginePerformanceMetrics>();
     }
+
     XStream xstream = new XStream(new DomDriver());
+    initXStream(xstream);
     return (List<AnalysisEnginePerformanceMetrics>)xstream.fromXML(serializedComponentStats);
   }
-  
+  public static void initXStream(XStream xstreamInstance) {
+	Class<?>[] classes = new Class[] { Properties.class,ArrayList.class,List.class,AnalysisEnginePerformanceMetrics.class};
+	XStream.setupDefaultSecurity(xstreamInstance);
+	xstreamInstance.allowTypes(classes);
+  }
 }
