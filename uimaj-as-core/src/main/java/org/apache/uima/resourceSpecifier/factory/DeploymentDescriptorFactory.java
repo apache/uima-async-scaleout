@@ -56,6 +56,17 @@ public final class DeploymentDescriptorFactory {
   public static UimaASDeploymentDescriptor createDeploymentDescriptor(String xmlDescriptor) 
   throws ResourceInitializationException {
     try {
+        // secure the parser
+    	org.apache.xmlbeans.XmlOptions options = new org.apache.xmlbeans.XmlOptions();
+		XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+		xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		xmlReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		xmlReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",false);
+		xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+		options.setLoadUseXMLReader(xmlReader);
+		
+		 AnalysisEngineDeploymentDescriptionDocument.Factory.parse(new File(descriptorPath), options);
+      
       return new UimaASDeploymentDescriptorImpl(AnalysisEngineDeploymentDescriptionDocument.Factory.parse(xmlDescriptor),new ServiceContextImpl("","","","") );
     } catch( XmlException e ) {
       throw new ResourceInitializationException(e);
