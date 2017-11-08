@@ -425,7 +425,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       }
 
  }
-    */
+    
     @Test
     public void testBrokerRestartWithAggregateMultiplier() throws Exception {
       System.out.println("-------------- testBrokerRestartWithAggregateMultiplier -------------");
@@ -463,7 +463,7 @@ public class TestUimaASExtended extends BaseTestSupport {
               "TopLevelTaeQueue", 1, PROCESS_LATCH);
   //    eeUimaEngine.stop();
  }
-    
+    */
     /**
      * Tests client and service recovery from broker restart. It deploys CM service, dispatches
      * a CAS for processing and while the CAS is in process, it bounces a broker. The service
