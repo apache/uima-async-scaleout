@@ -21,14 +21,14 @@
 	<parent>
 		<groupId>org.apache.uima</groupId>
 		<artifactId>parent-pom</artifactId>
-		<version>9</version>
+		<version>10</version>
 		<relativePath />
 	</parent>
 
 	<!-- >groupId>org.apache.uima</groupId -->
 	<artifactId>uima-as-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>2.9.1-SNAPSHOT</version>
+	<version>2.10.2-SNAPSHOT</version>
 	<name>Apache UIMA-AS: ${project.artifactId}</name>
 	<description>The common parent pom for uima-as</description>
 	<url>${uimaWebsiteUrl}</url>
@@ -121,13 +121,13 @@
 		<uimaScmRoot>uima-as</uimaScmRoot>
 		<uimaScmProject>${project.artifactId}</uimaScmProject>
 		<!-- level of uimaj sdk this release depends on -->
-		<uimajDependencyVersion>2.9.0</uimajDependencyVersion>
+		<uimajDependencyVersion>2.10.2</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
-		<org.apache.activemq.version>5.14.0</org.apache.activemq.version>
+		<org.apache.activemq.version>5.15.2</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
-		<org.springframework.version>4.1.9.RELEASE</org.springframework.version>
+		<org.springframework.version>4.3.9.RELEASE</org.springframework.version>
 
-        <org.apache.camel.version>2.15.3</org.apache.camel.version>
+        <org.apache.camel.version>2.19.3</org.apache.camel.version>
 
 		<org.apache.geronimo.jms.specs.version>1.1.1</org.apache.geronimo.jms.specs.version>
 
@@ -135,11 +135,11 @@
 
 		<org.apache.geronimo.servlet.specs.version>1.0</org.apache.geronimo.servlet.specs.version>
 
-		<jetty.version>9.2.13.v20150730</jetty.version>
+		<jetty.version>9.2.22.v20170606</jetty.version>
 
 		<commons-pool.version>2.4.2</commons-pool.version>
 
-		<xstream.version>1.4.8</xstream.version>
+		<xstream.version>1.4.10</xstream.version>
 
         <log4j.version>1.2.17</log4j.version>
 
@@ -149,7 +149,7 @@
 		
 		<xpp3.version>1.1.4c</xpp3.version>
 		
-		<http.client.version>4.5.1</http.client.version>
+		<http.client.version>4.5.3</http.client.version>
 		
 		<http.core.version>4.4.4</http.core.version>
 		
@@ -481,13 +481,14 @@ ${uimaASNoticeText}
     
     	<plugins>
 
-<plugin>
-  <artifactId>maven-compiler-plugin</artifactId>
-  <configuration>
-    <source>1.7</source>
-    <target>1.7</target>
-    </configuration>
-  </plugin>
+           <plugin>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>3.1</version>
+              <configuration>
+                 <source>1.7</source>
+                 <target>1.7</target>
+              </configuration>
+           </plugin>
 
     		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
     		<plugin>
