@@ -1200,10 +1200,29 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       } else {
         try {
-          
+        	List<AnalysisEnginePerformanceMetrics> perfMetrics =
+					new ArrayList<AnalysisEnginePerformanceMetrics>();
+          String aeName = getMetaData().getName();
+         
           CacheEntry entry =
                   getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
-          entry.addDelegateMetrics(getKey(), performanceList);
+          for( AnalysisEnginePerformanceMetrics m : performanceList ) {
+ //       	  System.out.println("...............BEFORE:  Name:"+m.getName()+" UniqueName:"+m.getUniqueName()+" How Many="+m.getNumProcessed());
+				boolean aggregate = m.getUniqueName().startsWith("/"+aeName);
+				int pos = m.getUniqueName().indexOf("/",1);
+				String uName = m.getUniqueName();
+				if ( pos > -1 && aeInstancePool.size() > 1 && aeName != null && aggregate) {
+					String st = m.getUniqueName().substring(pos);
+					uName = "/"+aeName+st;
+				} 
+				AnalysisEnginePerformanceMetrics newMetrics = 
+						new AnalysisEnginePerformanceMetrics(m.getName(),uName,m.getAnalysisTime(), m.getNumProcessed());
+			//	System.out.println("... Metrics - AE:"+metrics.getUniqueName()+" AE Analysis Time:"+metrics.getAnalysisTime());
+				perfMetrics.add(newMetrics);
+//	        	  System.out.println("...............AFTER:  Name:"+newMetrics.getName()+" UniqueName:"+newMetrics.getUniqueName()+" How Many="+newMetrics.getNumProcessed());
+
+          }
+          entry.addDelegateMetrics(getKey(), perfMetrics); //performanceList);
         } catch (Exception e) {
           // An exception be be thrown here if the service is being stopped.
           // The top level controller may have already cleaned up the cache
