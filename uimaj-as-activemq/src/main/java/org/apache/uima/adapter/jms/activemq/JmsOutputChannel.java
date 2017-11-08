@@ -25,16 +25,16 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -74,22 +74,14 @@ import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.aae.monitor.Monitor;
-import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
+import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 import org.apache.uima.util.Level;
-
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import org.apache.uima.resource.ResourceProcessException;
-
 
 import com.thoughtworks.xstream.XStream;
 
@@ -140,6 +132,8 @@ public class JmsOutputChannel implements OutputChannel {
   private Semaphore connectionSemaphore = new Semaphore(1);
   
   public JmsOutputChannel() {
+	UimaSerializer.initXStream(xstream);
+	   
     try {
     	if( System.getenv("IP") != null ) {
    		  hostIP = System.getenv("IP");
