@@ -54,7 +54,7 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
    * 
    * @param nodeIP Node IP where GetMeta request is handled
    * @param pid Remote Service PID where GetMeta request is handled. The
-   *     has the following syntax: <PID:THREADID>
+   *     has the following syntax: PID:THREADID
    */
   public void onBeforeProcessMeta(String nodeIP, String pid) {
     // to be overridden

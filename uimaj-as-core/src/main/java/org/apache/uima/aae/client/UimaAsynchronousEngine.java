@@ -44,7 +44,7 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
  * registered, and {@link #initialize(Map)} method is called, the application may call
  * {@link #process()} method.
  * 
- * <p>
+ * 
  * This API enables the application to dynamically deploy UIMA AS services that it intends to use
  * for processing. These services are deployed in a container and are collocated in the same JVM as
  * the application. The services are considered private and used exclusively by the application. To
@@ -53,20 +53,20 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
  * descriptor or an array thereof. The application must deploy its "private" services *before*
  * calling {@link #initialize(Map)} method.
  * 
- * <p>
+ * 
  * The application may stop the UIMA AS client in the middle of processing by calling
  * {@link #stop()} method.
  * 
- * <p>
+ * 
  * Listeners can register with the <code>UimaAsynchronousEngine</code> by calling the
  * {@link #addStatusCallbackListener(UimaAsBaseCallbackListener)} method. These listeners receive
  * status callbacks during the processing. An exception to that is the synchronous processing via
  * {@link #sendAndReceiveCAS(CAS)} method. This method returns either a CAS containing results of
  * analysis or an exception. No callbacks are made while processing CASes synchronously.
- * <p>
+ * 
  * An application may choose to implement parallelization of the processing, calling either
  * {@link #sendAndReceiveCAS(CAS)} or {@link #sendCAS(CAS)} methods from multiple threads.
- * <p>
+ * 
  * 
  * 
  */
@@ -80,7 +80,7 @@ public interface UimaAsynchronousEngine {
    * Name of an application that uses Uima AS client. The application provides it to the Uima AS client
    * in a Map which is an argument in {@link #initialize(Map)} .This name is used to register Uima AS 
    * client MBean with JMX. To make the name unique, provided string is prepended to a UUID to form 
-   * <ApplicationName>_www_xxxx_yyyy_zzzz
+   * ApplicationName_www_xxxx_yyyy_zzzz
    */
   public final String ApplicationName = "ApplicationName";
 
@@ -331,6 +331,8 @@ public interface UimaAsynchronousEngine {
    * or null if initialize() has not yet been called.
    * 
    * @throws ResourceInitializationException error
+   * 
+   * @return ProcessingResourceMetaData metadata
    */
   public ProcessingResourceMetaData getMetaData() throws ResourceInitializationException;
 
@@ -418,7 +420,7 @@ public interface UimaAsynchronousEngine {
    * 
    * @param aSpringContainerId
    *          - an id of the container to be destroyed.
-   * 
+   * @param stop_level stop
    * @throws Exception error
    */
   public void undeploy(String aSpringContainerId, int stop_level) throws Exception;
