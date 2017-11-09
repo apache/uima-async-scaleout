@@ -201,17 +201,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     this(null, anEndpointName, aDescriptor, aCasManager, anInProcessCache, aDestinationMap);
   }
 
-  /**
-   * 
-   * 
-   * @param aParentController
-   * @param anEndpointName
-   * @param aDescriptor
-   * @param aCasManager
-   * @param anInProcessCache
-   * @param aDestinationMap
-   * @throws Exception
-   */
   public AggregateAnalysisEngineController_impl(AnalysisEngineController aParentController,
           String anEndpointName, String aDescriptor, AsynchAECasManager aCasManager,
           InProcessCache anInProcessCache, Map aDestinationMap) throws Exception {
@@ -246,9 +235,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     delegateStats.put(delegateKey, aServiceStats);
   }
 
-  /**
-	 * 
-	 */
+ 
   public void addMessageOrigin(String aCasReferenceId, Endpoint anEndpoint) {
     if (anEndpoint == null) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
