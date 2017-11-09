@@ -248,11 +248,12 @@ public abstract class Delegate {
   /**
    * Adds a given Cas ID to the list of CASes pending reply. A new timer will be started to handle
    * delegate's timeout if either: 1) the list of CASes pending reply is empty AND delegate timeout
-   * > 0 2) the list already contains the CAS ID AND delegate timeout > 0. This is a retry logic.
+   * greater 0 2) the list already contains the CAS ID AND delegate timeout greater 0. This is a retry logic.
    * 
    * @param aCasReferenceId
    *          - CAS ID to add to pending list if not already there
-   * 
+   * @param casHashcode hashcode
+   * @param useTimerThreadPerCAS yes or no
    */
   public void addCasToOutstandingList(String aCasReferenceId, int casHashcode, boolean useTimerThreadPerCAS) {
     synchronized (outstandingCasList) {

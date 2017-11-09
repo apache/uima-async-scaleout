@@ -47,7 +47,7 @@ public class JmxManager implements JmxManagement {
   /**
    * Removes all objects from the MBeanServer with t
    * 
-   * @param aDomain
+   * @param aDomain domain
    */
   public void unregisterDomainObjects(String aDomain) {
     //  use class level locking to make sure one thread at time executes the code
