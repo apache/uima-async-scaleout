@@ -72,7 +72,7 @@ public class UimaSerializer {
    * @param aCAS CAS to serialize
    * @param encoding encoding to use
    * @param typeSystem type system 
-   * 
+   * @param otsd type system
    * @throws IOException io failure
    * @throws SAXException parsing error
    */
@@ -204,7 +204,7 @@ public class UimaSerializer {
   /** Utility method for deserializing a CAS from a binary 
    * 
    * @param binarySource serialized cas
-   * @param cas target cas
+   * @param aCAS target cas
    * 
    * @throws Exception on error
    * 
