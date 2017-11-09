@@ -186,16 +186,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   
   private Lock mergeLock = new ReentrantLock();
   
-  /**
-   * 
-   * @param anEndpointName
-   * @param aDescriptor
-   * @param aCasManager
-   * @param anInProcessCache
-   * @param aDestinationMap
-   * @throws Exception
-   */
-  public AggregateAnalysisEngineController_impl(String anEndpointName, String aDescriptor,
+    public AggregateAnalysisEngineController_impl(String anEndpointName, String aDescriptor,
           AsynchAECasManager aCasManager, InProcessCache anInProcessCache, Map aDestinationMap)
           throws Exception {
     this(null, anEndpointName, aDescriptor, aCasManager, anInProcessCache, aDestinationMap);
