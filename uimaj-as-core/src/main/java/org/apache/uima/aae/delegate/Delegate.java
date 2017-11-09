@@ -321,6 +321,8 @@ public abstract class Delegate {
    * 
    * @param aCasReferenceId
    *          - CAS ID to add to the delayed list
+   * @param casHashCode hash code
+   * @param useTimerThreadPerCAS yn         
    * @return how many pending in dispatch list
    */
   public int addCasToPendingDispatchList(String aCasReferenceId, long casHashCode, boolean useTimerThreadPerCAS) {
@@ -482,8 +484,8 @@ public abstract class Delegate {
    * OR the PING times out, all CASes are delayed. When the PING is acked by the delegate ALL
    * delayed CASes are sent to the delegate one at a time.
    * 
-   * @param cas id
-   * @return - ID of the oldest CAS in the list
+   * @param aCasReferenceId id
+   * @return true if removed false otherwise
    * 
    */
   public boolean removeCasFromPendingDispatchList(String aCasReferenceId) {
@@ -710,6 +712,8 @@ public abstract class Delegate {
   }
   /**
    * Starts GetMeta Request timer
+   * 
+   * @param casReferenceId cas id
    */
   public void startGetMetaRequestTimer(String casReferenceId) {
     startDelegateGetMetaTimer(casReferenceId, AsynchAEMessage.GetMeta);
