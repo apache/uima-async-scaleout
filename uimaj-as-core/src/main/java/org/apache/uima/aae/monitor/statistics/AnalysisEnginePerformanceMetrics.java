@@ -36,6 +36,11 @@ public class AnalysisEnginePerformanceMetrics implements Serializable {
   /**
    * Creates a performance metrics instance
    * 
+   * @param name AE name
+   * @paran uimaContextPath AE unique name
+   * @param analysisTime analysis time
+   * @param numProcessed num CASes processed so far
+   * 
    */
   public AnalysisEnginePerformanceMetrics(String name, String uimaContextPath, long analysisTime, long numProcessed ) {
     this.name = name;

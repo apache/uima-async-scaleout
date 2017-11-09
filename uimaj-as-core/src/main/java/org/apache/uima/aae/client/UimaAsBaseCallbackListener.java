@@ -32,8 +32,7 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
   /**
    * Called by Uima AS client API just before the CAS is send to the service.
    * 
-   * @param status
-   *          - status object containing id of the CAS being send.
+   * @param status status object containing id of the CAS being send.
    */
   public void onBeforeMessageSend(UimaASProcessStatus status) {
     // to be overridden
@@ -42,9 +41,9 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
    * Called by Uima AS client API before CAS processing begins at the remote
    * UIMA AS service
    * 
-   * @param status
-   * @param nodeIP
-   * @param pid
+   * @param status uima as status object
+   * @param nodeIP node ip
+   * @param pid process id
    */
   public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
     // to be overridden
@@ -53,8 +52,8 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
    * Called by Uima AS client API before GetMeta processing begins at the remote
    * UIMA AS service
    * 
-   * @param nodeIP - Node IP where GetMeta request is handled
-   * @param pid - Remote Service PID where GetMeta request is handled. The
+   * @param nodeIP Node IP where GetMeta request is handled
+   * @param pid Remote Service PID where GetMeta request is handled. The
    *     has the following syntax: <PID:THREADID>
    */
   public void onBeforeProcessMeta(String nodeIP, String pid) {
@@ -69,8 +68,7 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
    * The callback used to inform the application that the initialization request has completed. On
    * success aStatus will be null; on failure use the EntityProcessStatus class to get the details.
    * 
-   * @param aStatus
-   *          the status of the processing. This object contains a record of any Exception that
+   * @param aStatus the status of the processing. This object contains a record of any Exception that
    *          occurred, as well as timing information.
    */
   public void initializationComplete(EntityProcessStatus aStatus) {
@@ -80,10 +78,8 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
   /**
    * Called when the processing of each entity has completed.
    * 
-   * @param aCas
-   *          the CAS containing the processed entity and the analysis results
-   * @param aStatus
-   *          the status of the processing. This object contains a record of any Exception that
+   * @param aCas the CAS containing the processed entity and the analysis results
+   * @param aStatus the status of the processing. This object contains a record of any Exception that
    *          occurred, as well as timing information.
    */
   public void entityProcessComplete(CAS aCas, EntityProcessStatus aStatus) {
@@ -94,8 +90,7 @@ public abstract class UimaAsBaseCallbackListener implements UimaASStatusCallback
    * The callback used to inform the application that the CPC request has completed. On success
    * aStatus will be null; on failure use the EntityProcessStatus class to get the details.
    * 
-   * @param aStatus
-   *          the status of the processing. This object contains a record of any Exception that
+   * @param aStatus the status of the processing. This object contains a record of any Exception that
    *          occurred, as well as timing information.
    */
   public void collectionProcessComplete(EntityProcessStatus aStatus) {

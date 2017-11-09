@@ -122,14 +122,14 @@ public abstract class Delegate {
   /**
    * Returns delegate key
    * 
-   * @return
+   * @return key
    */
   public String getKey() {
     return delegateKey;
   }
 
   /**
-   * Sets an {@link Endpoint} object
+   * Sets an { Endpoint} object
    * 
    * @param anEndpoint
    *          - an endpoint object
@@ -139,9 +139,9 @@ public abstract class Delegate {
   }
 
   /**
-   * Returns an {@link Endpoint} object
+   * Returns an { Endpoint} object
    * 
-   * @return
+   * @return endpoint
    */
   public Endpoint getEndpoint() {
     return endpoint;
@@ -181,7 +181,7 @@ public abstract class Delegate {
   /**
    * Restarts timer for a given CAS
    * 
-   * @param entry
+   * @param entry delegate meta
    */
   private void restartTimerForCas(DelegateEntry entry) {
     if (getCasProcessTimeout() > 0) {
@@ -320,6 +320,7 @@ public abstract class Delegate {
    * 
    * @param aCasReferenceId
    *          - CAS ID to add to the delayed list
+   * @return how many pending in dispatch list
    */
   public int addCasToPendingDispatchList(String aCasReferenceId, long casHashCode, boolean useTimerThreadPerCAS) {
     synchronized (pendingDispatchList) {
@@ -405,7 +406,7 @@ public abstract class Delegate {
   /**
    * Increments retry count
    * 
-   * @param aCasReferenceId
+   * @param aCasReferenceId cas id
    */
   public void incrementRetryCount(String aCasReferenceId) {
     synchronized (outstandingCasList) {
@@ -427,11 +428,12 @@ public abstract class Delegate {
   }
 
   /**
-   * Returns {@link DelegateEntry} instance that matches given CAS ID pending reply.
+   * Returns {DelegateEntry} instance that matches given CAS ID pending reply.
    * 
    * @param aCasReferenceId
    *          - unique id of a CAS to be searched for
-   * @return
+   * @param delegate list
+   * @return delegate meta info
    */
   private DelegateEntry lookupEntry(String aCasReferenceId, List<DelegateEntry> list) {
     for (DelegateEntry entry : list) {
@@ -450,6 +452,7 @@ public abstract class Delegate {
    * delegate one at a time.
    * 
    * @return - ID of the oldest CAS in the list
+   * @return oldest entry
    */
   public String removeOldestFromPendingDispatchList() {
     synchronized (pendingDispatchList) {
@@ -478,7 +481,9 @@ public abstract class Delegate {
    * OR the PING times out, all CASes are delayed. When the PING is acked by the delegate ALL
    * delayed CASes are sent to the delegate one at a time.
    * 
+   * @param cas id
    * @return - ID of the oldest CAS in the list
+   * 
    */
   public boolean removeCasFromPendingDispatchList(String aCasReferenceId) {
     synchronized (pendingDispatchList) {
@@ -502,12 +507,14 @@ public abstract class Delegate {
   }
 
   /**
-   * Removes {@link DelegateEntry} from the list of CASes pending reply. The entry is removed when
+   * Removes {DelegateEntry} from the list of CASes pending reply. The entry is removed when
    * either: 1) reply is received from the delegate before the timeout 2) the timeout occurs with no
    * retry 3) an error occurs and the CAS is dropped as part of Error Handling
    * 
    * @param aCasReferenceId
    *          - id of the CAS to remove from the list
+   *          
+   * @return true on success false otherwise         
    */
   public boolean removeCasFromOutstandingList(String aCasReferenceId) {
     synchronized (outstandingCasList) {
@@ -525,6 +532,8 @@ public abstract class Delegate {
    * 
    * @param aCasReferenceId
    *          - id of a CAS to find in an outstandingCasList
+   *          
+   * @return true if pending false otherwise         
    */
   public boolean isCasPendingReply(String aCasReferenceId) {
     synchronized (outstandingCasList) {
@@ -537,12 +546,11 @@ public abstract class Delegate {
   }
 
   /**
-   * Removes {@link DelegateEntry} from the list of CASes pending reply. The entry is removed when
+   * Removes { DelegateEntry} from the list of CASes pending reply. The entry is removed when
    * either: 1) reply is received from the delegate before the timeout 2) the timeout occurs with no
    * retry 3) an error occurs and the CAS is dropped as part of Error Handling
    * 
-   * @param aCasReferenceId
-   *          - id of the CAS to remove from the list
+   * @return id of the CAS to remove from the list
    */
   public String removeOldestCasFromOutstandingList() {
     synchronized (outstandingCasList) {
@@ -558,12 +566,12 @@ public abstract class Delegate {
   }
 
   /**
-   * Removes {@link DelegateEntry} from the list of CASes pending reply. If the CAS removed was the
+   * Removes {DelegateEntry} from the list of CASes pending reply. If the CAS removed was the
    * oldest in the list (first in the list) AND there are other CASes in the list pending reply AND
    * the delegate timeout is configured ( timeout > 0) , restart the timer for the next oldest CAS
    * in the list.
    * 
-   * @param aDelegateEntry
+   * @param aDelegateEntry delegate
    */
   private void removeCasFromOutstandingList(DelegateEntry aDelegateEntry) {
     // Before removing the entry check if this is the oldest in the list. This will be
@@ -709,10 +717,8 @@ public abstract class Delegate {
   /**
    * Starts a timer for a given command
    * 
-   * @param aCasReferenceId
-   *          - id of a CAS if command = Process, null otherwise
-   * @param aCommand
-   *          - command for which the timer is started
+   * @param delegateEntry delegate Object
+   *
    */
 //  private void startDelegateTimer(final String aCasReferenceId, final int aCommand) {
   private void startDelegateTimer(final DelegateEntry delegateEntry) {

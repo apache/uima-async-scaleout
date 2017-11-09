@@ -44,8 +44,8 @@ public class UimaMessageValidator {
    *          - jms message retrieved from queue
    * @param properties
    *          - map containing message properties
-   * @return
-   * @throws Exception
+   * @return true if valid false otherwise
+   * @throws Exception error
    */
 
   public static boolean validMessageType(UimaMessage aMessage, String endpointName)
@@ -104,10 +104,9 @@ public class UimaMessageValidator {
    * 
    * @param aMessage
    *          - JMS Message received
-   * @param properties
-   *          - Map containing header properties
+   * @param endpointName endpoint name
    * @return - true if the command received is a valid one, false otherwise
-   * @throws Exception
+   * @throws Exception error
    */
   public static boolean validCommand(UimaMessage aMessage, String endpointName) throws Exception {
     if (aMessage.containsProperty(AsynchAEMessage.Command)) {
@@ -141,10 +140,9 @@ public class UimaMessageValidator {
    * 
    * @param aMessage
    *          - JMS Message received
-   * @param properties
-   *          - Map containing header properties
+   * @param endpointName endpoint name
    * @return - true if the payload is valid, false otherwise
-   * @throws Exception
+   * @throws Exception error
    */
   public static boolean validPayload(UimaMessage aMessage, String endpointName) throws Exception {
     if (aMessage.containsProperty(AsynchAEMessage.Command)) {
@@ -216,8 +214,9 @@ public class UimaMessageValidator {
    * 
    * @param aMessage
    *          - JMS Message to validate
+   * @param  controller controller        
    * @return - true if message is valid, false otherwise
-   * @throws Exception
+   * @throws Exception error
    */
   public static boolean isValidMessage(UimaMessage aMessage, AnalysisEngineController controller)
           throws Exception {

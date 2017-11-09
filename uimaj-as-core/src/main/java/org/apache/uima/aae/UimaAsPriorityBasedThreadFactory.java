@@ -70,12 +70,7 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
   public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup) {
     this(tGroup,null);
   }
-    /**
-   * 
-   * 
-   * @param tGroup
-   * @param aController
-   */
+   
   public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController) {
     this( tGroup, aController, null);
   }
@@ -109,6 +104,8 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
    * Once the thread finishes initializing AE instance in the controller, it calls run() on a given
    * Runnable. This Runnable is a Worker instance managed by the TaskExecutor. When the thread calls
    * run() on the Runnable it blocks until the Worker releases it.
+   * 
+   * @param r runnable
    */
   public Thread newThread(final Runnable r) {
     Thread newThread = null;

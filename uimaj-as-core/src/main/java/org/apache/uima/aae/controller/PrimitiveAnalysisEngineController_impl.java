@@ -750,8 +750,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
    * @param aCasReferenceId
    *          - Id of an input CAS. The client wants to stop generation of child CASes from this
    *          CAS.
-   * 
-   * @return
+   * @param anEndpoint endpoint
    */
 
   public void process(CAS aCAS, String aCasReferenceId, Endpoint anEndpoint) {
@@ -1518,7 +1517,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   
   /**
    * The HeapDumpTimer is optionally used to dump the heap if a task takes too much time to finish.
-   * It is enabled from the System property -DheapDumpThreshold=<x> where x is a number of seconds 
+   * It is enabled from the System property -DheapDumpThreshold=x where x is a number of seconds 
    * the task is allowed to complete. If the task is not completed, the heap dump will be created. 
    * 
    *

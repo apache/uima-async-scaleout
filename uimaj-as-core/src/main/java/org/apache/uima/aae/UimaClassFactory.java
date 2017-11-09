@@ -52,13 +52,12 @@ public class UimaClassFactory {
   /**
    * Creates a resource specifier from a given file
    * 
-   * @param aFileResource
-   *          - resource filename
+   * @param aFileResource resource filename
    * @return ResourceSpecifier - new instance
    * 
-   * @throws InvalidXMLException
-   * @throws ResourceInitializationException
-   * @throws IOException
+   * @throws InvalidXMLException invalid xml
+   * @throws ResourceInitializationException init failed
+   * @throws IOException io failed
    */
   public static ResourceSpecifier produceResourceSpecifier(String aFileResource)
           throws InvalidXMLException, ResourceInitializationException, IOException {
@@ -95,20 +94,18 @@ public class UimaClassFactory {
   /**
    * Produces and initializes new FlowController
    * 
-   * @param aeSpecifier
+   * @param aeSpecifier resource specifix
    *          -
-   * @param aFlowControllerDescriptor
-   * @param anAggregateMergedTypeSystem
-   *          - Merged type system from all delegates
-   * @param aParentContext
-   *          - reference to parent context
-   * @param aSofaMappings
-   *          -
-   * @param aJmxManagementInterface
-   * @return
-   * @throws InvalidXMLException
-   * @throws ResourceInitializationException
-   * @throws IOException
+   * @param aFlowControllerDescriptor FC descriptor
+   * @param anAggregateMergedTypeSystem Merged type system from all delegates
+   * @param aParentContext reference to parent context
+   * @param aSofaMappings SOFA mappings
+   * @param aJmxManagementInterface jmx API
+   * @return initialized FlowContainer
+   * 
+   * @throws InvalidXMLException bad xml
+   * @throws ResourceInitializationException init failure
+   * @throws IOException io failure
    */
   public static FlowControllerContainer produceAggregateFlowControllerContainer(
           AnalysisEngineDescription aeSpecifier, String aFlowControllerDescriptor,

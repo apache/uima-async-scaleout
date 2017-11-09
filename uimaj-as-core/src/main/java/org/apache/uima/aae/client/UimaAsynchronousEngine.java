@@ -222,7 +222,7 @@ public interface UimaAsynchronousEngine {
    *          - configuration containing UIMA EE Service Broker URI, service queue name, timeout
    *          value, reply window size, and CAS Pool size.
    * 
-   * @throws ResourceInitializationException
+   * @throws ResourceInitializationException init error
    */
   public void initialize(Map anApplicationContext) throws ResourceInitializationException;
 
@@ -233,7 +233,7 @@ public interface UimaAsynchronousEngine {
    * @param aCollectionReader
    *          - instance of a <code>CollectionReader</code>
    * 
-   * @throws ResourceInitializationException
+   * @throws ResourceInitializationException init error
    */
   public void setCollectionReader(CollectionReader aCollectionReader)
           throws ResourceInitializationException;
@@ -260,14 +260,14 @@ public interface UimaAsynchronousEngine {
    * Stops the asynchronous client. Cleans up resources, drops connection to UIMA AS service queue
    * and stops listening on a response queue.
    * 
-   * @throws Exception
+   * @throws Exception error
    */
   public void stop() throws Exception;
 
   /**
    * Not implemented
    * 
-   * @return null
+   * @return performance report
    */
   public String getPerformanceReport();
 
@@ -300,7 +300,7 @@ public interface UimaAsynchronousEngine {
    *          - a CAS to analyze.
    * 
    * @return - returns a unique identifier associated with the sent CAS
-   * @throws ResourceProcessException
+   * @throws ResourceProcessException error
    */
   public String sendCAS(CAS aCAS) throws ResourceProcessException;
 
@@ -309,7 +309,7 @@ public interface UimaAsynchronousEngine {
    * available in a CAS pool.
    * 
    * @return - new CAS instance fetched from the CAS pool
-   * @throws Exception
+   * @throws Exception error
    */
   public CAS getCAS() throws Exception;
 
@@ -319,7 +319,7 @@ public interface UimaAsynchronousEngine {
    * this method will notify an application of completing the Collection Processing Complete request
    * using registered listener
    * 
-   * @throws ResourceProcessException
+   * @throws ResourceProcessException error
    */
   public void collectionProcessingComplete() throws ResourceProcessException;
 
@@ -330,7 +330,7 @@ public interface UimaAsynchronousEngine {
    * returns - an ProcessingResourceMetadata received from an asynchronous Analysis Engine service,
    * or null if initialize() has not yet been called.
    * 
-   * @throws ResourceInitializationException
+   * @throws ResourceInitializationException error
    */
   public ProcessingResourceMetaData getMetaData() throws ResourceInitializationException;
 
@@ -342,7 +342,7 @@ public interface UimaAsynchronousEngine {
    * @param aCAS
    *          - a CAS to analyze.
    * @return - a unique id assigned to the CAS
-   * @throws ResourceProcessException
+   * @throws ResourceProcessException error
    */
   public String sendAndReceiveCAS(CAS aCAS) throws ResourceProcessException;
   /**
@@ -355,7 +355,7 @@ public interface UimaAsynchronousEngine {
    * @param aCAS - a CAS to analyze.
    * @param   componentMetricsList - empty list to be filled with per AE performance metrics
    * @return - a unique id assigned to the CAS
-   * @throws ResourceProcessException
+   * @throws ResourceProcessException error
    */
   public String sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList) throws ResourceProcessException;
   /**
@@ -407,7 +407,7 @@ public interface UimaAsynchronousEngine {
    * @param aSpringContainerId
    *          - an id of the container to be destroyed.
    * 
-   * @throws Exception
+   * @throws Exception error
    */
   public void undeploy(String aSpringContainerId) throws Exception;
 
@@ -419,7 +419,7 @@ public interface UimaAsynchronousEngine {
    * @param aSpringContainerId
    *          - an id of the container to be destroyed.
    * 
-   * @throws Exception
+   * @throws Exception error
    */
   public void undeploy(String aSpringContainerId, int stop_level) throws Exception;
 
@@ -444,6 +444,7 @@ public interface UimaAsynchronousEngine {
    * service is a Cas Multiplier, it will stop producing new CASes, will wait until all child CASes
    * finish and finally returns the input CAS.
    * 
+   * @param aCasReferenceId cas id
    */
   public void stopProducingCases(String aCasReferenceId);
 }

@@ -68,12 +68,13 @@ public class UimaSerializer {
   /**
    * Serializes CAS into a given OutputStream in Xmi format
    * 
-   * @param stream
-   * @param aCAS
-   * @param encoding
-   * @param typeSystem
-   * @throws IOException
-   * @throws SAXException
+   * @param stream output stream
+   * @param aCAS CAS to serialize
+   * @param encoding encoding to use
+   * @param typeSystem type system 
+   * 
+   * @throws IOException io failure
+   * @throws SAXException parsing error
    */
   public void serializeToXMI(OutputStream stream, CAS aCAS, String encoding, TypeSystem typeSystem,
           OutOfTypeSystemData otsd) throws IOException, SAXException {
@@ -91,6 +92,12 @@ public class UimaSerializer {
 
   /**
    * Utility method for serializing a CAS to an XMI String
+   * 
+   * @param aCAS CAS to serialize
+   * @param serSharedData shared data
+   * 
+   * @throws Exception on error
+   * @return serialized CAS
    */
   public String serializeCasToXmi(CAS aCAS, XmiSerializationSharedData serSharedData)
           throws Exception {
@@ -126,6 +133,17 @@ public class UimaSerializer {
    * Utility method for deserializing a CAS from an XMI String
    * Does both processing of requests arriving to this service
    *   and responses returning to this service, or to a client. 
+   *   
+   *   @param anXmlStr serialized CAS
+   *   @param aCAS cas instance
+   *   @param aSharedData shared data
+   *   @param aLenient true or false
+   *   @param aMergePoint merge point
+   *   
+   *   @throws FactoryConfigurationError factory error
+   *   @throws ParserConfigurationException parser error
+   *   @throws SAXException parsing error
+   *   @throws IOException io error
    */
   public void deserializeCasFromXmi(String anXmlStr, CAS aCAS,
           XmiSerializationSharedData aSharedData, boolean aLenient, int aMergePoint)
@@ -153,6 +171,18 @@ public class UimaSerializer {
    *              ignore - for parallel, with no delta cas being returned
    *                       because earlier version of client wasn't supporting delta cas
    * See above method for requests and responses
+   * 
+   * @param anXmlStr cas to deserialize
+   * @param aCAS target cas
+   * @param aSharedData shared data
+   * @param aLenient lenient or not
+   * @param aMergePoint merge point
+   * @param allow na
+   * 
+   * @throws FactoryConfigurationError config error
+   * @throws ParserConfigurationException parsing error
+   * @throws SAXException parsing error
+   * @throws IOException io error
    */
   public void deserializeCasFromXmi(String anXmlStr, CAS aCAS,
           XmiSerializationSharedData aSharedData, boolean aLenient, int aMergePoint,
@@ -171,7 +201,15 @@ public class UimaSerializer {
     xmlReader.parse(new InputSource(reader));
   }
 
-  /** Utility method for deserializing a CAS from a binary */
+  /** Utility method for deserializing a CAS from a binary 
+   * 
+   * @param binarySource serialized cas
+   * @param cas target cas
+   * 
+   * @throws Exception on error
+   * 
+   * @return SerialFormat success
+   * */
   public SerialFormat deserializeCasFromBinary(byte[] binarySource, CAS aCAS) throws Exception {
     ByteArrayInputStream fis = null;
     try {

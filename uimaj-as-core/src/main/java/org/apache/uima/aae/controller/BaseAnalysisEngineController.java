@@ -1672,8 +1672,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   /**
    * Logs statistics
    * 
-   * @param aDelegateKey
-   * @param aDelegateServicePerformance
+   * @param aDelegateKey delegate key
+   * @param aDelegateServicePerformance performance stats
    */
   protected void logStats(String aDelegateKey, ServicePerformance aServicePerformance) {
     if (aServicePerformance != null) {

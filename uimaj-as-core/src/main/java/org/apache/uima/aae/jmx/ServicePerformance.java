@@ -154,7 +154,7 @@ public class ServicePerformance implements ServicePerformanceMBean {
    * delegate. Each reply message containing a CAS include the current actual analysis time This is
    * not a delta, its the running analysis time.
    * 
-   * @param anAnalysisTime
+   * @param anAnalysisTime analysis time
    */
   public synchronized void setAnalysisTime(long anAnalysisTime) {
     analysisTime = anAnalysisTime;

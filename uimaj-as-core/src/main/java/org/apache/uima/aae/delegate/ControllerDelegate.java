@@ -31,7 +31,8 @@ public class ControllerDelegate extends Delegate {
   /**
    * Initializes this instance with a unique delegate key
    * 
-   * @param aDelegateKey
+   * @param aDelegateKey delegate key
+   * @param  aController controller
    */
   public ControllerDelegate(String aDelegateKey, AnalysisEngineController aController) {
     super.delegateKey = aDelegateKey;

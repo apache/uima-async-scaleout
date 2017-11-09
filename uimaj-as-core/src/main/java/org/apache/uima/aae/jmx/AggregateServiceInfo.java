@@ -24,10 +24,7 @@ import org.apache.uima.aae.controller.AnalysisEngineController;
 public class AggregateServiceInfo extends ServiceInfo implements AggregateServiceInfoMBean {
   private static final long serialVersionUID = 6076764724935117459L;
 
-  /**
-	 * 
-	 */
-
+ 
   public AggregateServiceInfo(AnalysisEngineController controller) {
     super(false, controller);
   }

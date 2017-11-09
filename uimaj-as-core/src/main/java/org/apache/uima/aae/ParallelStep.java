@@ -41,9 +41,8 @@ public class ParallelStep extends Step {
    * user's Flow implementation can (but is not required to) reuse the same SimpleStep object
    * multiple times.
    * 
-   * @return an Analysis Engine key. This must be one of the keys in the FlowController's
-   *         {@link FlowControllerContext#getAnalysisEngineMetaDataMap()}.
-   */
+   * @param aKeys - saves keys to the AE
+  */
   public void setAnalysisEngineKeys(String[] aKeys) {
     mKeys = aKeys;
   }

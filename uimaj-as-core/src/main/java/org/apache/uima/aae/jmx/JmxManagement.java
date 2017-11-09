@@ -35,28 +35,28 @@ public interface JmxManagement {
    * 
    * @param anInitMap
    *          - properties required during initialization
-   * @throws Exception
+   * @throws Exception error
    */
   public void initialize(Map anInitMap) throws Exception;
 
   /**
    * Returns instance of an MBeanServer
    * 
-   * @return
+   * @return MBeanServer the server
    */
   public MBeanServer getMBeanServer();
 
   /**
    * Returns configured Jmx Domain
    * 
-   * @return
+   * @return jmx Domain
    */
   public String getJmxDomain();
 
   /**
    * Sets the Jmx Domain
    * 
-   * @param aJmxDomain
+   * @param aJmxDomain domain
    */
   public void setJmxDomain(String aJmxDomain);
 
@@ -67,21 +67,21 @@ public interface JmxManagement {
    *          - instance of MBean to register
    * @param anMBeanName
    *          - name of the MBean
-   * @throws Exception
+   * @throws Exception error
    */
   public void registerMBean(Object anMBean, ObjectName anMBeanName) throws Exception;
 
   /**
    * Removed an MBean from the MBeanServer registry
    * 
-   * @param anMBeanName
+   * @param anMBeanName mbean name
    */
   public void unregisterMBean(ObjectName anMBeanName);
 
   /**
    * Performs cleanup when object goes out of scope
    * 
-   * @throws Exception
+   * @throws Exception error
    */
   public void destroy() throws Exception;
  

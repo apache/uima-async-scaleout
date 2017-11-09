@@ -60,12 +60,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
   public UimaAsThreadFactory(ThreadGroup tGroup) {
     this(tGroup,null);
   }
-    /**
-   * 
-   * 
-   * @param tGroup
-   * @param aController
-   */
+ 
   public UimaAsThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController) {
     this( tGroup, aController, null);
   }

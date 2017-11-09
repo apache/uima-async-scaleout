@@ -636,10 +636,9 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   /**
    * Shuts down the UIMA C++ service process.
    * 
-   * @param force
-   *          - force or allow service to shutdown gracefully.
-   * @throws IOException
-   * @throws InterruptedException
+   * @param force force or allow service to shutdown gracefully.
+   * @throws IOException error
+   * @throws InterruptedException error
    */
   public void shutdown() throws IOException, InterruptedException {
     mbean.shutdown();
@@ -688,11 +687,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
     }
   }
 
-  /**
-   * test
-   * 
-   * @param args
-   */
+
   public static void main(String[] args) {
     HashMap<String, String> envVarMap = new HashMap<String, String>();
 

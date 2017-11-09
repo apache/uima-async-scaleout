@@ -25,14 +25,10 @@ public class PrimitiveServiceInfo extends ServiceInfo implements PrimitiveServic
                                                                                           // ServiceInfoMBean
 // extends ServiceInfo implements PrimitiveServiceInfoMBean//, ServiceInfoMBean
 {
-  /**
-	 * 
-	 */
+ 
   private static final long serialVersionUID = -6416623322329673083L;
  
-  /**
-	 * 
-	 */
+ 
   public PrimitiveServiceInfo(boolean isaCasMultiplier, AnalysisEngineController controller ) {
     super(isaCasMultiplier, controller);
   }

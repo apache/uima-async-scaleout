@@ -868,8 +868,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    *          - reference id of the CAS created by the CAS multiplier
    * @param newCASProducedBy
    *          - name of the multiplier that created the CAS
-   * @throws AnalysisEngineProcessException
-   * @throws AsynchAEException
+   * @throws AnalysisEngineProcessException process error
+   * @throws AsynchAEException error
    */
   public void process(CAS aCAS, String anInputCasReferenceId, String aNewCasReferenceId,
           String newCASProducedBy) // throws AnalysisEngineProcessException, AsynchAEException

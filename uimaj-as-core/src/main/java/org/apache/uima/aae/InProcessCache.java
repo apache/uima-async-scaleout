@@ -78,6 +78,8 @@ public class InProcessCache implements InProcessCacheMBean {
     state. In this state the controller waits for 
     the cache to send notification when all CASes have been 
     processed.
+    
+    @param  ctrl - controller reference
   **/
   public void registerController(BaseAnalysisEngineController ctrl) {
     controller = ctrl;
@@ -129,9 +131,9 @@ public class InProcessCache implements InProcessCacheMBean {
    * processed, *but* its subordinate CASes are still in play. Input CAS is only returned back to
    * the client if all if its subordinate CASes are fully processed.
    * 
-   * @param anInputCASReferenceId
-   * @return
-   * @throws Exception
+   * @param anInputCASReferenceId - input CAS id
+   * @return true/false
+   * @throws Exception on failure
    */
   public boolean isInputCASPendingReply(String anInputCASReferenceId) throws Exception {
     if (anInputCASReferenceId == null) {
