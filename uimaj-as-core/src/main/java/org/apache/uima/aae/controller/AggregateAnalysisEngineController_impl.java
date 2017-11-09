@@ -290,10 +290,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     return false;
   }
 
-  /**
-   * 
-   * @param anEndpointName
-   */
+
   public void setServiceEndpointName(String anEndpointName) {
     serviceEndpointName = anEndpointName;
     if (this.isTopLevelComponent()) {
@@ -302,17 +299,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
   }
 
-  /**
-	 * 
-	 */
+
   public String getServiceEndpointName() {
     return serviceEndpointName;
   }
 
-  /**
-   * 
-   * @param aBeanName
-   */
+ 
   public void setControllerBeanName(String aBeanName) {
     controllerBeanName = aBeanName;
     if (this.isTopLevelComponent()) {
@@ -320,9 +312,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
   }
 
-  /**
-	 * 
-	 */
+ 
   public Endpoint getMessageOrigin(String aCasReferenceId) {
       if (originMap.containsKey(aCasReferenceId)) {
         return (Endpoint) originMap.get(aCasReferenceId);
@@ -342,9 +332,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
   }
 
-  /**
-	 * 
-	 */
   public void dropCAS(String aCasReferenceId, boolean dropCacheEntry) {
 
     FlowContainer flow = lookupFlow(aCasReferenceId);
@@ -368,9 +355,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   }
 
-  /**
-	 * 
-	 */
   public void mapEndpointsToKeys(ConcurrentHashMap aDestinationMap) {
     destinationMap = aDestinationMap;
     Set set = destinationMap.entrySet();
@@ -415,10 +399,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
   }
 
-  /**
-   * 
-   * @return
-   */
+ 
   private synchronized boolean allDelegatesCompletedCollection() {
     Set set = destinationMap.entrySet();
     for (Iterator it = set.iterator(); it.hasNext();) {
@@ -439,9 +420,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     return delegateStats;
   }
 
-  /**
-	 * 
-	 */
+  
   public void processCollectionCompleteReplyFromDelegate(String aDelegateKey, boolean sendReply)
           throws AsynchAEException {
 
@@ -518,19 +497,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     clearStats();
   }
 
-  /**
-   * 
-   * @param aFlowControllerDescriptor
-   */
+  
   public synchronized void setFlowControllerDescriptor(String aFlowControllerDescriptor) {
     flowControllerDescriptor = aFlowControllerDescriptor;
   }
 
-  /**
-   * 
-   * @param anEndpoint
-   * @throws AsynchAEException
-   */
+ 
   private void waitUntilAllCasesAreProcessed(Endpoint anEndpoint) throws AsynchAEException {
     try {
       boolean cacheNotEmpty = true;
@@ -556,9 +528,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
   }
 
-  /**
-	 * 
-	 */
+  
   public void takeAction(String anAction, String anEndpointName, ErrorContext anErrorContext) {
     try {
       handleAction(anAction, anEndpointName, anErrorContext);
@@ -868,8 +838,6 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    *          - reference id of the CAS created by the CAS multiplier
    * @param newCASProducedBy
    *          - name of the multiplier that created the CAS
-   * @throws AnalysisEngineProcessException process error
-   * @throws AsynchAEException error
    */
   public void process(CAS aCAS, String anInputCasReferenceId, String aNewCasReferenceId,
           String newCASProducedBy) // throws AnalysisEngineProcessException, AsynchAEException
@@ -1105,7 +1073,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   /**
    * This is a process method that is executed for CASes not created by a Multiplier in this
    * aggregate.
-   * 
+   * @param aCAS cas
+   * @param aCasReferenceId cas id
    */
   public void process(CAS aCAS, String aCasReferenceId) {
     boolean handlingDelayedStep = false;
@@ -1393,6 +1362,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    *   gives the string feature to use. An example of type and feature names to use would be
    *   "org.apache.uima.examples.SourceDocumentInformation" and "uri".
    *   
+   *   @param analysisEngineKey key
+   *   @param cas CAS
+   *   @throws Exception error
    */
   private void logCasForEndpoint(String analysisEngineKey, CAS cas) throws Exception {
     synchronized (enableCasLogMap) {
@@ -2363,6 +2335,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
   /**
     Check if a given destination exists in the DeadClient Map
+    
+    @param destination destination
+    @return true if client is dead false otherwise
   **/
   private boolean isClientDead(String destination) {
 	  if ( super.deadClientDestinationMap.containsKey(destination)) {
@@ -2565,6 +2540,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
    * a list of CASes pending dispatch. The delegate is in a questionable state and the aggregate
    * sends a ping message to check delegate's availability. If the delegate responds to the ping,
    * all CASes in the pending dispatch list will be immediately dispatched.
+   * 
+   * @param aCasReferenceId cas id
+   * @param aDelegateKey delegate key
+   * @param casHashcode hashcode
+   * 
+   * @return true if cas in timed out state
+   * @throws AsynchAEException error
    **/
   public boolean delayCasIfDelegateInTimedOutState(String aCasReferenceId, String aDelegateKey, long casHashcode)
           throws AsynchAEException {
@@ -2673,6 +2655,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   /**
    * Returns a delegate key given an endpoint (queue) name and a server uri. If a server is null,
    * only the endpoint name will be used for matching.
+   * 
+   * @param anEndpointName enadpoint name
+   * @param server server id
+   * 
+   * @return delegate key
    */
   public String lookUpDelegateKey(String anEndpointName, String server) {
     String key = null;
@@ -3259,7 +3246,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   /**
    * Accumulate analysis time for the aggregate
    * 
-   * @param anAnalysisTime
+   * @param anAnalysisTime time
    */
   public synchronized void incrementAnalysisTime(long anAnalysisTime) {
     servicePerformance.incrementAnalysisTime(anAnalysisTime);
@@ -3511,10 +3498,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     return localCache;
   }
 
-  /**
-   * Return {@link Delegate} object for a given delegate key.
-   * 
-   */
+  
   public Delegate lookupDelegate(String aDelegateKey) {
 
     for (Delegate delegate : delegates) {

@@ -42,8 +42,8 @@ public class UimaMessageValidator {
    * 
    * @param aMessage
    *          - jms message retrieved from queue
-   * @param properties
-   *          - map containing message properties
+   * @param endpointName
+   *          - endpoint name
    * @return true if valid false otherwise
    * @throws Exception error
    */
