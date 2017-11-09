@@ -406,33 +406,33 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =======================================================================
          
 =========================================================================
-==== This distribution includes jars from ActiveMQ version 5.14.0 
+==== This distribution includes jars from ActiveMQ version 5.15.2 
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
     From: 'Apache Software Foundation' (http://www.apache.org)
 =========================================================================
 
-activemq-kahadb-store-5.14.0.jar
-activemq-leveldb-store-5.14.0.jar
-activemq-console-5.14.0.jar
-activemq-mqtt-5.14.0.jar
-activemq-log4j-appender-5.14.0.jar
-activemq-amqp-5.14.0.jar
-activemq-shiro-5.14.0.jar
-activemq-spring-5.14.0.jar
-activemq-jaas-5.14.0.jar
-activemq-stomp-5.14.0.jar
-activemq-camel-5.14.0.jar
-activemq-client-5.14.0.jar
-activemq-broker-5.14.0.jar
-activemq-pool-5.14.0.jar
-activemq-runtime-config-5.14.0.jar
-activemq-jms-pool-5.14.0.jar
-activemq-partition-5.14.0.jar
-activemq-http-5.14.0.jar
+activemq-kahadb-store-5.15.2.jar
+activemq-leveldb-store-5.15.2.jar
+activemq-console-5.15.2.jar
+activemq-mqtt-5.15.2.jar
+activemq-log4j-appender-5.15.2.jar
+activemq-amqp-5.15.2.jar
+activemq-shiro-5.15.2.jar
+activemq-spring-5.15.2.jar
+activemq-jaas-5.15.2.jar
+activemq-stomp-5.15.2.jar
+activemq-camel-5.15.2.jar
+activemq-client-5.15.2.jar
+activemq-broker-5.15.2.jar
+activemq-pool-5.15.2.jar
+activemq-runtime-config-5.15.2.jar
+activemq-jms-pool-5.15.2.jar
+activemq-partition-5.15.2.jar
+activemq-http-5.15.2.jar
 log4j-1.2.17.jar
 
 =========================================================================
-==== ActiveMQ :: activemq-broker-5.14.0.jar (DEPENDENCIES)
+==== ActiveMQ :: activemq-broker-5.15.2.jar (DEPENDENCIES)
 =========================================================================
 
 From: 'Apache Software Foundation' (http://www.apache.org)
@@ -453,11 +453,11 @@ From: 'QOS.ch' (http://www.qos.ch)
 *********SEE ABOVE (jcl-over-slf4j-1.7.13.jar section ) FOR THE FULL TEXT OF MIT LICENSE TEXT ************
      
 =========================================================================================
-==== ActiveMQ :: activemq-console-5.14.0.jar (DEPENDENCIES)
+==== ActiveMQ :: activemq-console-5.15.2.jar (DEPENDENCIES)
 =========================================================================================
 
 From: 'The Apache Software Foundation' (http://www.apache.org)
-  - Apache XBean :: Spring (http://geronimo.apache.org/maven/xbean/3.18/xbean-spring) org.apache.xbean:xbean-spring:bundle:3.18
+  - Apache XBean :: Spring (http://geronimo.apache.org/maven/xbean/3.18/xbean-spring) org.apache.xbean:xbean-spring:bundle:4.2
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 From: 'The Apache Software Foundation' (http://www.apache.org/)
@@ -496,7 +496,7 @@ or otherwise exploited by anyone for any purpose, commercial or non-commercial, 
 
 
 ====================================================================================
-==== ActiveMQ :: activemq-http-5.14.0.jar (DEPENDENCIES)
+==== ActiveMQ :: activemq-http-5.15.2.jar (DEPENDENCIES)
 ====================================================================================
 
 From: 'an unknown organization'
@@ -528,12 +528,12 @@ From: 'Extreme! Lab, Indiana University' (http://www.extreme.indiana.edu/)
 *********SEE ABOVE (Apache Commons Pool section ) FOR the TEXT OF PUBLIC DOMAIN LICENSE TEXT ************
 
 From: 'Mort Bay Consulting' (http://www.mortbay.com)
-  - Jetty :: Aggregate :: All core Jetty (http://www.eclipse.org/jetty) org.eclipse.jetty.aggregate:jetty-all:jar:9.2.13.v20150730
+  - Jetty :: Aggregate :: All core Jetty (http://www.eclipse.org/jetty) org.eclipse.jetty.aggregate:jetty-all:jar:9.2.22.v20170606
     License: Apache Software License - Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0)    
     License: Eclipse Public License - Version 1.0  (http://www.eclipse.org/org/documents/epl-v10.php)
 
 
-    from jetty-all-9.2.13.v20150730.jar (about.html - detagged)
+    from jetty-all-9.2.22.v20170606.jar (about.html - detagged)
     ----------------------------------------------------------
     The Eclipse Foundation makes available all content in this plug-in (&quot;Content&quot;).  The Content is dual licensed and is 
     provided to you under the terms and conditions of the Eclipse Public License Version 1.0 (&quot;EPL&quot;) as well as the Apache 
@@ -555,7 +555,7 @@ From: 'Mort Bay Consulting' (http://www.mortbay.com)
 From: 'The Apache Software Foundation' (http://www.apache.org/)
   - Commons Codec (http://commons.apache.org/codec/) commons-codec:commons-codec:jar:1.9
 
- - HttpClient (http://hc.apache.org/httpcomponents-client) org.apache.httpcomponents:httpclient:jar:4.5.1
+ - HttpClient (http://hc.apache.org/httpcomponents-client) org.apache.httpcomponents:httpclient:jar:4.5.3
     License: Apache License  (LICENSE.txt)
   - HttpCore (http://hc.apache.org/httpcomponents-core-ga) org.apache.httpcomponents:httpcore:jar:4.4.4
     License: Apache License  (LICENSE.txt)
@@ -711,7 +711,7 @@ that may appear in any communication from You. This License may not be modified 
 
 
 From: 'XStream' (http://xstream.codehaus.org)
-  - XStream Core (http://codehaus.org/xstream-parent/xstream/) com.thoughtworks.xstream:xstream:jar:1.4.8
+  - XStream Core (http://codehaus.org/xstream-parent/xstream/) com.thoughtworks.xstream:xstream:jar:1.4.10
     License: BSD style  (http://xstream.codehaus.org/license.html)
 
 Copyright (c) 2003-2006, Joe Walnes
@@ -744,21 +744,21 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 
 
 =======================================================================
-==== This distribution includes jars from Spring Framework version 4.1.9
+==== This distribution includes jars from Spring Framework version 4.3.9
     License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
     From: 'Apache Software Foundation' (http://www.apache.org)
 =========================================================================
 
-spring-core-4.1.9.RELEASE.jar
-spring-beans-4.1.9.RELEASE.jar
-spring-jms-4.1.9.RELEASE.jar
-spring-tx-4.1.9.RELEASE.jar
-spring-expression-4.1.9.RELEASE.jar
-spring-aop-4.1.9.RELEASE.jar
-spring-context-4.1.9.RELEASE.jar
+spring-core-4.3.9.RELEASE.jar
+spring-beans-4.3.9.RELEASE.jar
+spring-jms-4.3.9.RELEASE.jar
+spring-tx-4.3.9.RELEASE.jar
+spring-expression-4.3.9.RELEASE.jar
+spring-aop-4.3.9.RELEASE.jar
+spring-context-4.3.9.RELEASE.jar
 
 =======================================================================
-From spring-core-4.1.9.RELEASE.jar (license.txt)
+From spring-core-4.3.9.RELEASE.jar (license.txt)
 
 
 To the extent any open source subcomponents are licensed under the EPL and/or

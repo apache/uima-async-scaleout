@@ -64,3 +64,15 @@ Excluded from the UIMA AS distribution are the following parts of Apache ActiveM
   - spring-aop-4.1.9.RELEASE.jar
   - spring-context-4.1.9.RELEASE.jar
   
+11/09/2017 - update License file to include information about new Apache Active MQ 5.15.2
+
+11/09/2017 - updated License file to include content found in 
+  - httpclient-4.5.3.jar
+
+11/09/2017 - updated License file to include content found in 
+  - xstream-1.4.10.jar
+  
+11/09/2017 - updated License file to include content found in 
+  - jetty-all-9.2.22.v20170606.jar  
+  
+11/09/2017 - update License file to include information about new Spring Framework 4.3.9.RELEASE
