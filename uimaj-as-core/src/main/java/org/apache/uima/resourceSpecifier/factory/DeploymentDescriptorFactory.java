@@ -32,7 +32,6 @@ import org.apache.uima.resourceSpecifier.factory.impl.UimaASPrimitiveDeploymentD
 /**
  * Factory class providing static API to generate UIMA AS Deployment Descriptor. Supports
  * creation of both Primitive and Aggregate Deployment Descriptors.
- * <p>
  *  
  */
 public final class DeploymentDescriptorFactory {
