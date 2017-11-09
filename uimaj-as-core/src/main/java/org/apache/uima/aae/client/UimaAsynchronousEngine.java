@@ -144,7 +144,7 @@ public interface UimaAsynchronousEngine {
   /**
    * Path to the XSLT processor to use when processing a deployment descriptor. The application provides it to the Uima AS 
    * client via System property, either on a command line using -D, or explicitly by using java's 
-   * System.setProperty(DD2SpringXsltFilePath,<value>). This path is required only if the Uima AS Client is used to deploy 
+   * System.setProperty(DD2SpringXsltFilePath,value). This path is required only if the Uima AS Client is used to deploy 
    * Uima AS service.
    */
   public static final String DD2SpringXsltFilePath = "DD2SpringXsltFilePath";
@@ -157,7 +157,7 @@ public interface UimaAsynchronousEngine {
   /**
    * Saxon classpath to use when processing a deployment descriptor. The application provides it to the Uima AS 
    * client via System property, either on a command line using -D, or explicitly by using java's 
-   * System.setProperty(SaxonClasspath,<value>). This path is required only if the Uima AS Client is used to deploy 
+   * System.setProperty(SaxonClasspath,value). This path is required only if the Uima AS Client is used to deploy 
    * Uima AS service.
    */
   public static final String SaxonClasspath = "SaxonClasspath";
@@ -166,7 +166,7 @@ public interface UimaAsynchronousEngine {
    * Debug flag to use when processing a deployment descriptor. If set, the dd2spring processor will not remove generated
    * spring configuration file on client exit. The application provides it to the Uima AS 
    * client via System property, either on a command line using -D, or explicitly by using java's 
-   * System.setProperty(UimaEeDebug,<value>). This setting is only relevant if the Uima AS Client is used to deploy 
+   * System.setProperty(UimaEeDebug,value). This setting is only relevant if the Uima AS Client is used to deploy 
    * Uima AS service.
    */
   public static final String UimaEeDebug = "-uimaEeDebug";
