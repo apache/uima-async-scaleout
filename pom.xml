@@ -348,7 +348,7 @@
           <!-- >version>2.9.1</version-->
 	  <executions>
 	      <execution>
-		  <id>javadocs-distr</id>
+		  <id>attach-javadocs</id>
 		  <phase>prepare-package</phase> <!-- must be before assembly -->
                   <!--phase>deploy</phase-->   <!-- comment above and uncomment to disable javadocs, for testing/experimentation, with assembly:assembly-->
 		  <goals>

@@ -135,7 +135,7 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
    * @param envVarMap
    *          - enviroment variables to be set. These settings are valid only for the new process in
    *          which C++ service will run.
-   * @throws UIMAException
+   * @throws UIMAException error
    */
   public UimacppServiceController(String aeDescriptorFileName, String queueName, String brokerURL,
           int numInstances, int prefetchSize, Map<String, String> envVarMap,
