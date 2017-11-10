@@ -29,7 +29,7 @@ public interface AnalysisEngineInstancePool {
    * 
    * @param anAnalysisEngine
    *          - AnalysisEngine instance to be added to the pool
-   * @throws Exception
+   * @throws Exception error
    */
   public void checkin(AnalysisEngine anAnalysisEngine) throws Exception;
 
@@ -37,21 +37,21 @@ public interface AnalysisEngineInstancePool {
    * Borrows an instance of AnalysisEngine from the pool
    * 
    * @return AnalysisEngine instance
-   * @throws Exception
+   * @throws Exception error
    */
   public AnalysisEngine checkout() throws Exception;
 
   /**
    * Destroys Analysis Engine instance pool.
    * 
-   * @throws Exception
+   * @throws Exception error
    */
   public void destroy() throws Exception;
 
   /**
    * Checks if the current Thread is assigned to an AE instance
    * 
-   * @return
+   * @return true or false
    */
   public boolean exists();
 

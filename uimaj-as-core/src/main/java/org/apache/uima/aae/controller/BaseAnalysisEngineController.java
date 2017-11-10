@@ -933,9 +933,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
   }
 
-  /**
-   * Override the default JmxManager
-   */
+ 
   public void setJmxManagement(JmxManagement aJmxManagement) {
     jmxManagement = aJmxManagement;
   }
@@ -1657,6 +1655,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    * statistics. A key to the map is the CAS id. This method creates a new instance of
    * ServicePerformance object if one doesnt exist in the map for a given CAS id.
    * 
+   * @param aCasReferenceId cas id
+   * @return ServicePerformance performance stats
    */
   public ServicePerformance getCasStatistics(String aCasReferenceId) {
     ServicePerformance casStats = null;
@@ -1858,7 +1858,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   /**
    * Return true if this service is in the shutdown state
-   * 
+   * @return true if shutting down
    */
   public boolean isStopped() {
     return stopped;
@@ -1893,6 +1893,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   /**
    * Stops input channel(s) and initiates a shutdown of all delegates ( if this is an aggregate ).
    * At the end sends an Exception to the client and closes an output channel.
+   * 
+   * @param shutdownNow stop this service
    */
   public void stop(boolean shutdownNow) {
     this.stop(null, null,shutdownNow);
@@ -2299,7 +2301,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   /**
    * Stops a listener on the main input channel
-   * 
+   * @param shutdownNow stop
    */
   protected void stopInputChannel(boolean shutdownNow) {
     InputChannel iC = getInputChannel(endpointName);
@@ -2409,7 +2411,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   /**
    * Aggregates have more than one Listener channel. This method stops all configured input channels
    * this service is configured with.
+   * @param cmKey cas multiplier key
    * 
+   * @return AnalysisEngineController CM controller
    */
 
   public AnalysisEngineController getCasMultiplierController(String cmKey) {

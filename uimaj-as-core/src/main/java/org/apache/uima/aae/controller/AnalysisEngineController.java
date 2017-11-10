@@ -226,10 +226,7 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public String getKey();
   
   public void dumpState(StringBuffer buffer, String lbl1);
-  /**
-   * Return UIMA AS process PID
-   * @return
-   */
+  
   public String getPID();
   
   public void warmUp(String warmUpDataPath, CountDownLatch warmUpLatch) throws Exception;
