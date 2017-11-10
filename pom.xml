@@ -370,7 +370,7 @@
                            uimaj-as-core/src/main/java:uimaj-as-activemq/src/main/java:uimaj-as-camel/src/main/java:uima-as-jms/src/main/java
                       </sourcepath>
                       <subpackages>org.apache.uima</subpackages>
-		      <excludePackageNames>*.aae.*:org.apache.uima.resourceSpecifier</excludePackageNames>
+		      <excludePackageNames>*.aae.*:org.apache.uima.resourceSpecifier.*</excludePackageNames>
 		      <!-- add a few classes in impl packages that are directly used by user code -->
                       <additionalparam>
                           ${javadoc.opts}
