@@ -1673,7 +1673,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    * Logs statistics
    * 
    * @param aDelegateKey delegate key
-   * @param aDelegateServicePerformance performance stats
+   * @param aServicePerformance performance stats
    */
   protected void logStats(String aDelegateKey, ServicePerformance aServicePerformance) {
     if (aServicePerformance != null) {
@@ -1848,11 +1848,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     return clientEndpoint;
   }
 
-  /**
-   * 
-   * @param anEndpoint
-   */
-  public void cacheClientEndpoint(Endpoint anEndpoint) {
+   public void cacheClientEndpoint(Endpoint anEndpoint) {
     clientEndpoint = anEndpoint;
   }
 

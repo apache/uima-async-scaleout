@@ -244,20 +244,21 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
    * Communication via sockets is established between this Controller and the C++ service through
    * which logging, JMX and administrative messages are transmitted.
    * 
-   * @param uimaLogger
-   * @param aeDescriptorFileName
-   * @param mqQueueName
-   * @param mqHostName
-   * @param mqPort
-   * @param mqChannel
-   * @param mqQueueMgr
-   * @param numInstances
-   * @param envVarMap
-   * @param processCasErrorThreshhold
-   * @param processCasErrorWindow
-   * @param terminateOnCPCError
-   * @param mBeanServer
-   * @throws ResourceInitializationException
+   * @param uimaLogger logger
+   * @param aeDescriptorFileName descriptor
+   * @param queueName queue name
+   * @param mqHostName host name
+   * @param mqPort port
+   * @param mqChannel channel
+   * @param mqQueueMgr queue manager
+   * @param numInstances how many
+   * @param envVarMap environment
+   * @param processCasErrorThreshhold threshold
+   * @param processCasErrorWindow error threshold
+   * @param terminateOnCPCError termination 
+   * @param jmxManagement JMX server
+   * @param initialFsHeapSize heap size
+   * @throws ResourceInitializationException error
    */
   public UimacppServiceController(org.apache.uima.util.Logger uimaLogger,
           String aeDescriptorFileName, String queueName, String mqHostName, int mqPort,
@@ -636,7 +637,6 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
   /**
    * Shuts down the UIMA C++ service process.
    * 
-   * @param force force or allow service to shutdown gracefully.
    * @throws IOException error
    * @throws InterruptedException error
    */

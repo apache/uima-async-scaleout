@@ -117,9 +117,7 @@ public class CpcErrorHandler extends ErrorHandlerBase implements ErrorHandler {
     return true;
   }
 
-  /**
-   * @param args
-   */
+  
   public static void main(String[] args) {
     // TODO Auto-generated method stub
 
