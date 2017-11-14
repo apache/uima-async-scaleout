@@ -143,7 +143,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     @Test
     public void testSyncClientRecoveryFromBrokerStopAndRestart() throws Exception  {
       System.out.println("-------------- testSyncClientRecoveryFromBrokerStopAndRestart -------------");
-      System.setProperty("uima.as.enable.jmx","false");  
+      //System.setProperty("uima.as.enable.jmx","false");  
       // Instantiate Uima AS Client
         BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
         BrokerService broker2 = setupSecondaryBroker(true);
@@ -227,7 +227,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     @Test
     public void testMultipleSyncClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
       System.out.println("-------------- testMultipleSyncClientsRecoveryFromBrokerStopAndRestart -------------");
-      System.setProperty("uima.as.enable.jmx","false"); 
+      //System.setProperty("uima.as.enable.jmx","false"); 
       final BrokerService broker2 = setupSecondaryBroker(true);
       final CountDownLatch latch = new CountDownLatch(8);
       Thread[] clientThreads = new Thread[8];
@@ -1571,7 +1571,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   @Test
   public void testSyncClientRecoveryFromBrokerStop() throws Exception  {
     System.out.println("-------------- testSyncClientRecoveryFromBrokerStop -------------");
-    System.setProperty("uima.as.enable.jmx","false"); 
+    //System.setProperty("uima.as.enable.jmx","false"); 
     // Instantiate Uima AS Client
       BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
       BrokerService broker2 = setupSecondaryBroker(true);
