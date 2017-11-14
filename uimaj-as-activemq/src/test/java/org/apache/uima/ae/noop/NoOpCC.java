@@ -31,7 +31,7 @@ public class NoOpCC extends CasConsumer_ImplBase {
   }
 
   public void processCas(CAS aCAS) throws ResourceProcessException {
-    System.out.println("NoOpCC process() called");
+    //System.out.println("NoOpCC process() called");
   }
 
 }
