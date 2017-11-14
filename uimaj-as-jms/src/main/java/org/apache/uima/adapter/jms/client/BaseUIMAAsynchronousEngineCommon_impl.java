@@ -3012,7 +3012,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         //  System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.recoverSharedConnectionIfClosed() Got new connection");
         getDispatcher().setConnection(sharedConnection.getConnection());
         
-        System.out.println("Uima-AS Client Recovered Broker Connection - Sending GetMeta Ping");
+        //System.out.println("Uima-AS Client Recovered Broker Connection - Sending GetMeta Ping");
         serviceDelegate.setAwaitingPingReply();
 
         try {
