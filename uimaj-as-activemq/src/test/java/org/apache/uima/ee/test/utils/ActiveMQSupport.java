@@ -280,10 +280,12 @@ public class ActiveMQSupport extends TestCase {
       String hostName = "localhost"; 
   	  boolean enableJMX = true;
   	  String jmxFlag = System.getProperty("uima.as.enable.jmx");
-  	  if ( jmxFlag != null && jmxFlag.equalsIgnoreCase("false") ) {
+  	 
+  	  if ( secondaryBroker ) {
+  		enableJMX = false;
+  	  } else  if ( jmxFlag != null && jmxFlag.equalsIgnoreCase("false") ) {
   		enableJMX = false;
   	  }
-
       BrokerService broker = 
         BrokerFactory.createBroker(new URI("broker:()/" + hostName + "?persistent=false"));
       tcpConnector = addConnector(broker, "tcp",port);
