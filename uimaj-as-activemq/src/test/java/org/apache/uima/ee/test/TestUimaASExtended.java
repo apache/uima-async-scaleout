@@ -130,7 +130,37 @@ public class TestUimaASExtended extends BaseTestSupport {
 
 	return b.getDefaultSocketURIString();
     }  
-    
+    /*
+    @Test
+    public void testBrokerRestartWithPrimitiveMultiplier() throws Exception {
+      System.out.println("-------------- testBrokerRestartWithPrimitiveMultiplier -------------");
+      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
+
+      BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+      
+      deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
+     
+      
+      broker.stop();
+      broker.waitUntilStopped();
+
+      broker = createBroker();
+      broker.start();
+      broker.waitUntilStarted();
+
+      String burl = broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString();
+      Map<String, Object> appCtx = 
+      buildContext(burl, "TestMultiplierQueue");
+
+      // reduce the cas pool size and reply window
+      appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
+      appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(2));
+      runTest(appCtx, eeUimaEngine,burl,
+              "TestMultiplierQueue", 1, PROCESS_LATCH);
+      
+      eeUimaEngine.stop();
+    }
+*/
     
     /**
      * This test starts a secondary broker, starts NoOp Annotator, and
@@ -665,37 +695,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     
 
-    @Test
-    public void testBrokerRestartWithPrimitiveMultiplier() throws Exception {
-      System.out.println("-------------- testBrokerRestartWithPrimitiveMultiplier -------------");
-      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
-
-      BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-      
-      deployService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
-     
-      
-      broker.stop();
-      broker.waitUntilStopped();
-
-      broker = createBroker();
-      broker.start();
-      broker.waitUntilStarted();
-
-      String burl = broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString();
-      Map<String, Object> appCtx = 
-      buildContext(burl, "TestMultiplierQueue");
-
-      // reduce the cas pool size and reply window
-      appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
-      appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(2));
-      runTest(appCtx, eeUimaEngine,burl,
-              "TestMultiplierQueue", 1, PROCESS_LATCH);
-      
-      eeUimaEngine.stop();
-    }
-
-    
+ 
     
   /*
   public void testContinueOnRetryFailure2() throws Exception {
