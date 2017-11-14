@@ -3261,10 +3261,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         	c = clientList.get(0);
         	if ( !c.running) {
         		break;
-        	} else {
-             	  System.out.println(".................. Client running ............");
-             	 
-        	}
+        	} 
         }
         try {
         	
