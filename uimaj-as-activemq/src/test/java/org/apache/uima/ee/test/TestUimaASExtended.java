@@ -616,6 +616,7 @@ public class TestUimaASExtended extends BaseTestSupport {
      *  
      * @throws Exception
      */
+    
     @Test
     public void testServiceWithHttpListeners() throws Exception {
   	    System.out.println("-------------- testServiceWithHttpListeners -------------");
@@ -629,7 +630,8 @@ public class TestUimaASExtended extends BaseTestSupport {
   	    c.setConcurrentConsumers(2);
   	    c.setBeanName("testServiceWithHttpListeners() - JUnit Test Listener");
   	    c.setMessageListener(new JmsInputChannel());
-  	    c.initialize();
+  	    //c.initialize();
+  	    //c.afterPropertiesSet();
   	    c.start();
   	    
   	    if ( c.isRunning() ) {
@@ -650,14 +652,15 @@ public class TestUimaASExtended extends BaseTestSupport {
   	    	if ( c.failed() ) {
   		    	fail("Broker Failed - Reason:"+c.getReasonForFailure());
   	    	} else {
-  	    		System.out.println("Stopping Listener");
-  	    		c.stop();
-  	    		c.shutdown();
-  	    	}
+ 	    	}
   	    } catch( Exception e) {
   	    	e.printStackTrace();
   	    	fail(e.getMessage());
   	    }
+  		System.out.println("Stopping Listener");
+  		c.stop();
+  		c.shutdown();
+
     }
 
     
