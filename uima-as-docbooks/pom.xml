@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uima-as-parent</artifactId>
-    <version>2.10.2-SNAPSHOT</version>
+    <version>2.10.2</version>
     <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
   
@@ -43,13 +43,13 @@
        element, and just changing the following two properties -->  
   <scm>
     <connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-docbooks
+      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.10.2/uima-as-docbooks
     </connection>
     <developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-docbooks
+      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.10.2/uima-as-docbooks
     </developerConnection>
     <url>
-      http://svn.apache.org/viewvc/uima/uima-as/trunk/uima-as-docbooks
+      http://svn.apache.org/viewvc/uima/uima-as/tags/uima-as-2.10.2/uima-as-docbooks
     </url>
   </scm>
   
