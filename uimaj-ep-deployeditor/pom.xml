@@ -311,7 +311,7 @@
   </dependencies>
 
   <build>
-    <finalName>org.apache.uima.deployeditor_${parsedVersion.osgiVersion}</finalName>
+    <finalName>org.apache.uima.as.deployeditor_${parsedVersion.osgiVersion}</finalName>
     
     <plugins>
       <plugin>
@@ -378,6 +378,7 @@ org.eclipse.core.runtime
             </Require-Bundle>
             <Import-Package>
               !org.eclipse.jface.text,
+              !org.osgi.framework,
               !org.eclipse.ui.texteditor,
               !org.eclipse.ui,
               !org.eclipse.ui.dialogs,
