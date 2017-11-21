@@ -37,13 +37,13 @@
 
   <scm>
     <connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-eclipse-update-site
+      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-eclipse-update-site-2.10.2
     </connection>
     <developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-eclipse-update-site
+      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-eclipse-update-site-2.10.2
     </developerConnection>
     <url>
-      http://svn.apache.org/viewvc/uima/uima-as/trunk/uima-as-eclipse-update-site
+      http://svn.apache.org/viewvc/uima/uima-as/tags/uima-as-eclipse-update-site-2.10.2
     </url>
   </scm>
 
