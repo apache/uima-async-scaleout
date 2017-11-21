@@ -167,11 +167,11 @@
 
                 <echo>-------------------------------------------------------</echo> 
                 <copy todir="${eusWork}2/features" overwrite="true" failonerror="true">
-                  <fileset dir="${eusWork}/features" includes="*.jar" />                 
+                  <fileset dir="${eusWork}/features" includes="*.jar,*.jar.pack.gz" />                 
                 </copy>
 
                 <copy todir="${eusWork}2/features" overwrite="true" failonerror="true">
-                  <fileset dir="${eclipseUpdateSubSite}/features" includes="*.jar" />                 
+                  <fileset dir="${eclipseUpdateSubSite}/features" includes="*.jar,*jar.pack.gz" />                 
                 </copy>
 
 
