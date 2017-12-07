@@ -560,7 +560,17 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 			   isReplyRequired((Message)messageContext.getRawMessage()) );
   }
   public void onMessage(MessageWrapper wrapper) {
-	  onMessage((Message)wrapper.getMessage(), (Session)wrapper.getSession());
+	  try {
+		  onMessage((Message)wrapper.getMessage(), (Session)wrapper.getSession());
+	  } finally {
+		  // semaphore is only added by target and process listeners. The semaphore is used
+		  // to throttle work into the service. A JMS thread blocks if semaphore permits are 
+		  // exhausted. The blocking is done in PriorityMessageHandler class. The JmsInputChannel
+		  // and PriorityMessageHandler are the only classes operating on the semaphore.
+		  if ( wrapper.getSemaphore() != null ) {
+			  wrapper.getSemaphore().release();
+		  }
+	  }
   }
   /**
    * Receives Messages from the JMS Provider. It checks the message header to determine the type of
@@ -1158,7 +1168,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
 	                    "createListenerForTargetedMessages", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 	                    "UIMAJMS_TARGET_LISTENER__INFO",
-	                    new Object[] {listener.getMessageSelector(), controller.getComponentName() });
+	                    new Object[] {targetedListener.getMessageSelector(), controller.getComponentName() });
 	          }
 	          break;
 

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +40,7 @@ import javax.jms.ExceptionListener;
 import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.MessageListener;
 import javax.jms.Session;
 import javax.jms.TemporaryQueue;
 
@@ -65,6 +67,7 @@ import org.apache.uima.aae.error.handler.GetMetaErrorHandler;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageWrapper;
 import org.apache.uima.adapter.jms.JmsConstants;
+import org.apache.uima.adapter.jms.activemq.JmsOutputChannel.BrokerConnectionEntry;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 import org.springframework.core.task.TaskExecutor;
@@ -164,12 +167,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   public void setTargetedListener() {
 	  targetedListener = true;
   }
+
   /**
    * Overriden Spring's method that tries to recover from lost connection. We dont 
    * want to recover when the service is stopping.
    */
   protected void refreshConnectionUntilSuccessful() {
-    boolean doLogFailureMsg = true;
+	 // System.out.println("............refreshConnectionUntilSuccessful() called");
+
+	  boolean doLogFailureMsg = true;
     try {
     	// Only one listener thread should enter to recover lost connection.
     	// Seems like spring recovery api is not reentrant. If multiple listeners
@@ -177,6 +183,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     	// on observing jconsole attached to uima-as service with multiple listeners
     	// on an endpoint.  
     	synchronized(UimaDefaultMessageListenerContainer.class ) {
+    		ActiveMQConnection c = null;//(ActiveMQConnection)super.getSharedConnection();
+    		try {
+    			c = (ActiveMQConnection)super.getSharedConnection();
+    		} catch( SharedConnectionNotInitializedException ee) {
+    			// the onnectionClosedOrFailed(c) below will test for null
+    		}
     	    while (isRunning() && !terminating ) {
     	    	Connection tcon = null;
     		      try {
@@ -459,6 +471,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * @param t
    */
   private void handleQueueFailure(Throwable t) {
+	//  System.out.println("............handleQueueFailure() called");
     final String endpointName = (getDestination() == null) ? ""
             : ((ActiveMQDestination) getDestination()).getPhysicalName();
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -577,6 +590,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * This method is called by Spring when a listener fails
    */
   protected void handleListenerSetupFailure(Throwable t, boolean alreadyHandled) {
+    if ( t.getCause() instanceof InterruptedException ) {
+//  	  System.out.println("............handleListenerFailure(Throwable t, boolean alreadyHandled) called - Cause:"+t);
+  	  return;
+    }
     // If shutdown already, nothing to do
 	    // If controller is stopping no need to recover the connection
     if (awaitingShutdown || terminating || (controller != null && controller.isStopped()) ) {
@@ -667,6 +684,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   }
 
   protected void handleListenerException(Throwable t) {
+	 // System.out.println("............handleListenerException(Throwable t)");
+	  
     // Already shutdown, nothing to do
     if (awaitingShutdown) {
       return;
@@ -807,8 +826,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
         pluginThreadPool = true;
       }
     } else {
-      super.setConcurrentConsumers(1);
-//      super.setConcurrentConsumers(cc);
+         super.setConcurrentConsumers(1);
+    	//if ( targetedListener ) {
+     	    //super.setConcurrentConsumers(1);
+    	//} else {
+        //    super.setConcurrentConsumers(cc);
+    	//}
       pluginThreadPool = true;
     }
     Thread t = new Thread(threadGroup, new Runnable() {
@@ -1120,6 +1143,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     //  we will start listeners on input queue.
     this.setAutoStartup(false);
   }
+  private boolean isProcessListener() {
+	  return getMessageSelector().endsWith(PROCESS_SELECTOR_SUFFIX);
+  }
   /**
    * Callback called by Spring when it receives a messages. Its purpose is to assign high 
    * priority for targeted messages. 
@@ -1129,12 +1155,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 	  try {
 		  if ( targetedListener ) {
 			  m.setJMSPriority(HIGH_PRIORITY);
-		  }
-		  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+			  m.setJMSType("TargetMessage");
+			  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "doInvokeListener",
 	                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_MSG_INTERCEPTOR__FINEST",
 	                  new Object[] {controller.getComponentName(), m.getJMSPriority(), getMessageSelector() });
-	      }
+	      
+			  }
+		  }
+		  //System.out.println("................ doInvokeListener() - Thread ID:"+Thread.currentThread().getId()+" Listener Class:"+l.getClass().getName()+" Controller:"+controller.getComponentName());
 		  l.onMessage(m, s);
 	  } catch( Throwable t ) {
 		  t.printStackTrace();
@@ -1293,66 +1322,75 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     
   }
   
-  private void setUimaASThreadPoolExecutor(int consumerCount) throws Exception{
+  private void setUimaASThreadPoolExecutor(int consumerCount) throws Exception {
 	  if ( isGetMetaListener() ) {
 		    super.setMessageListener(ml);
 	  } else if ( isFreeCasQueueListener()) {
 		    super.setMessageListener(ml);
-   	  }
-	  else if (endpoint != null && endpoint.isTempReplyDestination()) {
+   	  } else if (endpoint != null && endpoint.isTempReplyDestination()) {
 		    super.setMessageListener(ml);
 	  } else {
-		  if ( controller != null && controller instanceof PrimitiveAnalysisEngineController ) {
+		  if ( isProcessListener() ) { //controller != null && controller instanceof PrimitiveAnalysisEngineController ) {
 
 		  // Singleton handler shared by Process CAS listener and a targeted listener. The handler
 		  // onMessage() is called by Spring when a message with a matching selector is available.
 		  // When onMessage() is called, it adds a message to the Priority Queue
 		//  PriorityMessageHandler h = PriorityMessageHandler.getInstance();
-		  
+				System.out.println("+++++++++++++ Controller:"+controller.getComponentName()+" Listener Scaleout="+cc+" Selector:"+super.getMessageSelector());
+
 		  //super.setMessageListener(h);
 		  // targeted listener should not have its own thread pool because it needs to use
 		  // threads created by the Process Cas Listener. Each of these threads is pinned to
 		  // a dedicated AE initialized at startup. Contract says that each AE process() will be called
 		  // on the same thread that initialized it. The targeted listener and process listener share
 		  // the same handler where CASes are pushed onto a Blocking Priority Queue for processing.
-		  if ( !targetedListener && !isFreeCasQueueListener() ) {
-			  
-			  PriorityMessageHandler h = new PriorityMessageHandler();
-			  
-			  super.setMessageListener(h);
-			  try {
-				  while( controller.getInputChannel() == null ) {
-					  synchronized(h) {
-						  h.wait(100);
-					  }
-				  }
-			  } catch( Exception e) {
-				  e.printStackTrace();
-			  }
-			  if ( controller.getInputChannel() != null ) {
-					  latchToCountNumberOfTerminatedThreads = new CountDownLatch(consumerCount);
-				      // Create a Custom Thread Factory. Provide it with an instance of
-				      // PrimitiveController so that every thread can call it to initialize
-				      // the next available instance of a AE.
-					  tf = new UimaAsPriorityBasedThreadFactory(threadGroup, (PrimitiveAnalysisEngineController) controller, latchToCountNumberOfTerminatedThreads);
-					  ((UimaAsPriorityBasedThreadFactory)tf).withQueue(h.getQueue()).withChannel(controller.getInputChannel());
-					     
-					  ((UimaAsPriorityBasedThreadFactory)tf).setDaemon(true);
-					  // This ThreadExecutor will use custom thread factory instead of defult one
-					  ((ThreadPoolTaskExecutor) taskExecutor).setThreadFactory(tf);
-					  // Initialize the thread pool
-					  ((ThreadPoolTaskExecutor) taskExecutor).initialize();
-					  // Make sure all threads are started. This forces each thread to call
-					  // PrimitiveController to initialize the next instance of AE
-					  ((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().prestartAllCoreThreads();
-				  } else {
-					  Exception e = new RuntimeException("......!!!!!!!  UimaDefaultMessageListener.setUimaASThreadPoolExecutor() - input channel not available - selector:"+getMessageSelector());
-					  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-			                    "destroy", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-			                    "UIMAJMS_exception__WARNING", e);
-				  }
+				if (!targetedListener && !isFreeCasQueueListener()) {
+					System.out.println(">>>>>>>>>>> Controller:"+controller.getComponentName()+" Listener Scaleout="+cc+" Selector:"+super.getMessageSelector());
+					PriorityMessageHandler h = new PriorityMessageHandler(cc);
+
+					super.setMessageListener(h);
+					try {
+						while (controller.getInputChannel() == null) {
+							synchronized (h) {
+								h.wait(100);
+							}
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					//if (isPrimitiveService()) {
+						latchToCountNumberOfTerminatedThreads = new CountDownLatch(consumerCount);
+						// Create a Custom Thread Factory. Provide it with an instance of
+						// PrimitiveController so that every thread can call it to initialize
+						// the next available instance of a AE.
+						tf = new UimaAsPriorityBasedThreadFactory(threadGroup,
+								controller, latchToCountNumberOfTerminatedThreads);
+								//(PrimitiveAnalysisEngineController) controller, latchToCountNumberOfTerminatedThreads);
+						((UimaAsPriorityBasedThreadFactory) tf).withQueue(h.getQueue())
+								.withChannel(controller.getInputChannel());
+
+						((UimaAsPriorityBasedThreadFactory) tf).setDaemon(true);
+						if ( taskExecutor == null ) {  // true for aggregates
+							taskExecutor = new ThreadPoolTaskExecutor();
+						}
+						// This ThreadExecutor will use custom thread factory instead of defult one
+						((ThreadPoolTaskExecutor) taskExecutor).setThreadFactory(tf);
+						// Initialize the thread pool
+						((ThreadPoolTaskExecutor) taskExecutor).initialize();
+						// Make sure all threads are started. This forces each thread to call
+						// PrimitiveController to initialize the next instance of AE
+						((ThreadPoolTaskExecutor) taskExecutor).getThreadPoolExecutor().prestartAllCoreThreads();
+//					} else {
+//						
+//					}
 			  }
 		  } else {
+			  if ( controller.getInputChannel() == null ) {
+				  //System.out.println("............. Error - JmsInputChannel not set yet...");
+			  } else if ( !(controller.getInputChannel() instanceof MessageListener ||
+					  controller.getInputChannel() instanceof SessionAwareMessageListener) ) {
+				  //System.out.println("............. Error - wrong MessageListener type - Getting this:"+controller.getInputChannel().getClass().getName());
+			  }
 			  super.setMessageListener(controller.getInputChannel());
 		  }
 	  }
@@ -1401,6 +1439,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     */
   }
 
+  private boolean isPrimitiveService() {
+	  return controller != null && controller instanceof PrimitiveAnalysisEngineController &&
+			  controller.getInputChannel() != null;
+  }
   
   /**
    * Called by Spring to inject TaskExecutor

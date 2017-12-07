@@ -26,16 +26,41 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
-import org.apache.uima.aae.message.AsynchAEMessage;
+//import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageWrapper;
 import org.springframework.jms.listener.SessionAwareMessageListener;
 
+/**
+ * This class main job is to receive a JMS message from Spring Listeners
+ * via onMessage() and wrapping it in a MessageWrapper before enqueuing that
+ * onto a BlockingPriorityQueue for process threads. Only two listener
+ * types send messages to this class: Targeted Listener and Process Listener.
+ * For targeted listener this class creates a dedicated semaphore with 1
+ * permit. For process listener this class creates a dedicated semaphore
+ * with a number of permits equal to scaleout (# of process threads).
+ * The listener thread calling onMessage() will try to acquire its
+ * semaphore and will block if no permits are available. The targeted listener
+ * is identified by value returned from message.getJMSType(). This is set
+ * in UimaDefaultMessageListenerContainer.doInvokeListener() before this
+ * class onMessage() is called.
+ *
+ */
 @SuppressWarnings("rawtypes")
 public class PriorityMessageHandler implements SessionAwareMessageListener {
 
 	private PriorityBlockingQueue<MessageWrapper> queue =
 			new PriorityBlockingQueue<MessageWrapper>();
-
+//	private int scaleout = 1;
+	private Semaphore targetedListenerSemaphore = null;
+	private Semaphore processListenerSemaphore = null;
+	
+	public PriorityMessageHandler(int scaleout) {
+//		this.scaleout = scaleout;
+		processListenerSemaphore =
+				new Semaphore(scaleout);
+		targetedListenerSemaphore =
+				new Semaphore(1);
+	}
 
     public BlockingQueue<MessageWrapper> getQueue() {
     	return queue;
@@ -46,19 +71,40 @@ public class PriorityMessageHandler implements SessionAwareMessageListener {
      * an instance of a service will be assigned high priority for processing.
      */
 	public void onMessage(Message message, Session session) throws JMSException {
-		Semaphore semaphore = new Semaphore(0);
-		int command = message
-	      .getIntProperty(AsynchAEMessage.Command);
-	      int type = message
-	      .getIntProperty(AsynchAEMessage.MessageType);
-	      String msgFrom = (String) message.getStringProperty(AsynchAEMessage.MessageFrom);
-		
+		Semaphore semaphore = null;//new Semaphore(0);
+//		int command = message
+//	      .getIntProperty(AsynchAEMessage.Command);
+//	      int type = message
+//	      .getIntProperty(AsynchAEMessage.MessageType);
+//	      String msgFrom = (String) message.getStringProperty(AsynchAEMessage.MessageFrom);
+		 // System.out.println("................ PriorityMessageHandler.onMessage() - Thread ID:"+Thread.currentThread().getId());
+		// the JMSType is set by targeted listener in
+		//  UimaDefaultMessageListenerContainer.doInvokeListener(). The process
+		// listener does not set this property.
+		if ( "TargetMessage".equals(message.getJMSType())  )  {
+			semaphore = targetedListenerSemaphore;  // 1 permit
+			if ( System.getProperty("TargetServiceId") != null ) {
+				System.out.println("..... Processing CAS Received From Target Channel with TargetID:"+System.getProperty("TargetServiceId"));
+			}
+		} else {
+			semaphore = processListenerSemaphore;   // N permits
+		}
+		try {
+			// throttle the listener so that it doesn't enqueue more work
+			// than necessary.
+			semaphore.acquire();
+		} catch( InterruptedException e) {
+			System.out.println("Semaphore Interrupted ");
+		}
+		// wrap JMS message and add a semaphore so that the process thread can signal the JMS
+		// thread.
 		MessageWrapper m = 
 				new MessageWrapper(message, session, semaphore, message.getJMSPriority());
 		// Add the message to a shared queue. This queue is shared with a custom thread
 		// factory where messages are consumed. If a consumer thread is not available
 		// the add() method will block to support throttling of incoming messages
 		queue.add(m);
+
 	}
 			
 			
