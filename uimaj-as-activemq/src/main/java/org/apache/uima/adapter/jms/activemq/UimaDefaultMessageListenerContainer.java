@@ -167,6 +167,15 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   public void setTargetedListener() {
 	  targetedListener = true;
   }
+  private static boolean connectionClosedOrFailed(ActiveMQConnection connection) {
+	    if (connection == null
+	            || connection.isClosed()
+	            || connection.isClosing()
+	            || connection.isTransportFailed()) {
+	      return true;
+	    }
+	    return false;
+  }
 
   /**
    * Overriden Spring's method that tries to recover from lost connection. We dont 
@@ -188,6 +197,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     			c = (ActiveMQConnection)super.getSharedConnection();
     		} catch( SharedConnectionNotInitializedException ee) {
     			// the onnectionClosedOrFailed(c) below will test for null
+    		}
+    		if ( !connectionClosedOrFailed(c) ) {
+    			//System.out.println("............. Thread:"+Thread.currentThread().getId()+" Connection restored - returning");
+    			return;
     		}
     	    while (isRunning() && !terminating ) {
     	    	Connection tcon = null;
