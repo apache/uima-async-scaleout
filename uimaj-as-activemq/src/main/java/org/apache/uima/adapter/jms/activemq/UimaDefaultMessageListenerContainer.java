@@ -1349,7 +1349,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 		  // onMessage() is called by Spring when a message with a matching selector is available.
 		  // When onMessage() is called, it adds a message to the Priority Queue
 		//  PriorityMessageHandler h = PriorityMessageHandler.getInstance();
-				System.out.println("+++++++++++++ Controller:"+controller.getComponentName()+" Listener Scaleout="+cc+" Selector:"+super.getMessageSelector());
+			//	System.out.println("+++++++++++++ Controller:"+controller.getComponentName()+" Listener Scaleout="+cc+" Selector:"+super.getMessageSelector());
 
 		  //super.setMessageListener(h);
 		  // targeted listener should not have its own thread pool because it needs to use
@@ -1358,7 +1358,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 		  // on the same thread that initialized it. The targeted listener and process listener share
 		  // the same handler where CASes are pushed onto a Blocking Priority Queue for processing.
 				if (!targetedListener && !isFreeCasQueueListener()) {
-					System.out.println(">>>>>>>>>>> Controller:"+controller.getComponentName()+" Listener Scaleout="+cc+" Selector:"+super.getMessageSelector());
+			//		System.out.println(">>>>>>>>>>> Controller:"+controller.getComponentName()+" Listener Scaleout="+cc+" Selector:"+super.getMessageSelector());
 					PriorityMessageHandler h = new PriorityMessageHandler(cc);
 
 					super.setMessageListener(h);
