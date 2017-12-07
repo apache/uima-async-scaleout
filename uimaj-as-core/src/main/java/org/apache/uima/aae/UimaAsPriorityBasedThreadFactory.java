@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController_impl;
@@ -45,7 +46,9 @@ import org.apache.uima.util.Level;
 public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
   private static final Class<UimaAsPriorityBasedThreadFactory> CLASS_NAME = UimaAsPriorityBasedThreadFactory.class;
   private static final String THREAD_POOL = "[UIMA AS ThreadPool ";
-  private PrimitiveAnalysisEngineController controller;
+  
+  private AnalysisEngineController controller;
+//  private PrimitiveAnalysisEngineController controller;
 
   private ThreadGroup theThreadGroup;
 
@@ -70,11 +73,12 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
   public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup) {
     this(tGroup,null);
   }
-   
-  public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController) {
+//  public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController) {
+  public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup, AnalysisEngineController aController) {
     this( tGroup, aController, null);
   }
-  public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController, CountDownLatch latchToCountNumberOfTerminatedThreads) {
+//  public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController, CountDownLatch latchToCountNumberOfTerminatedThreads) {
+  public UimaAsPriorityBasedThreadFactory(ThreadGroup tGroup, AnalysisEngineController aController, CountDownLatch latchToCountNumberOfTerminatedThreads) {
     controller = aController;
     theThreadGroup = tGroup;
     this.latchToCountNumberOfTerminatedThreads = latchToCountNumberOfTerminatedThreads;
@@ -123,7 +127,9 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
           Thread.currentThread().setName( threadNamePrefix +" - "                 
                           + Thread.currentThread().getId());
           try {
-            if (controller != null && !controller.threadAssignedToAE()) {
+            if (controller != null && 
+            	controller instanceof PrimitiveAnalysisEngineController && 
+            	!((PrimitiveAnalysisEngineController)controller).threadAssignedToAE())  {
               // call the controller to initialize next instance of AE. Once initialized this
               // AE instance process() method will only be called from this thread
 			  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
@@ -132,7 +138,7 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
              
 			  if ( !initFailed && !controller.getState().equals(ServiceState.FAILED) ) {
             	  try {
-            		  controller.initializeAnalysisEngine();
+            		  ((PrimitiveAnalysisEngineController)controller).initializeAnalysisEngine();
             	  } catch( Exception e) {
             		  initFailed = true;
             		  e.printStackTrace();
