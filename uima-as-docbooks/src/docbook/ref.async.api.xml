@@ -70,6 +70,21 @@ under the License.
       and JMX monitoring for native services are integrated with the other UIMA components in the JVM.
     </para>
     
+    <para>
+	  Optionally, an application may want to target a specific instance of UIMA-AS service. Each 
+	  service supports targeting using a unique identifier. By default the identifier is IP:PID as
+	  in this example 127.0.0.1:4444. A deployer of a service may choose a custom identifier, in which
+	  case such the service command line must include -DTargetServiceId=ID, where ID may be an arbitrary 
+	  string with no spaces. An application client can target the service using either async or synchronous
+	  call:
+	  <para> 
+	    <code>void sendCAS(CAS aCAS, String serviceTargetId)</code>
+	  </para>
+	  <para>
+	    <code>void sendAndReceiveCAS(CAS aCAS, List&lt;AnalysisEnginePerformanceMetrics> componentMetricsList, String serviceTargetId)</code>
+	  </para>
+    </para>
+    
   </section>
   
     <!--======================================================-->    
@@ -85,7 +100,7 @@ under the License.
       <programlisting>UimaAsynchronousEngine uimaAsEngine = 
         new BaseUIMAAsynchronousEngine_impl();</programlisting>
 
-      The following is a short introduction to some important methods on this class.
+      The following is a short introduction to some important methods on this interface.
       
       <itemizedlist>
         <listitem>
@@ -129,6 +144,13 @@ under the License.
         </listitem>
 
         <listitem>
+          <para><code>void sendCAS(CAS aCAS, String serviceTargetId)</code>: Sends a given CAS for analysis to a 
+          specific instance of a UIMA-AS Service. This instance is identified by a serviceTargetId. 
+          The application is notified of responses or timeouts via <code>entityProcessComplete()</code> method.
+         </para>
+        </listitem>
+        
+        <listitem>
           <para><code>void setCollectionReader(CollectionReader aCollectionReader)</code>: 
             Plugs in an instantiated CollectionReader instance to use. This method must be called before
             <code>initialize</code>.
@@ -166,6 +188,16 @@ under the License.
         <listitem>
           <para><code>void sendAndReceiveCAS(CAS aCAS, List&lt;AnalysisEnginePerformanceMetrics> componentMetricsList)</code>:
             Send a CAS, wait for response. On success aCAS contains the analysis results and componentMetricsList
+            contains per Analysis Engine performance breakdown. This breakdown shows how much time each Analysis Engine
+            took to analyze the CAS. The method throws an exception on error.  Note that this interface cannot be used 
+            to interface to a CAS Multiplier service, because it will block until the parent comes back, and any child 
+            CASes will be ignored.
+          </para>
+        </listitem>
+
+       <listitem>
+          <para><code>void sendAndReceiveCAS(CAS aCAS, List&lt;AnalysisEnginePerformanceMetrics> componentMetricsList, String serviceTargetId)</code>:
+            Send a CAS to a specified instance of UIMA-AS service and wait for response. On success aCAS contains the analysis results and componentMetricsList
             contains per Analysis Engine performance breakdown. This breakdown shows how much time each Analysis Engine
             took to analyze the CAS. The method throws an exception on error.  Note that this interface cannot be used 
             to interface to a CAS Multiplier service, because it will block until the parent comes back, and any child 
@@ -315,8 +347,10 @@ under the License.
             will contain result of analysis; on failure the CAS will be in the same state as 
             before it was sent to a service and aStatus will contain the cause of failure. When calling 
             this method, UIMA AS passes an object of type <code>UimaASProcessStatus</code> as a second argument. 
-            This class extends <code>EntityProcessStatus</code> and provides 4 additional methods: <code>getCAS(), 
-            getCasReferenceId(), getParentCasReferenceId() &amp; getPerfomanceMetricsList().</code> 
+            This class extends <code>EntityProcessStatus</code> and provides 5 additional methods: <code>getCAS(), 
+            getCasReferenceId(), getParentCasReferenceId(),getServiceTargetId(), &amp; getPerfomanceMetricsList().</code> 
+			The getServiceTargetId() returns an id of a service that this client targeted for processing
+			a CAS. Targeting is optional and typically used for checking if a service is viable.
 			The last method provides the per component performance breakdown as reported by the UIMA
             Analysis Engine which includes the elapsed time each component spent analyzing the CAS. 
             The <code>AnalysisEnginePerformanceMetrics</code> class provides the following API:
@@ -437,6 +471,18 @@ CAS cas = uimaAsEngine.getCAS();
 cas.setDocumentText("Some text to pass to this service.");
 // Send Cas to service for processing
 uimaAsEngine.sendCAS(cas);
+    </programlisting>
+    </para>
+    
+    <para>
+     Targeting a specific instance of UIMA-AS service can be done with the following:
+      
+    <programlisting>//get an empty CAS from the Cas pool
+CAS cas = uimaAsEngine.getCAS();
+// Initialize it with input data
+cas.setDocumentText("Some text to pass to this service.");
+// Send Cas to a service running on 127.0.0.1 with PID 4444. 
+uimaAsEngine.sendCAS(cas, "127.0.0.1:4444");
     </programlisting>
     </para>
   </section>

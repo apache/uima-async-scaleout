@@ -37,6 +37,7 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
+import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UimaMessageValidator;
 import org.apache.uima.adapter.jms.JmsConstants;
@@ -319,7 +320,12 @@ public class ActiveMQMessageSender extends BaseMessageSender {
                 if (System.getProperty("UimaAsCasTracking") != null) {
                   message.setStringProperty("UimaAsCasTracking", "enable");
                 }
-    			   
+                // Target specific service instance if targeting for the CAS is provided
+                // by the client application
+    			if ( cacheEntry.getTargetServiceId() != null ) {
+ //   				System.out.println("------------Client Sending CAS to Service Instance With Id:"+cacheEntry.getTargetServiceId());;
+    				message.setStringProperty(UimaAsynchronousEngine.TargetSelectorProperty, cacheEntry.getTargetServiceId());
+    			}
          	   // Use Process Timeout value for the time-to-live property in the
               // outgoing JMS message. When this time is exceeded
               // while the message sits in a queue, the JMS Server will remove it from

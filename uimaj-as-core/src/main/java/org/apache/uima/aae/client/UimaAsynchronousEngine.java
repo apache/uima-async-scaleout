@@ -303,6 +303,23 @@ public interface UimaAsynchronousEngine {
    * @throws ResourceProcessException error
    */
   public String sendCAS(CAS aCAS) throws ResourceProcessException;
+  
+  /**
+   * Sends a given CAS for analysis to a specific instance of UIMA AS Service. This method may block if the client is
+   * configured to use a reply window which prevents sending too many CASes to the service. Assuming
+   * the window is large enough to send the CAS, this method returns as soon as the CAS is sent.
+   * Before sending the CAS, a timer starts that will expire if a reply doesn't arrive in a given
+   * interval.
+   * 
+   * @param aCAS
+   *          - a CAS to analyze.
+   * @parm targetServiceId 
+   *          - Id of a specific service which should process the CAS         
+   * 
+   * @return - returns a unique identifier associated with the sent CAS
+   * @throws ResourceProcessException error
+   */
+  public String sendCAS(CAS aCAS, String targetServiceId) throws ResourceProcessException;
 
   /**
    * Requests new CAS instance from a CAS pool. This method blocks until a free instance of CAS is
@@ -360,6 +377,21 @@ public interface UimaAsynchronousEngine {
    * @throws ResourceProcessException error
    */
   public String sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList) throws ResourceProcessException;
+  
+  /**
+   * This synchronous method sends a given CAS to a UIMA AS service and waits for response. The
+   * method either returns a CAS with the result of analysis or throws an exception. It doesn't 
+   * use call-backs through a registered application listener. If there is
+   * no exception, the method also returns per Analysis Engine performance breakdown for the CAS.
+   * This breakdown can be used to identify how much time each AE took to process the CAS. 
+   * 
+   * @param aCAS - a CAS to analyze.
+   * @param   componentMetricsList - empty list to be filled with per AE performance metrics
+   * @param targetServiceId - Id of a specific service which should process the CAS  
+   * @return - a unique id assigned to the CAS
+   * @throws ResourceProcessException error
+   */
+  public String sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList, String targetServiceId) throws ResourceProcessException;
   /**
    * Deploys a UIMA AS container and all services defined in the provided deployment descriptor.
    * The deployment is within the same JVM. 

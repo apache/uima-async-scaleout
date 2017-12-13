@@ -138,7 +138,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   protected static Lock globalLock = new ReentrantLock();
   
-  private String serviceTargetSelector = null;
+  //private String serviceTargetSelector = null;
   
   protected volatile boolean stopped = false;
   public BaseUIMAAsynchronousEngine_impl() {
@@ -223,10 +223,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
           SerialFormat serialFormat) throws ResourceProcessException {
     try {
       msg.setStringProperty(AsynchAEMessage.MessageFrom, consumerDestination.getQueueName());
-      // check if this message should target specific service instance
-      if ( serviceTargetSelector != null ) {
-          msg.setStringProperty(UimaAsynchronousEngine.TargetSelectorProperty,serviceTargetSelector);
-      }
+//      // check if this message should target specific service instance
+//      if ( serviceTargetSelector != null ) {
+//          msg.setStringProperty(UimaAsynchronousEngine.TargetSelectorProperty,serviceTargetSelector);
+//      }
       msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
       msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
       msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.Process);
@@ -784,10 +784,10 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
               .intValue();
       clientSideJmxStats.setCasPoolSize(casPoolSize);
     }
-    if ( anApplicationContext.containsKey(UimaAsynchronousEngine.TargetSelectorProperty) ) {
-        serviceTargetSelector = 
-        		(String)anApplicationContext.get(UimaAsynchronousEngine.TargetSelectorProperty);
-    }
+//    if ( anApplicationContext.containsKey(UimaAsynchronousEngine.TargetSelectorProperty) ) {
+//        serviceTargetSelector = 
+//        		(String)anApplicationContext.get(UimaAsynchronousEngine.TargetSelectorProperty);
+//    }
     
     if (anApplicationContext.containsKey(UimaAsynchronousEngine.Timeout)) {
       processTimeout = ((Integer) anApplicationContext.get(UimaAsynchronousEngine.Timeout))

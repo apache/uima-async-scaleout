@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UimaContext;
+import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.analysis_component.CasAnnotator_ImplBase;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CAS;
@@ -44,9 +45,14 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase {
 
   int cpcDelay = 0;
 
+  boolean addServiceTargetId = false;
+  
+  private String thisServiceTargetId = null;
   public void initialize(UimaContext aContext) throws ResourceInitializationException {
     super.initialize(aContext);
-
+    // this can be null. The TargetSelectorProperty is optional
+    thisServiceTargetId = System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty);
+    
     if (getContext().getConfigParameterValue("FailDuringInitialization") != null) {
       throw new ResourceInitializationException(new FileNotFoundException("Simulated Exception"));
     }
@@ -71,6 +77,9 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase {
     if (getContext().getConfigParameterValue("FinalCount") != null) {
       finalCount = ((Integer) getContext().getConfigParameterValue("FinalCount")).intValue();
     }
+    if (getContext().getConfigParameterValue("addServiceTargetId") != null) {
+        addServiceTargetId = ((Boolean) getContext().getConfigParameterValue("addServiceTargetId")).booleanValue();
+      }
 
     // write log messages
     Logger logger = getContext().getLogger();
@@ -132,6 +141,10 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase {
           throw new IndexOutOfBoundsException();
         }
       }
+      if ( addServiceTargetId && thisServiceTargetId != null) {
+    	  aCAS.setDocumentText(thisServiceTargetId);
+      }
+     
     } catch (Exception e) {
       throw new AnalysisEngineProcessException(e);
     }

@@ -56,6 +56,9 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
 
   private List<AnalysisEnginePerformanceMetrics> performanceMetricsList;
   
+  private String serviceTargetID;
+  
+  
   public UimaASProcessStatusImpl(ProcessTrace p) {
     this(p, null, null);
   }
@@ -201,5 +204,12 @@ public class UimaASProcessStatusImpl implements UimaASProcessStatus {
     sb.append("}");
 
     return sb.toString();
+  }
+
+  public void setServiceTargetID(String sid) {
+	  serviceTargetID = sid;
+  }
+  public String getServiceTargetId() {
+	return serviceTargetID;
   }
 }

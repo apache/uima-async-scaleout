@@ -868,12 +868,17 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
    * Sends a given CAS for analysis to the UIMA EE Service.
    * 
    */
-  private String sendCAS(CAS aCAS, ClientRequest requestToCache) throws ResourceProcessException {
+  private String sendCAS(CAS aCAS, ClientRequest requestToCache, String targetServiceId) throws ResourceProcessException {
     synchronized (sendMux) {
       if ( requestToCache == null ) {
         throw new ResourceProcessException(new Exception("Invalid Process Request. Cache Entry is Null"));
       }
       String casReferenceId = requestToCache.getCasReferenceId();
+      // check if application wants to target a specific service instance to process the CAS
+      if ( targetServiceId != null) {
+    	  // the dispatcher will fetch the service target id before sending the msg
+    	  requestToCache.setTargetServiceId(targetServiceId);
+      }
       try {
         if (!running) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
@@ -1028,8 +1033,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     if ( !running ) {
     	throw new ResourceProcessException(new UimaEEServiceException("Uima AS Client Has Been Stopped. Rejecting Request to Process CAS"));
     }
-	  return this.sendCAS(aCAS, produceNewClientRequestObject());
+	  return this.sendCAS(aCAS, produceNewClientRequestObject(), null);
   }
+  public synchronized String sendCAS(CAS aCAS, String targetServiceId) throws ResourceProcessException {
+	    if ( !running ) {
+	    	throw new ResourceProcessException(new UimaEEServiceException("Uima AS Client Has Been Stopped. Rejecting Request to Process CAS"));
+	    }
+		  return this.sendCAS(aCAS, produceNewClientRequestObject(),targetServiceId);
+	  }
 
   /**
    * Handles response to CollectionProcessComplete request.
@@ -1120,7 +1131,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     	                    "UIMAJMS_dispatch_delayed_cas__INFO",
     	                    new Object[] { casReferenceId, String.valueOf(cachedRequest.cas.hashCode())});
     	          }
-    	          sendCAS(cachedRequest.getCAS(), cachedRequest);
+    	          sendCAS(cachedRequest.getCAS(), cachedRequest,null);
     	        }
     	  }
       } else {
@@ -1771,6 +1782,10 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           } else {
             status = new UimaASProcessStatusImpl(pt, cas, casReferenceId);
           }
+          if ( cachedRequest.getTargetServiceId() != null ) {
+        	  status.setServiceTargetID(cachedRequest.getTargetServiceId());
+          }
+          
           if ( message.propertyExists(AsynchAEMessage.CASPerComponentMetrics)) {
  
 	      List<AnalysisEnginePerformanceMetrics> ml = 
@@ -2138,18 +2153,29 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   public String sendAndReceiveCAS(CAS aCAS) throws ResourceProcessException {
     return sendAndReceiveCAS(aCAS, null, null);
   }
+  /**
+   * This method is not part of a public interface and should not be used by an application
+   * directly. It is used by a test code internally. 
+   * 
+   * @param aCAS - CAS to process
+   * @param pt - ProcessTrace to aggregate stats
+   * @return - Spring container ID
+   * @throws ResourceProcessException on error
+   */
   public String sendAndReceiveCAS(CAS aCAS, ProcessTrace pt) throws ResourceProcessException {
-    return sendAndReceiveCAS(aCAS, pt, null);
+    return sendAndReceiveCAS(aCAS, pt, null, null);
   }
   public String sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList) throws ResourceProcessException {
-    return sendAndReceiveCAS(aCAS, null, componentMetricsList);
+    return sendAndReceiveCAS(aCAS, null, componentMetricsList, null);
   }
-
+  public String sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList, String targetServiceId) throws ResourceProcessException {
+	    return sendAndReceiveCAS(aCAS, null, componentMetricsList, targetServiceId);
+	  }
   /**
    * This is a synchronous method which sends a message to a destination and blocks waiting for a
    * reply.
    */
-  public String sendAndReceiveCAS(CAS aCAS, ProcessTrace pt, List<AnalysisEnginePerformanceMetrics> componentMetricsList) throws ResourceProcessException {
+  public String sendAndReceiveCAS(CAS aCAS, ProcessTrace pt, List<AnalysisEnginePerformanceMetrics> componentMetricsList, String targetServiceId) throws ResourceProcessException {
     if (!running) {
       throw new ResourceProcessException(new Exception("Uima EE Client Not In Running State"));
     }
@@ -2175,7 +2201,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 
     ClientRequest cachedRequest = produceNewClientRequestObject();
     cachedRequest.setSynchronousInvocation();
-    
+//    cachedRequest.setTargetServiceId(targetServiceId);
     //	save application provided List where the performance stats will be copied
     //  when reply comes back
     cachedRequest.setComponentMetricsList(componentMetricsList);
@@ -2212,7 +2238,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
                 "UIMAJMS_cas_submitting_FINE", new Object[] { casReferenceId, String.valueOf(aCAS.hashCode()), Thread.currentThread().getId()});
       }
       // send CAS. This call does not block. Instead we will block the sending thread below.
-      casReferenceId = sendCAS(aCAS, cachedRequest);
+      casReferenceId = sendCAS(aCAS, cachedRequest, targetServiceId);
 
     } catch( ResourceProcessException e) {
       
@@ -2268,7 +2294,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           }
           if (running && serviceDelegate.getState() == Delegate.OK_STATE
                   && serviceDelegate.removeCasFromPendingDispatchList(casReferenceId)) {
-            sendCAS(aCAS, cachedRequest);
+            sendCAS(aCAS, cachedRequest, targetServiceId);
           } else {
             break; // done here, received a reply or the client is not running
           }
@@ -2590,7 +2616,17 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
     // flag to indicate if the remote service acknowledged receiving a CAS for processing
     private volatile boolean receivedServiceACK=false;
     
-    public boolean receivedServiceACK() {
+    private String targetServiceId;
+    
+    public String getTargetServiceId() {
+		return targetServiceId;
+	}
+
+	public void setTargetServiceId(String serviceTargetId) {
+		this.targetServiceId = serviceTargetId;
+	}
+
+	public boolean receivedServiceACK() {
 		return receivedServiceACK;
 	}
 

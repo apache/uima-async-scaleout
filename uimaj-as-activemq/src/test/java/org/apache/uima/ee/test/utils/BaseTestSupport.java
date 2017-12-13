@@ -727,6 +727,21 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       if (aProcessStatus instanceof UimaASProcessStatus) {
         casReferenceId = ((UimaASProcessStatus) aProcessStatus).getCasReferenceId();
         parentCasReferenceId = ((UimaASProcessStatus) aProcessStatus).getParentCasReferenceId();
+        if ( ((UimaASProcessStatus) aProcessStatus).getServiceTargetId() != null ) {
+        	// fetch id of the service where this CAS was processed
+        	String serviceId = aCAS.getDocumentText();
+        	if ( !((UimaASProcessStatus) aProcessStatus).getServiceTargetId().equals(serviceId)) {
+        		System.out.println("Service Targeting Failed - Client received a reply from a wrong service - Expected:"
+        				+ ((UimaASProcessStatus) aProcessStatus).getServiceTargetId()
+        				+ " The CAS was Actually Processed by "+serviceId);
+        		unexpectedException = true;
+                processCountLatch.countDown();
+
+                return;
+        	} else {
+        		System.out.println("Service Targeting Success - CAS Processed by Service:"+serviceId);
+        	}
+        }
       }
       if (aProcessStatus.isException()) {
         List list = aProcessStatus.getExceptions();

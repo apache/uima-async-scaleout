@@ -729,92 +729,92 @@ public class TestUimaASExtended extends BaseTestSupport {
     /*
      * Tests 
      */
-    @Test
-    public void testSyncClientRecoveryFromBrokerStopAndRestart3() throws Exception  {
-      System.out.println("-------------- testSyncClientRecoveryFromBrokerStopAndRestart -------------");
-      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
- 
-      // Instantiate Uima AS Client
-        BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
-        //BrokerService broker2 = setupSecondaryBroker(true);
-        // Deploy Uima AS Primitive Service
-        deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
-        
-        Map<String, Object> appCtx = 
-        buildContext(broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString(), "NoOpAnnotatorQueue");
-        appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
-        appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
-        appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
-        initialize(uimaAsEngine, appCtx);
-        waitUntilInitialized();
-
-
-        broker.stop();
-        broker.waitUntilStopped();
-
-        //System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-        //broker2 = setupSecondaryBroker(true);
-        broker = createBroker();
-        broker.start();
-        broker.waitUntilStarted();
-        int errorCount = 0;
-        System.out.println("Sending CASes");
-        for (int i = 0; i < 60; i++) {
-            CAS cas = uimaAsEngine.getCAS();
-            cas.setDocumentText("Some Text");
-            try {
-                uimaAsEngine.sendAndReceiveCAS(cas);
-              } catch( Exception e) {
-                System.out.println("Client Received Expected Error on CAS:"+(i+1));
-              } finally {
-                cas.release();
-              }
-
-
-        }
-        uimaAsEngine.stop();
-        
-        /*
-        int errorCount=0;
-        for (int i = 0; i < 20; i++) {
-          
-          if ( i == 5 ) {
-            broker2.stop();
-            broker2.waitUntilStopped();
-          } else if ( i == 10 ) {
-            //  restart the broker 
-            System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
-            broker2 = setupSecondaryBroker(true);
-            
-            broker2.start();
-            broker2.waitUntilStarted();
-
-          }
-          CAS cas = uimaAsEngine.getCAS();
-          cas.setDocumentText("Some Text");
-        //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
-          try {
-            uimaAsEngine.sendAndReceiveCAS(cas);
-          } catch( Exception e) {
-            errorCount++;
-            System.out.println("Client Received Expected Error on CAS:"+(i+1));
-          } finally {
-            cas.release();
-          }
-        }
-        
-        uimaAsEngine.stop();
-        super.cleanBroker(broker2);
-
-        broker2.stop();
-
-        //  expecting 5 failures due to broker missing
-        if ( errorCount != 5 ) {
-          fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
-        }
-        broker2.waitUntilStopped();
-*/
-    }
+//    @Test
+//    public void testSyncClientRecoveryFromBrokerStopAndRestart3() throws Exception  {
+//      System.out.println("-------------- testSyncClientRecoveryFromBrokerStopAndRestart -------------");
+//      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
+// 
+//      // Instantiate Uima AS Client
+//        BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+//        //BrokerService broker2 = setupSecondaryBroker(true);
+//        // Deploy Uima AS Primitive Service
+//        deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
+//        
+//        Map<String, Object> appCtx = 
+//        buildContext(broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString(), "NoOpAnnotatorQueue");
+//        appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+//        appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+//        appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 20000);
+//        initialize(uimaAsEngine, appCtx);
+//        waitUntilInitialized();
+//
+//
+//        broker.stop();
+//        broker.waitUntilStopped();
+//
+//        //System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+//        //broker2 = setupSecondaryBroker(true);
+//        broker = createBroker();
+//        broker.start();
+//        broker.waitUntilStarted();
+//        int errorCount = 0;
+//        System.out.println("Sending CASes");
+//        for (int i = 0; i < 60; i++) {
+//            CAS cas = uimaAsEngine.getCAS();
+//            cas.setDocumentText("Some Text");
+//            try {
+//                uimaAsEngine.sendAndReceiveCAS(cas);
+//              } catch( Exception e) {
+//                System.out.println("Client Received Expected Error on CAS:"+(i+1));
+//              } finally {
+//                cas.release();
+//              }
+//
+//
+//        }
+//        uimaAsEngine.stop();
+//        
+//        /*
+//        int errorCount=0;
+//        for (int i = 0; i < 20; i++) {
+//          
+//          if ( i == 5 ) {
+//            broker2.stop();
+//            broker2.waitUntilStopped();
+//          } else if ( i == 10 ) {
+//            //  restart the broker 
+//            System.setProperty("activemq.broker.jmx.domain","org.apache.activemq.test");
+//            broker2 = setupSecondaryBroker(true);
+//            
+//            broker2.start();
+//            broker2.waitUntilStarted();
+//
+//          }
+//          CAS cas = uimaAsEngine.getCAS();
+//          cas.setDocumentText("Some Text");
+//        //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+//          try {
+//            uimaAsEngine.sendAndReceiveCAS(cas);
+//          } catch( Exception e) {
+//            errorCount++;
+//            System.out.println("Client Received Expected Error on CAS:"+(i+1));
+//          } finally {
+//            cas.release();
+//          }
+//        }
+//        
+//        uimaAsEngine.stop();
+//        super.cleanBroker(broker2);
+//
+//        broker2.stop();
+//
+//        //  expecting 5 failures due to broker missing
+//        if ( errorCount != 5 ) {
+//          fail("Expected 5 failures due to broker down, instead received:"+errorCount+" failures");
+//        }
+//        broker2.waitUntilStopped();
+//*/
+//    }
 
     /*
     
@@ -1247,6 +1247,27 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testSendAndReceive() throws Exception  {
       BaseUIMAAsynchronousEngine_impl uimaAsEngine 
       	= new BaseUIMAAsynchronousEngine_impl();
+      
+      /*
+      String id = deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+      deployService(uimaAsEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
+
+      
+      Map<String, Object> appCtx = buildContext(getMasterConnectorURI(broker),"MeetingDetectorTaeQueue");
+      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
+      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
+      //appCtx.put(UimaAsynchronousEngine.TargetSelectorProperty, "MeetingDetector2");
+      initialize(uimaAsEngine, appCtx);
+      waitUntilInitialized();
+      for (int i = 0; i < 15; i++) {
+          CAS cas = uimaAsEngine.getCAS();
+          cas.setDocumentText("Some Text");
+          System.out.println(".... Sending CAS "+i);
+          uimaAsEngine.sendAndReceiveCAS(cas);
+          cas.release();
+      }
+      */
+      
       String id = deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
       deployService(uimaAsEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
       // Deploy Uima AS Primitive Service
@@ -1269,7 +1290,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           for( AnalysisEnginePerformanceMetrics m :componentMetricsList ) {
         	  System.out.println(".............. Component:"+m.getName()+" AnalysisTime:"+m.getAnalysisTime());
           }
-//        	uimaAsEngine.sendCAS(cas);
+        	//uimaAsEngine.sendCAS(cas);
           System.out.println("----------------------------------------------------");
           componentMetricsList.clear();
         } catch( Exception e) {
@@ -1280,6 +1301,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         }
       }
       uimaAsEngine.stop();
+      
   }
   @Test
   public void testMultipleSyncClientsWithMultipleBrokers() throws Exception  {
@@ -2188,6 +2210,86 @@ private class Killer {
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
     runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
             "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
+  }
+  @Test
+  public void testDeployPrimitiveServiceWithTargeting() throws Exception {
+    System.out.println("-------------- testDeployPrimitiveService -------------");
+    // Instantiate Uima-AS Client
+    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    System.setProperty(UimaAsynchronousEngine.TargetSelectorProperty,"ServiceOne");
+    // Deploy Uima-AS Primitive Service
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithTargetingSupport.xml");
+    
+    System.setProperty(UimaAsynchronousEngine.TargetSelectorProperty,"ServiceTwo");
+    // Deploy Uima-AS Primitive Service
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithTargetingSupport.xml");
+
+    System.setProperty(UimaAsynchronousEngine.TargetSelectorProperty,"ServiceThree");
+    // Deploy Uima-AS Primitive Service
+    deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithTargetingSupport.xml");
+
+    System.getProperties().remove(UimaAsynchronousEngine.TargetSelectorProperty);
+    Map<String, Object> appCtx = buildContext(getMasterConnectorURI(broker),
+    "NoOpAnnotatorQueue");
+    int toProcess = 10;
+    try {
+      initialize(eeUimaEngine, appCtx);
+      waitUntilInitialized();
+      String tsId = "ServiceOne";
+      
+      for( int i=0; i < 10; i++ ) {
+          CAS cas = eeUimaEngine.getCAS();
+          //cas.setDocumentText("");
+          eeUimaEngine.sendAndReceiveCAS(cas, null, tsId);
+          String serviceIdWhereCasWasProcessed = cas.getDocumentText();
+          if ( !serviceIdWhereCasWasProcessed.equals(tsId)) {
+        	  fail("Received Reply from a Wrong Service - Expected: "+tsId+" Instead Received "+serviceIdWhereCasWasProcessed);
+          }
+          cas.release();
+      }
+      
+      tsId = "ServiceTwo";
+      for( int i=0; i < 10; i++ ) {
+          CAS cas = eeUimaEngine.getCAS();
+          //cas.setDocumentText("");
+          eeUimaEngine.sendAndReceiveCAS(cas, null, tsId);
+          String serviceIdWhereCasWasProcessed = cas.getDocumentText();
+          if ( !serviceIdWhereCasWasProcessed.equals(tsId)) {
+        	  fail("Received Reply from a Wrong Service - Expected: "+tsId+" Instead Received "+serviceIdWhereCasWasProcessed);
+          }
+          cas.release();
+      }
+      
+      tsId = "ServiceThree";
+      
+      
+      for( int i=0; i < toProcess; i++ ) {
+    	  CAS cas = eeUimaEngine.getCAS();
+          //cas.setDocumentText("");
+          eeUimaEngine.sendCAS(cas, tsId);
+          //cas.release();
+      }
+    } catch( Exception e) {
+    	e.printStackTrace();
+    } finally {
+    	
+    	while( getNumberOfCASesProcessed() < toProcess ) {
+    		if ( unexpectedException ) {
+    			fail("Service Targeting Failed");
+    			break;
+    		}
+    		synchronized(this) {
+    			wait(100);
+    		}
+    	}
+    	eeUimaEngine.stop();
+    }
+//    synchronized(this) {
+//    	wait(0);
+//    }
+    
+ //   runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+  //          "PersonTitleAnnotatorQueue", 0, EXCEPTION_LATCH);
   }
   @Test
   public void testDeployPrimitiveServiceWithInitFailure() throws Exception {

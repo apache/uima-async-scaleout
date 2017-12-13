@@ -50,12 +50,10 @@ public class PriorityMessageHandler implements SessionAwareMessageListener {
 
 	private PriorityBlockingQueue<MessageWrapper> queue =
 			new PriorityBlockingQueue<MessageWrapper>();
-//	private int scaleout = 1;
 	private Semaphore targetedListenerSemaphore = null;
 	private Semaphore processListenerSemaphore = null;
 	
 	public PriorityMessageHandler(int scaleout) {
-//		this.scaleout = scaleout;
 		processListenerSemaphore =
 				new Semaphore(scaleout);
 		targetedListenerSemaphore =
@@ -71,21 +69,13 @@ public class PriorityMessageHandler implements SessionAwareMessageListener {
      * an instance of a service will be assigned high priority for processing.
      */
 	public void onMessage(Message message, Session session) throws JMSException {
-		Semaphore semaphore = null;//new Semaphore(0);
-//		int command = message
-//	      .getIntProperty(AsynchAEMessage.Command);
-//	      int type = message
-//	      .getIntProperty(AsynchAEMessage.MessageType);
-//	      String msgFrom = (String) message.getStringProperty(AsynchAEMessage.MessageFrom);
-		 // System.out.println("................ PriorityMessageHandler.onMessage() - Thread ID:"+Thread.currentThread().getId());
+		Semaphore semaphore = null;
+	    // System.out.println("................ PriorityMessageHandler.onMessage() - Thread ID:"+Thread.currentThread().getId());
 		// the JMSType is set by targeted listener in
 		//  UimaDefaultMessageListenerContainer.doInvokeListener(). The process
 		// listener does not set this property.
 		if ( "TargetMessage".equals(message.getJMSType())  )  {
 			semaphore = targetedListenerSemaphore;  // 1 permit
-			if ( System.getProperty("TargetServiceId") != null ) {
-				System.out.println("..... Processing CAS Received From Target Channel with TargetID:"+System.getProperty("TargetServiceId"));
-			}
 		} else {
 			semaphore = processListenerSemaphore;   // N permits
 		}

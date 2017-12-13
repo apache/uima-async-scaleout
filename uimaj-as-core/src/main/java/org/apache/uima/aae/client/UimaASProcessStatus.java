@@ -60,4 +60,10 @@ public interface UimaASProcessStatus extends EntityProcessStatus {
    * @return a list of {@link AnalysisEnginePerformanceMetrics}
    */
   public List<AnalysisEnginePerformanceMetrics> getPerformanceMetricsList();
+  /*
+   * Returns service target ID where client wanted to process a CAS
+   * 
+   * @return service target ID
+   */
+  public String getServiceTargetId();
 }
