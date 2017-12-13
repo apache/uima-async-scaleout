@@ -418,19 +418,16 @@ UIMA-AS service deployer may choose a different value for the 'TargetServiceId' 
 include -DTargetServiceId=<value> on the service command line. The <value> may be an arbitrary string with
 no spaces.
 
-To target a specific service instance, an application client must add 'TargetServiceId'
-property to a Map which is used to initialize UIMA-AS client as shown in below code snippet: 
+To target a specific service instance, an application client must use UIMA-AS client API.
+For async calls, use
 
-UIMAAsynchronousEngine client = new BaseUIMAAsynchronousEngine_impl();
-Map<String, Object> appCtx = new HashMap<String, Object>();
-appCtx.put(UimaAsynchronousEngine.TargetSelectorProperty, target);
-...
-client.initialize(appCtx);
+sendCAS(CAS cas, String serviceId)
+ 
+and for synchronous calls, use 
 
-where constant UimaAsynchronousEngine.TargetSelectorProperty = 'TargetServiceId'.
+sendAndReceiveCAS(CAS aCAS, List&lt;AnalysisEnginePerformanceMetrics> componentMetricsList, String serviceId)
 
-The value in 'target' variable above must match the value of -DTargetServiceId property used to launch a service or
-it should match service <IP>:<PID> in case the property is missing from a command line.
+where serviceId is a unique service identifier as described above.
 
 6. Known problems/limitations with Release 2.10.2
 ================================================
