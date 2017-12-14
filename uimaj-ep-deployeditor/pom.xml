@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>uima-as-parent</artifactId>
-    <version>2.10.3-SNAPSHOT</version>
+    <version>2.10.2-SNAPSHOT</version>
     <relativePath>../uima-as-parent/pom.xml</relativePath>
   </parent>
 
@@ -385,9 +385,9 @@ org.eclipse.core.runtime
               !org.eclipse.ui.model,
               !org.eclipse.ui.part, 
               !org.eclipse.core.runtime,
-              *,
               org.apache.uima.taeconfigurator.editors.ui.dialogs,
-              org.apache.uima.taeconfigurator.files
+              org.apache.uima.taeconfigurator.files,
+              *
             </Import-Package>
 
             <!--Import-Package>*,
