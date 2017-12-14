@@ -313,8 +313,8 @@ public interface UimaAsynchronousEngine {
    * 
    * @param aCAS
    *          - a CAS to analyze.
-   * @parm targetServiceId 
-   *          - Id of a specific service which should process the CAS         
+   * @param targetServiceId 
+   *          - Id of a service which should process the CAS         
    * 
    * @return - returns a unique identifier associated with the sent CAS
    * @throws ResourceProcessException error
