@@ -425,7 +425,7 @@ sendCAS(CAS cas, String serviceId)
  
 and for synchronous calls, use 
 
-sendAndReceiveCAS(CAS aCAS, List&lt;AnalysisEnginePerformanceMetrics> componentMetricsList, String serviceId)
+sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetricsList, String serviceId)
 
 where serviceId is a unique service identifier as described above.
 
