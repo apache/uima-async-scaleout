@@ -69,21 +69,7 @@ under the License.
       optionally be launched as separate processes on the same machine. In either case logging
       and JMX monitoring for native services are integrated with the other UIMA components in the JVM.
     </para>
-    
-    <para>
-	  Optionally, an application may want to target a specific instance of UIMA-AS service. Each 
-	  service supports targeting using a unique identifier. By default the identifier is IP:PID as
-	  in this example 127.0.0.1:4444. A deployer of a service may choose a custom identifier, in which
-	  case such the service command line must include -DTargetServiceId=ID, where ID may be an arbitrary 
-	  string with no spaces. An application client can target the service using either async or synchronous
-	  call:
-	  <para> 
-	    <code>void sendCAS(CAS aCAS, String serviceTargetId)</code>
-	  </para>
-	  <para>
-	    <code>void sendAndReceiveCAS(CAS aCAS, List&lt;AnalysisEnginePerformanceMetrics> componentMetricsList, String serviceTargetId)</code>
-	  </para>
-    </para>
+
     
   </section>
   
@@ -474,17 +460,6 @@ uimaAsEngine.sendCAS(cas);
     </programlisting>
     </para>
     
-    <para>
-     Targeting a specific instance of UIMA-AS service can be done with the following:
-      
-    <programlisting>//get an empty CAS from the Cas pool
-CAS cas = uimaAsEngine.getCAS();
-// Initialize it with input data
-cas.setDocumentText("Some text to pass to this service.");
-// Send Cas to a service running on 127.0.0.1 with PID 4444. 
-uimaAsEngine.sendCAS(cas, "127.0.0.1:4444");
-    </programlisting>
-    </para>
   </section>
 
   <section id="ugr.ref.async.api.usage_getresults">
@@ -544,30 +519,29 @@ uimaAsEngine.deploy(service, appCtx);
 <section id="ugr.ref.async.api.usage_targetservice">
     <title>Targeting specific service instance with the Client API</title>
     <para>
-      Service targeting allows an application client to send CASes to a specific instance of UIMA-AS service. This
-feature can be used to determine if a service is viable or not. When a service starts, it creates a  
+      Service targeting allows an application client to send CASes to a specific instance of UIMA-AS service. This new
+feature can be used to determine if a service is viable or not and is capable of processing a CAS.  When a service starts, it creates a  
 listener on its input queue which handles messages containing property 'TargetServiceId'. By default, the
 property value has a format &lt;IP&gt;:&lt;PID&gt;. If an incoming message contains the property with a value matching
 service &lt;IP&gt;:&lt;PID&gt;, the listener will dequeue the message and process a CAS contained therein. Optionally, the 
-UIMA-AS service deployer may choose a different value for the 'TargetServiceId' property. To override the default
+UIMA-AS service deployer may choose a custom value for the 'TargetServiceId' property. To override the default
 include -DTargetServiceId=&lt;value&gt; on the service command line. The &lt;value&gt; may be an arbitrary string with
 no spaces.
 
 The following shows how a client can target specific instance of a service deployed with a default targeting 
 support:
-<programlisting>// Add Broker URI on local machine
-	appCtx.put(UimaAsynchronousEngine.ServerUri, "tcp://localhost:61616");
-	// Add Queue Name
-	appCtx.put(UimaAsynchronousEngine.Endpoint, "RoomNumberAnnotatorQueue");
-	// Add the Cas Pool Size
-	appCtx.put(UimaAsynchronousEngine.CasPoolSize, 2);
-    // Add Service Target using default &lt;IP&gt;:&lt;PID&gt; format
-	appCtx.put(UimaAsynchronousEngine.TargetSelectorProperty, 
-	           "111.111.111.11:333");
 
-    //initialize
-    uimaAsEngine.initialize(appCtx);
+
+<programlisting>//get an empty CAS from the Cas pool
+CAS cas = uimaAsEngine.getCAS();
+// Initialize it with input data
+cas.setDocumentText("Some text to pass to this service.");
+// Send Cas to a service running on 127.0.0.1 with PID 4444. 
+uimaAsEngine.sendCAS(cas, "127.0.0.1:4444");
     </programlisting>
+The above example uses an asynchronous client API method. For synchronous invocations use 
+<para><code>sendAndReceiveCAS(cas, componentMetricsList, "127.0.0.1:4444")</code></para>
+
     </para>
   </section>
   
