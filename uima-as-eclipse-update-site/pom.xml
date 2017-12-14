@@ -29,7 +29,7 @@
   
   <artifactId>uima-as-eclipse-update-site</artifactId>
   <packaging>pom</packaging>
-  <version>2.10.2-SNAPSHOT</version>
+  <version>2.10.2</version>
 
   <name>Apache UIMA Eclipse: ${project.artifactId}</name>
   <description>The UIMA Eclipse update site</description>
