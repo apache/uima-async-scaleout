@@ -19,6 +19,13 @@ Look for the result in the two artifacts:
    target/uima-as-[version]-source-release.zip (if run with -Papache-release) and
    target/uima-as-[version]-bin.zip (or  ...tar.gz) 
 
+If your maven build fails with strange errors try running maven with  update flag
+like this:
+
+   mvn -U clean install
+   
+Note that a build with -U option takes much longer to finish.
+
 For more details, please see http://uima.apache.org/building-uima.html   
 
 1. What's New in 2.10.2
