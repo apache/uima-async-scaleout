@@ -831,7 +831,14 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
          if ( (hasNext = collectionReader.hasNext()) == true) {
              cas = getCAS();
              collectionReader.getNext(cas);
-             sendCAS(cas);
+             String targetStringSelector = 
+            		 System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty);
+             if (targetStringSelector != null && targetStringSelector.trim().length() > 0 ) {
+            	 sendCAS(cas, targetStringSelector );
+             } else {
+            	 sendCAS(cas);
+             }
+             
          } else {
            break;
          }
