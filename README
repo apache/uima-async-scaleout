@@ -19,7 +19,7 @@ Look for the result in the two artifacts:
    target/uima-as-[version]-source-release.zip (if run with -Papache-release) and
    target/uima-as-[version]-bin.zip (or  ...tar.gz) 
 
-If your maven build fails with strange errors try running maven with  update flag
+If your maven build fails with strange errors try running maven with an update flag
 like this:
 
    mvn -U clean install
@@ -287,6 +287,21 @@ Start two terminal windows, each with an environments setup as described in sect
     If you get an UnsupportedClassVersionError, Java 8 is probably not being used.
     If the driver fails to find the input data, adjustExamplePaths was probably not run.
 
+    To target specific service instance, use these steps:
+    cd $UIMA_HOME/examples/deploy/as
+    deployAsyncService.sh/cmd Deploy_MeetingDetectorTAE.xml
+    
+    Note this process PID. Assuming the process is launched on a machine with 
+    IP 1.1.1.1 and the PID is 2222, launch runRemoteAsyncAE as follows:
+  
+    runRemoteAsyncAE.sh/cmd tcp://localhost:61616 MeetingDetectorTaeQueue \
+         -c $UIMA_HOME/examples/descriptors/collection_reader/FileSystemCollectionReader.xml
+         -TargetServiceId 1.1.1.1:2222
+    
+    When the process completes you should see multiple lines of output that look like this:
+    
+          CAS received by service with selector: 1.1.1.1:2222
+          
 3.5 Calling a UIMA AS Asynchronous Service from an Existing UIMA Application
 
 You can also call a UIMA AS Service from the DocumentAnalyzer or any other UIMA
