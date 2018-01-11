@@ -578,13 +578,6 @@ public class RunRemoteAsyncAE {
     public void onBeforeProcessCAS(UimaASProcessStatus status, String nodeIP, String pid) {
       long current = System.nanoTime() / 1000000 - mStartTime;
       casStartMap.put(status.getCasReferenceId(), current);
-      if ( selector != null ) {
-    	  // strip thread ID. The service sends pid with this format <PID>:<Thread ID>
-    	  int pos = pid.lastIndexOf(':');
-    	  pid = pid.substring(0, pos);
-    	  System.out.println("CAS received by service with selector:"+nodeIP.concat(":").concat(pid));
-    	  
-      }
     }
 
   }
