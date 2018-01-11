@@ -2005,7 +2005,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (inputChannelList != null) {
       inputChannelList.clear();
     }
-    inputChannel = null;
+    //inputChannel = null;
 
     if (serviceErrorMap != null) {
       serviceErrorMap.clear();
@@ -2149,7 +2149,6 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
 
   public void terminate(Throwable cause, String aCasReferenceId) {
-
       if (stopLatch.getCount() > 0) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "terminate",
@@ -2431,9 +2430,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public InputChannel getInputChannel(String anEndpointName) {
 
     for (int i = 0; inputChannelList != null && i < inputChannelList.size(); i++) {
-      InputChannel iC = (InputChannel) inputChannelList.get(i);
-      if (iC.isListenerForDestination(anEndpointName)) {
-        return (InputChannel) inputChannelList.get(i);
+      InputChannel iC = inputChannelList.get(i);
+      if (iC != null && iC.isListenerForDestination(anEndpointName)) {
+        return inputChannelList.get(i);
       }
     }
     return null;
