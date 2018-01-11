@@ -352,7 +352,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 	public void stop() {
 		try {
-			  System.out.println(this.getClass().getName()+".stop() - Stopping UIMA-AS Client");
+			  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+						Level.INFO)) {
+			     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
+							CLASS_NAME.getName(), "stop",
+							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+							"UIMAJMS_stopping_as_client_INFO");
+		      }
 			  stopConnection();
 
 		      super.doStop();
