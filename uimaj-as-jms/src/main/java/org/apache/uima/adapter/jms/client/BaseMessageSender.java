@@ -114,7 +114,6 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
    */
   public void doStop() {
     done = true;
-    System.out.println("BaseMessageSender.doStop() called............................");
     
     // Create an empty message to deliver to the queue that is blocking
     PendingMessage emptyMessage = new PendingMessage(0);
@@ -129,7 +128,13 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     	
     }
     messageQueue.add(emptyMessage);
-    System.out.println("BaseMessageSender.doStop() added empty message to force stop ............................");
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+			Level.INFO)) {
+     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
+				CLASS_NAME.getName(), "doStop",
+				JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+				"UIMAJMS_STOP_DISPATCH_THREAD_INFO");
+  }
     try {
         stopLatch.await();
     } catch( InterruptedException e) {
@@ -238,7 +243,11 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
    */
   public void run() {
     String destination = null;
-    System.out.println("BaseMessageSender.run() - starting Dispatcher Thread................");
+    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+                  "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAJMS_START_DISPATCH_THREAD_INFO");
+    }
     //  by default, add time to live to each message
     boolean addTimeToLive = true;
     // Check the environment for existence of NoTTL tag. If present,
@@ -284,8 +293,12 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
       } catch (InterruptedException e) {
       }
       if (done) {
-    	  System.out.println("BaseMessageSender.run() - Exiting Dispatch Thread............");
-          stopLatch.countDown();
+    	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(),
+                      "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAJMS_EXIT_DISPATCH_THREAD_INFO");
+            }
+    	  stopLatch.countDown();
     	  break; // done in this loop
       }
       //  Check if the request should be rejected. If the connection to the broker is invalid and the request
