@@ -1717,6 +1717,7 @@ public class TestUimaASExtended extends BaseTestSupport {
    * @throws Exception
    */
 
+  /*
   @Test
   public void testMultipleClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
     System.out.println("-------------- testMultipleClientsRecoveryFromBrokerStopAndRestart -------------");
@@ -1800,6 +1801,7 @@ public class TestUimaASExtended extends BaseTestSupport {
       broker2.waitUntilStopped();
 
   }
+  */
   /**
    * Tests ability of an aggregate to recover from a Broker restart. The broker managing
    * delegate's input queue is stopped after 1st CAS is fully processed. As part of error
