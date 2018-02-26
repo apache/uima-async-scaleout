@@ -21,11 +21,16 @@ package org.apache.uima.aae;
 
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
+import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 
 public interface OutputChannel extends Channel {
+	
+  public ENDPOINT_TYPE getType();
+	
   public void setController(AnalysisEngineController aContainer);
 
   public void initialize() throws AsynchAEException;
@@ -36,7 +41,7 @@ public interface OutputChannel extends Channel {
   public void sendReply(int aCommand, Endpoint anEndpoint, String aCasReferenceId, boolean notifyOnJmsException)
   throws AsynchAEException;
 
-  public void sendReply(CacheEntry entry, Endpoint anEndpoint) throws AsynchAEException;
+  public void sendReply(CasStateEntry casStateEntry, Endpoint anEndpoint) throws AsynchAEException;
 
   public void sendReply(ProcessingResourceMetaData aProcessingResourceMetadata,
           Endpoint anEndpoint, boolean serialize) throws AsynchAEException;

@@ -63,6 +63,7 @@ import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineManagement;
 import org.apache.uima.analysis_engine.CasIterator;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
+import org.apache.uima.as.client.DirectMessageContext;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.impl.CASImpl;
 import org.apache.uima.collection.CollectionReaderDescription;
@@ -263,7 +264,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     	    }
       }
       AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(rSpecifier, paramsMap);
-   
+      System.out.println("------------ initializeAnalysisEngine()-Created instance of AE:"+getComponentName()+" Thread iD:"+Thread.currentThread().getId());
       super.addUimaObject(ae.getManagementInterface().getUniqueMBeanName());
       //  Call to produceAnalysisEngine() may take a long time to complete. While this
         //  method was executing, the service may have been stopped. Before continuing 
@@ -476,7 +477,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
             UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "postInitialize",
                   UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_initialized_controller__INFO",
-                  new Object[] { getComponentName() });
+                  new Object[] { getComponentName(), super.getBrokerURL() });
           }
           super.serviceInitialized = true;
         }
@@ -549,6 +550,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 "UIMAEE_cpc_all_cases_processed__FINEST", new Object[] { getComponentName() });
       }
       getServicePerformance().incrementAnalysisTime(super.getCpuTime() - start);
+      /*
       if (!anEndpoint.isRemote()) {
         UimaTransport transport = getTransport(anEndpoint.getEndpoint());
         UimaMessage message = transport.produceMessage(AsynchAEMessage.CollectionProcessComplete,
@@ -558,6 +560,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       } else {
         getOutputChannel().sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint, null, false);
       }
+*/
+      getOutputChannel(anEndpoint).sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint, null, false);
 
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(),
@@ -741,7 +745,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
             aem.getNumberOfCASesProcessed());
     
   }
-  
+  private void cancelStackDumpTimer(StackDumpTimer stackDumpTimer) {
+      if ( stackDumpTimer != null ) {
+    	  stackDumpTimer.cancel();
+    	  stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
+          // it in case an exception happens below
+      }
+
+  }
   /**
    * This is called when a Stop request is received from a client. Add the provided Cas id to the
    * list of aborted CASes. The process() method checks this list to determine if it should continue
@@ -758,9 +769,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (stopped) {
       return;
     }
-    
-    List<AnalysisEnginePerformanceMetrics> beforeAnalysisManagementObjects = new ArrayList<AnalysisEnginePerformanceMetrics>();
-    List<AnalysisEnginePerformanceMetrics> afterAnalysisManagementObjects = new ArrayList<AnalysisEnginePerformanceMetrics>();
+    System.out.println("Service:"+getComponentName()+" CAS:"+aCasReferenceId+" CAS Hashcode:"+aCAS.hashCode());
+    List<AnalysisEnginePerformanceMetrics> beforeAnalysisManagementObjects = new ArrayList<>();
+    List<AnalysisEnginePerformanceMetrics> afterAnalysisManagementObjects = new ArrayList<>();
     CasStateEntry parentCasStateEntry = null;
     //	If enabled, keep a reference to a timer which
     //  when it expires, will cause a JVM to dump a stack
@@ -810,19 +821,15 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
       
       CasIterator casIterator = ae.processAndOutputNewCASes(aCAS);
-      if ( stackDumpTimer != null ) {
-    	  stackDumpTimer.cancel();
-    	  stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
-          // it in case an exception happens below
-      }
-      
+      cancelStackDumpTimer(stackDumpTimer);
       // Store how long it took to call processAndOutputNewCASes()
       totalProcessTime = (super.getCpuTime() - time);
       long sequence = 1;
       long hasNextTime = 0; // stores time in hasNext()
-      long getNextTime = 0; // stores time in next();
+      long getNextTime = 0; // stores time in next()
       boolean moreCASesToProcess = true;
       boolean casAbortedDueToExternalRequest = false;
+      
       while (moreCASesToProcess) {
         long timeToProcessCAS = 0; // stores time in hasNext() and next() for each CAS
         hasNextTime = super.getCpuTime();
@@ -831,23 +838,25 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         //	method is allowed to complete. If the method is not complete in allowed window
         //	the heap and stack trace dump of all threads will be produced.
         stackDumpTimer = ifEnabledStartHeapDumpTimer();
+        
+        /* ********************************************** */
+        /* CHECK IF THERE ARE MORE CHILD CASes TO PROCESS */
+        /* ********************************************** */
         if (!casIterator.hasNext()) {
           moreCASesToProcess = false;
           // Measure how long it took to call hasNext()
           timeToProcessCAS = (super.getCpuTime() - hasNextTime);
           totalProcessTime += timeToProcessCAS;
-          if ( stackDumpTimer != null ) {
-        	  stackDumpTimer.cancel();
-        	  stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
-              // it in case an exception happens below
-          }
+          cancelStackDumpTimer(stackDumpTimer);
+          /* ************************************* */
+          /* WE ARE DONE PROCESSING INPUT CAS HERE */
+          /* ************************************* */
           break; // from while
         }
-        if ( stackDumpTimer != null ) {
-        	stackDumpTimer.cancel();
-        	stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
-                                    // it in case an exception happens below
-        }
+
+        
+        cancelStackDumpTimer(stackDumpTimer);
+        
         // Measure how long it took to call hasNext()
         timeToProcessCAS = (super.getCpuTime() - hasNextTime);
         getNextTime = super.getCpuTime();
@@ -856,17 +865,20 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         //	method is allowed to complete. If the method is not complete in allowed window
         //	the heap and stack trace dump of all threads will be produced.
         stackDumpTimer = ifEnabledStartHeapDumpTimer();
-        CAS casProduced = casIterator.next();
-        if ( stackDumpTimer != null ) {
-        	stackDumpTimer.cancel();
-        	stackDumpTimer = null;   // nullify timer instance so that we dont have to worry about
-            // it in case an exception happens below
-        }
+
+        /* ****************************** */
+        /* GET THE NEXT CHILD CAS         */
+        /* ****************************** */
+        CAS childCAS = casIterator.next();
+        
+        cancelStackDumpTimer(stackDumpTimer);
+
         // Add how long it took to call next()
         timeToProcessCAS += (super.getCpuTime() - getNextTime);
         // Add time to call hasNext() and next() to the running total
         totalProcessTime += timeToProcessCAS;
         casAbortedDueToExternalRequest = abortGeneratingCASes(aCasReferenceId);
+
         // If the service is stopped or aborted, stop generating new CASes and just return the input
         // CAS
         if (stopped || casAbortedDueToExternalRequest) {
@@ -891,8 +903,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 // We are either stopping the service or aborting input CAS due to explicit STOP
                 // request
                 // from a client. If a new CAS was produced, release it back to the pool.
-                if (casProduced != null) {
-                  casProduced.release();
+                if (childCAS != null) {
+                	childCAS.release();
                 }
               } catch (Exception e) {
             	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
@@ -935,24 +947,22 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 //        OutOfTypeSystemData otsd = getInProcessCache().getOutOfTypeSystemData(aCasReferenceId);
         MessageContext mContext = getInProcessCache()
                 .getMessageAccessorByReference(aCasReferenceId);
-        CacheEntry newEntry = getInProcessCache().register(casProduced, mContext /*, otsd*/);
+        CacheEntry newEntry = getInProcessCache().register(childCAS, mContext /*, otsd*/);
         // if this Cas Multiplier is not Top Level service, add new Cas Id to the private
         // cache of the parent aggregate controller. The Aggregate needs to know about
         // all CASes it has in play that were generated from the input CAS.
         CasStateEntry childCasStateEntry = null;
         if (!isTopLevelComponent()) {
-          newEntry.setNewCas(true, parentController.getComponentName());
-          // Create CAS state entry in the aggregate's local cache
-          childCasStateEntry = parentController.getLocalCache().createCasStateEntry(
-                  newEntry.getCasReferenceId());
-          // Fetch the parent CAS state entry from the aggregate's local cache. We need to increment
-          // number of child CASes associated with it.
-          parentCasStateEntry = parentController.getLocalCache().lookupEntry(aCasReferenceId);
-        } else {
-          childCasStateEntry = getLocalCache().createCasStateEntry(newEntry.getCasReferenceId());
-        }
+            newEntry.setNewCas(true, parentController.getComponentName());
+            // Fetch the parent CAS state entry from the aggregate's local cache. We need to increment
+            // number of child CASes associated with it.
+            parentCasStateEntry = parentController.getLocalCache().lookupEntry(aCasReferenceId);
+          } 
+        childCasStateEntry = getLocalCache().createCasStateEntry(newEntry.getCasReferenceId());
+
         // Associate parent CAS (input CAS) with the new CAS.
-        childCasStateEntry.setInputCasReferenceId(aCasReferenceId);
+        childCasStateEntry.setParentCasReferenceId(aCasReferenceId);
+        childCasStateEntry.setInputCasReferenceId(parentCasStateEntry.getInputCasReferenceId());
         // Increment number of child CASes generated from the input CAS
         parentCasStateEntry.incrementSubordinateCasInPlayCount();
         parentCasStateEntry.incrementOutstandingFlowCounter();
@@ -960,6 +970,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // Associate input CAS with the new CAS
         newEntry.setInputCasReferenceId(aCasReferenceId);
         newEntry.setCasSequence(sequence);
+        childCasStateEntry.setSequenceNumber(sequence);
+        
         // Add to the cache how long it took to process the generated (subordinate) CAS
         getCasStatistics(newEntry.getCasReferenceId()).incrementAnalysisTime(timeToProcessCAS);
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -1007,48 +1019,26 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
                     "UIMAEE_exception__WARNING", exx);
         }
 
-        if (!anEndpoint.isRemote()) {
-          UimaTransport transport = getTransport(anEndpoint.getEndpoint());
-          UimaMessage message = transport.produceMessage(AsynchAEMessage.Process,
-                  AsynchAEMessage.Request, getName());
-          message.addStringProperty(AsynchAEMessage.CasReference, newEntry.getCasReferenceId());
-          message.addStringProperty(AsynchAEMessage.InputCasReference, aCasReferenceId);
-          message.addLongProperty(AsynchAEMessage.CasSequence, sequence);
-          ServicePerformance casStats = getCasStatistics(aCasReferenceId);
-
-          message.addLongProperty(AsynchAEMessage.TimeToSerializeCAS, casStats
-                  .getRawCasSerializationTime());
-          message.addLongProperty(AsynchAEMessage.TimeToDeserializeCAS, casStats
-                  .getRawCasDeserializationTime());
-          message.addLongProperty(AsynchAEMessage.TimeInProcessCAS, casStats.getRawAnalysisTime());
-          long iT = getIdleTimeBetweenProcessCalls(AsynchAEMessage.Process);
-          message.addLongProperty(AsynchAEMessage.IdleTime, iT);
-          if (!stopped) {
-            transport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
-            dropStats(newEntry.getCasReferenceId(), getName());
-          }
-        } else {
-          // Send generated CAS to the remote client
-          if (!stopped) {
-              getOutputChannel().sendReply(newEntry, anEndpoint);
-            
-              //	Check for delivery failure. The client may have terminated while an input CAS was being processed
-            if ( childCasStateEntry.deliveryToClientFailed() ) {
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "process",
-                            UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_delivery_to_client_failed_INFO",
-                            new Object[] { getComponentName(), aCasReferenceId });
-              }
-              clientUnreachable = true;
-              if ( cmOutstandingCASes.containsKey(childCasStateEntry.getCasReferenceId())) {
-              	  cmOutstandingCASes.remove(childCasStateEntry.getCasReferenceId());
-          	  }
-              //	Stop generating new CASes. We failed to send a CAS to a client. Most likely
-              //	the client has terminated. 
-          	  moreCASesToProcess = false; // exit the while loop
-          	  
-          	  dropCAS(childCasStateEntry.getCasReferenceId(), true);
+        // Send generated CAS to the client
+        if (!stopped) {
+            getOutputChannel(anEndpoint).sendReply(childCasStateEntry, anEndpoint);
+          
+            //	Check for delivery failure. The client may have terminated while an input CAS was being processed
+          if ( childCasStateEntry.deliveryToClientFailed() ) {
+            if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "process",
+                          UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_delivery_to_client_failed_INFO",
+                          new Object[] { getComponentName(), aCasReferenceId });
             }
+            clientUnreachable = true;
+            if ( cmOutstandingCASes.containsKey(childCasStateEntry.getCasReferenceId())) {
+            	  cmOutstandingCASes.remove(childCasStateEntry.getCasReferenceId());
+        	  }
+            //	Stop generating new CASes. We failed to send a CAS to a client. Most likely
+            //	the client has terminated. 
+        	  moreCASesToProcess = false; // exit the while loop
+        	  
+        	  dropCAS(childCasStateEntry.getCasReferenceId(), true);
           }
         }
         // Remove new CAS state entry from the local cache if this is a top level primitive.
@@ -1117,6 +1107,8 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       //  Create a List to hold per CAS analysisTime and total number of CASes processed
       //  by each AE. This list will be serialized and sent to the client
       List<AnalysisEnginePerformanceMetrics> performanceList = 
+    		  getCasMetricList(parentCasStateEntry, afterAnalysisManagementObjects, beforeAnalysisManagementObjects);
+      /*
         new ArrayList<AnalysisEnginePerformanceMetrics>();
       //  Diff the before process() performance metrics with post process performance
       //  metrics
@@ -1158,70 +1150,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
         }
       }
+      */
       parentCasStateEntry.getAEPerformanceList().addAll(performanceList);
-      if (!anEndpoint.isRemote()) {
-        inputCASReturned = true;
-        UimaTransport transport = getTransport(anEndpoint.getEndpoint());
 
-        if (getInProcessCache() != null && getInProcessCache().getSize() > 0
-                && getInProcessCache().entryExists(aCasReferenceId)) {
-          try {
-            CacheEntry ancestor = 
-                      getInProcessCache().
-                        getTopAncestorCasEntry(getInProcessCache().getCacheEntryForCAS(aCasReferenceId));
-            if ( ancestor != null ) {
-               ancestor.addDelegateMetrics(getKey(), performanceList);
-            }
-          } catch (Exception e) {
-            // An exception be be thrown here if the service is being stopped.
-            // The top level controller may have already cleaned up the cache
-            // and the getCacheEntryForCAS() will throw an exception. Ignore it
-            // here, we are shutting down.
-          }
-        }          
-        
-        UimaMessage message = transport.produceMessage(AsynchAEMessage.Process,
-                AsynchAEMessage.Response, getName());
-        message.addStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
-        ServicePerformance casStats = getCasStatistics(aCasReferenceId);
-
-        message.addLongProperty(AsynchAEMessage.TimeToSerializeCAS, casStats
-                .getRawCasSerializationTime());
-        message.addLongProperty(AsynchAEMessage.TimeToDeserializeCAS, casStats
-                .getRawCasDeserializationTime());
-        message.addLongProperty(AsynchAEMessage.TimeInProcessCAS, casStats.getRawAnalysisTime());
-        long iT = getIdleTimeBetweenProcessCalls(AsynchAEMessage.Process);
-        message.addLongProperty(AsynchAEMessage.IdleTime, iT);
-        // Send reply back to the client. Use internal (non-jms) transport
-        if (!stopped) {
-          transport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
-          dropStats(aCasReferenceId, getName());
-        }
-      } else {
         try {
-        	List<AnalysisEnginePerformanceMetrics> perfMetrics =
-					new ArrayList<AnalysisEnginePerformanceMetrics>();
-          String aeName = getMetaData().getName();
-         
+          
           CacheEntry entry =
                   getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
-          for( AnalysisEnginePerformanceMetrics m : performanceList ) {
- //       	  System.out.println("...............BEFORE:  Name:"+m.getName()+" UniqueName:"+m.getUniqueName()+" How Many="+m.getNumProcessed());
-				boolean aggregate = m.getUniqueName().startsWith("/"+aeName);
-				int pos = m.getUniqueName().indexOf("/",1);
-				String uName = m.getUniqueName();
-				if ( pos > -1 && aeInstancePool.size() > 1 && aeName != null && aggregate) {
-					String st = m.getUniqueName().substring(pos);
-					uName = "/"+aeName+st;
-				} 
-				AnalysisEnginePerformanceMetrics newMetrics = 
-						new AnalysisEnginePerformanceMetrics(m.getName(),uName,m.getAnalysisTime(), m.getNumProcessed());
-			//	System.out.println("... Metrics - AE:"+metrics.getUniqueName()+" AE Analysis Time:"+metrics.getAnalysisTime());
-				perfMetrics.add(newMetrics);
-//	        	  System.out.println("...............AFTER:  Name:"+newMetrics.getName()+" UniqueName:"+newMetrics.getUniqueName()+" How Many="+newMetrics.getNumProcessed());
-
-          }
-          entry.addDelegateMetrics(getKey(), perfMetrics); //performanceList);
+          entry.addDelegateMetrics(getKey(), performanceList);
         } catch (Exception e) {
           // An exception be be thrown here if the service is being stopped.
           // The top level controller may have already cleaned up the cache
@@ -1230,12 +1166,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
 
         if (!stopped && !clientUnreachable ) {
-            getOutputChannel().sendReply(getInProcessCache().getCacheEntryForCAS(aCasReferenceId), anEndpoint);
+//            getOutputChannel(anEndpoint).sendReply(getInProcessCache().getCacheEntryForCAS(aCasReferenceId), anEndpoint);
+            getOutputChannel(anEndpoint).sendReply(getLocalCache().lookupEntry(aCasReferenceId), anEndpoint);
         }
 
         inputCASReturned = true;
-      }
-      
       // Remove input CAS state entry from the local cache
       if (!isTopLevelComponent()) {
         localCache.lookupEntry(aCasReferenceId).setDropped(true);
@@ -1297,13 +1232,67 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         		((CASImpl) aCAS).enableReset(true);
         	}
           // Remove input CAS cache entry if the CAS has been sent to the client
-          dropCAS(aCasReferenceId, true);
+            MessageContext mContext = getInProcessCache()
+                    .getMessageAccessorByReference(aCasReferenceId);
+            if ( mContext != null && mContext instanceof DirectMessageContext) {
+            	dropCASFromLocal(aCasReferenceId);
+            } else {
+                // Remove input CAS cache entry if the CAS has been sent to the client
+                dropCAS(aCasReferenceId, true);
+            }
+        	//dropCAS(aCasReferenceId, true);
+ 
           localCache.dumpContents();
         }
       }
     }
   }
 
+  private List<AnalysisEnginePerformanceMetrics>  getCasMetricList(CasStateEntry parentCasStateEntry, List<AnalysisEnginePerformanceMetrics> afterAnalysisList, List<AnalysisEnginePerformanceMetrics> beforeAnalysisList) {
+      List<AnalysisEnginePerformanceMetrics> performanceList = 
+    	        new ArrayList<AnalysisEnginePerformanceMetrics>();
+	  //  Diff the before process() performance metrics with post process performance
+      //  metrics
+      for (AnalysisEnginePerformanceMetrics after : afterAnalysisList) {
+        for( AnalysisEnginePerformanceMetrics before: beforeAnalysisList) {
+        	if ( before.getUniqueName().equals(after.getUniqueName())) {
+        	  boolean found = false;
+        	  AnalysisEnginePerformanceMetrics metrics = null;
+        	  for( AnalysisEnginePerformanceMetrics met : parentCasStateEntry.getAEPerformanceList() ) {
+                  String un = after.getUniqueName();
+        		  if ( un.indexOf("Components") >= -1 ) {
+        			  un = un.substring(un.indexOf("/"));
+        		  }
+           		  if ( met.getUniqueName().equals(un)) {
+                      long at = after.getAnalysisTime()- before.getAnalysisTime();
+                      metrics = new AnalysisEnginePerformanceMetrics(after.getName(),
+                              un,//after.getUniqueName(),
+                              met.getAnalysisTime()+at,
+                              after.getNumProcessed());
+                      found = true;
+                      parentCasStateEntry.getAEPerformanceList().remove(met);
+                      break;
+        		  } 
+        	  }
+        	  if ( !found ) {
+        		  String un = after.getUniqueName();
+        		  
+        		  if ( un.indexOf("Components") >= -1 ) {
+        			  un = un.substring(un.indexOf("/"));
+        		  }
+                  metrics = new AnalysisEnginePerformanceMetrics(after.getName(),
+                          un,//after.getUniqueName(),
+                          after.getAnalysisTime()- before.getAnalysisTime(),
+                          after.getNumProcessed());
+        		  
+        	  }
+            performanceList.add(metrics);
+            break;
+          }
+        }
+      }
+      return performanceList;
+  }
   private void addConfigIntParameter(String aParamName, int aParamValue) {
     ConfigurationParameter cp = new ConfigurationParameter_impl();
     cp.setMandatory(false);
@@ -1414,6 +1403,13 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public void stop() {
     super.stop(true);  // shutdown now
+    if ( getLocalCache().size() > 0 ) {
+    	for( Entry<String, LocalCache.CasStateEntry> entry : getLocalCache().entrySet()) {
+    		System.out.println("........... Controller:"+getComponentName()+" - stop() - Releasing CAS:"+entry.getKey());
+    		releaseNextCas(entry.getKey());
+    	}
+    }
+
     if (aeInstancePool != null) {
       try {
         aeInstancePool.destroy();
@@ -1517,7 +1513,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
   
   /**
    * The HeapDumpTimer is optionally used to dump the heap if a task takes too much time to finish.
-   * It is enabled from the System property -DheapDumpThreshold=x where x is a number of seconds 
+   * It is enabled from the System property -DheapDumpThreshold=<x> where x is a number of seconds 
    * the task is allowed to complete. If the task is not completed, the heap dump will be created. 
    * 
    *

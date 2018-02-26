@@ -76,7 +76,7 @@ public class CpcErrorHandler extends ErrorHandlerBase implements ErrorHandler {
         if (aController instanceof AggregateAnalysisEngineController) {
           endpoint = ((AggregateAnalysisEngineController) aController).getClientEndpoint();
         }
-        aController.getOutputChannel().sendReply(t, null, null, endpoint,
+        aController.getOutputChannel(endpoint).sendReply(t, null, null, endpoint,
                 AsynchAEMessage.CollectionProcessComplete);
       } catch (Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {

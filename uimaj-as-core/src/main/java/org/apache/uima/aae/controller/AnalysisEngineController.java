@@ -19,6 +19,7 @@
 
 package org.apache.uima.aae.controller;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
@@ -29,6 +30,7 @@ import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaEEAdminContext;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
@@ -41,7 +43,10 @@ import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.spi.transport.UimaMessageListener;
 import org.apache.uima.aae.spi.transport.UimaTransport;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
+import org.apache.uima.as.client.DirectInputChannel;
+import org.apache.uima.as.client.Listener;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.resource.ResourceSpecifier;
 
 public interface AnalysisEngineController extends ControllerLifecycle {
   public static final String CasPoolSize = "CasPoolSize";
@@ -54,9 +59,19 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public void setInputChannel(InputChannel anInputChannel) throws Exception;
 
+  public void setDirectInputChannel(DirectInputChannel anInputChannel) throws Exception;
+  
+  public void setJmsInputChannel(InputChannel anInputChannel) throws Exception;
+
+  public InputChannel getInputChannel(ENDPOINT_TYPE et);
+
   public void addInputChannel(InputChannel anInputChannel) throws Exception;
 
   public String getServiceEndpointName();
+
+  public void setServiceId(String name);
+
+  public String getServiceId();
 
   public void handleDelegateLifeCycleEvent(String anEndpoint, int aDelegateCount);
 
@@ -64,7 +79,9 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public InputChannel getInputChannel();
 
-  public InputChannel getInputChannel(String aQueueName);
+  public List<Listener> getAllListeners();
+
+  //public InputChannel getInputChannel(String aQueueName);
 
   public void saveReplyTime(long snapshot, String aKey);
 
@@ -109,10 +126,16 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public long getTime(String aCasReferenceId, String anEndpointName);
 
   public ErrorHandlerChain getErrorHandlerChain();
-
+/*
   public void setOutputChannel(OutputChannel anOutputChannel) throws Exception;
 
   public OutputChannel getOutputChannel();
+*/
+  public void addOutputChannel(OutputChannel anOutputChannel) throws Exception;
+
+  public OutputChannel getOutputChannel(Endpoint anEndpoint);
+  
+  public OutputChannel getOutputChannel(ENDPOINT_TYPE et);
 
   public void setCasManager(AsynchAECasManager aCasManager);
 
@@ -195,13 +218,13 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public UimaMessageListener getUimaMessageListener(String aDelegateKey);
 
-  public UimaTransport getTransport(UimaAsContext aContext, String aKey) throws Exception;
-
-  public UimaTransport getTransport(String aKey) throws Exception;
-
-  public void initializeVMTransport(int parentControllerReplyConsumerCount) throws Exception;
-
-  public InputChannel getReplyInputChannel(String aDelegateKey);
+//  public UimaTransport getTransport(UimaAsContext aContext, String aKey) throws Exception;
+//
+//  public UimaTransport getTransport(String aKey) throws Exception;
+//
+//  public void initializeVMTransport(int parentControllerReplyConsumerCount) throws Exception;
+//
+//  public InputChannel getReplyInputChannel(String aDelegateKey);
 
   public LocalCache getLocalCache();
 
@@ -235,6 +258,10 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   
   public void addUimaObject(String objectName ) throws Exception;
   
+  public void setErrorHandlerChain(ErrorHandlerChain ehc);
+
+  public ResourceSpecifier getResourceSpecifier();
+
 }
   
   

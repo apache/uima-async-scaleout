@@ -87,4 +87,6 @@ public interface JmxManagement {
  
   public void addObject(String objectName) throws Exception;
  
+  public boolean isRegistered(ObjectName aName) throws Exception;
+
 }

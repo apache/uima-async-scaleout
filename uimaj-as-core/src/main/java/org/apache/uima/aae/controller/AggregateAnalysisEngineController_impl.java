@@ -100,7 +100,8 @@ import org.apache.uima.util.Logger;
 import org.apache.uima.util.TypeSystemUtil;
 import org.apache.uima.util.XMLInputSource;
 
-public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineController implements
+public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineController 
+implements
         AggregateAnalysisEngineController, AggregateAnalysisEngineController_implMBean {
 
   /**
@@ -217,6 +218,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               new Object[] { getComponentName(), aChildController.getComponentName() });
     }
     synchronized(childControllerList) {
+    	System.out.println(":::::::::::::::::: Aggregate:"+getComponentName()+" Registering Child Controller:"+aChildController.getComponentName());;
+
       childControllerList.add(aChildController);
     }
   }
@@ -228,6 +231,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
  
   public void addMessageOrigin(String aCasReferenceId, Endpoint anEndpoint) {
+//	  Thread.dumpStack();
     if (anEndpoint == null) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "addMessageOrigin",
@@ -236,23 +240,26 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
       return;
     }
+    System.out.println(".... Aggregate "+getComponentName()+" addMessageOrigin() - Adding endoint with hashCode:"+anEndpoint.hashCode()+" For CAS:"+aCasReferenceId);
+
     originMap.put(aCasReferenceId, anEndpoint);
-    if (UIMAFramework.getLogger().isLoggable(Level.FINE)) {
+//    if (UIMAFramework.getLogger().isLoggable(Level.FINE)) {
       Iterator it = originMap.keySet().iterator();
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       while (it.hasNext()) {
         String key = (String) it.next();
         Endpoint e = (Endpoint) originMap.get(key);
         if (e != null) {
           sb.append("\t\nCAS:" + key + " Origin:" + e.getEndpoint());
         }
-      }
+ //     }
       /*
        * UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(),
        * "addMessageOrigin", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
        * "UIMAEE_dump_msg_origin__FINE", new Object[] {getComponentName(), sb.toString()});
        */
     }
+      System.out.println(".... Aggregate "+getComponentName()+" addMessageOrigin() - Origin Map Contents:\n"+sb.toString());
   }
 
   public boolean isDelegateDisabled(String aDelegateKey) {
@@ -270,6 +277,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
 
   public void setServiceEndpointName(String anEndpointName) {
+	  //Thread.currentThread().dumpStack();
     serviceEndpointName = anEndpointName;
     if (this.isTopLevelComponent()) {
       // This is done so that the collocated client application can determine where to send messages
@@ -293,6 +301,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
  
   public Endpoint getMessageOrigin(String aCasReferenceId) {
       if (originMap.containsKey(aCasReferenceId)) {
+  	    System.out.println(".... Aggregate "+getComponentName()+" getMessageOrigin() - endoint with hashCode:"+((Endpoint) originMap.get(aCasReferenceId)).hashCode()+" For CAS:"+aCasReferenceId);
+
         return (Endpoint) originMap.get(aCasReferenceId);
     }
     return null;
@@ -335,9 +345,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public void mapEndpointsToKeys(ConcurrentHashMap aDestinationMap) {
     destinationMap = aDestinationMap;
-    Set set = destinationMap.entrySet();
-    for (Iterator it = set.iterator(); it.hasNext();) {
-      Map.Entry entry = (Map.Entry) it.next();
+    Set<Map.Entry<String, Endpoint>> set = destinationMap.entrySet();
+    for (Iterator<Map.Entry<String, Endpoint>> it = set.iterator(); it.hasNext();) {
+      Map.Entry<String, Endpoint> entry =  it.next();
       Endpoint endpoint = (Endpoint) entry.getValue();
       if (endpoint != null) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -346,6 +356,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   "UIMAEE_endpoint_to_key_map__FINE",
                   new Object[] { getName(), (String) entry.getKey(), endpoint.getEndpoint() });
         }
+        System.out.println("............ Aggregate:"+getName()+" Delegate:"+entry.getKey()+" Endpoint:"+endpoint.getEndpoint() );
         if (destinationToKeyMap == null) {
           destinationToKeyMap = new HashMap();
         }
@@ -462,6 +473,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (aClientEndpoint == null) {
       aClientEndpoint = getClientEndpoint();
     }
+    /*
     if (!aClientEndpoint.isRemote()) {
       UimaTransport transport = getTransport(aClientEndpoint.getEndpoint());
       UimaMessage message = transport.produceMessage(AsynchAEMessage.CollectionProcessComplete,
@@ -471,7 +483,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     } else {
       getOutputChannel().sendReply(AsynchAEMessage.CollectionProcessComplete, aClientEndpoint, null, false);
     }
-
+*/
+    getOutputChannel(aClientEndpoint).sendReply(AsynchAEMessage.CollectionProcessComplete, aClientEndpoint, null, false);
     clearStats();
   }
 
@@ -486,10 +499,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       boolean cacheNotEmpty = true;
       boolean shownOnce = false;
       final Object localMux = new Object();
+      
+      /*
       while (cacheNotEmpty) {
         InProcessCache cache = getInProcessCache();
         if (!shownOnce) {
-          shownOnce = true;
+          //shownOnce = true;
           cache.dumpContents(getComponentName());
         }
 
@@ -501,6 +516,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           }
         }
       }
+      */
     } catch (Exception e) {
       throw new AsynchAEException(e);
     }
@@ -563,10 +579,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       }
     } else {
-      Set set = destinationMap.entrySet();
-      for (Iterator it = set.iterator(); it.hasNext();) {
-        Map.Entry entry = (Map.Entry) it.next();
+      Set<?> set = destinationMap.entrySet();
+      for (Iterator<?> it = set.iterator(); it.hasNext();) {
+        Map.Entry<String, Endpoint> entry = (Map.Entry) it.next();
         Endpoint endpoint = (Endpoint) entry.getValue();
+        /*
         if (endpoint != null && endpoint.getStatus() == Endpoint.OK) {
 
           if (!endpoint.isRemote()) {
@@ -593,6 +610,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             endpoint.startCollectionProcessCompleteTimer();
           }
         }
+        */
+        getOutputChannel(endpoint).sendRequest(AsynchAEMessage.CollectionProcessComplete, null, endpoint);
+        endpoint.startCollectionProcessCompleteTimer();
+
       }
     }
   }
@@ -609,7 +630,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     return false;
   }
 
-  public Map getDestinations() {
+  public Map<String, Endpoint> getDestinations() {
     return destinationMap;
   }
 
@@ -639,23 +660,23 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private void stopListener(String key, Endpoint endpoint) throws Exception {
     // Stop the Listener on endpoint that has been disabled
-    InputChannel iC = null;
+//    InputChannel iC = null;
     String destName = null;
     if (endpoint.getDestination() != null) {
       destName = endpoint.getDestination().toString();
-      iC = getInputChannel(destName);
+ //     iC = getInputChannel(destName);
     } else {
       destName = endpoint.getReplyToEndpoint();
-      iC = getInputChannel(destName);
+//      iC = getInputChannel(destName);
     }
-    if (iC != null) {
+//    if (iC != null) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "stopListener",
                 UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_stopping_listener__INFO",
                 new Object[] { getComponentName(), destName, key });
       }
-      iC.destroyListener(destName, key);
-    }
+      inputChannel.destroyListener(destName, key);
+//    }
   }
 
   public void disableDelegates(List aDelegateList) throws AsynchAEException {
@@ -882,7 +903,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           if (localCache.lookupEntry(aNewCasReferenceId) == null) {
             // Add this Cas Id to the local cache. Every input CAS goes through here
             CasStateEntry casStateEntry = localCache.createCasStateEntry(aNewCasReferenceId);
-            casStateEntry.setInputCasReferenceId(anInputCasReferenceId);
+            casStateEntry.setParentCasReferenceId(anInputCasReferenceId);
           }
 
           // Save the subordinate Flow Object in a cache. Flow exists in the
@@ -947,7 +968,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       CacheEntry cacheEntry = getInProcessCache().getCacheEntryForCAS(aCasReferenceId);
       Endpoint replyEndpoint = getReplyEndpoint(cacheEntry, casStateEntry);
       if (replyEndpoint != null) {
-        getOutputChannel().sendReply(new ServiceShutdownException(), aCasReferenceId, null,
+        getOutputChannel(replyEndpoint).sendReply(new ServiceShutdownException(), aCasReferenceId, null,
                 replyEndpoint, AsynchAEMessage.Process);
       }
     } catch (Exception ex) {
@@ -970,7 +991,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // Check if this CAS has a parent
       if (casStateEntry.isSubordinate()) {
         // Fetch parent's cache entry
-        parentCasStateEntry = getLocalCache().lookupEntry(casStateEntry.getInputCasReferenceId());
+        parentCasStateEntry = getLocalCache().lookupEntry(casStateEntry.getParentCasReferenceId());
         // Check the state of the parent CAS. If it is marked as failed, it means that
         // one of its child CASes failed and error handling was configured to fail the
         // CAS. Such failure of a child CAS causes a failure of the parent CAS. All child
@@ -990,7 +1011,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               fcEndpoint.setReplyEndpoint(true);
               fcEndpoint.setIsCasMultiplier(true);
               fcEndpoint.setFreeCasEndpoint(true);
-              getOutputChannel().sendRequest(AsynchAEMessage.ReleaseCAS, entry.getCasReferenceId(),
+              getOutputChannel(fcEndpoint).sendRequest(AsynchAEMessage.ReleaseCAS, entry.getCasReferenceId(),
                       fcEndpoint);
             }
             // Check if a request to stop generation of new CASes from the parent of
@@ -1490,7 +1511,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   public void sendRequestForMetadataToRemoteDelegates() throws AsynchAEException {
-    synchronized(childControllerList) {
+    /*
+	  synchronized(childControllerList) {
       //  Add a delay of 100ms before sending requests for metadata to remote delegates.
       //  This is done to give the broker enough time to 'finalize' creation of
       //  temp reply queues for each remote delegate. It's been observed (on MAC OS only) that AMQ
@@ -1513,6 +1535,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       }
     }
+    */
+	    System.out.println("........... Aggregate.sendRequestForMetadataToRemoteDelegates():"+getName());
+
     Endpoint[] delegateEndpoints = new Endpoint[destinationMap.size()];
 
     // First copy endpoints to an array so that we dont get Concurrent access problems
@@ -1574,6 +1599,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             return;
           }
           if (delegateEndpoints[i].getStatus() == Endpoint.OK ) {
+              System.out.println("----- Aggregate Service:"+getName()+ " dispatching GetMeta request to remote "+delegateEndpoints[i].getEndpoint());
+
             dispatchMetadataRequest(delegateEndpoints[i]);
           }
         }
@@ -1583,8 +1610,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // collocated delegate
         delegateEndpoints[i].initialize();
         delegateEndpoints[i].setController(this);
-
         delegateEndpoints[i].setWaitingForResponse(true);
+        getOutputChannel(ENDPOINT_TYPE.DIRECT).sendRequest(AsynchAEMessage.GetMeta, null, delegateEndpoints[i]);
+/*
         try {
           UimaMessage message = getTransport(delegateEndpoints[i].getEndpoint()).produceMessage(
                   AsynchAEMessage.GetMeta, AsynchAEMessage.Request, getName());
@@ -1593,6 +1621,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         } catch (Exception e) {
           throw new AsynchAEException(e);
         }
+        */
       }
     }
   }
@@ -1600,7 +1629,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   private CasStateEntry fetchParentCasFromLocalCache(CasStateEntry casStateEntry) throws Exception {
     // Lookup parent CAS in the local cache
     CasStateEntry parentCasStateEntry = localCache.lookupEntry(casStateEntry
-            .getInputCasReferenceId());
+            .getParentCasReferenceId());
     if (parentCasStateEntry == null) {
 
       if (UIMAFramework.getLogger().isLoggable(Level.INFO)) {
@@ -1623,7 +1652,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     try {
       // Fetch the parent Cas cache entry
       parentCASCacheEntry = getInProcessCache().getCacheEntryForCAS(
-              casStateEntry.getInputCasReferenceId());
+              casStateEntry.getParentCasReferenceId());
     } catch (Exception ex) {
 
       if (UIMAFramework.getLogger().isLoggable(Level.INFO)) {
@@ -1633,7 +1662,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 "fetchParentCasFromGlobalCache",
                 UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                 "UIMAEE_cas_not_found__INFO",
-                new Object[] { getComponentName(), casStateEntry.getInputCasReferenceId(),
+                new Object[] { getComponentName(), casStateEntry.getParentCasReferenceId(),
                     "InProcessCache" });
       }
     }
@@ -1641,6 +1670,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   private boolean casHasChildrenInPlay(CasStateEntry casStateEntry) throws Exception {
+	  System.out.println(".. FinalState.casHasChildrenInPlay()-CAS:"+casStateEntry.getCasReferenceId()+" Number of Child CASes in Play:"+casStateEntry.getSubordinateCasInPlayCount());
     if (casStateEntry.getSubordinateCasInPlayCount() > 0) {
       // This CAS has child CASes still in play. This CAS will remain in the cache
       // until all its children are fully processed.
@@ -1716,8 +1746,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     }
     // Found entries in caches for a given CAS id
     try {
-      endpoint = getInProcessCache().getEndpoint(null, aCasReferenceId);
-
+     // endpoint = getInProcessCache().getEndpoint(null, aCasReferenceId);
+    	endpoint = getMessageOrigin(aCasReferenceId);
       synchronized (super.finalStepMux) {
         // Check if the global cache still contains the CAS. It may have been deleted by another
         // thread already
@@ -1766,12 +1796,15 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   new Object[] { getComponentName(), aCasReferenceId });
         }
         // Determine if this CAS is a child of some CAS
-        isSubordinate = casStateEntry.getInputCasReferenceId() != null;
+        isSubordinate = casStateEntry.getParentCasReferenceId() != null;
 
         if (isSubordinate) {
           // fetch the destination of a CM that produced this CAS, so that we know where to send
           // Free Cas Notification
-          freeCasEndpoint = cacheEntry.getFreeCasEndpoint();
+         // freeCasEndpoint = cacheEntry.getFreeCasEndpoint();
+          freeCasEndpoint = casStateEntry.getFreeCasNotificationEndpoint();
+     	  System.out.println(".........Service:"+getComponentName()+" Cas:"+aCasReferenceId+" is subordinate - freeCasEndpoint="+freeCasEndpoint);
+
           parentCasStateEntry = fetchParentCasFromLocalCache(casStateEntry);
           parentCASCacheEntry = fetchParentCasFromGlobalCache(casStateEntry);
           doDecrementChildCount = true;
@@ -1796,6 +1829,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
             if (isSubordinate) {
               // drop the flow since we no longer need it
               dropFlow(aCasReferenceId, true);
+              System.out.println(">>>>>>>>>>>> Controller:"+getComponentName()+" Dropping CAS:"+aCasReferenceId);
               // Drop the CAS and remove cache entry for it
               dropCAS(aCasReferenceId, true);
               casDropped = true;
@@ -1817,14 +1851,18 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           cEndpoint = replyToClient(cacheEntry, casStateEntry);
           replySentToClient = true;
           
-          if (cEndpoint != null && cEndpoint.isRemote()) {
+          if (cEndpoint != null && cEndpoint.isRemote() && !cEndpoint.getServerURI().equals("java")) {
             // if this service is a Cas Multiplier don't remove the CAS. It will be removed
             // when a remote client sends explicit Release CAS Request
             if (!isCasMultiplier()) {
+            	System.out.println(".... Aggregate:"+getComponentName()+" Releasing CAS:"+aCasReferenceId +" Client is Remote");
+
               // Drop the CAS and remove cache entry for it
               dropCAS(aCasReferenceId, true);
             }
             casDropped = true;
+          } else if (cEndpoint != null && cEndpoint.getServerURI().equals("java")) {
+        	  casDropped = true;
           } else {
             // Remove entry from the local cache for this CAS. If the client
             // is remote the entry was removed in replyToClient()
@@ -1839,12 +1877,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
 
         if (parentCasStateEntry == null && isSubordinate) {
-          parentCasStateEntry = localCache.lookupEntry(casStateEntry.getInputCasReferenceId());
+          parentCasStateEntry = localCache.lookupEntry(casStateEntry.getParentCasReferenceId());
         }
         if (doDecrementChildCount) {
           // Child CAS has been fully processed, decrement its parent count of active child CASes
           if (parentCasStateEntry != null) {
             parentCasStateEntry.decrementSubordinateCasInPlayCount();
+        	  System.out.println("... Controller:"+getComponentName()+" CAS:"+parentCasStateEntry.getCasReferenceId()+" Decremented Child Count - Courrent Count:"+parentCasStateEntry.getSubordinateCasInPlayCount());
             // If debug level=FINEST dump the entire cache
             localCache.dumpContents();
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
@@ -1932,8 +1971,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
           freeCasEndpoint.setReplyEndpoint(true);
           freeCasEndpoint.setIsCasMultiplier(true);
           freeCasEndpoint.setFreeCasEndpoint(true);
+          System.out.println("....Aggregate "+getComponentName()+" Sending ReleaseCAS to remote CM - CASID:"+aCasReferenceId);
+
           // send Free CAS Notification to a Cas Multiplier
-          getOutputChannel().sendRequest(AsynchAEMessage.ReleaseCAS, aCasReferenceId,
+          getOutputChannel(freeCasEndpoint).sendRequest(AsynchAEMessage.ReleaseCAS, aCasReferenceId,
                   freeCasEndpoint);
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -1984,7 +2025,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
 
   private boolean forceToDropTheCas(CasStateEntry entry, CacheEntry cacheEntry, FinalStep aStep) {
-    // Get the key of the Cas Producer
+   
+	  // Get the key of the Cas Producer
     String casProducer = cacheEntry.getCasProducerAggregateName();
     // CAS is considered new from the point of view of this service IF it was produced by it
     boolean isNewCas = (cacheEntry.isNewCas() && casProducer != null && getComponentName().equals(
@@ -2025,10 +2067,13 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
               new Object[] { getComponentName(), casStateEntry.getCasReferenceId(),
                   replyEndpoint.getEndpoint() });
     }
+    getOutputChannel(replyEndpoint).sendReply(casStateEntry.getErrors().get(0),
+            casStateEntry.getCasReferenceId(), null, replyEndpoint, AsynchAEMessage.Process);
+/*
     if (replyEndpoint.isRemote()) {
       // this is an input CAS that has been marked as failed. Return the input CAS
       // and an exception to the client.
-      getOutputChannel().sendReply(casStateEntry.getErrors().get(0),
+      getOutputChannel(replyEndpoint).sendReply(casStateEntry.getErrors().get(0),
               casStateEntry.getCasReferenceId(), null, replyEndpoint, AsynchAEMessage.Process);
     } else {
       replyEndpoint.setReplyEndpoint(true);
@@ -2056,6 +2101,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       vmTransport.getUimaMessageDispatcher(replyEndpoint.getEndpoint()).dispatch(message);
       dropStats(casStateEntry.getCasReferenceId(),getName());
     }
+    */
   }
 
   private boolean sendExceptionToClient(CacheEntry cacheEntry, CasStateEntry casStateEntry,
@@ -2070,7 +2116,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
       // Fetch the top ancestor CAS of this CAS.
       CasStateEntry topAncestorCasStateEntry = getLocalCache().getTopCasAncestor(
-              casStateEntry.getInputCasReferenceId());
+              casStateEntry.getParentCasReferenceId());
       if ( topAncestorCasStateEntry != null ) {
     	// check the state
           if (topAncestorCasStateEntry.isFailed() && casHasExceptions(casStateEntry)
@@ -2125,7 +2171,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       sendReplyWithException(cacheEntry, casStateEntry, replyEndpoint);
     } else {
       // Send response to a given endpoint
-      getOutputChannel().sendReply(cacheEntry, replyEndpoint);
+      getOutputChannel(replyEndpoint).sendReply(casStateEntry, replyEndpoint);
     }
     // Drop the CAS only if the client is remote and the CAS is an input CAS OR
     // the CAS is a child but there was a failure delivering it to a client. The client
@@ -2139,7 +2185,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 		if ( casStateEntry.isSubordinate()) {
 			try {
 				
-				String inputCasId = casStateEntry.getInputCasReferenceId();
+				String inputCasId = casStateEntry.getParentCasReferenceId();
 				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
 					UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
 							"sendReplyToRemoteClient", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
@@ -2175,7 +2221,9 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                 "UIMAEE_client_dead__FINE",
                 new Object[] { getComponentName(), replyEndpoint.getDestination().toString(), casStateEntry.getCasReferenceId()});
         }
-    	dropCAS(casStateEntry.getCasReferenceId(), true);
+    	if ( !replyEndpoint.getServerURI().equals("java")) {
+        	dropCAS(casStateEntry.getCasReferenceId(), true);
+    	}
     	// If the cache is empty change the state of the Aggregate to idle
     	if (getInProcessCache().isEmpty()) {
     	  endProcess(AsynchAEMessage.Process);
@@ -2223,23 +2271,29 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         // client perspective, this Cas Multiplier Aggregate is a black box,
         // all CASes produced here must be linked with the input CAS.
         // Find the top ancestor of this CAS. It is the input CAS sent by the client
-        String inputCasId = getLocalCache().lookupInputCasReferenceId(casStateEntry);
+//        String inputCasId = getLocalCache().lookupInputCasReferenceId(casStateEntry);
+        String inputCasId = casStateEntry.getInputCasReferenceId(); //getLocalCache().lookupInputCasReferenceId(casStateEntry);
         // Modify the parent of this CAS.
         if (inputCasId != null ) {
-          if ( !inputCasId.equals(casStateEntry.getInputCasReferenceId())) {
-            cacheEntry.setInputCasReferenceId(inputCasId);
+//          if ( !inputCasId.equals(casStateEntry.getParentCasReferenceId())) {
+//            cacheEntry.setInputCasReferenceId(inputCasId);
+//          }
+          if ( parentController != null ) {
+        	  // Update counters in the parents controller local cache. 
+              CasStateEntry parentCasStateEntry = 
+                parentController.getLocalCache().lookupEntry(inputCasId);
+              if ( parentCasStateEntry != null ) {
+                parentCasStateEntry.incrementSubordinateCasInPlayCount();
+                parentCasStateEntry.incrementOutstandingFlowCounter();
+              } 
           }
-          // Update counters in the parents controller local cache. 
-          CasStateEntry parentCasStateEntry = 
-            parentController.getLocalCache().lookupEntry(inputCasId);
-          if ( parentCasStateEntry != null ) {
-            parentCasStateEntry.incrementSubordinateCasInPlayCount();
-            parentCasStateEntry.incrementOutstandingFlowCounter();
-          }
+         
         }
       }
       // Send CAS to a given reply endpoint
-      sendVMMessage(mType, replyEndpoint, cacheEntry);
+//      sendVMMessage(mType, replyEndpoint, cacheEntry);
+      getOutputChannel(replyEndpoint).sendReply(casStateEntry, replyEndpoint);
+
     }
   }
 
@@ -2263,7 +2317,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       HashMap map = new HashMap();
       map.put(AsynchAEMessage.Command, AsynchAEMessage.Process);
       map.put(AsynchAEMessage.CasReference, casStateEntry.getCasReferenceId());
-      handleError(map, new UnknownDestinationException());
+      handleError(map, new UnknownDestinationException("Controller:"+getComponentName()+" CasReferenceId:"+casStateEntry.getCasReferenceId()+" Destination Not Found"));
       return false;
     }
     // Dont send a reply to the client if the client is a CAS multiplier
@@ -2276,7 +2330,14 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private Endpoint replyToClient(CacheEntry cacheEntry, CasStateEntry casStateEntry)
           throws Exception {
-    Endpoint endpoint = getReplyEndpoint(cacheEntry, casStateEntry);
+	 // Thread.dumpStack();
+   // Endpoint endpoint = getReplyEndpoint(cacheEntry, casStateEntry);
+    
+    CasStateEntry inputCasCasStateEntry = getLocalCache().get(casStateEntry.getInputCasReferenceId());
+    
+    Endpoint endpoint = inputCasCasStateEntry.getClientEndpoint();
+   // Endpoint endpoint = getMessageOrigin(cacheEntry.getCasReferenceId());
+    
     if (!validEndpoint(endpoint, casStateEntry)) {
       return null; // the reason has already been logged
     }
@@ -2294,8 +2355,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     if (!isStopped()) {
       try {
         if (endpoint.isRemote()) {
+       	  System.out.println("......replyToClient()[Remote] - Controller:"+getComponentName()+" CasID:"+cacheEntry.getCasReferenceId());
+
           sendReplyToRemoteClient(cacheEntry, casStateEntry, endpoint);
         } else {
+        	  System.out.println("......replyToClient()[Direct] - Controller:"+getComponentName()+" CasID:"+cacheEntry.getCasReferenceId());
+
           sendReplyToCollocatedClient(cacheEntry, casStateEntry, endpoint);
         }
       } catch ( Exception e) {
@@ -2323,6 +2388,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  }
 	  return false;
   }
+  /*
   private void sendVMMessage(int messageType, Endpoint endpoint, CacheEntry cacheEntry)
           throws Exception {
     // If the CAS was produced by this aggregate send the request message to the client
@@ -2352,7 +2418,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     dropStats(cacheEntry.getCasReferenceId(), getName());
 
   }
-
+*/
   private Endpoint getReplyEndpoint(CacheEntry cacheEntry, CasStateEntry casStateEntry)
           throws Exception {
     Endpoint endpoint = null;
@@ -2481,6 +2547,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   private void dispatch(CacheEntry entry, Endpoint anEndpoint) throws AsynchAEException {
     if (!anEndpoint.isRemote()) {
+        getOutputChannel(ENDPOINT_TYPE.DIRECT).sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), anEndpoint);
+/*
       try {
         UimaTransport transport = getTransport(anEndpoint.getEndpoint());
         UimaMessage message = transport.produceMessage(AsynchAEMessage.Process,
@@ -2499,6 +2567,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                   "UIMAEE_exception__WARNING", e);
         }
       }
+      */
     } else {
       // Check delegate's state before sending it a CAS. The delegate
       // may have previously timed out and is in a process of pinging
@@ -2508,7 +2577,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // delayed CASes will be dispatched to the delegate.
       if (!delayCasIfDelegateInTimedOutState(entry.getCasReferenceId(), anEndpoint.getDelegateKey(), entry.getCas().hashCode())) {
         // The delegate is in the normal state so send it this CAS
-        getOutputChannel().sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), anEndpoint);
+        getOutputChannel(anEndpoint).sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), anEndpoint);
       }
     }
   }
@@ -2612,7 +2681,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         if (endpoint.getSerialFormat() == SerialFormat.BINARY) {
           endpoint.setSerialFormat(SerialFormat.XMI);  
         }
-        getOutputChannel().sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), endpoint);
+        getOutputChannel(endpoint).sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), endpoint);
       }    
     }
 
@@ -2729,15 +2798,20 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                                                                                                      SerialFormat.COMPRESSED_FILTERED);
     }
   }
-  
-  public void mergeTypeSystem(String aTypeSystem, String fromDestination) throws AsynchAEException {
-    mergeTypeSystem(aTypeSystem, fromDestination, null);
-  }
+//  
+//  public void mergeTypeSystem(String aTypeSystem, String fromDestination) throws AsynchAEException {
+//    mergeTypeSystem(aTypeSystem, fromDestination, null);
+//  }
 
 //  public synchronized void mergeTypeSystem(String aTypeSystem, String fromDestination,
-  public void mergeTypeSystem(String aTypeSystem, String fromDestination,
+//  public void mergeTypeSystem(String aTypeSystem, String fromDestination,
+ //         String fromServer) throws AsynchAEException {
+  public void mergeTypeSystem(ResourceMetaData resource, String fromDestination,
           String fromServer) throws AsynchAEException {
+
     mergeLock.lock();
+    System.out.println("AggregateAnalysisEngineController.mergeTypeSystem() - from "+fromDestination);
+
     try {
       // Find the endpoint for this service, given its input queue name and broker URI.
       // We now allow endpoints managed by different servers to have the same queue name.
@@ -2763,9 +2837,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         if ( endpoint.getServiceInfo() != null ) {
           endpoint.getServiceInfo().setState(ServiceState.RUNNING.name());
         }
-        ResourceMetaData resource = null;
+//        ResourceMetaData resource = null;
         ServiceInfo remoteDelegateServiceInfo = null;
-        if (aTypeSystem.trim().length() > 0) {
+//        if (aTypeSystem.trim().length() > 0) {
+        if ( resource != null ) {  
           if (endpoint.isRemote()) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
               UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
@@ -2779,10 +2854,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
                     "mergeTypeSystem", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                     "UIMAEE_merge_ts_from_delegate__CONFIG", new Object[] { fromDestination });
           }
+          /*
           ByteArrayInputStream bis = new ByteArrayInputStream(aTypeSystem.getBytes());
           XMLInputSource in1 = new XMLInputSource(bis, null);
 
           resource = UIMAFramework.getXMLParser().parseResourceMetaData(in1);
+          */
           if (isStopped()) {
             return;
           }
@@ -2832,7 +2909,11 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
         //  
         if (collocatedAggregate || resource instanceof ProcessingResourceMetaData) {
-          if (allTypeSystemsMerged()) {
+        	System.out.println("#############  Aggregate:"+getName()+" Merged Typesystem from "+fromDestination);//+" allTypeSystemsMerged():"+allTypeSystemsMerged());
+
+        	if (allTypeSystemsMerged()) {
+                System.out.println("!!!!! AGGREGATE:"+getName()+" Got Metadata from ALL delegates");
+
             if (!isStopped()) {
               try {
                 completeInitialization();
@@ -2862,6 +2943,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         }
       }
     } catch (Exception e) {
+    	e.printStackTrace();
       throw new AsynchAEException(e);
     } finally {
     	mergeLock.unlock();
@@ -3007,11 +3089,14 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 	  return aggTypePriorities;
   }
   protected void startProcessing() throws Exception {
-	  
+	  System.out.println(",,,,,,,,,,, Controller "+getName()+" Opening Latch ,,,,,,,,,,,,");
+
 	    // Open latch to allow messages to be processed. The
 	    // latch was closed to prevent messages from entering
 	    // the controller before it is initialized.
 	    latch.openLatch(getName(), isTopLevelComponent(), true);
+		  System.out.println(",,,,,,,,,,, Controller "+getName()+" Latch is Opened,,,,,,,,,,,, Latch hashcode:"+latch.hashCode());
+
 	    initialized = true;
 	    // Notify client listener that the initialization of the controller was successfull
 	    notifyListenersWithInitializationStatus(null);
@@ -3055,6 +3140,8 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
       delegateCount++;
     }
+    System.out.println("+++++++++++++ delegateCount="+delegateCount+" destinationMap.size()="+destinationMap.size());
+
     if (delegateCount == destinationMap.size()) {
       return true; // All delegates responded to GetMeta request
     }
@@ -3110,7 +3197,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
       }
     }
-    getOutputChannel().sendRequest(AsynchAEMessage.GetMeta, null, anEndpoint);
+    getOutputChannel(anEndpoint).sendRequest(AsynchAEMessage.GetMeta, null, anEndpoint);
   }
 
   public void retryMetadataRequest(Endpoint anEndpoint) throws AsynchAEException {
@@ -3163,7 +3250,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
         getInProcessCache().getEndpoint(anEndpoint, casReferenceId).cancelTimer();
         Endpoint requestOrigin = cachedEntries[i].getMessageOrigin();
         try {
-          getOutputChannel().sendReply(
+          getOutputChannel(requestOrigin).sendReply(
                   new UimaEEServiceException("Delegates Not Found To Process CAS on Endpoint:"
                           + anEndpoint), casReferenceId, parentCasReferenceId, requestOrigin,
                   AsynchAEMessage.Process);
@@ -3186,7 +3273,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
   public void retryLastCommand(int aCommand, Endpoint anEndpoint, String aCasReferenceId) {
     try {
-      getOutputChannel().sendRequest(aCommand, aCasReferenceId, anEndpoint);
+      getOutputChannel(anEndpoint).sendRequest(aCommand, aCasReferenceId, anEndpoint);
     } catch (AsynchAEException e) {
 
     }
@@ -3206,7 +3293,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       // block in getInputChannel() on the latch
       if (isTopLevelComponent() && getInputChannel() != null) {
         serviceInfo.setInputQueueName(getInputChannel().getName());
-        serviceInfo.setBrokerURL(super.getBrokerURL());
+     //   serviceInfo.setBrokerURL(super.getBrokerURL());
       } else {
         serviceInfo.setInputQueueName(getName());
         serviceInfo.setBrokerURL("vm://localhost");
@@ -3299,8 +3386,12 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
       cache.destroy();
     }
   }
-
+ 
   public void stop() {
+	  for( AnalysisEngineController delegate : getChildControllerList() ) {
+		  delegate.stop();
+	  }
+
 	  super.stop(true);  // shutdown now
 	  
 	  // enable blocked threads to finish // https://issues.apache.org/jira/browse/UIMA-3433
@@ -3327,7 +3418,7 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
     
   }
 
-  public List getChildControllerList() {
+  public List<AnalysisEngineController> getChildControllerList() {
     return childControllerList;
   }
 
@@ -3417,9 +3508,10 @@ public class AggregateAnalysisEngineController_impl extends BaseAnalysisEngineCo
   }
   
   public void changeCollocatedDelegateState( String delegateKey, ServiceState state ) throws Exception {
-    if ( delegateKey != null && state != null ) {
+	  System.out.println("............. changeCollocatedDelegateState - delegateKey:"+delegateKey+" state is Null:"+(state==null));
+	  if ( delegateKey != null && state != null ) {
       synchronized(childControllerList) {
-        if ( childControllerList.size() > 0 ) {
+        if ( !childControllerList.isEmpty() ) {
           for( AnalysisEngineController childController : childControllerList ) {
             if ( delegateKey.equals(childController.getKey())) {
               childController.changeState(state);

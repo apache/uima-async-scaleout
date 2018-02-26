@@ -70,8 +70,15 @@ public class InProcessCache implements InProcessCacheMBean {
 
   private BaseAnalysisEngineController controller;
   
+  private boolean registeredWithJMX = false;
   
+  public boolean isRegisteredWithJMX() {
+	  return registeredWithJMX;
+  }
   
+  public void setRegisteredWithJMX() {
+	  registeredWithJMX = true;
+  }
   /**
 	  Register controller to call when the cache becomes empty.
     This call is made when the controller enters quiesce
@@ -225,41 +232,51 @@ public class InProcessCache implements InProcessCacheMBean {
   }
 
   public synchronized void dumpContents(String aControllerName) {
-//    int count = 0;
-    /*
-     * if ( UIMAFramework.getLogger().isLoggable(Level.FINEST) ) { Iterator it =
-     * cache.keySet().iterator(); StringBuffer sb = new StringBuffer("\n");
-     * 
-     * while( it.hasNext() ) { String key = (String) it.next(); CacheEntry entry =
-     * (CacheEntry)cache.get(key); count++; if ( entry.isSubordinate()) { sb.append(key+
-     * " Number Of Child CASes In Play:"
-     * +entry.getSubordinateCasInPlayCount()+" Parent CAS id:"+entry.getInputCasReferenceId()); }
-     * else { sb.append(key+
-     * " *** Input CAS. Number Of Child CASes In Play:"+entry.getSubordinateCasInPlayCount()); }
-     * 
-     * // if ( entry.isWaitingForRelease() ) // { //
-     * sb.append(" <<< Reached Final State in Controller:"+aControllerName); // }
-     * 
-     * sb.append("\n"); } UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST,
-     * CLASS_NAME.getName(), "dumpContents", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-     * "UIMAEE_show_cache_entry_key__FINEST", new Object[] { aControllerName, count, sb.toString()
-     * });
-     * 
-     * sb.setLength(0); } else if ( UIMAFramework.getLogger().isLoggable(Level.FINE) ) { Iterator it
-     * = cache.keySet().iterator(); StringBuffer sb = new StringBuffer("\n"); int inFinalState=0;
-     * 
-     * while( it.hasNext() ) { String key = (String) it.next(); CacheEntry entry =
-     * (CacheEntry)cache.get(key); count++;
-     * 
-     * //if ( entry.isWaitingForRelease() ) //{ //inFinalState++; //}
-     * 
-     * } UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "dumpContents",
-     * UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_show_abbrev_cache_stats___FINE", new
-     * Object[] { aControllerName, count, inFinalState });
-     * 
-     * 
-     * }
-     */
+    int count = 0;
+    
+    //  if ( UIMAFramework.getLogger().isLoggable(Level.FINEST) ) { 
+    	  Iterator it =
+             cache.keySet().iterator(); 
+    	  StringBuilder sb = new StringBuilder("\n");
+      
+          while( it.hasNext() ) { 
+        	  String key = (String) it.next(); 
+        	  CacheEntry entry =
+                  (CacheEntry)cache.get(key); 
+        	  count++; 
+        	  sb.append("CAS ").append(entry.getCasReferenceId()).append(" Parent:").append(entry.getInputCasReferenceId());
+        	  /*
+        	  if ( entry.isSubordinate()) { 
+        		  sb.append(key+ " Number Of Child CASes In Play:"
+                     +entry.getSubordinateCasInPlayCount()+" Parent CAS id:"+entry.getInputCasReferenceId()); 
+        	  } else { sb.append(key+
+      " *** Input CAS. Number Of Child CASes In Play:"+entry.getSubordinateCasInPlayCount()); 
+        	  }
+      
+      // if ( entry.isWaitingForRelease() ) // { //
+      sb.append(" <<< Reached Final State in Controller:"+aControllerName); // }
+      
+      sb.append("\n"); } UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST,
+      CLASS_NAME.getName(), "dumpContents", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+      "UIMAEE_show_cache_entry_key__FINEST", new Object[] { aControllerName, count, sb.toString()
+      });
+      
+      sb.setLength(0); } else if ( UIMAFramework.getLogger().isLoggable(Level.FINE) ) { Iterator it
+      = cache.keySet().iterator(); StringBuffer sb = new StringBuffer("\n"); int inFinalState=0;
+      
+      while( it.hasNext() ) { String key = (String) it.next(); CacheEntry entry =
+      (CacheEntry)cache.get(key); count++;
+      
+      //if ( entry.isWaitingForRelease() ) //{ //inFinalState++; //}
+      
+      } UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "dumpContents",
+      UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_show_abbrev_cache_stats___FINE", new
+      Object[] { aControllerName, count, inFinalState });
+      
+      */
+     // }
+      }
+      System.out.println(sb.toString());
   }
 
   public synchronized void remove(String aCasReferenceId) {
@@ -366,10 +383,15 @@ public class InProcessCache implements InProcessCacheMBean {
   }
 
   public MessageContext getMessageAccessorByReference(String aCasReferenceId) {
-    if (!cache.containsKey(aCasReferenceId)) {
+//    if (!cache.containsKey(aCasReferenceId)) {
+//      return null;
+//    }
+    CacheEntry casRefEntry = getEntry(aCasReferenceId);
+    if (casRefEntry == null) {
+    	System.out.println("... CAS "+aCasReferenceId+" Not Found In InprocessCache");
       return null;
     }
-    CacheEntry casRefEntry = getEntry(aCasReferenceId);
+
     return casRefEntry.getMessageAccessor();
   }
 
@@ -528,7 +550,13 @@ public class InProcessCache implements InProcessCacheMBean {
     }
     return casRefEntry;
   }
+  public static class UndefinedCacheEntry extends CacheEntry {
 
+	  public UndefinedCacheEntry() {
+		  super(null, null, null);
+	  }
+	  
+  }
   public static class CacheEntry {
     public static final int FINAL_STATE = 1;
 

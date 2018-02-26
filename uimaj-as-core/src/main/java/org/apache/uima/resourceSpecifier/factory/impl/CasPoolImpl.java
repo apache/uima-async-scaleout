@@ -45,6 +45,7 @@ public class CasPoolImpl implements CasPool {
     this.cpt = cpt;
     setNumberOfCases(context.getCasPoolSize());
     setInitialFsHeapSize(context.getInitialHeapSize());
+    disableJCasCache(context.disableJCasCache());
 
 //    if ( props.containsKey(UimaASDeploymentDescriptor.CASPOOL_CAS_COUNT)) {
 //      setAttr(UimaASDeploymentDescriptor.CASPOOL_CAS_COUNT,props);
@@ -99,5 +100,18 @@ public int getNumberOfCases() {
     Assert.notNull(cpt);
     cpt.setInitialFsHeapSize(heapSize);
   }
-
+  /* (non-Javadoc)
+   * @see org.apache.uima.resourceSpecifier.factory.CasPool#disableJCasCache()
+   */
+  public boolean disableJCasCache() {
+	  Assert.notNull(cpt);
+	 return cpt.getDisableJCasCache(); 
+  }
+  /* (non-Javadoc)
+   * @see org.apache.uima.resourceSpecifier.factory.CasPool#disableJCasCache(boolean)
+   */
+  public void disableJCasCache(boolean disable) {
+	  Assert.notNull(cpt);
+	  cpt.setDisableJCasCache(disable);
+  }
 }

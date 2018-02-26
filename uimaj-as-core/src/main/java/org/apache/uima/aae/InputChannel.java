@@ -19,12 +19,26 @@
 
 package org.apache.uima.aae;
 
+import java.util.List;
+
+import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.Endpoint;
+import org.apache.uima.aae.handler.Handler;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.aae.message.MessageWrapper;
+import org.apache.uima.as.client.Listener;
 
 public interface InputChannel extends Channel {
+  // The REPLY type is only for handling replies from remote services.
+  public enum ChannelType {REPLY, REQUEST_REPLY };
+	
+  public void setController(AnalysisEngineController controller) throws Exception;
+  public void setEndpointName(String name);
+  public void setMessageHandler(Handler handler);
+  
+  public ChannelType getChannelType();
   public int getSessionAckMode();
 
   public void ackMessage(MessageContext aMessageContext);
@@ -39,7 +53,7 @@ public interface InputChannel extends Channel {
 
   public boolean isStopped();
 
-  public int getConcurrentConsumerCount();
+ // public int getConcurrentConsumerCount();
 
   public void destroyListener(String anEndpointName, String aDelegateKey);
 
@@ -47,6 +61,15 @@ public interface InputChannel extends Channel {
 
   public void createListenerForTargetedMessages() throws Exception;
   
+  public List<Listener> getListeners();
+  
+//  public void addListener(Listener listener);
+  public List<Listener> registerListener(Listener messageListener);
+  
+  public void disconnectListenersFromQueue() throws Exception;
+
+  public void disconnectListenerFromQueue(Listener listener) throws Exception;
+
   public boolean isFailed(String aDelegateKey);
 
   public boolean isListenerForDestination(String anEndpointName);
@@ -57,7 +80,8 @@ public interface InputChannel extends Channel {
   
   public void terminate();
   
-  public void disconnectListenersFromQueue() throws Exception;
+ 
+ // public void onMessage(MessageWrapper message);
   
-  public void onMessage(MessageWrapper message);
+  public ENDPOINT_TYPE getType();
 }

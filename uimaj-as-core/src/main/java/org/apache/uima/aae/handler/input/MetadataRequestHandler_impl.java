@@ -31,7 +31,7 @@ import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.util.Level;
 
 public class MetadataRequestHandler_impl extends HandlerBase {
-  private static final Class CLASS_NAME = MetadataRequestHandler_impl.class;
+  private static final Class<?> CLASS_NAME = MetadataRequestHandler_impl.class;
 
   public MetadataRequestHandler_impl(String aName) {
     super(aName);

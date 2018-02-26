@@ -35,10 +35,13 @@ public class TempDestinationResolver implements DestinationResolver {
 
   private String serviceName = "";
   
+  private String endpoint = "";
+  
   public TempDestinationResolver() {
   }
-  public TempDestinationResolver(String name) {
+  public TempDestinationResolver(String name, String endpoint) {
 	  serviceName = name;
+	  this.endpoint = endpoint;
   }
   /**
    * This method is called by the Spring listener code. It creates a single temp queue for all
@@ -48,7 +51,9 @@ public class TempDestinationResolver implements DestinationResolver {
    */
   public Destination resolveDestinationName(Session session, String destinationName,
           boolean pubSubDomain) throws JMSException {
-    synchronized (mutex) {
+	  System.out.println("************ resolveDestinationName() Controller:"+serviceName+" Endpoint:"+endpoint+"************************");
+
+	  synchronized (mutex) {
       if (destination == null) {
         destination = session.createTemporaryQueue();
         if (listener != null) {

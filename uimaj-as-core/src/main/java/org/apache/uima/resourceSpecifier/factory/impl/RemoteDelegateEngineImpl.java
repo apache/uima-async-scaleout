@@ -113,7 +113,7 @@ public class RemoteDelegateEngineImpl implements RemoteDelegateEngine {
    * @param context the context
    */
   private void addCasMultiplier(CasMultiplierType cmt, DelegateConfiguration cdc, ServiceContext context) {
-    cm = new CasMultiplierImpl(cmt, cdc.getCasPoolSize(), cdc.getInitialHeapSize(), cdc.processParentLast());
+    cm = new CasMultiplierImpl(cmt, cdc.getCasPoolSize(), cdc.getInitialHeapSize(), cdc.processParentLast(), cdc.disableJCasCache());
   }
 
   /**

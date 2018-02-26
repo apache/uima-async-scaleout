@@ -150,4 +150,17 @@ public interface DelegateConfiguration {
    */
   public CollectionProcessCompleteErrorHandlingSettings getCollectionProcessCompleteErrorHandlingSettings();
   
+  /**
+   * Returns the value of the diableJCasCache
+   * @return true if configured to disable JCasCache. False otherwise
+   */
+  public boolean disableJCasCache();
+  
+  /**
+   * Sets the value of the diableJCasCache
+   * 
+   * @param disable - true to disable JCasCache. False otherwise
+   */
+  public void disableJCasCache(boolean disable);
+
 }

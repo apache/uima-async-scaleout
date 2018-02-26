@@ -33,7 +33,7 @@ import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.cas.SerialFormat;
 
 public class JmsMessageContext implements MessageContext {
-  private static final Class CLASS_NAME = JmsMessageContext.class;
+  private static final Class<?> CLASS_NAME = JmsMessageContext.class;
 
   private Message message;
 

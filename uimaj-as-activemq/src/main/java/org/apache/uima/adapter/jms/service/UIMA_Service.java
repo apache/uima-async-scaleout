@@ -23,6 +23,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidClassException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UimaASApplicationExitEvent;
@@ -31,8 +35,11 @@ import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.jmx.monitor.BasicUimaJmxMonitorListener;
 import org.apache.uima.aae.jmx.monitor.JmxMonitor;
 import org.apache.uima.aae.jmx.monitor.JmxMonitorListener;
+import org.apache.uima.aae.service.UimaASService;
+import org.apache.uima.aae.service.UimaAsServiceRegistry;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
+import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 import org.springframework.context.ApplicationEvent;
@@ -74,6 +81,7 @@ public class UIMA_Service implements ApplicationListener {
       // allow multiple args for one key
       deploymentDescriptors = getMultipleArg2("-dd", args);
     }
+    /*
     String saxonURL = getArg("-saxonURL", args);
     String xslTransform = getArg("-xslt", args);
     String uimaAsDebug = getArg("-uimaEeDebug", args);
@@ -84,6 +92,7 @@ public class UIMA_Service implements ApplicationListener {
       printUsageMessage();
       return null;
     }
+    */
     String brokerURL = getArg("-brokerURL", args);
     // Check if broker URL is specified on the command line. If it is not, use the default
     // localhost:61616. In either case, set the System property defaultBrokerURL. It will be used
@@ -99,6 +108,7 @@ public class UIMA_Service implements ApplicationListener {
       System.out.println(">>> Setting Inactivity Timeout To: "
               + System.getProperty(JmsConstants.SessionTimeoutOverride));
     }
+    /*
     if (deploymentDescriptors.length == 0) {
       // array of context files passed in
       springConfigFileArray = args;
@@ -149,8 +159,10 @@ public class UIMA_Service implements ApplicationListener {
         }
       }
     }
+    
     return springConfigFileArray;
-
+    */
+    return deploymentDescriptors;
   }
   public SpringContainerDeployer deploy(String[] springContextFiles, ApplicationListener<ApplicationEvent> listener) throws Exception {
 	    SpringContainerDeployer springDeployer;
@@ -415,6 +427,7 @@ public class UIMA_Service implements ApplicationListener {
   public static void main(String[] args) {
     try {
       UIMA_Service service = new UIMA_Service();
+      /*
       // parse command args and run dd2spring to generate spring context
       // files from deployment descriptors
       String contextFiles[] = service.initialize(args);
@@ -422,6 +435,9 @@ public class UIMA_Service implements ApplicationListener {
       if (contextFiles == null) {
         return;
       }
+      */
+      String dd[] = service.initialize(args);
+      /*
       // Deploy components defined in Spring context files. This method blocks until
       // the container is fully initialized and all UIMA-AS components are succefully
       // deployed.
@@ -430,6 +446,7 @@ public class UIMA_Service implements ApplicationListener {
         System.out.println(">>> Failed to Deploy UIMA Service. Check Logs for Details");
         System.exit(0);
       }
+      
       // remove temporary spring context files generated from DD
       for( String contextFile: contextFiles) {
         File file = new File(contextFile);
@@ -437,8 +454,16 @@ public class UIMA_Service implements ApplicationListener {
           file.delete();
         }
       }
+      */
+      BaseUIMAAsynchronousEngine_impl engine = 
+    		  new BaseUIMAAsynchronousEngine_impl();
+      
+      for( String deploymentDescriptorPath : dd ) {
+    	  engine.deploy(deploymentDescriptorPath, new HashMap<>());
+      }
       // Add a shutdown hook to catch kill signal and to force quiesce and stop
-      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
+      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(engine);
+//      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
       Runtime.getRuntime().addShutdownHook(shutdownHook);
       // Check if we should start an optional JMX-based monitor that will provide service metrics
       // The monitor is enabled by existence of -Duima.jmx.monitor.interval=<number> parameter. By
@@ -451,21 +476,25 @@ public class UIMA_Service implements ApplicationListener {
         service.startMonitor(Long.parseLong(monitorCheckpointFrequency));
       }
       
-      AnalysisEngineController topLevelControllor = serviceDeployer.getTopLevelController();
+//      AnalysisEngineController topLevelControllor = serviceDeployer.getTopLevelController();
       String prompt = "Press 'q'+'Enter' to quiesce and stop the service or 's'+'Enter' to stop it now.\nNote: selected option is not echoed on the console.";
-      if (topLevelControllor != null) {
+  //    if (topLevelControllor != null) {
         System.out.println(prompt);
         // Loop forever or until the service is stopped
-        while (!topLevelControllor.isStopped()) {
+        while ( engine.isRunning() ) {
+//            while (!topLevelControllor.isStopped()) {
+
           if (System.in.available() > 0) {
             int c = System.in.read();
             if (c == 's') {
               service.stopMonitor();
-              serviceDeployer.undeploy(SpringContainerDeployer.STOP_NOW);
+              engine.undeploy();
+              //serviceDeployer.undeploy(SpringContainerDeployer.STOP_NOW);
               System.exit(0);
             } else if (c == 'q') {
-              service.stopMonitor();
-              serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+            	engine.undeploy();
+              //service.stopMonitor();
+             // serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
               System.exit(0);
 
             } else if (Character.isLetter(c) || Character.isDigit(c)) {
@@ -473,13 +502,13 @@ public class UIMA_Service implements ApplicationListener {
             }
           }
           // This is a polling loop. Sleep for 1 sec
-          try {
-        	if (!topLevelControllor.isStopped()) 
-              Thread.sleep(1000);
-          } catch (InterruptedException ex) {
-          }
+//          try {
+//        	if (!topLevelControllor.isStopped()) 
+//              Thread.sleep(1000);
+//          } catch (InterruptedException ex) {
+//          }
         } // while
-      }
+      //}
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -491,21 +520,28 @@ public class UIMA_Service implements ApplicationListener {
   
   static class ServiceShutdownHook extends Thread {
     public SpringContainerDeployer serviceDeployer;
-
+    BaseUIMAAsynchronousEngine_impl engine;
+    
     public ServiceShutdownHook(SpringContainerDeployer serviceDeployer) {
       this.serviceDeployer = serviceDeployer;
     }
-
+    public ServiceShutdownHook(BaseUIMAAsynchronousEngine_impl engine) {
+        this.engine = engine;
+    }
     public void run() {
       try {
-      	AnalysisEngineController topLevelController = serviceDeployer.getTopLevelController();
-      	if (topLevelController != null && !topLevelController.isStopped() ) {
+    	  
+      	//AnalysisEngineController topLevelController = serviceDeployer.getTopLevelController();
+      	//if (topLevelController != null && !topLevelController.isStopped() ) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
                 "run", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_caught_signal__INFO", new Object[] { topLevelController.getComponentName() });
-      	  serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+                "UIMAJMS_caught_signal__INFO", new Object[] { "TopLevelService" });
+//          "UIMAJMS_caught_signal__INFO", new Object[] { topLevelController.getComponentName() });
+      	 // serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
+    	  engine.undeploy();
+
       	  Runtime.getRuntime().halt(0);
-    	  } 
+    	  //} 
       } catch( Exception e) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),

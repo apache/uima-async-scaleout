@@ -40,6 +40,7 @@ import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.ClientRequest;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.SharedConnection;
 import org.apache.uima.adapter.jms.message.PendingMessage;
+import org.apache.uima.adapter.jms.message.PendingMessageImpl;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.jms.error.handler.BrokerConnectionException;
@@ -54,11 +55,11 @@ import org.apache.uima.util.impl.ProcessTrace_impl;
  * worker thread terminates when the uima ee client calls doStop() method.
  */
 public abstract class BaseMessageSender implements Runnable, MessageSender {
-  private static final Class CLASS_NAME = BaseMessageSender.class;
+  private static final Class<?> CLASS_NAME = BaseMessageSender.class;
 
   // A reference to a shared queue where application threads enqueue messages
   // to be sent
-  protected BlockingQueue<PendingMessage> messageQueue = new LinkedBlockingQueue<PendingMessage>();
+  protected BlockingQueue<PendingMessage> messageQueue = new LinkedBlockingQueue<>();
 
   // Global flag controlling lifecycle of this thread. It will be set to true
   // when the
@@ -116,7 +117,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
     done = true;
     
     // Create an empty message to deliver to the queue that is blocking
-    PendingMessage emptyMessage = new PendingMessage(0);
+    PendingMessage emptyMessage = new PendingMessageImpl(0);
     
     messageQueue.add(emptyMessage);
     synchronized(emptyMessage) {
@@ -191,7 +192,7 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
         if (pm.getMessageType() == AsynchAEMessage.Process) {
           //  fetch the cache entry for this CAS
           ClientRequest cacheEntry = (ClientRequest) engine.getCache().get(
-                  pm.get(AsynchAEMessage.CasReference));
+                  pm.getPropertyAsString(AsynchAEMessage.CasReference));
           if ( cacheEntry != null ) {
             //  We are rejecting any Process requests until connection to broker
             //  is recovered
@@ -505,12 +506,12 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
         break;
 
       case AsynchAEMessage.Process:
-        String casReferenceId = (String) aPm.get(AsynchAEMessage.CasReference);
+        String casReferenceId = aPm.getPropertyAsString(AsynchAEMessage.CasReference);
         if (engine.getSerialFormat() == SerialFormat.XMI) {
-          String serializedCAS = (String) aPm.get(AsynchAEMessage.CAS);
+          String serializedCAS = aPm.getPropertyAsString(AsynchAEMessage.CAS);
           engine.setCASMessage(casReferenceId, serializedCAS, anOutgoingMessage);
         } else {
-          byte[] serializedCAS = (byte[]) aPm.get(AsynchAEMessage.CAS);
+          byte[] serializedCAS =  aPm.getPropertyAsBytesArray(AsynchAEMessage.CAS);
           engine.setCASMessage(casReferenceId, serializedCAS, anOutgoingMessage);
 
         }
@@ -523,15 +524,15 @@ public abstract class BaseMessageSender implements Runnable, MessageSender {
         break;
         
       case AsynchAEMessage.ReleaseCAS:
-          String casRefId = (String) aPm.get(AsynchAEMessage.CasReference);
+          String casRefId = aPm.getPropertyAsString(AsynchAEMessage.CasReference);
           String selector = 
-        			 (String) aPm.get(AsynchAEMessage.TargetingSelector) ;
+        			 aPm.getPropertyAsString(AsynchAEMessage.TargetingSelector) ;
 
           engine.setFreeCasMessage(anOutgoingMessage, casRefId, selector);
           break;
           
       case AsynchAEMessage.Stop:
-          String casRefId2 = (String) aPm.get(AsynchAEMessage.CasReference);
+          String casRefId2 = aPm.getPropertyAsString(AsynchAEMessage.CasReference);
           engine.setStopMessage(anOutgoingMessage, casRefId2);
     	  break;
     }

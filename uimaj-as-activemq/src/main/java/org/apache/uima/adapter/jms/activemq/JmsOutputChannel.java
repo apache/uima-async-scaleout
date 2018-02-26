@@ -60,6 +60,7 @@ import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaSerializer;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
@@ -87,7 +88,7 @@ import com.thoughtworks.xstream.XStream;
 
 public class JmsOutputChannel implements OutputChannel {
 
-  private static final Class CLASS_NAME = JmsOutputChannel.class;
+  private static final Class<?> CLASS_NAME = JmsOutputChannel.class;
 
   private static final long INACTIVITY_TIMEOUT = 5; // MINUTES
 
@@ -159,7 +160,7 @@ public class JmsOutputChannel implements OutputChannel {
     serverURI = aServerURI;
   }
 
-  protected void setFreeCasQueue(Destination destination) {
+  public void setFreeCasQueue(Destination destination) {
     freeCASTempQueue = destination;
   }
 
@@ -175,11 +176,12 @@ public class JmsOutputChannel implements OutputChannel {
    * 
    * @param connectionFactory
    */
+  /*
   public void setConnectionFactory(ActiveMQConnectionFactory connectionFactory) {
     this.connectionFactory = connectionFactory;
     this.connectionFactory.setTrustAllPackages(true);
   }
-
+*/
   public void setServiceInputEndpoint(String anEnpoint) {
     serviceInputEndpoint = anEnpoint;
   }
@@ -359,11 +361,12 @@ public class JmsOutputChannel implements OutputChannel {
     Connection conn = brokerConnectionEntry.getConnection();
     try {
     	if ( conn != null)
-       if ( conn != null && !((ActiveMQConnection)conn).isClosed()) {
+       if ( conn != null && ((ActiveMQConnection)conn).isClosed()) {
            for (Entry<Object, JmsEndpointConnection_impl> endpoints : brokerConnectionEntry.endpointMap
                    .entrySet()) {
               endpoints.getValue().close(); // close session and producer
            }
+           brokerConnectionEntry.getConnection().stop();
            brokerConnectionEntry.getConnection().close();
            brokerConnectionEntry.setConnection(null);
        }
@@ -446,6 +449,7 @@ public class JmsOutputChannel implements OutputChannel {
     
     try {
         connectionSemaphore.acquire();
+        /*
         //  If sending a Free Cas Request to a remote Cas Multiplier always use the CM's
         //  broker
         if ( anEndpoint.isFreeCasEndpoint() && anEndpoint.isCasMultiplier() && anEndpoint.isReplyEndpoint()) {
@@ -456,6 +460,9 @@ public class JmsOutputChannel implements OutputChannel {
           brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
           
         }
+        */
+        brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+
         String key = getLookupKey(anEndpoint);
         String destination = getDestinationName(anEndpoint);
 
@@ -540,7 +547,7 @@ public class JmsOutputChannel implements OutputChannel {
                     //  Returns InputChannel if the Reply Listener for the delegate has previously failed.
                     //  If the listener hasnt failed the getReplyInputChannel returns null
 //                    InputChannel iC = getAnalysisEngineController().getReplyInputChannel(anEndpoint.getDelegateKey());
-                    InputChannel iC = getAnalysisEngineController().getReplyInputChannel(anEndpoint.getDestination().toString());
+                    InputChannel iC = getAnalysisEngineController().getInputChannel();
                     if ( iC != null ) { 
                       try {
                         // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
@@ -713,9 +720,12 @@ public class JmsOutputChannel implements OutputChannel {
         
         case AsynchAEMessage.Process:
           logRequest("UIMAEE_service_sending_process_request__FINE", anEndpoint);
-          serializeCasAndSend(getAnalysisEngineController().
-                  getInProcessCache().
-                    getCacheEntryForCAS(aCasReferenceId), anEndpoint);
+          CasStateEntry stateEntry =
+        		  getAnalysisEngineController().getLocalCache().lookupEntry(aCasReferenceId);
+          serializeCasAndSend(stateEntry, anEndpoint);
+//          serializeCasAndSend(getAnalysisEngineController().
+//                  getInProcessCache().
+//                    getCacheEntryForCAS(aCasReferenceId), anEndpoint);
           return;  /// <<<<< RETURN - Done here >>>>
           
         
@@ -747,7 +757,7 @@ public class JmsOutputChannel implements OutputChannel {
     }
   }
   
-  private void serializeCasAndSend(CacheEntry entry, Endpoint anEndpoint) throws Exception {
+  private void serializeCasAndSend(CasStateEntry entry, Endpoint anEndpoint) throws Exception {
     if (anEndpoint.getSerialFormat() == SerialFormat.XMI) {
       String serializedCAS = getSerializedCasAndReleaseIt(false, entry.getCasReferenceId(), anEndpoint,
               anEndpoint.isRetryEnabled());
@@ -785,7 +795,8 @@ public class JmsOutputChannel implements OutputChannel {
   }
 
 
-  public void sendReply(CacheEntry entry, Endpoint anEndpoint) throws AsynchAEException {
+//  public void sendReply(CacheEntry entry, Endpoint anEndpoint) throws AsynchAEException {
+	  public void sendReply(CasStateEntry entry, Endpoint anEndpoint) throws AsynchAEException {
 	  try {
       anEndpoint.setReplyEndpoint(true);
       if (anEndpoint.isRemote()) {
@@ -844,14 +855,15 @@ public class JmsOutputChannel implements OutputChannel {
 	        // If this service is a Cas Multiplier add to the message a FreeCasQueue.
 	        // The client may need send Stop request to that queue.
 	        if (aCommand == AsynchAEMessage.ServiceInfo
-	                && getAnalysisEngineController().isCasMultiplier() ) {
-	          if ( freeCASTempQueue != null ) {
+	                && getAnalysisEngineController().isCasMultiplier()  ) {
+	        	if ( freeCASTempQueue != null ) {
 		        	// Attach a temp queue to the outgoing message. This a queue where
 		          // Free CAS notifications need to be sent from the client
 		          tm.setJMSReplyTo(freeCASTempQueue);
-	          }
+	          
+	        	}
 	          // new services will receive FreeCas request via a targeted queue
-	          StringBuffer selector = new StringBuffer().
+	          StringBuilder selector = new StringBuilder().
 	        		  append("TargetServiceId = ").
 	        		  append("'").append(hostIP).append(":").
 	        		  append(getAnalysisEngineController().getPID()).
@@ -1044,9 +1056,15 @@ public class JmsOutputChannel implements OutputChannel {
     }
     long msgSize = 0;
 
+    System.out.println("------------ Service:"+getAnalysisEngineController().getComponentName()+" Sending GetMeta Reply");
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
-    	
+    	Object destination = anEndpoint.getReplyDestination();
+    	if ( destination == null ) {
+    		destination = anEndpoint.getDestination();
+    	}
+    	System.out.println(".......... Service:"+getAnalysisEngineController().getComponentName()+" replying with GetMeta to reply queue:"+destination);
+
     	
       anEndpoint.setReplyEndpoint(true);
       // Initialize JMS connection to given endpoint
@@ -1237,7 +1255,7 @@ public class JmsOutputChannel implements OutputChannel {
     CAS cas = null;
     try {
       String serializedCAS = null;
-      // Using Cas reference Id retrieve CAS from the shared Cash
+      // Using Cas reference Id retrieve CAS from the shared Cache
       cas = getAnalysisEngineController().getInProcessCache().getCasByReference(aCasReferenceId);
       ServicePerformance casStats = getAnalysisEngineController().getCasStatistics(aCasReferenceId);
       if (cas == null) {
@@ -1509,7 +1527,7 @@ public class JmsOutputChannel implements OutputChannel {
     this.controllerInputEndpoint = controllerInputEndpoint;
   }
 
-  private void dispatch(Message aMessage, Endpoint anEndpoint, CacheEntry entry, boolean isRequest,
+  private void dispatch(Message aMessage, Endpoint anEndpoint, CasStateEntry entry, boolean isRequest,
           JmsEndpointConnection_impl endpointConnection, long msgSize) throws Exception {
 	  
 	  if ( anEndpoint == null ) { 
@@ -1627,10 +1645,9 @@ public class JmsOutputChannel implements OutputChannel {
     }
   }
 
-  private void sendCasToRemoteEndpoint(boolean isRequest, Object aSerializedCAS, CacheEntry entry,
+  private void sendCasToRemoteEndpoint(boolean isRequest, Object aSerializedCAS, CasStateEntry casStateEntry,
           Endpoint anEndpoint, boolean startTimer) throws AsynchAEException,
           ServiceShutdownException {
-    CasStateEntry casStateEntry = null;
     long msgSize = 0;
     try {
       if (aborting) {
@@ -1639,9 +1656,7 @@ public class JmsOutputChannel implements OutputChannel {
       //  If this is a reply to a client, use the same broker URL that manages this service input queue.
       //  Otherwise this is a request so use a broker specified in the endpoint object.
       String brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
-
-      casStateEntry = getAnalysisEngineController().getLocalCache().lookupEntry(
-              entry.getCasReferenceId());
+/*
       if (casStateEntry == null) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(
                 Level.WARNING,
@@ -1651,12 +1666,12 @@ public class JmsOutputChannel implements OutputChannel {
                 "UIMAJMS_unable_to_send_reply__WARNING",
                 new Object[] { getAnalysisEngineController().getComponentName(),
                   anEndpoint.getDestination(), brokerConnectionURL, 
-                  entry.getInputCasReferenceId() == null ? "" : entry.getInputCasReferenceId(), 
-                          entry.getCasReferenceId(), 0, 
+                  casStateEntry.getParentCasReferenceId() == null ? "" : casStateEntry.getParentCasReferenceId(), 
+                		  casStateEntry.getCasReferenceId(), 0, 
                           new Exception("Unable to lookup entry in Local Cache for a given Cas Id")  });
         return;
       }
-
+*/
       // Get the connection object for a given endpoint
       JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
 
@@ -1689,19 +1704,22 @@ public class JmsOutputChannel implements OutputChannel {
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_unable_to_send_reply__WARNING",
                   new Object[] { getAnalysisEngineController().getComponentName(),
-                  	anEndpoint.getDestination(), brokerConnectionURL, entry.getInputCasReferenceId() == null ? "" : entry.getInputCasReferenceId(), entry.getCasReferenceId(), 0, ex  });
+                  	anEndpoint.getDestination(), brokerConnectionURL, casStateEntry.getParentCasReferenceId() == null ? "" : casStateEntry.getParentCasReferenceId(), casStateEntry.getCasReferenceId(), 0, ex  });
         return;
       }
       // Add Cas Reference Id to the outgoing JMS Header
-      tm.setStringProperty(AsynchAEMessage.CasReference, entry.getCasReferenceId());
+      tm.setStringProperty(AsynchAEMessage.CasReference, casStateEntry.getCasReferenceId());
       // Add common properties to the JMS Header
       if (isRequest == true) {
         populateHeaderWithRequestContext(tm, anEndpoint, AsynchAEMessage.Process);
       } else {
-        populateHeaderWithResponseContext(tm, anEndpoint, AsynchAEMessage.Process);   
-        tm.setBooleanProperty(AsynchAEMessage.SentDeltaCas, entry.sentDeltaCas());
+        populateHeaderWithResponseContext(tm, anEndpoint, AsynchAEMessage.Process);  
+        CacheEntry cacheEntry = 
+        		getAnalysisEngineController().
+        		     getInProcessCache().getCacheEntryForCAS(casStateEntry.getCasReferenceId());
+        tm.setBooleanProperty(AsynchAEMessage.SentDeltaCas, cacheEntry.sentDeltaCas());
       }
-      // The following is true when the analytic is a CAS Multiplier
+      // The following is true when the service is a CAS Multiplier
       if (casStateEntry.isSubordinate() && !isRequest) {
         // Override MessageType set in the populateHeaderWithContext above.
         // Make the reply message look like a request. This message will contain a new CAS
@@ -1710,10 +1728,10 @@ public class JmsOutputChannel implements OutputChannel {
         tm.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
         isRequest = true;
         // Save the id of the parent CAS
-        tm.setStringProperty(AsynchAEMessage.InputCasReference, getTopParentCasReferenceId(entry
+        tm.setStringProperty(AsynchAEMessage.InputCasReference, getTopParentCasReferenceId(casStateEntry
                 .getCasReferenceId()));
         // Add a sequence number assigned to this CAS by the controller
-        tm.setLongProperty(AsynchAEMessage.CasSequence, entry.getCasSequence());
+        tm.setLongProperty(AsynchAEMessage.CasSequence, casStateEntry.getSequenceNumber());
         // If this is a Cas Multiplier, add a reference to a special queue where
         // the client sends Free Cas Notifications
         if (freeCASTempQueue != null) {
@@ -1729,11 +1747,11 @@ public class JmsOutputChannel implements OutputChannel {
                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_send_cas_to_collocated_service_detail__FINE",
                   new Object[] { getAnalysisEngineController().getComponentName(), "Remote",
-                      anEndpoint.getEndpoint(), entry.getCasReferenceId(),
-                      entry.getInputCasReferenceId(), entry.getInputCasReferenceId() });
+                      anEndpoint.getEndpoint(), casStateEntry.getCasReferenceId(),
+                      casStateEntry.getParentCasReferenceId(), casStateEntry.getParentCasReferenceId() });
         }
       }
-      dispatch(tm, anEndpoint, entry, isRequest, endpointConnection, msgSize);
+      dispatch(tm, anEndpoint, casStateEntry, isRequest, endpointConnection, msgSize);
 
     } catch (JMSException e) {
       // Unable to establish connection to the endpoint. Logit and continue
@@ -1757,21 +1775,25 @@ public class JmsOutputChannel implements OutputChannel {
 
   private Delegate lookupDelegate(String aDelegateKey) {
     if (getAnalysisEngineController() instanceof AggregateAnalysisEngineController) {
-      Delegate delegate = ((AggregateAnalysisEngineController) getAnalysisEngineController())
+      return ((AggregateAnalysisEngineController) getAnalysisEngineController())
               .lookupDelegate(aDelegateKey);
-      return delegate;
     }
     return null;
   }
 
-  private void addCasToOutstandingList(CacheEntry entry, boolean isRequest, String aDelegateKey) {
+  private void addCasToOutstandingList(CasStateEntry casStateEntry, boolean isRequest, String aDelegateKey) 
+  throws AsynchAEException {
     Delegate delegate = null;
     if (isRequest && (delegate = lookupDelegate(aDelegateKey)) != null) {
-      delegate.addCasToOutstandingList(entry.getCasReferenceId(), entry.getCas().hashCode(), false);  // false=dont start timer thread per CAS
+        CacheEntry cacheEntry = 
+        		getAnalysisEngineController().
+        		     getInProcessCache().getCacheEntryForCAS(casStateEntry.getCasReferenceId());
+
+      delegate.addCasToOutstandingList(casStateEntry.getCasReferenceId(), cacheEntry.getCas().hashCode(), false);  // false=dont start timer thread per CAS
     }
   }
 
-  private void removeCasFromOutstandingList(CacheEntry entry, boolean isRequest, String aDelegateKey) {
+  private void removeCasFromOutstandingList(CasStateEntry entry, boolean isRequest, String aDelegateKey) {
     Delegate delegate = null;
     if (isRequest && (delegate = lookupDelegate(aDelegateKey)) != null) {
       delegate.removeCasFromOutstandingList(entry.getCasReferenceId());
@@ -1787,7 +1809,7 @@ public class JmsOutputChannel implements OutputChannel {
 
     if (casStateEntry.isSubordinate()) {
       // Recurse until the top CAS reference Id is found
-      return getTopParentCasReferenceId(casStateEntry.getInputCasReferenceId());
+      return getTopParentCasReferenceId(casStateEntry.getParentCasReferenceId());
     }
     // Return the top ancestor CAS id
     return casStateEntry.getCasReferenceId();
@@ -2097,7 +2119,7 @@ public class JmsOutputChannel implements OutputChannel {
   private static class RecoveryThread implements Runnable {
     Endpoint endpoint;
 
-    CacheEntry entry;
+    CasStateEntry entry;
 
     boolean isRequest;
 
@@ -2105,7 +2127,7 @@ public class JmsOutputChannel implements OutputChannel {
 
     JmsOutputChannel outputChannel;
 
-    public RecoveryThread(JmsOutputChannel channel, Endpoint anEndpoint, CacheEntry anEntry,
+    public RecoveryThread(JmsOutputChannel channel, Endpoint anEndpoint, CasStateEntry anEntry,
             boolean isRequest, AnalysisEngineController aController) {
       endpoint = anEndpoint;
       entry = anEntry;
@@ -2124,9 +2146,8 @@ public class JmsOutputChannel implements OutputChannel {
         // Mark this delegate as Failed
         delegate.getEndpoint().setStatus(Endpoint.FAILED);
         // Destroy listener associated with a reply queue for this delegate
-        InputChannel ic = controller.getInputChannel(delegate.getEndpoint().getDestination()
-                .toString());
-        if (ic != null && delegate != null && delegate.getEndpoint() != null) {
+        InputChannel ic = controller.getInputChannel();
+        if (delegate.getEndpoint() != null) {
           ic.destroyListener(delegate.getEndpoint().getDestination().toString(), endpoint
                   .getDelegateKey());
         }
@@ -2141,5 +2162,8 @@ public class JmsOutputChannel implements OutputChannel {
       }
 
     }
+  }
+  public ENDPOINT_TYPE getType() {
+		return ENDPOINT_TYPE.JMS;
   }
 }

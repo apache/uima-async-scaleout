@@ -67,9 +67,9 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
  * 
  */
 public class ConcurrentMessageListener implements SessionAwareMessageListener {
-  private static final Class CLASS_NAME = ConcurrentMessageListener.class;
+  private static final Class<?> CLASS_NAME = ConcurrentMessageListener.class;
 
-  private SessionAwareMessageListener delegateListener;
+  private SessionAwareMessageListener<Message> delegateListener;
 
   private int concurrentThreadCount = 0;
 
@@ -98,14 +98,14 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
    *          - JmsInputChannel instance to delegate CAS to
    * @throws InvalidClassException
    */
-  public ConcurrentMessageListener(int concurrentThreads, Object delegateListener, String destination, ThreadGroup threadGroup, String threadPrefix)
+  public ConcurrentMessageListener(int concurrentThreads,  SessionAwareMessageListener<Message> inputChannel, String destination, ThreadGroup threadGroup, String threadPrefix)
           throws InvalidClassException {
-    if (!(delegateListener instanceof SessionAwareMessageListener)) {
-      throw new InvalidClassException("Invalid Delegate Listener. Expected Object of Type:"
-              + SessionAwareMessageListener.class + " Received:" + delegateListener.getClass());
-    }
+//    if (!(delegateListener instanceof SessionAwareMessageListener)) {
+//      throw new InvalidClassException("Invalid Delegate Listener. Expected Object of Type:"
+//              + SessionAwareMessageListener.class + " Received:" + delegateListener.getClass());
+//    }
     concurrentThreadCount = concurrentThreads;
-    this.delegateListener = (SessionAwareMessageListener) delegateListener;
+    this.delegateListener = inputChannel;
     if (concurrentThreads > 1) {
       //  created an unbounded queue. The throttling is controlled by the
       //  semaphore in the UimaBlockingExecutor initialized below
@@ -140,7 +140,34 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
   private boolean isMessageFromCasMultiplier(final Message message) throws JMSException {
     return message.propertyExists(AsynchAEMessage.CasSequence);
   }
+  private void incrementChildCASes(String parentCASid) {
+      try {
+//          String parentCasReferenceId = message
+//                  .getStringProperty(AsynchAEMessage.InputCasReference);
+          // Fetch parent CAS entry from the local cache
+          CasStateEntry parentEntry = controller.getLocalCache().lookupEntry(parentCASid);
+          // increment number of child CASes this parent has in play
+          parentEntry.incrementSubordinateCasInPlayCount();
+          //  increment a counter that counts number of child CASes that have no
+          //  flow object yet. The flow object is created for each child CAS from
+          //  the parent flow object. The method below will actually acquire a 
+          //  permit from a binary semaphore to force the parent to block until
+          //  the last of its children acquires its Flow object.
+          parentEntry.incrementOutstandingFlowCounter();
 
+        } catch (Exception e) {
+          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+            
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "onMessage", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_service_exception_WARNING", controller.getComponentName());
+            
+            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                    "onMessage", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_exception__WARNING", e);
+          }
+        }
+  }
   /**
    * Intercept a message to increment a child count of the input CAS. This method is always called
    * in a single thread, guaranteeing order of processing. The child CAS will always come here
@@ -150,12 +177,16 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
    * 
    */
   public void onMessage(final Message message, final Session session) throws JMSException {
-    try {
-      // Wait until the controller is plugged in
-      controllerLatch.await();
-    } catch (InterruptedException e) {
-    }
+	  System.out.println("..........ConcurrentMessageListener.onMessage() got message");
+
+//	  try {
+//      // Wait until the controller is plugged in
+//      controllerLatch.await();
+//    } catch (InterruptedException e) {
+//    }
     if (isMessageFromCasMultiplier(message)) {
+    	  System.out.println("..........ConcurrentMessageListener.onMessage() message from remote CM");
+
       // Check if the message came from a Cas Multiplier and it contains a new Process Request
       int command = message.getIntProperty(AsynchAEMessage.Command);
       int messageType = message.getIntProperty(AsynchAEMessage.MessageType);
@@ -171,6 +202,8 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
             delegate.setConcurrentConsumersOnReplyQueue();
           }
         }
+        incrementChildCASes(message.getStringProperty(AsynchAEMessage.InputCasReference));
+/*
         try {
           String parentCasReferenceId = message
                   .getStringProperty(AsynchAEMessage.InputCasReference);
@@ -197,6 +230,7 @@ public class ConcurrentMessageListener implements SessionAwareMessageListener {
                     "UIMAJMS_exception__WARNING", e);
           }
         }
+        */
       }
 
     }

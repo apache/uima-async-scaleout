@@ -471,8 +471,19 @@ public class ProcessResponseHandler extends HandlerBase {
               .getLocalCache().lookupEntry(casReferenceId);
 
       CAS cas = cacheEntry.getCas();
-      String delegateKey = ((AggregateAnalysisEngineController) getController())
-              .lookUpDelegateKey(aMessageContext.getEndpoint().getEndpoint());
+//      String delegateKey = ((AggregateAnalysisEngineController) getController())
+//              .lookUpDelegateKey(aMessageContext.getEndpoint().getEndpoint());
+      String delegateKey = null;
+      if ( aMessageContext.getEndpoint().getEndpoint() == null || aMessageContext.getEndpoint().getEndpoint().trim().length()==0) {
+    	  String fromEndpoint = aMessageContext
+                  .getMessageStringProperty(AsynchAEMessage.MessageFrom);
+    	  delegateKey = ((AggregateAnalysisEngineController) getController())
+                  .lookUpDelegateKey(fromEndpoint);
+      } else {
+          delegateKey = ((AggregateAnalysisEngineController) getController())
+                  .lookUpDelegateKey(aMessageContext.getEndpoint().getEndpoint());
+      }
+      
       Delegate delegate = ((AggregateAnalysisEngineController) getController())
               .lookupDelegate(delegateKey);
       if (casStateEntry != null) {

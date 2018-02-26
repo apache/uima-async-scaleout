@@ -84,6 +84,10 @@ public class ServiceContextImpl implements ServiceContext {
   
   /** The cpc additional action. */
   private Action cpcAdditionalAction = Action.Terminate;
+  
+  /** The disable/enable of JCasCache */
+  private boolean disableJCasCache=true;
+
   /**
    * This class describes UIMA AS service. The minimal information needed is the service name, description, the AnalysisEngine
    * descriptor and the queue name. If not provided, the class uses defaults to fully describe the service.
@@ -373,5 +377,16 @@ public class ServiceContextImpl implements ServiceContext {
   public boolean isAsync() {
     return async;
   }
-
+  /* (non-Javadoc)
+   * @see org.apache.uima.resourceSpecifier.factory.ServiceContext#disableJCasCache(boolean)
+   */
+  public void disableJCasCache(boolean disable) {
+	  disableJCasCache = disable;
+  }
+  /* (non-Javadoc)
+   * @see org.apache.uima.resourceSpecifier.factory.ServiceContext#disableJCasCache()
+   */
+  public boolean disableJCasCache() {
+	  return disableJCasCache;
+  }
 }

@@ -27,11 +27,21 @@ import java.util.Map;
 
 import org.apache.uima.aae.controller.AnalysisEngineController;
 
-public class ErrorHandlerChain extends LinkedList {
-  public ErrorHandlerChain(List aChainofHandlers) {
+public class ErrorHandlerChain extends LinkedList<ErrorHandler>  {
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+  public ErrorHandlerChain(List<ErrorHandler> aChainofHandlers) {
     this.addAll(aChainofHandlers);
   }
+  public ErrorHandlerChain() {
+  }
 
+  public void setErrorHandler(ErrorHandler eh ) {
+	    this.add(eh);
+  }
   public Map getThresholds() {
     Map thresholds = new HashMap();
     Iterator iterator = this.iterator();
@@ -51,7 +61,7 @@ public class ErrorHandlerChain extends LinkedList {
       if (t instanceof AsynchAEException && t.getCause() != null) {
         cause = t.getCause();
       }
-      Iterator iterator = this.iterator();
+      Iterator<ErrorHandler> iterator = this.iterator();
       while (errorHandled == false && iterator.hasNext()) {
         ErrorHandler handler = ((ErrorHandler) iterator.next());
         errorHandled = handler.handleError(cause, anErrorContext, aController);

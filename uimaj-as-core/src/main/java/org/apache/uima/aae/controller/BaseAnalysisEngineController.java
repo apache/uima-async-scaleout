@@ -19,7 +19,6 @@
 
 package org.apache.uima.aae.controller;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -52,11 +51,11 @@ import org.apache.uima.aae.EECasManager_impl;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.InputChannel;
+import org.apache.uima.aae.InputChannel.ChannelType;
 import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UIDGenerator;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
-import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaAsVersion;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.UimaEEAdminContext;
@@ -69,7 +68,6 @@ import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.aae.error.ForcedMessageTimeoutException;
-import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.error.UimaAsUncaughtExceptionHandler;
 import org.apache.uima.aae.error.handler.ProcessCasErrorHandler;
 import org.apache.uima.aae.jmx.JmxManagement;
@@ -83,15 +81,16 @@ import org.apache.uima.aae.monitor.MonitorBaseImpl;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.aae.monitor.statistics.Statistic;
 import org.apache.uima.aae.monitor.statistics.Statistics;
-import org.apache.uima.aae.spi.transport.UimaMessage;
 import org.apache.uima.aae.spi.transport.UimaMessageListener;
 import org.apache.uima.aae.spi.transport.UimaTransport;
-import org.apache.uima.aae.spi.transport.vm.VmTransport;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.impl.AnalysisEngineManagementImpl;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.analysis_engine.metadata.SofaMapping;
+import org.apache.uima.as.client.DirectInputChannel;
+import org.apache.uima.as.client.Listener;
+import org.apache.uima.as.client.Listener.Type;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.resource.PearSpecifier;
@@ -104,10 +103,16 @@ import org.apache.uima.util.Level;
 
 public abstract class BaseAnalysisEngineController extends Resource_ImplBase implements
         AnalysisEngineController, EventSubscriber {
-  private static final Class CLASS_NAME = BaseAnalysisEngineController.class;
+  public static enum ENDPOINT_TYPE {
+	JMS,
+	DIRECT
+  };
+  private static final Class<?> CLASS_NAME = BaseAnalysisEngineController.class;
   private static final String JMS_PROVIDER_HOME = "ACTIVEMQ_HOME";
-  public static enum ServiceState { INITIALIZING, RUNNING, DISABLED, STOPPING, FAILED };
+  public enum ServiceState { INITIALIZING, RUNNING, DISABLED, STOPPING, FAILED };
   public static final boolean NO_RECOVERY = true;
+  public static final ENDPOINT_TYPE DEFAULT_OUTPUTCHANNEL_TYPE = ENDPOINT_TYPE.JMS;
+
   // Semaphore use only when quiesceAndStop is called
   // When the cache becomes empty the semaphore is released.
   private Semaphore quiesceSemaphore = new Semaphore(0);
@@ -148,9 +153,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   protected long errorCount = 0;
 
-  protected List<InputChannel> inputChannelList = new ArrayList<InputChannel>();
+//  protected List<InputChannel> inputChannelList = new ArrayList<InputChannel>();
 
-  protected ConcurrentHashMap<String, InputChannel> inputChannelMap = new ConcurrentHashMap<String, InputChannel>();
+  protected ConcurrentHashMap<ENDPOINT_TYPE, InputChannel> inputChannelMap = 
+		  new ConcurrentHashMap<>();
 
   private UimaEEAdminContext adminContext;
 
@@ -219,6 +225,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   
   private Object lock = new Object();
 
+  protected Map<String, OutputChannel> outputChannelMap = 
+		  new HashMap<String, OutputChannel>();
+ 
   // Local cache for this controller only. This cache stores state of
   // each CAS. The actual CAS is still stored in the global cache. The
   // local cache is used to determine when each CAS can be removed as
@@ -260,6 +269,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   
   private String serviceName=null;
   
+  private String serviceId="";
+  
   protected UimaContext uimaContext=null;
   
   public abstract void dumpState(StringBuffer buffer, String lbl1);
@@ -297,7 +308,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           int aComponentCasPoolSize, long anInitialCasHeapSize, String anEndpointName,
           String aDescriptor, AsynchAECasManager aCasManager, InProcessCache anInProcessCache,
           Map aDestinationMap, JmxManagement aJmxManagement,boolean disableJCasCache) throws Exception {
-    casManager = aCasManager;
+    
+	System.out.println("C'tor Called Descriptor:"+aDescriptor);
+
+	casManager = aCasManager;
     inProcessCache = anInProcessCache;
     localCache = new LocalCache(this);
     aeDescriptor = aDescriptor;
@@ -456,11 +470,25 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
 
     // Register InProcessCache with JMX under the top level component
-    if (inProcessCache != null && isTopLevelComponent()) {
-      inProcessCache.setName(jmxManagement.getJmxDomain() + jmxContext + ",name="
-              + inProcessCache.getName());
-      ObjectName on = new ObjectName(inProcessCache.getName());
-      jmxManagement.registerMBean(inProcessCache, on);
+//    if (inProcessCache != null && isTopLevelComponent()) {
+//      inProcessCache.setName(jmxManagement.getJmxDomain() + jmxContext + ",name="
+//              + inProcessCache.getName());
+//      ObjectName on = new ObjectName(inProcessCache.getName());
+//      jmxManagement.registerMBean(inProcessCache, on);
+//    }
+    if (inProcessCache != null && !inProcessCache.isRegisteredWithJMX() && isTopLevelComponent()) {
+  	  
+    	if ( jmxManagement.isRegistered(new ObjectName("org.apache.uima:type=ee.jms.services,s=Test Aggregate TAE Uima EE Service,p0=Test Aggregate TAE Components,name=InProcessCache"))) {
+    		System.out.println("!!!!!!!!!!!!!!!!!! InProcessCache Already Registered"); 
+    	} else {
+    		System.out.println(">>>>>>>>> Registering InProcessCache with JMX");
+        	inProcessCache.setName(jmxManagement.getJmxDomain() + jmxContext + ",name="
+                    + inProcessCache.getName());
+            System.out.println("-------->>>>>>>>> InProcessCache Object Name:"+inProcessCache.getName());
+            ObjectName on = new ObjectName(inProcessCache.getName());
+            jmxManagement.registerMBean(inProcessCache, on);
+            inProcessCache.setRegisteredWithJMX();
+    	}
     }
     initializeServiceStats();
 
@@ -582,7 +610,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public AnalysisEngineController getParentController() {
     return parentController;
   }
-
+/*
   public UimaTransport getTransport(String aKey) throws Exception {
     return getTransport(null, aKey);
   }
@@ -609,10 +637,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
     return transport;
   }
-
+*/
   /**
    * Initializes transport used for internal messaging between collocated Uima AS services.
    */
+  /*
   public void initializeVMTransport(int parentControllerReplyConsumerCount) throws Exception {
     // If this controller is an Aggregate Controller, force delegates to initialize
     // their internal transports.
@@ -686,7 +715,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
 
   }
-
+*/
   public synchronized UimaMessageListener getUimaMessageListener(String aDelegateKey) {
     return messageListeners.get(aDelegateKey);
   }
@@ -818,6 +847,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public void addUimaObject(String objectName ) throws Exception {
 	  jmxManagement.addObject(objectName);
   }
+  public void addOutputChannel(OutputChannel outputChannel) throws Exception {
+	  outputChannelMap.put( outputChannel.getType().name(), outputChannel);  
+//	  this.outputChannel = outputChannel;
+  }
   /**
    * Register a component with a given name with JMX MBeanServer
    * 
@@ -867,6 +900,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
     registerWithAgent(servicePerformance, name);
     servicePerformance.setIdleTime(System.nanoTime());
+    /*
     ServiceInfo serviceInfo = null;
     if (remote) {
       serviceInfo = getInputChannel().getServiceInfo();
@@ -886,6 +920,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         }
       }
     }
+    */
     ServiceInfo pServiceInfo = null;
 
     if (this instanceof PrimitiveAnalysisEngineController) {
@@ -906,8 +941,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       }
 
       
+//      name = jmxManagement.getJmxDomain() + key_value_list + ",name=" + thisComponentName + "_"
+//              + serviceInfo.getLabel();
+      
       name = jmxManagement.getJmxDomain() + key_value_list + ",name=" + thisComponentName + "_"
-              + serviceInfo.getLabel();
+              + pServiceInfo.getLabel();
+
       if (!isTopLevelComponent()) {
         pServiceInfo.setBrokerURL("Embedded Broker");
       } else {
@@ -1092,7 +1131,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   public void setInputChannel(InputChannel anInputChannel) throws Exception {
     inputChannel = anInputChannel;
-    inputChannelList.add(anInputChannel);
+//    inputChannelList.add(anInputChannel);
 
     inputChannelLatch.countDown();
     if (!registeredWithJMXServer) {
@@ -1102,6 +1141,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
 
   public void addInputChannel(InputChannel anInputChannel) {
+	  /*
 	  inputChannelLatch.countDown();
     if (!inputChannelMap.containsKey(anInputChannel.getInputQueueName())) {
       inputChannelMap.put(anInputChannel.getInputQueueName(), anInputChannel);
@@ -1109,18 +1149,65 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         inputChannelList.add(anInputChannel);
       }
     }
-  }
+    */
+    if (!inputChannelMap.containsKey(anInputChannel.getType())) {
+  	  inputChannelMap.put(anInputChannel.getType(),anInputChannel);
+        inputChannelLatch.countDown();
+        if (!registeredWithJMXServer) {
+          registerServiceWithJMX(jmxContext, false);
+          registeredWithJMXServer = true;
 
+        }
+
+    }
+    if ( anInputChannel.getChannelType().equals(ChannelType.REQUEST_REPLY)) {
+  	  inputChannel = anInputChannel;
+    }
+
+  }
   public InputChannel getInputChannel() {
-    try {
+	  return inputChannel;
+  }
+  public InputChannel getInputChannel(ENDPOINT_TYPE type) {
+    /*
+	  try {
       inputChannelLatch.await();
 
     } catch (Exception e) {
     }
 
     return inputChannel;
+    */
+    return inputChannelMap.get(type);
   }
-
+  public InputChannel getInputChannel(Class<?> clz) {
+	  return inputChannel;
+  }
+  public List<Listener> getAllListeners() {
+	  List<Listener> listeners = new ArrayList<Listener>();
+		if ( getInputChannel(ENDPOINT_TYPE.JMS) != null ) {
+			listeners.addAll(getInputChannel(ENDPOINT_TYPE.JMS).getListeners());
+		}   
+		if ( getInputChannel(ENDPOINT_TYPE.DIRECT) != null ) {
+			listeners.addAll(getInputChannel(ENDPOINT_TYPE.DIRECT).getListeners());
+		}
+		return listeners;
+  }
+  public void setDirectInputChannel(DirectInputChannel anInputChannel) throws Exception {
+ //   inputChannel = anInputChannel;
+    
+  //  inputChannelList.add(anInputChannel);
+	addInputChannel(anInputChannel);
+	   
+    inputChannelLatch.countDown();
+    if (!registeredWithJMXServer) {
+      registeredWithJMXServer = true;
+      registerServiceWithJMX(jmxContext, false);
+    }
+  }
+  public void setJmsInputChannel(InputChannel anInputChannel) throws Exception {
+	   addInputChannel(anInputChannel);
+  }
   public void dropCAS(CAS aCAS) {
     if (aCAS != null) {
       // Check if this method was called while another thread is stopping the service.
@@ -1180,7 +1267,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           if (!isStopped()) {
             Endpoint endpoint = (Endpoint) anErrorContext.get(AsynchAEMessage.Endpoint);
             if ( endpoint != null && !"WarmupDelegate".equals(endpoint.getDelegateKey() ) ) {
-              getOutputChannel().sendReply((Throwable) anErrorContext.get(ErrorContext.THROWABLE_ERROR), 
+              getOutputChannel(endpoint).sendReply((Throwable) anErrorContext.get(ErrorContext.THROWABLE_ERROR), 
                       casReferenceId, parentCasReferenceId,
                       endpoint, AsynchAEMessage.Process);
             }
@@ -1346,7 +1433,39 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
 
   }
-
+  public void dropCASFromLocal(String aCasReferenceId) {
+	  try {
+		    CacheEntry entry = null ;
+		    if ( inProcessCache.entryExists(aCasReferenceId)) {
+		        entry = inProcessCache.getCacheEntryForCAS(aCasReferenceId);
+		    }
+		    if ( entry != null ) {
+			      // Release semaphore which throttles ingestion of CASes from service
+			      // input queue.
+		        Semaphore semaphore=null;
+		        if ( !isPrimitive() && (semaphore = entry.getThreadCompletionSemaphore()) != null ) {
+		          semaphore.release();
+		        }
+		        if (localCache.containsKey(aCasReferenceId)) {
+		            try {
+		              localCache.lookupEntry(aCasReferenceId).setDropped(true);
+		            } catch (Exception e) {
+		          	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+		          	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "dropCASFromLocal",
+		          	                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_parent_cas_notin_cache__INFO",
+		          	                new Object[] {getComponentName(), aCasReferenceId  });
+		          	      }
+		            }
+		            localCache.remove(aCasReferenceId);
+		          }
+		        // Remove stats from the map maintaining CAS specific stats
+		        if (perCasStatistics.containsKey(aCasReferenceId)) {
+		          perCasStatistics.remove(aCasReferenceId);
+		        }
+		    }
+	  } catch( Exception e) {
+      }
+  }
   public void forceTimeoutOnPendingCases(String key) {
     Delegate delegate = ((AggregateAnalysisEngineController) this).lookupDelegate(key);
     // Cancel the delegate timer. No more responses are expected
@@ -1546,14 +1665,32 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
     return false;
   }
-
+/*
   public OutputChannel getOutputChannel() {
     return outputChannel;
   }
-
+*/
   public void setOutputChannel(OutputChannel outputChannel) throws Exception {
-    this.outputChannel = outputChannel;
+//    this.outputChannel = outputChannel;
+    outputChannelMap.put(outputChannel.getType().name(), outputChannel);
+
   }
+  public OutputChannel getOutputChannel(ENDPOINT_TYPE et) {
+	return outputChannelMap.get(et.name());
+//	  return outputChannel;
+  }
+  public OutputChannel getOutputChannel(Endpoint anEndpoint) {
+      ENDPOINT_TYPE et  = ENDPOINT_TYPE.DIRECT;
+      
+      if ( anEndpoint.getServerURI().indexOf("http") > -1 ||
+    		  anEndpoint.getServerURI().indexOf("tcp") > -1 ) {
+    	 et = ENDPOINT_TYPE.JMS;
+      }
+//System.out.println("............... OutputChannel type:"+et.name());
+      OutputChannel oc = outputChannelMap.get(et.name());
+	return oc;
+  }
+
 
   public AsynchAECasManager getCasManagerWrapper() {
     return casManager;
@@ -1567,10 +1704,15 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     return inProcessCache;
   }
 
-  protected ResourceSpecifier getResourceSpecifier() {
+  public ResourceSpecifier getResourceSpecifier() {
     return resourceSpecifier;
   }
-
+  public void setServiceId(String sid) {
+	  serviceId = sid;
+  }
+  public String getServiceId() {
+	  return serviceId;
+  }
   public String getName() {
     return endpointName;
   }
@@ -1794,12 +1936,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 
   public String getBrokerURL() {
     // Wait until the connection factory is injected by Spring
-    while (System.getProperty("BrokerURI") == null) {
-      try {
-        Thread.sleep(50);
-      } catch (InterruptedException ex) {
-      }
-    }
+//    while (System.getProperty("BrokerURI") == null) {
+//      try {
+//        Thread.sleep(50);
+//      } catch (InterruptedException ex) {
+//      }
+//    }
     return System.getProperty("BrokerURI");
   }
 
@@ -1909,12 +2051,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     /*
      * Send an exception to the client if this is a top level service
      */
-    if (cause != null && aCasReferenceId != null && getOutputChannel() != null
-            && isTopLevelComponent()) {
+    if (cause != null && aCasReferenceId != null && isTopLevelComponent()) {
       Endpoint clientEndpoint = null;
       if ((clientEndpoint = getClientEndpoint()) != null) {
         try {
-          getOutputChannel().sendReply(cause, aCasReferenceId, null, clientEndpoint,
+          getOutputChannel(clientEndpoint).sendReply(cause, aCasReferenceId, null, clientEndpoint,
                   clientEndpoint.getCommand());
         } catch (Exception e) {
           if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
@@ -1937,11 +2078,16 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
               UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_stop__INFO",
               new Object[] { getComponentName() });
     }
-    if (getOutputChannel() != null) {
-      getOutputChannel().cancelTimers();
+    for( Entry<String, OutputChannel> oce : outputChannelMap.entrySet()) {
+    	if ( oce.getValue() != null ) {
+    		oce.getValue().cancelTimers();
+    	}
     }
+//    if (getOutputChannel() != null) {
+//      getOutputChannel().cancelTimers();
+//    }
     
-    if (this instanceof PrimitiveAnalysisEngineController) {
+    if (isPrimitive()) {
       getControllerLatch().release();
       // Stops the input channel of this service
       stopInputChannels(InputChannel.CloseAllChannels, shutdownNow);
@@ -1986,8 +2132,17 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       adminContext = null;
     } else {
       // Stop output channel
-      getOutputChannel().stop();
-      
+        for( Entry<String, OutputChannel> oce : outputChannelMap.entrySet()) {
+        	if ( oce.getValue() != null ) {
+        	    oce.getValue().stop();
+        	}
+          }
+      //getOutputChannel().stop();
+        try {
+            // Remove all MBeans registered by this service
+            jmxManagement.destroy();
+          } catch (Exception e) {
+          }
       try {
         getInProcessCache().destroy();
       } catch (Exception e) {
@@ -2002,9 +2157,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (statsMap != null) {
       statsMap.clear();
     }
-    if (inputChannelList != null) {
-      inputChannelList.clear();
-    }
+//    if (inputChannelList != null) {
+//      inputChannelList.clear();
+//    }
     //inputChannel = null;
 
     if (serviceErrorMap != null) {
@@ -2031,9 +2186,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (threadStateMap != null) {
       threadStateMap.clear();
     }
-    if (inputChannelMap != null) {
-      inputChannelMap.clear();
-    }
+//    if (inputChannelMap != null) {
+//      inputChannelMap.clear();
+//    }
     if (controllerListeners != null) {
       controllerListeners.clear();
     }
@@ -2082,10 +2237,18 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       // we proceed with the shutdown of delegates and finally of the top level service.
       if (isTopLevelComponent()) {
           getInputChannel().setTerminating();
-
+          try {
+              // Stops all input channels of this service, but keep temp reply queue input channels open
+              // to process replies.
+              stopReceivingCASes(false);  // dont kill listeners on temp queues. The remotes may send replies
+ 	  
+          } catch( Exception e) {
+        	  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                      "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                      "UIMAEE_exception__WARNING", e);
+          }
         // Stops all input channels of this service, but keep temp reply queue input channels open
         // to process replies.
-        stopReceivingCASes(false);  // dont kill listeners on temp queues. The remotes may send replies
         if ( this instanceof PrimitiveAnalysisEngineController_impl &&
         		((PrimitiveAnalysisEngineController_impl)this).aeInstancePool != null ) {
         	//	Since we are quiescing, destroy all AEs that are in AE pool. Those that
@@ -2120,8 +2283,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           stopReceivingCASes(true);
           stopInputChannels(InputChannel.InputChannels, true);  
           System.out.println("UIMA-AS Service is Stopping, All CASes Have Been Processed");
-        } catch( InterruptedException e) {
-          
+        } catch( Exception e) {
+           	UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                    "quiesceAndStop", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAEE_exception__WARNING", e);
+
         }
         stop(true); 
       }
@@ -2163,16 +2329,26 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       ((BaseAnalysisEngineController) parentController).stop();
     } else if (!isStopped()) {
       stopDelegateTimers();
-      getOutputChannel().cancelTimers();
-      InputChannel iC = getInputChannel(endpointName);
+      for( Entry<String, OutputChannel> oce : outputChannelMap.entrySet()) {
+      	if ( oce.getValue() != null ) {
+      		oce.getValue().cancelTimers();
+      	}
+      }
+     // getOutputChannel().cancelTimers();
+      InputChannel iC = getInputChannel();
       if ( iC != null) {
           iC.setTerminating();
       }
-      // Stop the inflow of new input CASes
-      stopInputChannel(true);  // shutdownNow
-       if ( iC != null ) {
-        iC.terminate();
+      try {
+    	  // Stop the inflow of new input CASes
+          stopInputChannel(true);  // shutdownNow
+           if ( iC != null ) {
+            iC.terminate();
+          }
+      } catch (Exception e) {
+    	  
       }
+
       stopCasMultipliers();
       stopTransportLayer();
       if (cause != null && aCasReferenceId != null) {
@@ -2247,7 +2423,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
             Endpoint freeCasNotificationEndpoint = casEntry.getFreeCasNotificationEndpoint();
             if (freeCasNotificationEndpoint != null) {
               freeCasNotificationEndpoint.setCommand(AsynchAEMessage.Stop);
-              getOutputChannel().sendRequest(AsynchAEMessage.Stop, aCasReferenceId,
+              getOutputChannel(freeCasNotificationEndpoint).sendRequest(AsynchAEMessage.Stop, aCasReferenceId,
                       freeCasNotificationEndpoint);
             }
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
@@ -2298,7 +2474,14 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
    * Stops a listener on the main input channel
    * @param shutdownNow stop
    */
-  protected void stopInputChannel(boolean shutdownNow) {
+  protected void stopInputChannel(boolean shutdownNow) throws Exception {
+	  for( Listener listener : inputChannel.getListeners()) {
+		  if ( listener.getType().equals(Type.GetMeta) || 
+			   listener.getType().equals(Type.ProcessCAS)) {
+			  inputChannel.disconnectListenerFromQueue(listener);
+		  }
+	  }
+	  /*
     InputChannel iC = getInputChannel(endpointName);
     if (iC != null && !iC.isStopped()) {
       try {
@@ -2312,15 +2495,27 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         }
       }
     }
+    */
   }
   private void setInputChannelForNoRecovery() {
+	  /*
 	  if ( inputChannelMap.size() > 0 ) {
 		  InputChannel iC = getInputChannel();
 		  iC.setTerminating();
 	  }
+	  */
+	  inputChannel.setTerminating();
   }
-  protected void stopReceivingCASes(boolean stopAllListeners)  {
-	  
+  private boolean isTempListener( Listener listener ) {
+	  return listener.getType().equals(Type.Reply) || listener.getType().equals(Type.FreeCAS);
+  }
+  protected void stopReceivingCASes(boolean stopAllListeners) throws Exception {
+	  for( Listener listener : inputChannel.getListeners()) {
+		  if ( stopAllListeners || !isTempListener(listener) ) {
+			  inputChannel.disconnectListenerFromQueue(listener);
+		  }
+	  }
+/*
 	    InputChannel iC = null;
 	    setInputChannelForNoRecovery();
 	    Iterator<String> it = inputChannelMap.keySet().iterator();
@@ -2357,10 +2552,21 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	        }
 	      }
 	    }
-	  
+	  */
   }
   protected void stopInputChannels( int channelsToStop, boolean shutdownNow) {   //, boolean norecovery) {
-	    InputChannel iC = null;
+	  try {
+		  for( Entry<BaseAnalysisEngineController.ENDPOINT_TYPE, InputChannel> ic : inputChannelMap.entrySet()) {
+			  ic.getValue().stop(shutdownNow);
+		  }
+		 // inputChannel.stop(shutdownNow);
+	  } catch( Exception e ) {
+		  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                  "stopInputChannels", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                  "UIMAEE_exception__WARNING", e); 
+	  }
+	  /*
+	  InputChannel iC = null;
 	    setInputChannelForNoRecovery();
 	    Iterator it = inputChannelMap.keySet().iterator();
 	    int i = 1;
@@ -2401,7 +2607,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	        }
 	      }
 	    }
-	  
+	  */
   }
   /**
    * Aggregates have more than one Listener channel. This method stops all configured input channels
@@ -2426,7 +2632,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
     return null;
   }
-
+/*
   public InputChannel getInputChannel(String anEndpointName) {
 
     for (int i = 0; inputChannelList != null && i < inputChannelList.size(); i++) {
@@ -2437,7 +2643,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
     return null;
   }
-
+*/
 //  public InputChannel getReplyInputChannel(String aDelegateKey) {
   public InputChannel getReplyInputChannel(String aDestination) {
 	  InputChannel IC = null;
@@ -2916,6 +3122,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     	  if ( anEndpoint.getServerURI().equals("vm://localhost?broker.persistent=false")) {
     		  anEndpoint.setRemote(true);
     	  }
+    	  /*
         if (!anEndpoint.isRemote()) {
           ByteArrayOutputStream bos = new ByteArrayOutputStream();
           try {
@@ -2946,8 +3153,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         } else {
           getOutputChannel().sendReply(metadata, anEndpoint, true);
         }
+        */
+          getOutputChannel(anEndpoint).sendReply(metadata, anEndpoint, true);
+
       }
     } catch (Exception e) {
+    	e.printStackTrace();
       HashMap map = new HashMap();
       map.put(AsynchAEMessage.Endpoint, anEndpoint);
       map.put(AsynchAEMessage.MessageType, Integer.valueOf(AsynchAEMessage.Request));

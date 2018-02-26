@@ -18,18 +18,12 @@
  */
 package org.apache.uima.adapter.jms.message;
 
-import java.util.HashMap;
-
-public class PendingMessage extends HashMap<Object, Object> {
- 
-private static final long serialVersionUID = 3512718154731557413L;
-private int messageType;
-
-  public PendingMessage(int aMessageType) {
-    messageType = aMessageType;
-  }
-
-  public int getMessageType() {
-    return messageType;
-  }
+public interface PendingMessage {
+	
+	public int getMessageType();
+	public Object getProperty(String propertyKey);
+	public void addProperty(String propertyKey, Object property);
+	public String getPropertyAsString(String key);
+	public int getPropertyAsInt(String key);
+	public byte[] getPropertyAsBytesArray(String key);
 }

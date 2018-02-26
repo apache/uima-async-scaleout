@@ -20,10 +20,15 @@
 package org.apache.uima.adapter.jms.client;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -74,13 +79,24 @@ import org.apache.uima.aae.error.UimaASMetaRequestTimeout;
 import org.apache.uima.aae.jmx.JmxManager;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.UIMAMessage;
+import org.apache.uima.aae.service.AsynchronousUimaASService;
+import org.apache.uima.aae.service.UimaASService;
+import org.apache.uima.aae.service.UimaAsServiceRegistry;
+import org.apache.uima.aae.service.builder.UimaAsDirectServiceBuilder;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.ConnectionFactoryIniter;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
 import org.apache.uima.adapter.jms.activemq.UimaEEAdminSpringContext;
 import org.apache.uima.adapter.jms.message.PendingMessage;
+import org.apache.uima.adapter.jms.message.PendingMessageImpl;
 import org.apache.uima.adapter.jms.service.Dd2spring;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
+import org.apache.uima.as.client.DirectMessage;
+import org.apache.uima.as.deployer.ServiceDeployers;
+import org.apache.uima.as.deployer.ServiceDeployers.Protocol;
+import org.apache.uima.as.deployer.ServiceDeployers.Provider;
+import org.apache.uima.as.deployer.UimaAsServiceDeployer;
+import org.apache.uima.as.dispatcher.LocalDispatcher;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.impl.UimaVersion;
@@ -90,11 +106,15 @@ import org.apache.uima.resource.ResourceConfigurationException;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceManager;
 import org.apache.uima.resource.ResourceProcessException;
+import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
 import org.apache.uima.util.Level;
+import org.apache.xmlbeans.XmlDocumentProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineCommon_impl
         implements UimaAsynchronousEngine, MessageListener, ControllerCallbackListener, ApplicationListener<ApplicationEvent>{
@@ -138,7 +158,12 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   protected static Lock globalLock = new ReentrantLock();
   
-  //private String serviceTargetSelector = null;
+  protected UimaASService service = null;
+  
+  ExecutorService consumerService = null;
+  private int casPoolSize = 1;
+  
+  private Thread dispatchThread;
   
   protected volatile boolean stopped = false;
   public BaseUIMAAsynchronousEngine_impl() {
@@ -148,7 +173,11 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     " UIMA-AS Version " + UimaAsVersion.getVersionString());
   }
 
-
+  protected void beforeProcessReply(String casReferenceId) {
+	  if ( service != null ) {
+		  service.removeFromCache(casReferenceId);
+	  }
+  }
   protected TextMessage createTextMessage() throws ResourceInitializationException {
     return new ActiveMQTextMessage();
   }
@@ -352,20 +381,30 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 	public void stop() {
 		try {
-			  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
-						Level.INFO)) {
-			     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
-							CLASS_NAME.getName(), "stop",
-							JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-							"UIMAJMS_stopping_as_client_INFO");
-		      }
-			  stopConnection();
+			  if ( brokerURI != null && !brokerURI.equals("java")) {
+				  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
+							Level.INFO)) {
+				     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
+								CLASS_NAME.getName(), "stop",
+								JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+								"UIMAJMS_stopping_as_client_INFO");
+			      }
+				  stopConnection();
+			  }
+
 
 		      super.doStop();
 		      if (!running) {
 		        return;
 		      }
 		      running = false;
+		      if ( consumerService != null ) {
+		    	  DirectMessage poisonPillMsg = new DirectMessage().withCommand(AsynchAEMessage.Stop);
+		    	  ((AsynchronousUimaASService)service).getReplyQueue().put(poisonPillMsg);
+		    	  // stop thread pool for local queue listener
+		    	 // consumerService.shutdown();
+		    	  consumerService.shutdown();
+		      }
 			  if (super.serviceDelegate != null) {
 				// Cancel all timers and purge lists
 				super.serviceDelegate.cleanup();
@@ -378,6 +417,9 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 //				stopConnection();
 				// Undeploy all containers
 				undeploy();
+				if ( dispatchThread != null ) {
+					dispatchThread.interrupt();
+				}
 		 	    clientCache.clear();
 				if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 								Level.INFO)) {
@@ -407,7 +449,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		} 
 	}
 
-  protected void setCPCMessage(Message msg) throws Exception {
+  public void setCPCMessage(Message msg) throws Exception {
     msg.setStringProperty(AsynchAEMessage.MessageFrom, consumerDestination.getQueueName());
     msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
     msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
@@ -419,6 +461,183 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       ((TextMessage) msg).setText("");
     }
   }
+  protected boolean isServiceRemote() {
+	  return transport.equals(Transport.JMS);
+//	  return (service instanceof UimaASJmsService);
+//	  return service == null;
+  }
+  private void startLocalConsumer(Map anApplicationContext) {
+
+	  consumerService = Executors.newFixedThreadPool(1);
+	  	  consumerService.execute( new Runnable() {
+		      
+		      public void run() {
+		        try {
+		        	while( running ) {
+			        	DirectMessage message =
+				    			  ((AsynchronousUimaASService)service).getReplyQueue().take();
+			        	if ( message.getAsInt(AsynchAEMessage.Command) == AsynchAEMessage.Stop) {
+				        	System.out.println("BaseUIMAAsynchronousEngine_impl.startLocalConsumer().run() - Direct Consumer Recv'd Stop Msg - Terminating");
+			        		return;
+			        	}
+			        	System.out.println("Client Direct Local Consumer() Recv'd Reply");
+			        	onMessage(message);
+		        	}
+
+		        } catch( InterruptedException e) {
+		        	System.out.println("BaseUIMAAsynchronousEngine_impl.startLocalConsumer().run() - Stopped Direct Consumer");
+		        	return;
+		        	
+		        } catch( Exception e) {
+		        	e.printStackTrace();
+		        	
+		        }
+		      }
+	   });
+	  
+	  
+  }
+  private void initializeLocal(Map anApplicationContext) throws ResourceInitializationException {
+    if ( dispatchThread == null ) {
+  	  // make sure we are in the running state. The local consumer depends on it
+      	running = true;
+      
+    	// start message consumer to handle replies  
+    	startLocalConsumer(anApplicationContext);
+    	// start dispatcher in its own thread. It will fetch messages from a shared 'pendingMessageQueue'
+      	LocalDispatcher dispatcher =
+      			new LocalDispatcher(this, service, pendingMessageQueue);
+      	dispatchThread = new Thread(dispatcher);
+      	dispatchThread.start();
+    }
+
+  }
+  private void initializeJMS(Map anApplicationContext) throws ResourceInitializationException {
+      if (!anApplicationContext.containsKey(UimaAsynchronousEngine.ServerUri)) {
+          throw new ResourceInitializationException();
+        }
+        if (!anApplicationContext.containsKey(UimaAsynchronousEngine.ENDPOINT)) {
+          throw new ResourceInitializationException();
+        }
+        if (anApplicationContext.containsKey(UimaAsynchronousEngine.SERIALIZATION_STRATEGY)) {
+            final String serializationStrategy = (String) anApplicationContext.get(UimaAsynchronousEngine.SERIALIZATION_STRATEGY);
+            // change this to support compressed filitered as the default
+            setSerialFormat((serializationStrategy.equalsIgnoreCase("xmi")) ? SerialFormat.XMI : SerialFormat.BINARY);
+            clientSideJmxStats.setSerialization(getSerialFormat());
+        }
+        if (anApplicationContext.containsKey(UimaAsynchronousEngine.userName)) {
+            amqUser = (String) anApplicationContext
+                    .get(UimaAsynchronousEngine.userName);
+        }
+        if (anApplicationContext.containsKey(UimaAsynchronousEngine.password)) {
+        	amqPassword = (String) anApplicationContext
+        	.get(UimaAsynchronousEngine.password);
+        }
+        
+        brokerURI = (String) anApplicationContext.get(UimaAsynchronousEngine.ServerUri);
+        endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.ENDPOINT);
+        
+        //  Check if a placeholder is passed in instead of actual broker URL or endpoint. 
+        //  The placeholder has the syntax ${placeholderName} and may be imbedded in text.
+        //  A system property with placeholderName must exist for successful placeholder resolution.
+        //  Throws ResourceInitializationException if placeholder is not in the System properties.
+        brokerURI = replacePlaceholder(brokerURI); 
+        endpoint = replacePlaceholder(endpoint); 
+        // Check if sharedConnection exists. If not create a new one. The sharedConnection
+        // is static and shared by all instances of UIMA AS client in a jvm. The check
+        // is made in a critical section by first acquiring a global static semaphore to
+        // prevent a race condition.
+        try {
+            createSharedConnection(brokerURI);
+            running = true;
+            //  This is done to give the broker enough time to 'finalize' creation of
+            //  temp reply queue. It's been observed (on MAC OS only) that AMQ
+            //  broker QueueSession.createTemporaryQueue() call is not synchronous. Meaning,
+            //  return from createTemporaryQueue() does not guarantee immediate availability
+            //  of the temp queue. It seems like this operation is asynchronous, causing: 
+            //  "InvalidDestinationException: Cannot publish to a deleted Destination..."
+            //  on the service side when it tries to reply to the client.
+            wait(100);
+        } catch( InterruptedException e) {
+      	  
+        } catch (Exception e) {
+          state = ClientState.FAILED;
+          notifyOnInitializationFailure(e);
+          throw new ResourceInitializationException(e);
+    }
+
+  }
+  private void fetchRequiredProperties(Map anApplicationContext, Properties performanceTuningSettings) throws ResourceInitializationException {
+	    ResourceManager rm = null;
+	    if (anApplicationContext.containsKey(Resource.PARAM_RESOURCE_MANAGER)) {
+	      rm = (ResourceManager) anApplicationContext.get(Resource.PARAM_RESOURCE_MANAGER);
+	    } else {
+	      rm = UIMAFramework.newDefaultResourceManager();
+	    }
+	   
+	    if (anApplicationContext.containsKey(UIMAFramework.CAS_INITIAL_HEAP_SIZE)) {
+	      String cas_initial_heap_size = (String) anApplicationContext
+	              .get(UIMAFramework.CAS_INITIAL_HEAP_SIZE);
+	      performanceTuningSettings.put(UIMAFramework.CAS_INITIAL_HEAP_SIZE, cas_initial_heap_size);
+	    }
+	    asynchManager = new AsynchAECasManager_impl(rm);
+
+
+	    clientSideJmxStats.setEndpointName(endpoint);
+	    
+
+	    if (anApplicationContext.containsKey(UimaAsynchronousEngine.CasPoolSize)) {
+	      casPoolSize = ((Integer) anApplicationContext.get(UimaAsynchronousEngine.CasPoolSize))
+	              .intValue();
+	      clientSideJmxStats.setCasPoolSize(casPoolSize);
+	    }
+
+	    if (anApplicationContext.containsKey(UimaAsynchronousEngine.Timeout)) {
+	      processTimeout = ((Integer) anApplicationContext.get(UimaAsynchronousEngine.Timeout))
+	              .intValue();
+	    }
+
+	    if (anApplicationContext.containsKey(UimaAsynchronousEngine.GetMetaTimeout)) {
+	      metadataTimeout = ((Integer) anApplicationContext.get(UimaAsynchronousEngine.GetMetaTimeout))
+	              .intValue();
+	    }
+
+	    if (anApplicationContext.containsKey(UimaAsynchronousEngine.CpcTimeout)) {
+	      cpcTimeout = ((Integer) anApplicationContext.get(UimaAsynchronousEngine.CpcTimeout))
+	              .intValue();
+	    }
+	    if (anApplicationContext.containsKey(UimaAsynchronousEngine.ApplicationName)) {
+	      applicationName = (String) anApplicationContext.get(UimaAsynchronousEngine.ApplicationName);
+	    }
+
+	    if (anApplicationContext.containsKey(UimaAsynchronousEngine.TimerPerCAS)) {
+	        timerPerCAS = ((Boolean) anApplicationContext.get(UimaAsynchronousEngine.TimerPerCAS))
+	                .booleanValue();
+	    }
+     
+        brokerURI = (String) anApplicationContext.get(UimaAsynchronousEngine.ServerUri);
+        endpoint = (String) anApplicationContext.get(UimaAsynchronousEngine.ENDPOINT);
+        
+        //  Check if a placeholder is passed in instead of actual broker URL or endpoint. 
+        //  The placeholder has the syntax ${placeholderName} and may be imbedded in text.
+        //  A system property with placeholderName must exist for successful placeholder resolution.
+        //  Throws ResourceInitializationException if placeholder is not in the System properties.
+        brokerURI = replacePlaceholder(brokerURI); 
+        endpoint = replacePlaceholder(endpoint); 
+
+	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
+	      UIMAFramework.getLogger(CLASS_NAME)
+	              .logrb(
+	                      Level.CONFIG,
+	                      CLASS_NAME.getName(),
+	                      "initialize",
+	                      JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                      "UIMAJMS_init_uimaee_client__CONFIG",
+	                      new Object[] { brokerURI, 0, casPoolSize, processTimeout, metadataTimeout,
+	                          cpcTimeout,timerPerCAS });
+	    }
+
+}
   protected void setFreeCasMessage(Message msg, String aCasReferenceId, String selector) throws Exception {
 	    msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
 	    msg.setStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
@@ -750,7 +969,27 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       throw new ResourceInitializationException(new UIMA_IllegalStateException());
     }
     reset();
-    Properties performanceTuningSettings = null;
+    Properties performanceTuningSettings = new Properties();
+    fetchRequiredProperties(anApplicationContext, performanceTuningSettings);
+    transport = (Transport)anApplicationContext.get(UimaAsynchronousEngine.ClientTransport);
+    if ( Transport.JMS.equals(transport)) {
+    	initializeJMS(anApplicationContext);
+    } else if ( Transport.Java.equals(transport)) {
+    	if ( service == null ) {
+    		service = UimaAsServiceRegistry.getInstance().lookupByEndpoint(endpoint);
+    	}
+    	brokerURI = "java";
+    	initializeLocal(anApplicationContext);
+    	
+    } else if ( transport == null ){
+    	throw new IllegalArgumentException("Client Transport Not Specified - Add Transport.JMS or Transport.Java to ApplicationContext");
+    } else {
+    	throw new IllegalArgumentException("Unsupported Client Transport Specified - "+transport.toString()+" Expected Transport.JMS or Transport.Java");
+    }
+//    Properties performanceTuningSettings = new Properties();
+//    fetchRequiredProperties(anApplicationContext, performanceTuningSettings);
+ 
+    //Properties performanceTuningSettings = null;
 
     if (!anApplicationContext.containsKey(UimaAsynchronousEngine.ServerUri)) {
       throw new ResourceInitializationException();
@@ -847,33 +1086,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     super.serviceDelegate.setCasProcessTimeout(processTimeout);
     super.serviceDelegate.setGetMetaTimeout(metadataTimeout);
     try {
-      // Generate unique identifier
-      String uuid = UUIDGenerator.generate();
-      // JMX does not allow ':' in the ObjectName so replace these with underscore
-      uuid = uuid.replaceAll(":", "_");
-      uuid = uuid.replaceAll("-", "_");
-      applicationName += "_" + uuid;
-      jmxManager = new JmxManager("org.apache.uima");
-      clientSideJmxStats.setApplicationName(applicationName);
-      clientJmxObjectName = new ObjectName("org.apache.uima:name=" + applicationName);
-      jmxManager.registerMBean(clientSideJmxStats, clientJmxObjectName);
-
-      // Check if sharedConnection exists. If not create a new one. The sharedConnection
-      // is static and shared by all instances of UIMA AS client in a jvm. The check
-      // is made in a critical section by first acquiring a global static semaphore to
-      // prevent a race condition.
-      createSharedConnection(brokerURI);
-      running = true;
-      //  This is done to give the broker enough time to 'finalize' creation of
-      //  temp reply queue. It's been observed (on MAC OS only) that AMQ
-      //  broker QueueSession.createTemporaryQueue() call is not synchronous. Meaning,
-      //  return from createTemporaryQueue() does not guarantee immediate availability
-      //  of the temp queue. It seems like this operation is asynchronous, causing: 
-      //  "InvalidDestinationException: Cannot publish to a deleted Destination..."
-      //  on the service side when it tries to reply to the client.
-      try {
-        wait(100);
-      } catch( InterruptedException e) {}
+    	initJMX();
       sendMetaRequest();
       waitForMetadataReply();
       if (abort || !running) {
@@ -902,7 +1115,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
           }
         }
         initialized = true;
-        remoteService = true;
+        //remoteService = true;
+        remoteService =  isServiceRemote();
         // running = true;
 
         for (int i = 0; listeners != null && i < listeners.size(); i++) {
@@ -929,7 +1143,71 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     super.acquireCpcReadySemaphore();
     state = ClientState.RUNNING;
   }
+	private AnalysisEngineDeploymentDescriptionDocument parseDD(String descriptorPath) throws Exception {
+		org.apache.xmlbeans.XmlOptions options = new org.apache.xmlbeans.XmlOptions();
+		
+		
+		XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+		xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		xmlReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		xmlReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",false);
+		xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);
+		options.setLoadUseXMLReader(xmlReader);
+		
+		return AnalysisEngineDeploymentDescriptionDocument.Factory.parse(new File(descriptorPath), options);
+//		return AnalysisEngineDeploymentDescriptionDocument.Factory.parse(new File(descriptorPath));	
+	}
+	
+	private Provider provider( AnalysisEngineDeploymentDescriptionDocument dd) {
+		 String provider =
+			  dd.getAnalysisEngineDeploymentDescription().getDeployment().getProvider();
+		 
+		 provider = UimaAsDirectServiceBuilder.resolvePlaceholder(provider);
+		 System.out.println("...... provider() - "+provider);
 
+		 if (Provider.JAVA.get().equals(provider)) {
+			 return Provider.JAVA;
+		 } else if (Provider.ACTIVEMQ.get().equals(provider)) {
+			 return Provider.ACTIVEMQ;
+		 } else {
+			 throw new RuntimeException("Invalid provider attribute value in Deployment Descriptor :{"+provider+"} please check <deployment> element. Expected \"java\" or \"activemq\"");
+		 }
+
+		 /*
+		 if (Provider.JAVA.get().equals(provider)) {
+			 return Provider.JAVA;
+		 } else if (Provider.ACTIVEMQ.get().equals(provider)) {
+			 return Provider.ACTIVEMQ;
+		 } else {
+			 throw new RuntimeException("Invalid provider attribute value in Deployment Descriptor :{"+provider+"} please check <deployment> element. Expected \"java\" or \"activemq\"");
+		 }
+		 */
+	}
+	private Protocol protocol( AnalysisEngineDeploymentDescriptionDocument dd) {
+	     String protocol =
+			  dd.getAnalysisEngineDeploymentDescription().getDeployment().getProtocol();
+	     
+		 protocol = UimaAsDirectServiceBuilder.resolvePlaceholder(protocol);
+		 
+		 System.out.println("...... protocol() - "+protocol);
+	     if (Protocol.JAVA.get().equalsIgnoreCase(protocol) ) {
+			 return Protocol.JAVA;
+		 } else if (Protocol.JMS.get().equalsIgnoreCase(protocol)  ) {
+			 return Protocol.JMS;
+		 } else {
+			 throw new RuntimeException("Invalid protocol attribute value in Deployment Descriptor :{"+protocol+"} please check <deployment> element. Expected \"java\" or \"jms\"");
+		 }
+
+		 /*
+	     if (Protocol.JAVA.get().equals(protocol)) {
+			 return Protocol.JAVA;
+		 } else if (Protocol.JMS.get().equals(protocol)) {
+			 return Protocol.JMS;
+		 } else {
+			 throw new RuntimeException("Invalid protocol attribute value in Deployment Descriptor :{"+protocol+"} please check <deployment> element. Expected \"java\" or \"jms\"");
+		 }
+		 */
+	}
   /**
    * First generates a Spring context from a given deploy descriptor and than deploys the context
    * into a Spring Container.
@@ -942,34 +1220,29 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * @return - a unique spring container id
    * 
    */
-  public String deploy(String aDeploymentDescriptor, Map anApplicationContext) throws Exception {
-	  String springContext = null;
-	  try {
-		springContext = generateSpringContext(aDeploymentDescriptor, anApplicationContext);
+  public String deploy(String deploymentDescriptorPath, Map anApplicationContext) throws Exception {
+	  AnalysisEngineDeploymentDescriptionDocument dd =
+	            parseDD(deploymentDescriptorPath);
+		  
+		  XmlDocumentProperties dp = dd.documentProperties();
+		  System.out.println(dp.getSourceName());
 
-        SpringContainerDeployer springDeployer = new SpringContainerDeployer(springContainerRegistry, this);
+		  // Use factory to create deployer instance for a given protocol and provider
+		  UimaAsServiceDeployer deployer = 
+				  ServiceDeployers.newDeployer(protocol(dd), provider(dd));
+		  
+		  service = deployer.deploy(dd, anApplicationContext);
+		  
+		  UimaAsServiceRegistry.getInstance().register(service);
 
-    	String id = springDeployer.deploy(springContext);
-      if ( springDeployer.isInitialized() ) {
-        springDeployer.startListeners();
-      }
-      return id;
-    } catch (Exception e) {
-      running = true;
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                  "main", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                  "UIMAJMS_exception__WARNING", e);
-      }
+		  return service.getId();
 
-      throw e;
-    } finally {
-	  String uimaAsDebug = (String) anApplicationContext.get(UimaAsynchronousEngine.UimaEeDebug);
-	  if ( springContext != null && (null == uimaAsDebug || uimaAsDebug.equals("") ) ) {
-           disposeContextFiles(springContext);
-	  }
-    }
   }
+  
+  protected UimaASService getServiceReference()  {
+	  return service;
+  }
+  
   private void disposeContextFiles(String ...contextFiles) {
     for( String contextFile: contextFiles) {
       File file = new File(contextFile);
@@ -983,6 +1256,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	 */
   public String deploy(String[] aDeploymentDescriptorList, Map anApplicationContext)
           throws Exception {
+	  /*
     if (aDeploymentDescriptorList == null) {
       throw new ResourceConfigurationException(UIMA_IllegalArgumentException.ILLEGAL_ARGUMENT,
               new Object[] { "Null", "DeploymentDescriptorList", "deploy()" });
@@ -1018,11 +1292,29 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
 	//      disposeContextFiles(springContextFiles);
     }
-
+*/
+	  return "";
   }
 
   public void undeploy() throws Exception {
-    Iterator containerIterator = springContainerRegistry.keySet().iterator();
+		Iterator<Entry<String, List<UimaASService>>> iterator = 
+				UimaAsServiceRegistry.getInstance().getServiceList().entrySet().iterator();
+		// Need a separate list to hold service ids to prevent ConcurrentModificationException
+		List<String> serviceIdList = new ArrayList<String>();
+		while( iterator.hasNext() ) {
+			Iterator<UimaASService> listIterator = iterator.next().getValue().iterator();
+			while( listIterator.hasNext()) {
+				UimaASService service = listIterator.next();
+				serviceIdList.add(service.getId());
+			}	
+		}
+		// Now undeploy all services
+		for( String serviceId : serviceIdList ) {
+			undeploy(serviceId);
+		}
+		/*
+	  
+	  Iterator containerIterator = springContainerRegistry.keySet().iterator();
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
         String msg ="undeploying "+springContainerRegistry.size()+" Containers";
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
@@ -1039,6 +1331,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       }
       undeploy(containerId);
     }
+    */
   }
 
   public void undeploy(String aSpringContainerId) throws Exception {
@@ -1055,18 +1348,41 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       return;
     }
     
-    UimaEEAdminSpringContext adminContext = null;
-    if (!springContainerRegistry.containsKey(aSpringContainerId)) {
-        return;
-        // throw new InvalidContainerException("Invalid Spring container Id:" + aSpringContainerId +
-        // ". Unable to undeploy the Spring container");
-      }
-      // Fetch an administrative context which contains a Spring Container
-      adminContext = (UimaEEAdminSpringContext) springContainerRegistry.get(aSpringContainerId);
-      if (adminContext == null) {
+//    UimaEEAdminSpringContext adminContext = null;
+    final UimaASService deployedService =
+    		UimaAsServiceRegistry.getInstance().lookupById(aSpringContainerId);
+    if ( deployedService == null ) {
         throw new InvalidContainerException(
                 "Spring Container Does Not Contain Valid UimaEEAdminSpringContext Object");
       }
+    switch (stop_level) {
+    case SpringContainerDeployer.QUIESCE_AND_STOP:
+      //((AnalysisEngineController) ctrer).quiesceAndStop();
+        //service.stop();
+    	deployedService.quiesce();
+
+      break;
+    case SpringContainerDeployer.STOP_NOW:
+     // ((AnalysisEngineController) ctrer).terminate();
+        //service.stop();
+        deployedService.stop();
+        
+ 
+      break;
+  }
+    UimaAsServiceRegistry.getInstance().unregister(deployedService);
+    /*
+//    if (!springContainerRegistry.containsKey(aSpringContainerId)) {
+//        return;
+//        // throw new InvalidContainerException("Invalid Spring container Id:" + aSpringContainerId +
+//        // ". Unable to undeploy the Spring container");
+//      }
+//      // Fetch an administrative context which contains a Spring Container
+//      adminContext = (UimaEEAdminSpringContext) springContainerRegistry.get(aSpringContainerId);
+//      if (adminContext == null) {
+//        throw new InvalidContainerException(
+//                "Spring Container Does Not Contain Valid UimaEEAdminSpringContext Object");
+//      }
       // Fetch instance of the Container from its context
       ApplicationContext ctx = adminContext.getSpringContainer();
       // Query the container for objects that implement
@@ -1144,8 +1460,21 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
       }
       // Remove the container from a local registry
       springContainerRegistry.remove(aSpringContainerId);
+      */
   }
+  private void initJMX() throws Exception {
+	  	// Generate unique identifier
+	      String uuid = UUIDGenerator.generate();
+	      // JMX does not allow ':' in the ObjectName so replace these with underscore
+	      uuid = uuid.replaceAll(":", "_");
+	      uuid = uuid.replaceAll("-", "_");
+	      applicationName += "_" + uuid;
+	      jmxManager = new JmxManager("org.apache.uima");
+	      clientSideJmxStats.setApplicationName(applicationName);
+	      clientJmxObjectName = new ObjectName("org.apache.uima:name=" + applicationName);
+	      jmxManager.registerMBean(clientSideJmxStats, clientJmxObjectName);
 
+	  }
   /**
    * Use dd2spring to generate Spring context file from a given deployment descriptor file.
    * 
@@ -1340,9 +1669,56 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 
 //  private void stopProducingCases(ClientRequest clientCachedRequest) {
   private void stopProducingCases(String casReferenceId, Destination cmFreeCasQueue) {
-	     PendingMessage msg = new PendingMessage(AsynchAEMessage.Stop);
-	     msg.put(AsynchAEMessage.Destination, cmFreeCasQueue);
-		 msg.put(AsynchAEMessage.CasReference, casReferenceId);
+	    try {
+//	      if (clientCachedRequest.getFreeCasNotificationQueue() != null) {
+	      if (cmFreeCasQueue != null) {
+	        TextMessage msg = createTextMessage();
+	        msg.setText("");
+	        msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
+//	        msg.setStringProperty(AsynchAEMessage.CasReference, clientCachedRequest.getCasReferenceId());
+	        msg.setStringProperty(AsynchAEMessage.CasReference, casReferenceId);
+	        msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
+	        msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.Stop);
+	        msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
+	        try {
+	          MessageProducer msgProducer = getMessageProducer(cmFreeCasQueue);
+	          if (msgProducer != null) {
+	        	  
+	              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+	                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                          "UIMAJMS_client_sending_stop_to_service__INFO", new Object[] {casReferenceId,cmFreeCasQueue});
+	              }
+	            // Send STOP message to Cas Multiplier Service
+	            msgProducer.send(msg);
+	          } else {
+	              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                          "UIMAJMS_client_unable_to_send_stop_to_cm__WARNING");
+	              }
+	          }
+
+	        } catch (Exception ex) {
+	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                    "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                    "UIMAJMS_exception__WARNING",
+	                    ex);
+	          }
+	        }
+	      }
+	    } catch (Exception e) {
+	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+	                "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	                "UIMAJMS_exception__WARNING", e);
+	      }
+	    }
+	    /*
+	  PendingMessage msg = new PendingMessageImpl(AsynchAEMessage.Stop);
+	     msg.addProperty(AsynchAEMessage.Destination, cmFreeCasQueue);
+		 msg.addProperty(AsynchAEMessage.CasReference, casReferenceId);
 	     try {
 	    	 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
@@ -1365,64 +1741,17 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
               }
 	     }
 
-	  /*
-    try {
-//      if (clientCachedRequest.getFreeCasNotificationQueue() != null) {
-      if (cmFreeCasQueue != null) {
-        TextMessage msg = createTextMessage();
-        msg.setText("");
-        msg.setIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.None);
-//        msg.setStringProperty(AsynchAEMessage.CasReference, clientCachedRequest.getCasReferenceId());
-        msg.setStringProperty(AsynchAEMessage.CasReference, casReferenceId);
-        msg.setIntProperty(AsynchAEMessage.MessageType, AsynchAEMessage.Request);
-        msg.setIntProperty(AsynchAEMessage.Command, AsynchAEMessage.Stop);
-        msg.setStringProperty(UIMAMessage.ServerURI, brokerURI);
-        try {
-          MessageProducer msgProducer = getMessageProducer(cmFreeCasQueue);
-          if (msgProducer != null) {
-        	  
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                          "UIMAJMS_client_sending_stop_to_service__INFO", new Object[] {casReferenceId,cmFreeCasQueue});
-              }
-            // Send STOP message to Cas Multiplier Service
-            msgProducer.send(msg);
-          } else {
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                          "UIMAJMS_client_unable_to_send_stop_to_cm__WARNING");
-              }
-          }
-
-        } catch (Exception ex) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                    "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_exception__WARNING",
-                    ex);
-          }
-        }
-      }
-    } catch (Exception e) {
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAJMS_exception__WARNING", e);
-      }
-    }
-    */
+	 */
   }
   protected void dispatchFreeCasRequest(String casReferenceId, Message message) throws Exception {
-     PendingMessage msg = new PendingMessage(AsynchAEMessage.ReleaseCAS);
+     PendingMessage msg = new PendingMessageImpl(AsynchAEMessage.ReleaseCAS);
 //     if ( message.getStringProperty(AsynchAEMessage.TargetingSelector) != null ) {
 //    	 msg.put(AsynchAEMessage.TargetingSelector,message.getStringProperty(AsynchAEMessage.TargetingSelector) );
 //     } else {
 //         msg.put(AsynchAEMessage.Destination, message.getJMSReplyTo());
 //     }
-     msg.put(AsynchAEMessage.Destination, message.getJMSReplyTo());
-	 msg.put(AsynchAEMessage.CasReference, casReferenceId);
+     msg.addProperty(AsynchAEMessage.Destination, message.getJMSReplyTo());
+	 msg.addProperty(AsynchAEMessage.CasReference, casReferenceId);
      sender.dispatchMessage(msg, this, false);
   }
   protected MessageSender getDispatcher() {

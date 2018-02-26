@@ -27,13 +27,20 @@ import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.TypeSystemImpl;
+import org.apache.uima.resource.ResourceSpecifier;
 
 public class Endpoint_impl implements Endpoint, Cloneable {
-  private static final Class CLASS_NAME = Endpoint_impl.class;
+  private static final Class<?> CLASS_NAME = Endpoint_impl.class;
 
+  private volatile boolean javaRemote=false;
+  
   private volatile Object destination = null;
 
   private String endpoint;  // is the queue name (only)
+
+  private volatile Object getMetaDestination = null;
+  
+  private volatile Object replyDestination = null;
 
   private String serverURI;
 
@@ -45,11 +52,11 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   private volatile boolean waitingForResponse;
 
-  private int metadataRequestTimeout;
+  private int metadataRequestTimeout=0;
 
-  private int processRequestTimeout;
+  private int processRequestTimeout=0;
 
-  private int collectionProcessCompleteTimeout;
+  private int collectionProcessCompleteTimeout=0;
 
   private volatile boolean isRemote;
 
@@ -57,7 +64,7 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   private SerialFormat serialFormat = null;
   
-  private String serializer = "xmi";  // spring bean interface
+  private String serializer = SerialFormat.XMI.getDefaultFileExtension(); 
 
   private volatile boolean finalEndpoint;
 
@@ -121,6 +128,23 @@ public class Endpoint_impl implements Endpoint, Cloneable {
   
   private volatile boolean disableJCasCache;
   
+ private ResourceSpecifier resourceSpecifier;
+  
+  public void setJavaRemote() {
+	 javaRemote = true;
+  }
+  public boolean isJavaRemote() {
+	  return javaRemote;
+  }
+  public void setReplyDestination(Object replyDestination) {
+	  this.replyDestination = replyDestination;
+  }
+  public Object getReplyDestination() {
+	  return replyDestination;
+  }
+  public void setResourceSpecifier(ResourceSpecifier rs ) {
+	  this.resourceSpecifier = rs;
+  }
   public boolean isDisableJCasCache() {
     return disableJCasCache;
   }
@@ -319,11 +343,6 @@ public class Endpoint_impl implements Endpoint, Cloneable {
 
   public void setServerURI(String aServerURI) {
     this.serverURI = aServerURI;
-    if ( aServerURI != null && ( aServerURI.startsWith("vm:") == true && !aServerURI.equals("vm://localhost?broker.persistent=false")  ) ){
-      setRemote(false);
-    } else {
-      setRemote(true);
-    }
   }
 
   public void setWaitingForResponse(boolean isWaiting) {
@@ -436,7 +455,12 @@ public class Endpoint_impl implements Endpoint, Cloneable {
     isRemote = aRemote;
 
   }
-
+  public void setGetMetaDestination(Object aDestination) {
+	  getMetaDestination = aDestination;
+  }
+  public Object getMetaDestination() {
+	  return getMetaDestination;
+  }
   public String getDescriptor() {
     return descriptor;
   }

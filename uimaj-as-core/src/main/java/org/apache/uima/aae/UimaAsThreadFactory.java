@@ -57,19 +57,40 @@ public class UimaAsThreadFactory implements ThreadFactory {
   
   private volatile boolean initFailed=false;
   
+  private CountDownLatch latchToCountNumberOfInitedThreads;
+
+  public UimaAsThreadFactory() {
+	  
+  }
   public UimaAsThreadFactory(ThreadGroup tGroup) {
     this(tGroup,null);
   }
  
   public UimaAsThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController) {
-    this( tGroup, aController, null);
+    this( tGroup, aController, null, null);
   }
-  public UimaAsThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController, CountDownLatch latchToCountNumberOfTerminatedThreads) {
+  public UimaAsThreadFactory(ThreadGroup tGroup, PrimitiveAnalysisEngineController aController, CountDownLatch latchToCountNumberOfTerminatedThreads, CountDownLatch latchToCountNumberOfInitedThreads) {
     controller = aController;
     theThreadGroup = tGroup;
     this.latchToCountNumberOfTerminatedThreads = latchToCountNumberOfTerminatedThreads;
+    this.latchToCountNumberOfInitedThreads = latchToCountNumberOfInitedThreads;
   }
-  
+  public UimaAsThreadFactory withThreadGroup(ThreadGroup tGroup) {
+	  theThreadGroup = tGroup;
+	  return this;
+  }
+  public UimaAsThreadFactory withPrimitiveController(PrimitiveAnalysisEngineController aController) {
+	  controller = aController;
+	  return this;
+  }
+  public UimaAsThreadFactory withTerminatedThreadsLatch(CountDownLatch latchToCountNumberOfTerminatedThreads) {
+	    this.latchToCountNumberOfTerminatedThreads = latchToCountNumberOfTerminatedThreads;
+	  return this;
+  }
+  public UimaAsThreadFactory withInitedThreadsLatch(CountDownLatch latchToCountNumberOfInitedThreads) {
+	    this.latchToCountNumberOfInitedThreads = latchToCountNumberOfInitedThreads;
+	  return this;
+}
   public void setThreadNamePrefix(String prefix) {
     threadNamePrefix = prefix;
   }
@@ -117,6 +138,10 @@ public class UimaAsThreadFactory implements ThreadFactory {
             		  initFailed = true;
             		  e.printStackTrace();
             		  throw e;
+            	  }  finally {
+            		  if ( latchToCountNumberOfInitedThreads != null ) {
+                		  latchToCountNumberOfInitedThreads.countDown();
+            		  }
             	  }
               } else {
             	  return; // there was failure previously so just return

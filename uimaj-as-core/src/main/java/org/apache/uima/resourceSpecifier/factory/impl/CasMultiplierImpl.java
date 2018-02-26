@@ -38,7 +38,7 @@ public class CasMultiplierImpl implements CasMultiplier {
    * @param cmt the cmt
    */
   protected CasMultiplierImpl(CasMultiplierType cmt ) { 
-    this(cmt,1,2000000,false);
+    this(cmt,1,2000000,false,false);
   }
   
   /**
@@ -49,11 +49,12 @@ public class CasMultiplierImpl implements CasMultiplier {
    * @param initialHeapSize the initial heap size
    * @param processParentLast the process parent last
    */
-  protected CasMultiplierImpl(CasMultiplierType cmt, int casPoolSize, int initialHeapSize, boolean processParentLast) {
+  protected CasMultiplierImpl(CasMultiplierType cmt, int casPoolSize, int initialHeapSize, boolean processParentLast, boolean disableJCasCache) {
     this.cmt = cmt;
     setCasPoolSize(casPoolSize);
     setInitialFsHeapSize(initialHeapSize);
     setProcessParentLast(processParentLast);
+    disableJCasCache(disableJCasCache);
   }
   
   /**
@@ -67,6 +68,7 @@ public class CasMultiplierImpl implements CasMultiplier {
     setCasPoolSize(context.getCasPoolSize());
     setInitialFsHeapSize(context.getInitialHeapSize());
     setProcessParentLast(context.processParentLast());
+    disableJCasCache(context.disableJCasCache());
 
 //    if ( props.containsKey(UimaASDeploymentDescriptor.CASPOOL_CAS_COUNT)) {
 //      setAttr(UimaASDeploymentDescriptor.CASPOOL_CAS_COUNT,props);
@@ -150,5 +152,13 @@ public int getCasPoolSize() {
   public void setProcessParentLast(boolean processParentLast) {
     Assert.notNull(cmt);
     cmt.setProcessParentLast(Boolean.toString(processParentLast));
+  }
+  public boolean disableJCasCache() {
+	  Assert.notNull(cmt);
+	  return cmt.getDisableJCasCache();
+  }
+  public void disableJCasCache(boolean disable ) {
+	  Assert.notNull(cmt);
+	  cmt.setDisableJCasCache(disable);
   }
 }

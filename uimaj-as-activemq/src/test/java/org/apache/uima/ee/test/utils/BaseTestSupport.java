@@ -38,6 +38,7 @@ import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.error.UimaASPingTimeout;
 import org.apache.uima.aae.error.UimaASProcessCasTimeout;
@@ -114,9 +115,62 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
   protected long failedCasCountDueToBrokerFailure = 0;
   
+  protected String deployService(Transport transport, BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+          String aDeploymentDescriptorPath) throws Exception  {
+	  String serviceId = null;
+	  if ( transport.equals(Transport.Java)) {
+		  serviceId = deployJavaService(eeUimaEngine, aDeploymentDescriptorPath);
+	  } else if ( transport.equals(Transport.JMS)) {
+		  serviceId = deployJmsService(eeUimaEngine, aDeploymentDescriptorPath);
+	  }
+	  return serviceId;
+  }
+  protected String deployJavaService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+          String aDeploymentDescriptorPath) throws Exception  {
+    System.setProperty("Provider", "java");
+    System.setProperty("Protocol", "java");
+    System.setProperty("defaultBrokerURL", "java");
+    System.setProperty("DefaultBrokerURL", "java");
+
+    Map<String, Object> appCtx = new HashMap<>();
+    appCtx.put( AsynchAEMessage.Transport, Transport.Java);
+ 
+    return deployService(eeUimaEngine, aDeploymentDescriptorPath, appCtx);
+  }
+  protected String deployJmsService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+          String aDeploymentDescriptorPath)  throws Exception  {
+     System.setProperty("Provider", "activemq");
+     System.setProperty("Protocol", "jms");
+     System.setProperty("defaultBrokerURL", "tcp://localhost:61617");
+     String defaultBrokerURL = System.getProperty("defaultBrokerURL");
+     if (defaultBrokerURL != null) {
+       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+           String msg = ">>> runTest: Setting defaultBrokerURL to:" + defaultBrokerURL;
+           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "deployService",
+                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
+                   new Object[] { msg });
+       }
+       System.setProperty("defaultBrokerURL", defaultBrokerURL);
+     } else {
+       System.setProperty("defaultBrokerURL", "tcp://localhost:8118");
+     }
+
+     Map<String, Object> appCtx = new HashMap<>();
+	 appCtx.put( AsynchAEMessage.Transport, Transport.JMS);
+	 
+	 return deployService(eeUimaEngine, aDeploymentDescriptorPath, appCtx);
+  }
   protected String deployService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
           String aDeploymentDescriptorPath) throws Exception {
-    String defaultBrokerURL = System.getProperty("BrokerURL");
+	  return deployService(eeUimaEngine, aDeploymentDescriptorPath, new HashMap<String, Object>());
+  }
+  protected String deployService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+          String aDeploymentDescriptorPath,  Map<String, Object> appCtx) throws Exception {
+
+ // protected String deployService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+ //         String aDeploymentDescriptorPath) throws Exception {
+//    String defaultBrokerURL = System.getProperty("BrokerURL");
+    String defaultBrokerURL = System.getProperty("defaultBrokerURL");
     if (defaultBrokerURL != null) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
           String msg = ">>> runTest: Setting defaultBrokerURL to:" + defaultBrokerURL;
@@ -129,15 +183,15 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       System.setProperty("defaultBrokerURL", "tcp://localhost:8118");
     }
 
-    Map<String, Object> appCtx = new HashMap();
-    appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath,
-            "../src/main/scripts/dd2spring.xsl".replace('/', FS));
-    appCtx.put(UimaAsynchronousEngine.SaxonClasspath,
-            "file:../src/main/saxon/saxon8.jar".replace('/', FS));
+    //Map<String, Object> appCtx = new HashMap();
+//    appCtx.put(UimaAsynchronousEngine.DD2SpringXsltFilePath,
+//            "../src/main/scripts/dd2spring.xsl".replace('/', FS));
+//    appCtx.put(UimaAsynchronousEngine.SaxonClasspath,
+//            "file:../src/main/saxon/saxon8.jar".replace('/', FS));
     // appCtx.put(UimaAsynchronousEngine.UimaEeDebug, UimaAsynchronousEngine.UimaEeDebug);
-    String containerId = null;
+    String serviceId = null;
     try {
-      containerId = eeUimaEngine.deploy(aDeploymentDescriptorPath, appCtx);
+    	serviceId = eeUimaEngine.deploy(aDeploymentDescriptorPath, appCtx);
     } catch (ResourceInitializationException e) {
       if (!ignoreException(ResourceInitializationException.class)) {
         System.out
@@ -151,7 +205,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       System.out.println(">>>>>>>>>>> runTest: Exception:" + e.getClass().getName());
       throw e;
     }
-    return containerId;
+    return serviceId;
   }
 
   protected void addExceptionToignore(Class anExceptionToIgnore) {
@@ -196,19 +250,21 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     return (url == null ? null : url.getPath());
   }
 
-  protected Map<String, Object> buildContext(String aTopLevelServiceBrokerURI, String aTopLevelServiceQueueName)
+  protected Map<String, Object> buildContext(String aTopLevelServiceServiceURI, String aTopLevelServiceQueueName)
           throws Exception {
-    return buildContext(aTopLevelServiceBrokerURI, aTopLevelServiceQueueName, 0);
+    return buildContext(aTopLevelServiceServiceURI, aTopLevelServiceQueueName, 0);
   }
 
-  protected Map<String, Object> buildContext(String aTopLevelServiceBrokerURI, String aTopLevelServiceQueueName,
+  protected Map<String, Object> buildContext(String aTopLevelServiceServiceURI, String aTopLevelServiceQueueName,
           int timeout) throws Exception {
     Map<String, Object> appCtx = new HashMap<String, Object>();
-    appCtx.put(UimaAsynchronousEngine.ServerUri, aTopLevelServiceBrokerURI);
+    appCtx.put(UimaAsynchronousEngine.ServerUri, aTopLevelServiceServiceURI);
     appCtx.put(UimaAsynchronousEngine.ENDPOINT, aTopLevelServiceQueueName);
     appCtx.put(UimaAsynchronousEngine.CasPoolSize, Integer.valueOf(4));
     appCtx.put(UimaAsynchronousEngine.ReplyWindow, 15);
     appCtx.put(UimaAsynchronousEngine.Timeout, timeout);
+    appCtx.put(UimaAsynchronousEngine.GetMetaTimeout,0);
+
     return appCtx;
   }
 
@@ -316,7 +372,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     isStopping = false;
     final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy Uima EE Primitive Service
-    final String containerId = deployService(eeUimaEngine, serviceDeplyDescriptor);
+    final String containerId = deployJavaService(eeUimaEngine, serviceDeplyDescriptor);
 
     engine = eeUimaEngine;
 
@@ -577,6 +633,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         // Wait until the CPC Thread is ready.
         waitOnMonitor(ctrlSemaphore);
         if (!isStopped) {
+           	StringBuilder sb = new StringBuilder().append("=================> Client sending ").
+        			append(i+1).append(" CAS of ").append(howMany);
+        	System.out.println(sb.toString());
           // Send an in CAS to the top level service
           sendCAS(aUimaEeEngine, 1, sendCasAsynchronously);
         }
@@ -633,6 +692,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           boolean sendCasAsynchronously) throws Exception {
     engine = eeUimaEngine;
     for (int i = 0; i < howMany; i++) {
+ 
     	if (isStopping) {
     		break;
     	}
@@ -685,8 +745,8 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     }
     public synchronized void onBeforeMessageSend(UimaASProcessStatus status) {
       casSent = status.getCasReferenceId();
-//      System.out.println("runTest: Received onBeforeMessageSend() Notification With CAS:"
-//              + status.getCasReferenceId());
+      System.out.println("runTest: Received onBeforeMessageSend() Notification With CAS:"
+              + status.getCasReferenceId());
     }
     public void onUimaAsServiceExit(EventTrigger cause) {
         System.out.println("runTest: Received onUimaAsServiceExit() Notification With Cause:"

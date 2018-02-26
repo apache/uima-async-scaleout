@@ -41,8 +41,10 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
@@ -59,8 +61,11 @@ import org.apache.uima.aae.message.MessageWrapper;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.message.JmsMessageContext;
+import org.apache.uima.as.client.Listener;
+import org.apache.uima.as.client.Listener.Type;
 import org.apache.uima.util.Level;
 import org.springframework.jms.listener.SessionAwareMessageListener;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * Thin adapter for receiving JMS messages from Spring. It delegates processing of all messages to
@@ -69,17 +74,17 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
  * 
  */
 public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
-        SessionAwareMessageListener {
+        SessionAwareMessageListener<Message> {
   /**
 	 * 
 	 */
   private static final long serialVersionUID = -3318400773113552290L;
 
-  private static final Class CLASS_NAME = JmsInputChannel.class;
+  private static final Class<?> CLASS_NAME = JmsInputChannel.class;
 
-  private transient final CountDownLatch msgHandlerLatch = new CountDownLatch(1);
+  private final transient CountDownLatch msgHandlerLatch = new CountDownLatch(1);
 
-  private transient final CountDownLatch controllerLatch = new CountDownLatch(1);
+  private final transient  CountDownLatch controllerLatch = new CountDownLatch(1);
 
   // Reference to the first Message Handler in the Chain.
   private transient Handler handler;
@@ -92,9 +97,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 
   private int sessionAckMode;
 
-  private transient UimaDefaultMessageListenerContainer messageListener;
+  //private transient UimaDefaultMessageListenerContainer messageListener;
 
-  private transient Session jmsSession;
+  //private transient Session jmsSession;
 
   private String brokerURL = "";
 
@@ -110,21 +115,37 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 
   private transient RemoteJMXServer remoteJMXServer = null;
   //  synchronizes initialization of RemotBroker
-  private Object brokerMux = new Object();
+ // private Object brokerMux = new Object();
   
-  private ConcurrentHashMap<String, UimaDefaultMessageListenerContainer> failedListenerMap = new ConcurrentHashMap<String, UimaDefaultMessageListenerContainer>();
+  private ConcurrentHashMap<String, Listener> failedListenerMap = 
+		  new ConcurrentHashMap<>();
 
   //  A global flag that determines if we should create a connection to broker's MBeanServer to be
   //  able to determine if client's reply queue exists before processing a CAS. 
   public static transient boolean attachToBrokerMBeanServer=true;
   
-  private static Map<String, List<UimaDefaultMessageListenerContainer>> listenerMap =
-          new ConcurrentHashMap<String, List<UimaDefaultMessageListenerContainer>>();
+  private ENDPOINT_TYPE type = ENDPOINT_TYPE.JMS;
 
+  private static Map<String, List<Listener>> listenerMap =
+          new ConcurrentHashMap<>();
+
+  private ChannelType channelType;
+  
+  public JmsInputChannel(ChannelType type) {
+	  this.channelType = type;
+  }
+  public ChannelType getChannelType() {
+	  return channelType;
+  }
+  
   public AnalysisEngineController getController() {
     return controller;
   }
-
+  public ENDPOINT_TYPE getType() {
+	  return type;
+  }
+  
+  
   public String getName() {
     return endpointName;
   }
@@ -652,18 +673,18 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
                 .getIntProperty(AsynchAEMessage.MessageType));
       
         String msgSentFromIP = null;
-
+     //   System.out.println("<<<<<<<<<<<<< Service:"+ getController().getComponentName()+ " Received JMS Message - command:"+command+" type:"+messageType);
         if (aMessage.getIntProperty(AsynchAEMessage.MessageType) == AsynchAEMessage.Response
                 && aMessage.propertyExists(AsynchAEMessage.ServerIP)) {
           msgSentFromIP = aMessage.getStringProperty(AsynchAEMessage.ServerIP);
         }
-        // System.out.println("***********************************************************************************"
-        // +
-        // "           \n**CONTROLLER::"+controller.getName()+"**** Received New Message From [ "+aMessage.getStringProperty(AsynchAEMessage.MessageFrom)+" ]**************"
-        // +
-        // "           \n**MSGTYPE::"+messageType+" COMMAND:"+command +
-        // " Cas Reference Id::"+casRefId+
-        // "           \n******************************************************************************");
+         System.out.println("***********************************************************************************"
+         +
+         "           \n**CONTROLLER::"+controller.getName()+"**** Received New Message From [ "+aMessage.getStringProperty(AsynchAEMessage.MessageFrom)+" ]**************"
+         +
+         "           \n**MSGTYPE::"+messageType+" COMMAND:"+command +
+        " Cas Reference Id::"+casRefId+
+        "           \n******************************************************************************");
 
         String msgFrom = (String) aMessage.getStringProperty(AsynchAEMessage.MessageFrom);
         if (controller != null && msgFrom != null) {
@@ -674,7 +695,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         	if ( ackClient(messageContext)  ) {
         		try {
         			//	Any exception while sending an ACK results in a dropped request
-        			getController().getOutputChannel().sendReply(AsynchAEMessage.ServiceInfo,
+        			getController().getOutputChannel(ENDPOINT_TYPE.JMS).sendReply(AsynchAEMessage.ServiceInfo,
                             messageContext.getEndpoint(), aMessage.getStringProperty(AsynchAEMessage.CasReference), true);
         		} catch( Exception ex) {
         			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -800,30 +821,31 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   public String getServerUri() {
     return brokerURL;
   }
- public List<UimaDefaultMessageListenerContainer> registerListener(UimaDefaultMessageListenerContainer messageListener) {
-	    List<UimaDefaultMessageListenerContainer> ll = null;
+ public List<Listener> registerListener(Listener messageListener) {
+	    List<Listener> ll = null;
 	    if ( listenerMap.containsKey(getController().getComponentName()+getController().hashCode()) ) {
 	      ll = listenerMap.get(getController().getComponentName()+getController().hashCode());
 	    } else {
-	      ll = new CopyOnWriteArrayList<UimaDefaultMessageListenerContainer>();
+	      ll = new CopyOnWriteArrayList<>();
 	      listenerMap.put(getController().getComponentName()+getController().hashCode(), ll);
 	    }
 	    if (!ll.contains(messageListener)) {
 	      ll.add(messageListener);
 	    } else {
 	    }
-	    for(Object container: ll ) {
-	      UimaDefaultMessageListenerContainer c = (UimaDefaultMessageListenerContainer) container;
-	    }
+//	    for(Object container: ll ) {
+//	      UimaDefaultMessageListenerContainer c = (UimaDefaultMessageListenerContainer) container;
+//	    }
 	    return ll;
   }
-  public List<UimaDefaultMessageListenerContainer> getListeners() {
-	    List<UimaDefaultMessageListenerContainer> ll = null;
+  public List<Listener> getListeners() {
+	    List<Listener> ll = null;
 	    if ( listenerMap.containsKey(getController().getComponentName()+getController().hashCode()) ) {
 	      ll = listenerMap.get(getController().getComponentName()+getController().hashCode());
 	    }
 	    return ll;
   }
+  /*
   public synchronized void setListenerContainer(UimaDefaultMessageListenerContainer jmsL) {
     this.messageListener = jmsL;
     System.setProperty("BrokerURI", messageListener.getBrokerUrl());
@@ -844,7 +866,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       }
     } 
   }
-
+*/
+  public synchronized void addListenerContainer(UimaDefaultMessageListenerContainer messageListener) {
+	// Add new message listener to the list
+	  registerListener(messageListener);
+	 
+  }
+  /*
   public ActiveMQConnectionFactory getConnectionFactory() {
     if (messageListener == null) {
       return null;
@@ -852,7 +880,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       return (ActiveMQConnectionFactory) messageListener.getConnectionFactory();
     }
   }
-
+*/
   public void ackMessage(MessageContext aMessageContext) {
     if (aMessageContext != null && sessionAckMode == Session.CLIENT_ACKNOWLEDGE) {
       try {
@@ -877,15 +905,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   }
 
   public String getInputQueueName() {
-    if (messageListener != null)
-      if (messageListener.getDestination() != null) {
-        return messageListener.getDestination().toString();
-      } else {
-        return messageListener.getDestinationName();// getEndpointName();
-      }
-    else {
-      return "";
-    }
+     return endpointName;
   }
 
   public ServiceInfo getServiceInfo() {
@@ -914,7 +934,47 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
               .setBrokerURL(brokerURL);
     }
   }
+  private void stopListener(final UimaDefaultMessageListenerContainer mL) throws Exception {
+	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener Type:"+mL.getType());
+	  mL.setTerminating();
+	  mL.setAcceptMessagesWhileStopping(false);
 
+	  mL.stop();
+	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener - Calling destroy()");
+	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener - Done Calling destroy()");
+
+	  if ( mL.getTaskExecutor() instanceof ThreadPoolTaskExecutor ) {
+		  System.out.println(".... "+getController().getComponentName()+" Stopping ThreadPoolTaskExecutor");
+		  ThreadPoolTaskExecutor tpe = ((ThreadPoolTaskExecutor)mL.getTaskExecutor());
+		  tpe.destroy();
+
+	  } else {
+		  System.out.println(".... "+getController().getComponentName()+" ActiveConsumerCount:"+mL.getActiveConsumerCount());
+		  if ( mL.getTaskExecutor() != null ) {
+			  System.out.println(".... "+getController().getComponentName()+" TaskExecutor Class:"+ mL.getTaskExecutor().getClass().getName());
+		  } else {
+			  //((ActiveMQDestination)mL.getDestination()).;
+			  //mL.getTransport().;
+			 // mL.notifyAll();
+			  if ( mL.getActiveConsumerCount() > 0 ) {
+				  Thread.dumpStack();
+			  }
+			  System.out.println(".... "+getController().getComponentName()+" Destroying Listener");
+			  mL.doDestroy();
+			  System.out.println(".... "+getController().getComponentName()+" ActiveConsumerCount:"+mL.getActiveConsumerCount());
+
+		  }
+
+		  
+		 
+		  
+	  }
+	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener - Stopped Task Executor");
+	  mL.shutdown();
+
+		System.out.println("Stopped Listener ");
+
+  }
   private void stopChannel(UimaDefaultMessageListenerContainer mL, boolean shutdownNow) throws Exception {
     String eName = mL.getEndpointName();
     if (eName != null) {
@@ -924,9 +984,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
                 new Object[] { eName, shutdownNow });
       }
     }
-    mL.delegateStop();
+   // mL.delegateStop();
     if (shutdownNow) {
-        mL.destroy(shutdownNow);
+    	stopListener(mL);
     }
    
     String selector = "";
@@ -958,7 +1018,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
   public void stop(boolean shutdownNow) throws Exception {
     stop(InputChannel.CloseAllChannels, shutdownNow);
     listenerContainerList.clear();
-    List<UimaDefaultMessageListenerContainer> ll = getListeners();
+    List<Listener> ll = getListeners();
     if ( ll != null ) {
        ll.clear();
     }
@@ -969,26 +1029,31 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   public void disconnectListenersFromQueue() throws Exception {
-	List<UimaDefaultMessageListenerContainer> ll = getListeners();
-	for (UimaDefaultMessageListenerContainer listenerObject : ll) {
-		  	 stopChannel(listenerObject, false);
+	List<Listener> ll = getListeners();
+	for (Listener listenerObject : ll) {
+		disconnectListenerFromQueue(listenerObject);
 	}	
 
   }
+  public void disconnectListenerFromQueue(Listener listener) throws Exception {
+	stopChannel((UimaDefaultMessageListenerContainer)listener, false);
+  }
   public void setTerminating() {
-    List<UimaDefaultMessageListenerContainer> ll = getListeners();
-    for (UimaDefaultMessageListenerContainer listenerObject : ll) {
-        listenerObject.setTerminating();
+    List<Listener> ll = getListeners();
+    for (Listener listenerObject : ll) {
+    	((UimaDefaultMessageListenerContainer)listenerObject).setTerminating();
       } 
 
   }
   public void terminate() {
 	 try {
-	    List<UimaDefaultMessageListenerContainer> ll = getListeners();
-	    for (UimaDefaultMessageListenerContainer listenerObject : ll) {
-		      listenerObject.closeConnection();
+	    List<Listener> ll = getListeners();
+	    for (Listener listenerObject : ll) {
+	    	UimaDefaultMessageListenerContainer lc =
+	    			(UimaDefaultMessageListenerContainer)listenerObject;
+		      lc.closeConnection();
 		      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-		        String msg = "................. JmsInputChannel.terminate() - Listener -"+listenerObject.getDestinationName();
+		        String msg = "................. JmsInputChannel.terminate() - Listener -"+lc.getDestinationName();
                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "terminate",
                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
                   new Object[] { msg });
@@ -1004,8 +1069,8 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	  
   }
   public synchronized void stop(int channelsToClose, boolean shutdownNow) throws Exception {
-	  List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
-      List<UimaDefaultMessageListenerContainer> ll = getListeners();
+	//  List<UimaDefaultMessageListenerContainer> listenersToRemove = new ArrayList<UimaDefaultMessageListenerContainer>();
+      List<Listener> ll = getListeners();
       String msg = ">>>>>>>>>>>> JmsInputChannel. stop() - Controller:"+controller.getComponentName()+ " Listener Count:"+ll.size();
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "stop",
@@ -1013,13 +1078,14 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
                   new Object[] { msg });
       }
 
-      for (UimaDefaultMessageListenerContainer listenerObject : ll) {
-
-       if (listenerObject != null && doCloseChannel(listenerObject, channelsToClose)) {
-           listenerObject.setRecoveryInterval(0);  // https://issues.apache.org/jira/browse/UIMA-3437
-          listenerObject.setTerminating();
-          listenerObject.setAutoStartup(false);
-          stopChannel(listenerObject, shutdownNow);
+      for (Listener listenerObject : ll) {
+    	  UimaDefaultMessageListenerContainer lc =
+    			  (UimaDefaultMessageListenerContainer)listenerObject;
+       if (listenerObject != null && doCloseChannel(lc, channelsToClose)) {
+           lc.setRecoveryInterval(0);  // https://issues.apache.org/jira/browse/UIMA-3437
+          lc.setTerminating();
+          lc.setAutoStartup(false);
+          stopChannel(lc, shutdownNow);
 
       } else {
         if (getController() != null) {
@@ -1041,9 +1107,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     return stopped;
   }
 
-  public int getConcurrentConsumerCount() {
-    return messageListener.getConcurrentConsumers();
-  }
+//  public int getConcurrentConsumerCount() {
+//    return messageListener.getConcurrentConsumers();
+//  }
 
   private void testIfBrokerRunning(String aBrokerUrl) throws Exception {
     ActiveMQConnectionFactory f = new ActiveMQConnectionFactory(aBrokerUrl);
@@ -1061,7 +1127,8 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   public void createListenerOnTempQueue(ConnectionFactory cf, boolean isFreeCasDestination ) throws Exception {
-	  TempDestinationResolver resolver = new TempDestinationResolver(controller.getComponentName());
+	  TempDestinationResolver resolver = 
+			  new TempDestinationResolver(controller.getComponentName(),"");
 	  UimaDefaultMessageListenerContainer connector = new UimaDefaultMessageListenerContainer(true);
 	  connector.setConnectionFactory(cf);
 	  resolver.setListener(connector);
@@ -1069,9 +1136,9 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	  connector.setDestinationResolver(resolver);
 	  connector.setController(getController());
 	  connector.setMessageListener(this);
-	  connector.initializeContainer();
+	  //connector.initializeContainer();
 	  connector.getDestination();
-	  connector.afterPropertiesSet(false);
+	  connector.afterPropertiesSet();
 	  UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,getController().getComponentName()+"-JmsInputChannel.createListenerOnTempQueue()-starting new Listener" );
 	  connector.start();
 	  boolean log = true;
@@ -1103,10 +1170,10 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	  }
 
 	  if ( isFreeCasDestination ) {
-		  ((JmsOutputChannel) getController().getOutputChannel())
+		  ((JmsOutputChannel) getController().getOutputChannel(ENDPOINT_TYPE.JMS))
           .setFreeCasQueue(connector.getListenerEndpoint());
 	  }
-      setListenerContainer(connector);
+      addListenerContainer(connector);
 
 	  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.CONFIG)) {
 		  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.CONFIG, CLASS_NAME.getName(),
@@ -1116,7 +1183,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	  }
   }
   public void createListenerForTargetedMessages() throws Exception {
-	  List<UimaDefaultMessageListenerContainer> listeners =
+	  List<Listener> listeners =
 			  getListeners();
 	  // the TargetServiceId property value will become part of a jms selector. 
 	  String targetStringSelector = "";
@@ -1130,49 +1197,63 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 	  // find a listener instance which handles Process requests. The targeted 
 	  // listener created here will share a Connection Factory and ThreadFactory.
 	  // 
-	  for(UimaDefaultMessageListenerContainer listener : listeners ) {
-	      // Is this a Process listener instance? Check the selector
-		  if ( listener.getMessageSelector().endsWith(UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX) ) {
-	          // this will be a dedicated listener which handles targeted messages
-			  UimaDefaultMessageListenerContainer targetedListener = new UimaDefaultMessageListenerContainer();
-			  // setup jms selector
-			  if ( getController().isCasMultiplier()) {
-				  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.CM_PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
- 	          } else {
- 				  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
- 	          }
-			  
-			  // use shared ConnectionFactory
-	          targetedListener.setConnectionFactory(listener.getConnectionFactory());
-	          // mark the listener as a 'Targeted' listener
-	          targetedListener.setTargetedListener();
-	          targetedListener.setController(getController());
-	          // there will only be one AMQ delivery thread. Its job will be to
-	          // add a targeted message to a BlockingQueue. Such thread will block
-	          // in an enqueue if a dequeue is not available. This will be prevent
-	          // the overwhelming the service with messages.
-	          targetedListener.setConcurrentConsumers(1);
-			  if ( listener.getMessageListener() instanceof PriorityMessageHandler ) {
-				  // the targeted listener will use the same message handler as the
-				  // Process listener. This handler will add a message wrapper 
-				  // to enable prioritizing messages. 
-				  targetedListener.setMessageListener(listener.getMessageListener());
+	  for(Listener l : listeners ) {
+		  UimaDefaultMessageListenerContainer listener = 
+		     (UimaDefaultMessageListenerContainer) l;
+		  if ( listener.getTransport().equals(Transport.JMS)) {
+			  // Ignore listeners for replies (message selector = null)
+			  if ( listener.getMessageSelector() == null ) {
+				  continue;
 			  }
-			  // Same queue as the Process queue
-			  targetedListener.setDestination(listener.getDestination());
-	          registerListener(targetedListener);
-	          targetedListener.afterPropertiesSet();
-	          targetedListener.initialize();
-	          targetedListener.start();
-	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-	            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-	                    "createListenerForTargetedMessages", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-	                    "UIMAJMS_TARGET_LISTENER__INFO",
-	                    new Object[] {targetedListener.getMessageSelector(), controller.getComponentName() });
-	          }
-	          break;
+		      // Is this a Process listener instance? Check the selector
+			  if ( listener.getMessageSelector().endsWith(UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX) ) {
+		          // this will be a dedicated listener which handles targeted messages
+				  UimaDefaultMessageListenerContainer targetedListener = new UimaDefaultMessageListenerContainer();
+				  // setup jms selector
+				  if ( getController().isCasMultiplier()) {
+					  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.CM_PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+	 	          } else {
+	 				  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+	 	          }
+				  
+				  // use shared ConnectionFactory
+		          targetedListener.setConnectionFactory(listener.getConnectionFactory());
+		          // mark the listener as a 'Targeted' listener
+		          targetedListener.setTargetedListener();
+		          targetedListener.setController(getController());
+		          // there will only be one delivery thread. Its job will be to
+		          // add a targeted message to a BlockingQueue. Such thread will block
+		          // in an enqueue if a dequeue is not available. This will be prevent
+		          // the overwhelming the service with messages.
+		  		  ThreadPoolTaskExecutor threadExecutor = new ThreadPoolTaskExecutor();
+				  threadExecutor.setCorePoolSize(1);
+				  threadExecutor.setMaxPoolSize(1);
+				  targetedListener.setTaskExecutor(threadExecutor);
+		          targetedListener.setConcurrentConsumers(1);
+				  if ( listener.getMessageListener() instanceof PriorityMessageHandler ) {
+					  // the targeted listener will use the same message handler as the
+					  // Process listener. This handler will add a message wrapper 
+					  // to enable prioritizing messages. 
+					  targetedListener.setMessageListener(listener.getMessageListener());
+				  }
+				  // Same queue as the Process queue
+				  targetedListener.setDestination(listener.getDestination());
+		          registerListener(targetedListener);
+		          targetedListener.afterPropertiesSet();
+		          targetedListener.setType(Type.Target);
+		          targetedListener.initialize();
+		          targetedListener.start();
+		          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+		            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+		                    "createListenerForTargetedMessages", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+		                    "UIMAJMS_TARGET_LISTENER__INFO",
+		                    new Object[] {targetedListener.getMessageSelector(), controller.getComponentName() });
+		          }
+		          break;
 
-	      }
+		      }
+		  }
+
 	  }
   }
   public void createListener(String aDelegateKey, Endpoint endpointToUpdate) throws Exception {
@@ -1190,7 +1271,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         newListener.setMessageListener(this);
         newListener.setController(getController());
 
-        TempDestinationResolver resolver = new TempDestinationResolver(controller.getComponentName());
+        TempDestinationResolver resolver = new TempDestinationResolver(controller.getComponentName(), aDelegateKey);
         resolver.setConnectionFactory(f);
         resolver.setListener(newListener);
         newListener.setDestinationResolver(resolver);
@@ -1212,7 +1293,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
         }
         newListener.afterPropertiesSet();
         if ( controller != null && controller.isStopped() ) {
-          newListener.destroy(true);  // shutdownNow
+          stopListener(newListener);  // shutdownNow
           //  we are aborting, the controller has been stopped
           return;
         }
@@ -1231,11 +1312,13 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   public boolean isListenerActiveOnDestination(Destination destination ) {
-   List<UimaDefaultMessageListenerContainer> ll = getListeners();
-   for (UimaDefaultMessageListenerContainer mListener : ll ) {
-     if ( mListener.getDestination() != null && 
-          mListener.getDestination() == destination &&
-          mListener.isRunning()) {
+   List<Listener> ll = getListeners();
+   for (Listener mListener : ll ) {
+	   UimaDefaultMessageListenerContainer lc =
+			   (UimaDefaultMessageListenerContainer)mListener;
+     if ( lc.getDestination() != null && 
+          lc.getDestination() == destination &&
+          lc.isRunning()) {
        return true;
      }
    }
@@ -1252,23 +1335,25 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
    * 
    * @return - list of listeners
    */
-  private UimaDefaultMessageListenerContainer[] getListenersForEndpoint(String anEndpointName) {
-	    List<UimaDefaultMessageListenerContainer> ll = getListeners();
+  private Listener[] getListenersForEndpoint(String anEndpointName) {
+	    List<Listener> ll = getListeners();
 
 	    
-	    List<UimaDefaultMessageListenerContainer> listeners = new ArrayList<UimaDefaultMessageListenerContainer>();
-	    for (UimaDefaultMessageListenerContainer mListener : ll) {
-	      if (mListener.getDestinationName() != null
-	              && mListener.getDestinationName().equals(anEndpointName)) {
+	    List<Listener> listeners = new ArrayList<>();
+	    for (Listener mListener : ll) {
+	    	UimaDefaultMessageListenerContainer lc = 
+	    			(UimaDefaultMessageListenerContainer)mListener;
+	      if (lc.getDestinationName() != null
+	              && lc.getDestinationName().equals(anEndpointName)) {
 	        listeners.add(mListener);
-	      } else if (mListener.getDestination() != null
-	              && mListener.getDestination().toString().equals(anEndpointName)) {
+	      } else if (lc.getDestination() != null
+	              && lc.getDestination().toString().equals(anEndpointName)) {
 	        listeners.add(mListener);
 	      }
 	    }
-	    if (listeners.size() > 0) {
-	      UimaDefaultMessageListenerContainer[] listenerArray = new UimaDefaultMessageListenerContainer[listeners
-	              .size()];
+	    if (!listeners.isEmpty()) {
+	      Listener[] listenerArray = new Listener[listeners.size()];
+	              
 	      listeners.toArray(listenerArray);
 	      return listenerArray;
 	    }
@@ -1285,34 +1370,36 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
       return;
     }
     // Fetch all associated listeners.
-    final UimaDefaultMessageListenerContainer[] mListeners = getListenersForEndpoint(anEndpointName);
+    final Listener[] mListeners = getListenersForEndpoint(anEndpointName);
     if (mListeners == null) {
       return;
     }
     // Stop each listener
-    for (final UimaDefaultMessageListenerContainer mListener : mListeners) {
-      if (!mListener.isRunning()) {
+    for (final Listener mListener : mListeners) {
+    	UimaDefaultMessageListenerContainer lc = 
+    			(UimaDefaultMessageListenerContainer)mListener;
+      if (!lc.isRunning()) {
         continue; // Already Stopped
       }
 
       try {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)
-                && mListener.getDestination() != null) {
+                && lc.getDestination() != null) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
                   "destroyListener", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                   "UIMAJMS_stop_listener__INFO",
-                  new Object[] { mListener.getDestination().toString() });
+                  new Object[] { lc.getDestination().toString() });
         }
-        mListener.stop();
+        lc.stop();
         if (getController() != null) {
           Endpoint endpoint = ((AggregateAnalysisEngineController) getController()).lookUpEndpoint(
                   aDelegateKey, false);
           endpoint.setStatus(Endpoint.FAILED);
-          List<UimaDefaultMessageListenerContainer> ll = null;
+          List<Listener> ll = null;
           if ( listenerMap.containsKey(getController().getComponentName()+getController().hashCode()) ) {
             ll = listenerMap.get(getController().getComponentName()+getController().hashCode());
           }
-          if (mListener.getConnectionFactory() != null) {
+          if (lc.getConnectionFactory() != null) {
             if (getController() instanceof AggregateAnalysisEngineController) {
               if (!failedListenerMap.containsKey(aDelegateKey)) {
                 failedListenerMap.put(aDelegateKey, mListener);
@@ -1345,7 +1432,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   public boolean isListenerForDestination(String anEndpointName) {
-    UimaDefaultMessageListenerContainer[] mListeners = getListenersForEndpoint(anEndpointName);
+    Listener[] mListeners = getListenersForEndpoint(anEndpointName);
     if (mListeners == null) {
       return false;
     }

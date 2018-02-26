@@ -71,7 +71,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
       if (entry != null && entry.isSubordinate()) {
         // recursively call each parent until we get to the top of the
         // Cas hierarchy
-        parentCasReferenceId = lookupInputCasReferenceId(entry.getInputCasReferenceId());
+        parentCasReferenceId = lookupInputCasReferenceId(entry.getParentCasReferenceId());
       } else {
         return aCasReferenceId;
       }
@@ -85,14 +85,14 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
       // recursively call each parent until we get to the top of the
       // Cas hierarchy
       parentCasReferenceId = lookupInputCasReferenceId((CasStateEntry) get(entry
-              .getInputCasReferenceId()));
+              .getParentCasReferenceId()));
     } else {
       return entry.getCasReferenceId();
     }
     return parentCasReferenceId;
   }
   public void dumpContents() {
-    dumpContents(false);
+    dumpContents(true);
   }
   public synchronized void dumpContents(boolean dump2Stdout) {
     int count = 0;
@@ -109,7 +109,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
         if (casStateEntry.isSubordinate()) {
           sb.append(entry.getKey() + " Number Of Child CASes In Play:"
                   + casStateEntry.getSubordinateCasInPlayCount() + " Parent CAS id:"
-                  + casStateEntry.getInputCasReferenceId());
+                  + casStateEntry.getParentCasReferenceId());
         } else {
           sb.append(entry.getKey() + " *** Input CAS. Number Of Child CASes In Play:"
                   + casStateEntry.getSubordinateCasInPlayCount());
@@ -179,7 +179,7 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     CasStateEntry casStateEntry = lookupEntry(casReferenceId);
     if (casStateEntry.isSubordinate()) {
       // Recurse until the top CAS reference Id is found
-      return getTopCasAncestor(casStateEntry.getInputCasReferenceId());
+      return getTopCasAncestor(casStateEntry.getParentCasReferenceId());
     }
     // Return the top ancestor CAS id
     return casStateEntry;
@@ -187,7 +187,12 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 
   public static class CasStateEntry {
 	private String casReferenceId;
-
+	// id of a parent CAS 
+    private String parentCasReferenceId;
+    // stores the id of an input CAS sent by the client. This is used
+    // to identify client endpoint if the service is a CM.
+    private String inputCasReferenceId;
+    
     private volatile boolean waitingForChildren; // true if in FinalState and still has children in play
     
     private volatile boolean waitingForRealease;
@@ -212,8 +217,8 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 
     private Object childCountMux = new Object();
 
-    private String inputCasReferenceId;
-
+    private long seqNo;
+    
     private int numberOfParallelDelegates = 1;
 
     private Delegate lastDelegate = null;
@@ -221,6 +226,9 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     private int howManyDelegatesResponded = 0;
 
     private Endpoint freeCasNotificationEndpoint;
+
+    // client endpoint where the input CAS will be returned
+    private Endpoint clientEndpoint;
 
     private volatile boolean deliveryToClientFailed;
     
@@ -249,6 +257,12 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
     
     protected Map<String, AEMetrics > casMetrics = new TreeMap<String, AEMetrics>();
     
+    public Endpoint getClientEndpoint() {
+    	return clientEndpoint;
+    }
+    public void setClientEndpoint(Endpoint ce) {
+    	clientEndpoint = ce;
+    }
     public boolean waitingForChildrenToFinish() {
     	return waitingForChildren;
     }
@@ -297,7 +311,12 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
 	public void setDeliveryToClientFailed() {
 		this.deliveryToClientFailed = true;
 	}
-
+	public void setSequenceNumber(long seq) {
+		this.seqNo = seq;
+	}
+	public long getSequenceNumber() {
+		return this.seqNo;
+	}
 	public boolean isDropped() {
       return dropped;
     }
@@ -330,15 +349,20 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
       return casReferenceId;
     }
 
-    public String getInputCasReferenceId() {
-      return inputCasReferenceId;
+    public String getParentCasReferenceId() {
+      return parentCasReferenceId;
     }
 
-    public void setInputCasReferenceId(String anInputCasReferenceId) {
-      inputCasReferenceId = anInputCasReferenceId;
+    public void setParentCasReferenceId(String parentCasReferenceId) {
+      this.parentCasReferenceId = parentCasReferenceId;
       subordinateCAS = true;
     }
-
+    public String getInputCasReferenceId() {
+    	return inputCasReferenceId;
+    }
+    public void setInputCasReferenceId(String inputCasId) {
+    	inputCasReferenceId = inputCasId;
+    }
     public void setWaitingForRelease(boolean flag) {
       waitingForRealease = flag;
     }

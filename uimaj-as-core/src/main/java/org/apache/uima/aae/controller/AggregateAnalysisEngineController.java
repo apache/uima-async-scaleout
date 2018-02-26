@@ -35,11 +35,12 @@ import org.apache.uima.aae.jmx.ServiceErrors;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.flow.FinalStep;
+import org.apache.uima.resource.metadata.ResourceMetaData;
 
 public interface AggregateAnalysisEngineController extends AnalysisEngineController {
-  public void mergeTypeSystem(String aTypeSystem, String fromDestination) throws AsynchAEException;
+//  public void mergeTypeSystem(String aTypeSystem, String fromDestination) throws AsynchAEException;
 
-  public void mergeTypeSystem(String aTypeSystem, String fromDestination, String fromServer)
+  public void mergeTypeSystem(ResourceMetaData aProcessingResourceMetadata, String fromDestination, String fromServer)
           throws AsynchAEException;
 
   public void setRemoteSerializationSupported(int code, String fromDestination, String fromServer);
@@ -113,7 +114,7 @@ public interface AggregateAnalysisEngineController extends AnalysisEngineControl
 
   public void setRequestForMetaSentToRemotes();
 
-  public Map getDestinations();
+  public Map<String, Endpoint>  getDestinations();
 
   public ServicePerformance getServicePerformance(String aDelegateKey);
 
@@ -124,7 +125,7 @@ public interface AggregateAnalysisEngineController extends AnalysisEngineControl
   public boolean delayCasIfDelegateInTimedOutState(String aCasReferenceId, String aDelegateKey, long casHashcode)
           throws AsynchAEException;
 
-  public List getChildControllerList();
+  public List<AnalysisEngineController> getChildControllerList();
 
   public void stopCasMultiplier(Delegate casMultiplier, String aCasReferenceId);
 

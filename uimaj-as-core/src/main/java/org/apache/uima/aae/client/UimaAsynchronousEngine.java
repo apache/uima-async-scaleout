@@ -44,7 +44,7 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
  * registered, and {@link #initialize(Map)} method is called, the application may call
  * {@link #process()} method.
  * 
- * 
+ * <p>
  * This API enables the application to dynamically deploy UIMA AS services that it intends to use
  * for processing. These services are deployed in a container and are collocated in the same JVM as
  * the application. The services are considered private and used exclusively by the application. To
@@ -53,24 +53,31 @@ import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
  * descriptor or an array thereof. The application must deploy its "private" services *before*
  * calling {@link #initialize(Map)} method.
  * 
- * 
+ * <p>
  * The application may stop the UIMA AS client in the middle of processing by calling
  * {@link #stop()} method.
  * 
- * 
+ * <p>
  * Listeners can register with the <code>UimaAsynchronousEngine</code> by calling the
  * {@link #addStatusCallbackListener(UimaAsBaseCallbackListener)} method. These listeners receive
  * status callbacks during the processing. An exception to that is the synchronous processing via
  * {@link #sendAndReceiveCAS(CAS)} method. This method returns either a CAS containing results of
  * analysis or an exception. No callbacks are made while processing CASes synchronously.
- * 
+ * <p>
  * An application may choose to implement parallelization of the processing, calling either
  * {@link #sendAndReceiveCAS(CAS)} or {@link #sendCAS(CAS)} methods from multiple threads.
- * 
+ * <p>
  * 
  * 
  */
 public interface UimaAsynchronousEngine {
+	
+	public enum Transport {JMS, Java};
+	
+	public Transport transportType = Transport.Java;
+	
+	public final String ClientTransport = "ClientTransport";
+
   /**
    * @deprecated
    */

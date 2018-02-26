@@ -113,13 +113,14 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
     if (anEndpoint != null && aCasReferenceId != null && !anEndpoint.isCasMultiplier()) {
       try {
         if (!anEndpoint.isRemote()) {
+        	/*
           anEndpoint.setReplyEndpoint(true);
           UimaTransport vmTransport = aController.getTransport(anEndpoint.getEndpoint());
           UimaMessage message = vmTransport.produceMessage(AsynchAEMessage.Process,
                   AsynchAEMessage.Response, aController.getName());
           message.addIntProperty(AsynchAEMessage.Payload, AsynchAEMessage.Exception);
           message.addStringProperty(AsynchAEMessage.CasReference, aCasReferenceId);
-
+*/
           Throwable wrapper = null;
           if (!(t instanceof UimaEEServiceException)) {
             // Strip off AsyncAEException and replace with UimaEEServiceException
@@ -129,6 +130,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
               wrapper = new UimaEEServiceException(t);
             }
           }
+          /*
           if (wrapper == null) {
             message.addObjectProperty(AsynchAEMessage.Cargo, t);
           } else {
@@ -138,6 +140,16 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
             vmTransport.getUimaMessageDispatcher(anEndpoint.getEndpoint()).dispatch(message);
             aController.dropStats(aCasReferenceId, aController.getName());
           }
+          */
+          if (!aController.isStopped()) {
+              aController.dropStats(aCasReferenceId, aController.getName());
+            }
+        if (wrapper == null) {
+            aController.getOutputChannel(anEndpoint).sendReply(t, aCasReferenceId, null, anEndpoint,  AsynchAEMessage.Process);
+          } else {
+            aController.getOutputChannel(anEndpoint).sendReply(wrapper, aCasReferenceId, null, anEndpoint,  AsynchAEMessage.Process);
+          }
+
         } else {
           CasStateEntry stateEntry = null;
           String parentCasReferenceId = null;
@@ -152,7 +164,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
           }
 
           if (!aController.isStopped()) {
-            aController.getOutputChannel().sendReply(t, aCasReferenceId, parentCasReferenceId,
+            aController.getOutputChannel(anEndpoint).sendReply(t, aCasReferenceId, parentCasReferenceId,
                     anEndpoint, AsynchAEMessage.Process);
           }
         }
@@ -516,7 +528,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
         doSendReplyToClient = false;
         // Check if the CAS is a subordinate (has parent CAS).
         if (casStateEntry != null && casStateEntry.isSubordinate()) {
-          String parentCasReferenceId = casStateEntry.getInputCasReferenceId();
+          String parentCasReferenceId = casStateEntry.getParentCasReferenceId();
           if (parentCasReferenceId != null) {
             try {
               CacheEntry parentCasCacheEntry = aController.getInProcessCache().getCacheEntryForCAS(
@@ -542,7 +554,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
                   parentCasStateEntry.setFailed();
                   while (predecessorCas != null && predecessorCas.isSubordinate()) {
                     predecessorCas = aController.getLocalCache().lookupEntry(
-                            predecessorCas.getInputCasReferenceId());
+                            predecessorCas.getParentCasReferenceId());
                     predecessorCas.setFailed();
                   }
                   predecessorCas.addThrowable(t);
@@ -648,7 +660,7 @@ public class ProcessCasErrorHandler extends ErrorHandlerBase implements ErrorHan
               cmEndpoint.setReplyEndpoint(true);
               cmEndpoint.setIsCasMultiplier(true);
               cmEndpoint.setFreeCasEndpoint(true);
-              aController.getOutputChannel().sendRequest(AsynchAEMessage.ReleaseCAS,
+              aController.getOutputChannel(cmEndpoint).sendRequest(AsynchAEMessage.ReleaseCAS,
                       cacheEntry.getCasReferenceId(), cmEndpoint);
             }
           }

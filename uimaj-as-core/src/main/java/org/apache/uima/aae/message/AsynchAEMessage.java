@@ -22,11 +22,15 @@ package org.apache.uima.aae.message;
 public interface AsynchAEMessage {
   //public static final String TargetSelectorProperty ="TargetServiceId";
   
+  public static final String Transport = "Transport";
+
   public static final String TotalTimeSpentInAnalytic = "TimeInAnalytic";
 
   public static final String TimeInService = "TimeInService";
 
   public static final String Endpoint = "Endpoint";
+
+  public static final String EndpointName = "EndpointName";
 
   public static final String DelegateStats = "DelegateStats";
 
@@ -39,6 +43,8 @@ public interface AsynchAEMessage {
   public static final String MessageFrom = "MessageFrom";
   
   public static final String Destination = "Destination";
+
+  public static final String DelegateKey = "DelegateKey";
 
   // 5/2013 xcas not used as a serialization form
 //  public static final String XCASREFId = "XCASRefId";
@@ -82,6 +88,8 @@ public interface AsynchAEMessage {
   public static final String SkipPendingLists = "SkipPendingLists";
 
   public static final String Payload = "Payload";
+  
+  public static final String FreeCASQueue = "FreeCASQueue";
 
   public static final int XMIPayload = 1000;
 
@@ -117,6 +125,10 @@ public interface AsynchAEMessage {
   public static final int Ping = 2007;
 
   public static final int ServiceInfo = 2008;
+  
+  // this command is used to force stop java queue listener
+  public static final int PoisonPill = 2009;
+
 
   public static final String MessageType = "MessageType";
 

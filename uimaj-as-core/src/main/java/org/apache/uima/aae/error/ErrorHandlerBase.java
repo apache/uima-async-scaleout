@@ -225,7 +225,7 @@ public abstract class ErrorHandlerBase {
 
                 if (aController instanceof AggregateAnalysisEngineController && (masterEndpoint != null && masterEndpoint.getStatus() == Endpoint.FAILED)) {
                   // Fetch an InputChannel that handles messages for a given delegate
-                  InputChannel iC = aController.getReplyInputChannel(masterEndpoint.getDelegateKey());
+                  InputChannel iC = aController.getInputChannel();
                   // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
                   iC.createListener(masterEndpoint.getDelegateKey(), null);
                   iC.removeDelegateFromFailedList(masterEndpoint.getDelegateKey());

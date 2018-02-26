@@ -822,6 +822,7 @@ public abstract class Delegate {
    *          - command for which the timer is started
    */
   private void startDelegateGetMetaTimer(final String aCasReferenceId, final int aCommand) {
+	  Thread.dumpStack();
     synchronized( getMetaTimerLock ) {
       final long timeToWait = getTimeoutValueForCommand(aCommand);
       Date timeToRun = new Date(System.currentTimeMillis() + timeToWait);

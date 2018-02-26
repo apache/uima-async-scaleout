@@ -19,6 +19,8 @@
 
 package org.apache.uima.aae.handler.input;
 
+import java.io.ByteArrayInputStream;
+
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
@@ -29,10 +31,12 @@ import org.apache.uima.aae.handler.HandlerBase;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.cas.SerialFormat;
+import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.util.Level;
+import org.apache.uima.util.XMLInputSource;
 
 public class MetadataResponseHandler_impl extends HandlerBase {
-  private static final Class CLASS_NAME = MetadataResponseHandler_impl.class;
+  private static final Class<?> CLASS_NAME = MetadataResponseHandler_impl.class;
 
   public MetadataResponseHandler_impl(String aName) {
     super(aName);
@@ -43,6 +47,7 @@ public class MetadataResponseHandler_impl extends HandlerBase {
    * metadata.
    * 
    */
+  @Override
   public void handle(Object anObjectToHandle) {
 
     if (anObjectToHandle instanceof MessageContext) {
@@ -127,8 +132,17 @@ public class MetadataResponseHandler_impl extends HandlerBase {
             if (AsynchAEMessage.Exception == payload) {
               return;
             }
+            ResourceMetaData resource = null;
+            if ( serializationSupportedByRemote == AsynchAEMessage.None ) {
+            	resource = (ResourceMetaData)
+            			((MessageContext) anObjectToHandle).getMessageObjectProperty(AsynchAEMessage.AEMetadata);
+            } else {
+                String analysisEngineMetadata = ((MessageContext) anObjectToHandle).getStringMessage();
+                ByteArrayInputStream bis = new ByteArrayInputStream(analysisEngineMetadata.getBytes());
+                XMLInputSource in1 = new XMLInputSource(bis, null);
+                resource = UIMAFramework.getXMLParser().parseResourceMetaData(in1);
+            }
 
-            String analysisEngineMetadata = ((MessageContext) anObjectToHandle).getStringMessage();
             String fromServer = null;
             if (((MessageContext) anObjectToHandle).propertyExists(AsynchAEMessage.EndpointServer)) {
               fromServer = ((MessageContext) anObjectToHandle)
@@ -140,7 +154,7 @@ public class MetadataResponseHandler_impl extends HandlerBase {
             // The ServerURI set by the service may be its local name for the broker, e.g.
             // tcp://localhost:61616
             ((AggregateAnalysisEngineController) getController()).mergeTypeSystem(
-                    analysisEngineMetadata, fromEndpoint, fromServer);
+                    resource, fromEndpoint, fromServer);
             ((AggregateAnalysisEngineController) getController()).setRemoteSerializationSupported(serializationSupportedByRemote, fromEndpoint, fromServer);
           }
         } else {

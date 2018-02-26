@@ -43,6 +43,6 @@ public interface ErrorHandler {
   public boolean handleError(Throwable t, ErrorContext anErrorContext,
           AnalysisEngineController aController);
 
-  public Map getEndpointThresholdMap();
+  public Map<String,Threshold> getEndpointThresholdMap();
 
 }

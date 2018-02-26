@@ -32,6 +32,7 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
 import org.apache.uima.UIMAFramework;
+import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.internal.util.JmxMBeanAgent;
 import org.apache.uima.util.Level;
 
@@ -96,6 +97,15 @@ public class JmxManager implements JmxManagement {
 	    ObjectName objName = new ObjectName(objectName);
 	    mbeanList.add(objName);
   }
+  
+  public boolean isRegistered( ObjectName aName ) throws Exception {
+      synchronized(JmxManager.class) {
+          if (((MBeanServer) platformMBeanServer).isRegistered(aName)) {
+        	  return true;
+          }
+      }
+      return false;
+  }
   public void registerMBean(Object anMBeanToRegister, ObjectName aName) throws Exception {
     if (!isInitialized()) {
       return;
@@ -104,6 +114,13 @@ public class JmxManager implements JmxManagement {
     try {
       //  use class level locking to make sure one thread at time executes the code
       synchronized(JmxManager.class) {
+    	  if ( anMBeanToRegister instanceof InProcessCache ) {
+              Set instances = ((MBeanServer) platformMBeanServer).queryMBeans(new ObjectName("*,name=" + ((InProcessCache)anMBeanToRegister).getName()), null);
+              if ( instances.size() > 0) {
+            	  return;
+              }
+    	  }
+
         if (((MBeanServer) platformMBeanServer).isRegistered(aName)) {
           ((MBeanServer) platformMBeanServer).unregisterMBean(aName);
         }

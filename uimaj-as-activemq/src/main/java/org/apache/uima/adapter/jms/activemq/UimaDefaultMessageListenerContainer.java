@@ -54,9 +54,11 @@ import org.apache.uima.aae.UimaAsPriorityBasedThreadFactory;
 //import org.apache.uima.aae.UimaASCredentials;
 import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 //import org.apache.uima.aae.UimaAsThreadFactory.UsedFor;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
@@ -68,6 +70,7 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageWrapper;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel.BrokerConnectionEntry;
+import org.apache.uima.as.client.Listener;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 import org.springframework.core.task.TaskExecutor;
@@ -80,11 +83,14 @@ import org.springframework.jms.support.destination.DestinationResolver;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerContainer implements
-        ExceptionListener {
+        Listener, ExceptionListener {
   private static final Class<?> CLASS_NAME = UimaDefaultMessageListenerContainer.class;
   public static final String PROCESS_SELECTOR_SUFFIX = "(Command=2000 OR Command=2002)";
   public static final String CM_PROCESS_SELECTOR_SUFFIX = "(Command=2000 OR Command=2002 OR Command=2005)";
   public static final String GETMETA_SELECTOR_SUFFIX = "(Command=2001)";
+  
+  private Transport transport = Transport.JMS;
+  private Type type = Type.Unknown;
   
   public static final int HIGH_PRIORITY = 9;
   
@@ -153,12 +159,23 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     UIMAFramework.getLogger(CLASS_NAME).setLevel(Level.WARNING);
     __listenerRef = this;
     setRecoveryInterval(400);  // increase connection recovery to 30 sec
-    setAcceptMessagesWhileStopping(true);
+    //setAcceptMessagesWhileStopping(true);
     setExceptionListener(this);
     threadGroup = new ThreadGroup("ListenerThreadGroup_"
             + Thread.currentThread().getThreadGroup().getName());
   }
-
+  public Transport getTransport() {
+	  return transport;
+  }
+  public void setType(Type t) {
+	  this.type = t;
+  }
+  public Type getType() {
+	  return type;
+  }
+  protected void handleListenerException(Throwable t) {
+	  t.printStackTrace();
+  }
   public UimaDefaultMessageListenerContainer(boolean freeCasQueueListener) {
     this();
     this.freeCasQueueListener = freeCasQueueListener;
@@ -183,7 +200,38 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    */
   protected void refreshConnectionUntilSuccessful() {
 	 // System.out.println("............refreshConnectionUntilSuccessful() called");
+	  while (isRunning()) {
 
+			try {
+				
+				if (sharedConnectionEnabled()) {
+					refreshSharedConnection();
+				} else {
+					Connection con = createConnection();
+					JmsUtils.closeConnection(con);
+				}
+				// Use UIMA-AS custom Destination Resolver to create a new temp queue for this reply listener
+				if( Type.Reply.equals(type) || Type.FreeCAS.equals(type)) {
+					getDestinationResolver().resolveDestinationName(getSharedConnection().createSession(false, Session.AUTO_ACKNOWLEDGE),"",false);
+				}
+				logger.info(getType().name()+" Listener Successfully refreshed JMS Connection to broker: "+getBrokerUrl()+" Endpoint:"+getDestination());
+				logListenerFailure = true;
+				break;
+			}
+			catch (Exception ex) {
+				
+				if (ex instanceof JMSException) {
+					if (logListenerFailure && ex.getCause() instanceof ConnectException) {
+						
+						logger.info(getType().name()+" Listener lost connection to broker: "+getBrokerUrl()+"- Retrying until successfull ...");
+						logListenerFailure = false;
+					} else {
+						invokeExceptionListener((JMSException) ex);
+					}
+				}
+			}
+	  }
+	  /*
 	  boolean doLogFailureMsg = true;
     try {
     	// Only one listener thread should enter to recover lost connection.
@@ -244,30 +292,11 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
        	            		}
     	                   }
     	                   
-    	                       	            	/*  
-    	               	if ( getMessageListener() instanceof JmsInputChannel ) {
-    	            		System.out.println("------------------- Creating new listener for the temp queue");
-    	            		try {
-    	                	((JmsInputChannel)getMessageListener()).createListenerOnTempQueue(getConnectionFactory());
-    	                		System.out.println("------------------- New listener on temp queue is ready");
-    	            		} catch( Exception e) {
-    	                		System.out.println("------------------- Error while creating new listener on temp queue");
-    	            	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-    	            	              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-    	            	                      "handleTempQueueFailure", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-    	            	                      "UIMAJMS_exception__WARNING", e);
-    	            	            }
-    	            			
-    	            		}
-    	            	}
-*/
+
     	               
     	               }
     	               
-    	  /*
-    	               String delegateKey = ((AggregateAnalysisEngineController) controller)
-    	                .lookUpDelegateKey(endpoint.getEndpoint());
-    		*/
+ 
     		        //}
     		        break;
     		      }
@@ -293,6 +322,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     	}
     } catch( IllegalStateException e ) {
     }
+    */
   }
   protected void recoverAfterListenerSetupFailure() {
 	  if ( !terminating ) {
@@ -323,6 +353,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   /**
    * Stops this Listener
    */
+  /*
   private void handleListenerFailure() {
     // If shutdown already, nothing to do
     if (awaitingShutdown) {
@@ -363,12 +394,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
     }
   }
-
+*/
   /**
    * Handles failure on a temp queue
    * 
    * @param t
    */
+  /*
   private void handleTempQueueFailure(Throwable t) {
     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
       if ( controller != null ) {
@@ -463,7 +495,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     } else {
     }
   }
-
+*/
   private ErrorHandler fetchGetMetaErrorHandler() {
     ErrorHandler handler = null;
     Iterator it = controller.getErrorHandlerChain().iterator();
@@ -483,6 +515,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * 
    * @param t
    */
+  /*
   private void handleQueueFailure(Throwable t) {
 	//  System.out.println("............handleQueueFailure() called");
     final String endpointName = (getDestination() == null) ? ""
@@ -598,7 +631,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     }
 
   }
-
+*/
   /**
    * This method is called by Spring when a listener fails
    */
@@ -609,9 +642,10 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     }
     // If shutdown already, nothing to do
 	    // If controller is stopping no need to recover the connection
-    if (awaitingShutdown || terminating || (controller != null && controller.isStopped()) ) {
+    if (!super.isRunning() || awaitingShutdown || terminating || (controller != null && controller.isStopped()) ) {
       return;
     }
+    /*
     if ( controller != null ) {
       controller.changeState(ServiceState.FAILED);
     }
@@ -676,10 +710,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
       failed = true;
     }
+    */
   }
   public Endpoint getEndpoint() {
 	  return endpoint;
   }
+  /*
   private void terminate(Throwable t) {
     // ****************************************
     // terminate the service
@@ -695,7 +731,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       controller.stop();
     }
   }
-
+  
   protected void handleListenerException(Throwable t) {
 	 // System.out.println("............handleListenerException(Throwable t)");
 	  
@@ -703,17 +739,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if (awaitingShutdown) {
       return;
     }
-    /*
-    String endpointName = (getDestination() == null) ? ""
-            : ((ActiveMQDestination) getDestination()).getPhysicalName();
-
-    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-      UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, this.getClass().getName(),
-              "handleListenerException", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-              "UIMAJMS_jms_listener_failed_WARNING",
-              new Object[] { endpointName, getBrokerUrl(), t });
-    }
-    */
+   
     super.handleListenerException(t);
   }
 
@@ -731,14 +757,16 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     super.setConnectionFactory(connectionFactory);
   }
 
-
+*/
   public boolean isGetMetaListener() {
-	  
+	  return Type.GetMeta.equals(type);
+	  /*
     return getMessageSelector() != null
             && __listenerRef.getMessageSelector().endsWith(GETMETA_SELECTOR_SUFFIX);
 //    && __listenerRef.getMessageSelector().endsWith("(Command=2001)");
+ */
   }
-  
+  /*
   private boolean isActiveMQDestination() {
     return getDestination() != null && getDestination() instanceof ActiveMQDestination;
   }
@@ -762,24 +790,26 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       }
     }
   }
-
+*/
   /**
    * Intercept Spring call to increment number of consumer threads. If the value > 1, don't
    * propagate to Spring. A new listener will be injected and it will use provided number of
    * consumer threads.
    **/
+  /*
   public void setConcurrentConsumers(int concurrentConsumers) {
     cc = concurrentConsumers;
     if (this.freeCasQueueListener) {
       super.setConcurrentConsumers(concurrentConsumers);
     }
   }
-
+*/
   /**
    * Intercept Spring call to inject application Pojo listener. Don't propagate the listener up to
    * Spring just yet. If more than one consumer thread is used, a different listener will be
    * injected.
    **/
+  /*
   public void setMessageListener(Object messageListener) {
     ml = messageListener;
     if (this.freeCasQueueListener || targetedListener ) {
@@ -791,10 +821,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   public void afterPropertiesSet() {
     afterPropertiesSet(true);
   }
+  */
   /**
    * Called by Spring and some Uima AS components when all properties have been set. This method
    * spins a thread in which the listener is initialized.
    */
+  /*
   public void afterPropertiesSet(final boolean propagate) {
     if (endpoint != null) {
 			// Override the prefetch size. The dd2spring always sets this to 1 which 
@@ -938,12 +970,13 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     });
     t.start();
   }
-
+*/
   /**
    * Inject instance of this listener into the InputChannel
    * 
    * @throws Exception
    */
+  /*
   private void connectWithInputChannel() throws Exception {
     Object pojoListener = getPojoListener();
 
@@ -961,7 +994,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       ((ModifiableListener) pojoListener).setListener(__listenerRef);
     }
   }
-
+*/
   public String getDestinationName() {
 
     return destinationName;
@@ -975,7 +1008,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   }
 
   public String getBrokerUrl() {
-    return ((ActiveMQConnectionFactory) connectionFactory).getBrokerURL();
+		return ((ActiveMQConnectionFactory)super.getConnectionFactory()).getBrokerURL();
+
+//    return ((ActiveMQConnectionFactory) connectionFactory).getBrokerURL();
   }
 
   /*
@@ -984,28 +1019,17 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * deployment descriptor and create a new one with rewritten Broker URL. We will inject the
    * prefetch policy to the new CF based on what is found in the CF in the deployment descriptor.
    */
-
+/*
   public void setConnectionFactory(ConnectionFactory aConnectionFactory)  {
     connectionFactory = aConnectionFactory;
-    /*
-    if ( System.getProperty("uima.as.broker.credentials.file") != null ) {
-    	UimaASCredentials credentials = new UimaASCredentials();
-    	try {
-        	credentials.readCredentials(System.getProperty("uima.as.broker.credentials.file"));
-    	} catch( IOException e) {
-    		throw new RuntimeException(e);
-    	}
-    	((ActiveMQConnectionFactory)connectionFactory).setUserName(credentials.getUsername());
-        ((ActiveMQConnectionFactory)connectionFactory).setPassword(credentials.getPassword());
-    }
-    */
+   
     ConnectionFactoryIniter cfIniter =
             new ConnectionFactoryIniter((ActiveMQConnectionFactory)connectionFactory);
     cfIniter.whiteListPackages();
     ((ActiveMQConnectionFactory)connectionFactory).setTrustAllPackages(true);
     super.setConnectionFactory(connectionFactory);
   }
-
+*/
   public void setDestinationResolver(DestinationResolver resolver) {
     ((TempDestinationResolver) resolver).setListener(this);
     super.setDestinationResolver(resolver);
@@ -1057,8 +1081,17 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 
   public void setDestination(Destination aDestination) {
     super.setDestination(aDestination);
+   
+    System.out.println("............................. "+endpoint+" Destination:"+aDestination.toString());
+    if ( Type.FreeCAS.equals(type)) {
+    	((JmsOutputChannel)controller.getOutputChannel(ENDPOINT_TYPE.JMS)).setFreeCasQueue(aDestination);
+    }
     if (endpoint != null) {
       endpoint.setDestination(aDestination);
+      if (aDestination instanceof TemporaryQueue ) {
+    	  endpoint.setTempReplyDestination(true);
+      }
+      /*
       //  Get the prefetch size. If > 1, it has been previously overriden. The override is done in
       // the code since dd2spring alwys sets the prefetch on a reply queue to 1. This may slow down
       // a throughput of a service.
@@ -1079,10 +1112,28 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           ((JmsInputChannel) pojoListener).setListenerContainer(this);
         }
       }
+      */
       endpoint.setServerURI(getBrokerUrl());
     }
   }
+  public void start() {
+	  if ( isRunning()) {
+		  return;
+	  }
+	  int consumerThreadCount=-1;
+	  if ( getTaskExecutor() instanceof ThreadPoolTaskExecutor) {
+		  ((ThreadPoolTaskExecutor)getTaskExecutor()).initialize();
+		  // if this listener is a handling Process requests, the prestartAllCoreThreads() below
+		  // will force initialization of AEs if this is a primitive service.
+		  ((ThreadPoolTaskExecutor)getTaskExecutor()).getThreadPoolExecutor().prestartAllCoreThreads();
+	  }
+	  super.afterPropertiesSet();
+	  super.initialize();
+	  super.start();
+	  
+      System.out.println(">>>>>>> Listener Service:"+controller.getComponentName()+" Broker URL:"+getBrokerUrl()+" Endpoint:"+__listenerRef.getEndpoint()+" ConsumerThreadCount:"+consumerThreadCount);
 
+  }
   private Object getPojoListener() {
     Object pojoListener = null;
     if (ml != null) {
@@ -1098,6 +1149,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   }
 
   public void onException(JMSException arg0) {
+	  /*
     if (awaitingShutdown) {
       return;
     }
@@ -1121,7 +1173,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     if ( getDestination() != null && ((ActiveMQDestination)getDestination()).isTemporary() ) {
       handleTempQueueFailure(arg0);
     }
-  
+  */
   }
 
   public void setTargetEndpoint(Endpoint anEndpoint) {
@@ -1129,7 +1181,8 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   }
 
   public boolean isFreeCasQueueListener() {
-    return freeCasQueueListener;
+	  return Type.FreeCAS.equals(type);
+    //return freeCasQueueListener;
   }
 
   protected void setModifiedTaskExecutor(TaskExecutor taskExecutor) {
@@ -1185,6 +1238,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
                   "UIMAJMS_exception__WARNING", t);
 	  }
   }
+  /*
   public void shutdownTaskExecutor(ThreadPoolExecutor tpe, boolean stopImmediate) throws InterruptedException {
     tpe.awaitTermination(50, TimeUnit.MILLISECONDS);
     
@@ -1203,10 +1257,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   public void destroy() {
 	  destroy(true); 
   }
+  */
   /**
    * Spins a shutdown thread and stops Sprint and ActiveMQ threads.
    * 
    */
+  /*
   public void destroy(final boolean stopImmediate) {
 	  
     if (awaitingShutdown) {
@@ -1432,26 +1488,9 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
           super.setTaskExecutor(es);
       }
     }
-    /*
-    else {
-        UimaAsThreadFactory tf = new UimaAsThreadFactory(threadGroup);
-        tf.setDaemon(true);
-        if ( isFreeCasQueueListener()) {
-          tf.setThreadNamePrefix(controller.getComponentName()+" - FreeCASRequest Thread");
-        } else if ( isGetMetaListener()  ) {
-          tf.setThreadNamePrefix(super.getBeanName()+" - Thread");
-        } else if ( getDestination() != null && getMessageSelector() != null ) {
-          tf.setThreadNamePrefix(controller.getComponentName() + " Process Thread");
-        } else if ( endpoint != null && endpoint.isTempReplyDestination() ) {
-          tf.setThreadNamePrefix(super.getBeanName()+" - Thread");
-        } else { 
-          throw new Exception("Unknown Context Detected in setUimaASThreadPoolExecutor()");
-        }
-        
-    }
-    */
+   
   }
-
+*/
   private boolean isPrimitiveService() {
 	  return controller != null && controller instanceof PrimitiveAnalysisEngineController &&
 			  controller.getInputChannel() != null;
@@ -1462,6 +1501,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    */
   public void setTaskExecutor(TaskExecutor aTaskExecutor) {
     taskExecutor = aTaskExecutor;
+    super.setTaskExecutor(aTaskExecutor);
   }
 
   public TaskExecutor getTaskExecutor() {
@@ -1476,6 +1516,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * 
    * @throws Exception
    */
+  /*
   private void initializeTaskExecutor(int consumers) throws Exception {
     // TaskExecutor is only used with primitives
     if (controller instanceof PrimitiveAnalysisEngineController) {
@@ -1493,10 +1534,18 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     	threadPoolExecutor.prestartAllCoreThreads();
     }
   }
+  */
   public void delegateStop() {
     super.stop();
   }
+  /*
   public void stop() throws JmsException {
     destroy();
+  }
+  */
+  @Override
+  public String getName() {
+  	// TODO Auto-generated method stub
+  	return null;
   }
 }

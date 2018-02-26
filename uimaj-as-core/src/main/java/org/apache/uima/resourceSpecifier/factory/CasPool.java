@@ -51,4 +51,18 @@ public interface CasPool {
    * @param heapSize the new initial fs heap size
    */
   public void setInitialFsHeapSize(int heapSize);
+  
+  /**
+   * Returns boolean to indicate if JCasCache should be enabled/disabled
+   *
+   * @return - boolean
+   */
+  public boolean disableJCasCache();
+  
+  /**
+   * Disables or enables JCasCache.
+   *
+   * @param disable - true or false
+   */
+  public void disableJCasCache(boolean disable);
 }

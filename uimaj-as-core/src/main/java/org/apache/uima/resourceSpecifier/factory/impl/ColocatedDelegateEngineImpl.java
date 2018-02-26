@@ -52,7 +52,7 @@ public class ColocatedDelegateEngineImpl implements ColocatedDelegateEngine {
     setKey(cdc.getKey());
     setReplyQueueScaleup(cdc.getInternalReplyQueueScaleout());
     if ( cdc.isCasMultiplier()) {
-      cm = new CasMultiplierImpl(dcaet.addNewCasMultiplier(), cdc.getCasPoolSize(), cdc.getInitialHeapSize(), cdc.processParentLast());
+      cm = new CasMultiplierImpl(dcaet.addNewCasMultiplier(), cdc.getCasPoolSize(), cdc.getInitialHeapSize(), cdc.processParentLast(),cdc.disableJCasCache());
     }
     configuration= cdc;
   }
@@ -111,7 +111,11 @@ public class ColocatedDelegateEngineImpl implements ColocatedDelegateEngine {
    * @see org.apache.uima.resourceSpecifier.factory.ColocatedDelegateEngine#setAsync()
    */
   public void setAsync() {
-    dcaet.setAsync("true");
+	if ( isAggregate()) {
+	   dcaet.setAsync("true");
+	} else {
+       dcaet.setAsync("false");
+	}
   }
 
   /* (non-Javadoc)

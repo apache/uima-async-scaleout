@@ -55,6 +55,7 @@ import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController;
+import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
 import org.apache.uima.aae.delegate.Delegate;
@@ -124,8 +125,9 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     } else {
       //  If this is a reply to a client, use the same broker URL that manages this service input queue.
       //  Otherwise this is a request so use a broker specified in the endpoint object.
-      serverUri = (anEndpoint.isReplyEndpoint()) ? 
-              ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() : anEndpoint.getServerURI();
+//      serverUri = (anEndpoint.isReplyEndpoint()) ? 
+//              ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() : anEndpoint.getServerURI();
+      serverUri = anEndpoint.getServerURI();
     }
     isReplyEndpoint = anEndpoint.isReplyEndpoint();
     controller = aController;
@@ -183,7 +185,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		        // If replying to http request, reply to a queue managed by this service broker using tcp
 		        // protocol
 		        if (isReplyEndpoint && brokerUri.startsWith("http")) {
-		          brokerUri = ((JmsOutputChannel) aController.getOutputChannel()).getServerURI();
+		          brokerUri = ((JmsOutputChannel) aController.getOutputChannel(ENDPOINT_TYPE.JMS)).getServerURI();
 
 		          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
 		            UIMAFramework.getLogger(CLASS_NAME).logrb(
@@ -193,7 +195,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 		                    JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
 		                    "UIMAJMS_override_connection_to_endpoint__FINE",
 		                    new Object[] {  aComponentName, getEndpoint(),
-		                      ((JmsOutputChannel) aController.getOutputChannel()).getServerURI() });
+		                      ((JmsOutputChannel) aController.getOutputChannel(ENDPOINT_TYPE.JMS)).getServerURI() });
 		          }
 		        } else if ( !brokerUri.startsWith("http") && !brokerUri.startsWith("failover") && !brokerUri.startsWith("vm://localhost?broker.persistent=false")){
 				  String prefix = "";
@@ -772,7 +774,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
     		        }
     	          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
     	                  "send", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-    	                  "UIMAEE_service_delivery_exception__WARNING",new Object[] { controller.getComponentName(), key, endpointName});
+    	                  "UIMAEE_service_delivery_exception__WARNING",new Object[] { controller.getComponentName(), endpointName,serverUri});
     		  }
    		      CasStateEntry casStateEntry = controller.getLocalCache().lookupEntry(casReferenceId);
    		      // Mark the CAS as failed so that the CAS is released and cache cleaned up
@@ -889,14 +891,14 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
    * @param delegateKey
    * @throws Exception
    */
-  private void createListener(String delegateKey) throws Exception {
-    if (controller instanceof AggregateAnalysisEngineController) {
-      // Fetch an InputChannel that handles messages for a given delegate
-      InputChannel iC = controller.getReplyInputChannel(delegateKey);
-      // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
-      iC.createListener(delegateKey, null);
-    }
-  }
+//  private void createListener(String delegateKey) throws Exception {
+//    if (controller instanceof AggregateAnalysisEngineController) {
+//      // Fetch an InputChannel that handles messages for a given delegate
+//      InputChannel iC = controller.getReplyInputChannel(delegateKey);
+//      // Create a new Listener, new Temp Queue and associate the listener with the Input Channel
+//      iC.createListener(delegateKey, null);
+//    }
+//  }
 
   private synchronized boolean handleJmsException(JMSException ex) {
     if (!failed) {
@@ -990,7 +992,7 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
 			if ( casState.isSubordinate()) {
 				try {
 					
-					String inputCasId = casState.getInputCasReferenceId();
+					String inputCasId = casState.getParentCasReferenceId();
 					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
 						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
 								"UimaAsAsyncCallbackListener.onException()", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,

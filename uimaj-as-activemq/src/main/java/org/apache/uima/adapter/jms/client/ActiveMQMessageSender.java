@@ -44,6 +44,7 @@ import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.ClientRequest;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl.SharedConnection;
 import org.apache.uima.adapter.jms.message.PendingMessage;
+import org.apache.uima.adapter.jms.message.PendingMessageImpl;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.util.Level;
@@ -284,11 +285,11 @@ public class ActiveMQMessageSender extends BaseMessageSender {
           // instead of a temp queue. Regular queues can be recovered in case of
           // a broker restart. The test below will be true for UIMA-AS v. 2.10.0 +.
           // Code in JmsOutputChannel will add the selector if the service is a CM.
-          if (pm.get(AsynchAEMessage.TargetingSelector) != null) {
-        	  selector = (String)pm.get(AsynchAEMessage.TargetingSelector);
+          if (pm.getPropertyAsString(AsynchAEMessage.TargetingSelector) != null) {
+        	  selector = (String)pm.getPropertyAsString(AsynchAEMessage.TargetingSelector);
           }
           if ( selector == null && (pm.getMessageType() == AsynchAEMessage.ReleaseCAS || pm.getMessageType() == AsynchAEMessage.Stop) ) {
-        	  d = (Destination)pm.get(AsynchAEMessage.Destination);
+        	  d = (Destination)pm.getProperty(AsynchAEMessage.Destination);
               
           } else {
               d = jmsSession.createQueue(destinationName);
@@ -313,7 +314,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
           }
           if (casProcessRequest) {
             cacheEntry = (ClientRequest) engine.getCache().get(
-                    pm.get(AsynchAEMessage.CasReference));
+                    pm.getPropertyAsString(AsynchAEMessage.CasReference));
             if (cacheEntry != null) {
             //    CAS cas = cacheEntry.getCAS();
                 // enable logging 
@@ -356,7 +357,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                           "UIMAJMS_failed_cache_lookup__WARNING",
                           new Object[] {
-                         	 pm.get(AsynchAEMessage.CasReference),
+                         	 pm.getPropertyAsString(AsynchAEMessage.CasReference),
                               UimaMessageValidator.decodeIntToString(AsynchAEMessage.Command, message
                                       .getIntProperty(AsynchAEMessage.Command)),
                               UimaMessageValidator.decodeIntToString(AsynchAEMessage.MessageType, message
@@ -403,7 +404,7 @@ public class ActiveMQMessageSender extends BaseMessageSender {
                         JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAJMS_calling_onBeforeMessageSend__FINE",
                         new Object[] {
-                          pm.get(AsynchAEMessage.CasReference),
+                          pm.getPropertyAsString(AsynchAEMessage.CasReference),
                           String.valueOf(cacheEntry.getCAS().hashCode())
                         });
               }  

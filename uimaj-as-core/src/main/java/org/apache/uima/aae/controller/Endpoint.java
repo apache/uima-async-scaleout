@@ -31,8 +31,16 @@ public interface Endpoint {
 
   public static final int DISABLED = 3;
 
+  public boolean isJavaRemote();
+  
+  public void setJavaRemote();
+  
   public int getMetadataRequestTimeout();
 
+  public void setDisableJCasCache(boolean disableOrEnable);
+  
+  public void setCollectionProcessCompleteTimeout(int cpcTimeout);
+  
   public void setController(AnalysisEngineController aController);
 
   public void startCheckpointTimer();
@@ -46,6 +54,10 @@ public interface Endpoint {
   public int getProcessRequestTimeout();
 
   public void setReplyEndpoint(boolean tORf);
+
+  public void setReplyDestination(Object replyDestination);
+
+  public Object getReplyDestination();
 
   public boolean isReplyEndpoint();
 
@@ -128,6 +140,10 @@ public interface Endpoint {
   public Object getDestination();
 
   public void setDestination(Object aDestination);
+
+  public void setGetMetaDestination(Object aDestination);
+
+  public Object getMetaDestination();
 
   public void setCommand(int aCommand);
 

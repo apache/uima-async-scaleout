@@ -58,6 +58,7 @@ import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.log4j.Logger;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalStateException;
+import org.apache.uima.aae.InputChannel.ChannelType;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
@@ -659,7 +660,7 @@ public class TestUimaASExtended extends BaseTestSupport {
   	    c.setDestinationName("TestQ");
   	    c.setConcurrentConsumers(2);
   	    c.setBeanName("testServiceWithHttpListeners() - JUnit Test Listener");
-  	    c.setMessageListener(new JmsInputChannel());
+  	    c.setMessageListener(new JmsInputChannel(ChannelType.REQUEST_REPLY));
   	    //c.initialize();
   	    //c.afterPropertiesSet();
   	    c.start();

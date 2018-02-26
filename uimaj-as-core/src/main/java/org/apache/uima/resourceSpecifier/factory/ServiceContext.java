@@ -289,5 +289,14 @@ public interface ServiceContext {
    * @return the cp c additional action
    */
   public Action getCpCAdditionalAction();
-  
+  /**
+   * Enables/disables JCas Cache
+   * 
+   */
+  public void disableJCasCache(boolean disable);
+  /**
+   * Gets a boolean to indicate if JCas Cache is enabled/disabled
+   * 
+   */
+  public boolean disableJCasCache();
 }
