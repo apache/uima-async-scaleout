@@ -58,6 +58,8 @@ public abstract class DelegateConfigurationImpl implements DelegateConfiguration
   /** The collection process complete error handling settings. */
   private CollectionProcessCompleteErrorHandlingSettings collectionProcessCompleteErrorHandlingSettings;
   
+  private boolean disableJCasCache = false;
+  
   /**
    * Instantiates a new delegate configuration impl.
    *
@@ -203,5 +205,12 @@ public abstract class DelegateConfigurationImpl implements DelegateConfiguration
    */
   public void setProcessParentLast(boolean processParentLast) {
     this.processParentLast = processParentLast;
+  }
+  public boolean disableJCasCache() {
+	  return disableJCasCache;
+  }
+  
+  public void disableJCasCache(boolean disable) {
+	  disableJCasCache = disable;
   }
 }

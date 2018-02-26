@@ -30,6 +30,7 @@
       <extension base="string">
         <attribute type="int" name="numberOfCASes"/>
         <attribute type="int" name="initialFsHeapSize"/>
+        <attribute type="boolean" name="disableJCasCache"/>
       </extension>
     </simpleContent>
   </complexType>
@@ -89,6 +90,7 @@
         <attribute type="int" name="poolSize" use="optional" default="1"/>
         <attribute type="string" name="initialFsHeapSize" use="optional"/>
         <attribute type="string" name="processParentLast" use="optional" default="false"/>
+        <attribute type="boolean" name="disableJCasCache" use="optional" default="false"/>
       </extension>
     </simpleContent>
   </complexType>
