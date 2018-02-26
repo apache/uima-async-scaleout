@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.analysis_engine.AnalysisEngineServiceStub;
@@ -155,6 +156,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
       appCtxt.put(UimaAsynchronousEngine.ServerUri, brokerUrl);
       appCtxt.put(UimaAsynchronousEngine.ENDPOINT, endpoint);
       appCtxt.put(UimaAsynchronousEngine.CasPoolSize, 0);
+      appCtxt.put(UimaAsynchronousEngine.ClientTransport, Transport.JMS);
+
       if (timeout > 0) {
         appCtxt.put(UimaAsynchronousEngine.Timeout, timeout);
       }
@@ -168,6 +171,8 @@ public class JmsAnalysisEngineServiceStub extends UimaAsBaseCallbackListener imp
         appCtxt.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "binary");
       }
       uimaEEEngine = new BaseUIMAAsynchronousEngine_impl();
+      System.out.println("::::::::::::::::JmsAdapter uimaEEEngine.hashCode():"+uimaEEEngine.hashCode());
+
       uimaEEEngine.addStatusCallbackListener(this);
       uimaEEEngine.initialize(appCtxt);
       enginemap.put(brokerUrl+endpoint, uimaEEEngine);
