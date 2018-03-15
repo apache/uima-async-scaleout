@@ -94,6 +94,7 @@ import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.analysis_engine.metadata.SofaMapping;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReaderDescription;
+import org.apache.uima.resource.CustomResourceSpecifier;
 import org.apache.uima.resource.PearSpecifier;
 import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceCreationSpecifier;
@@ -963,46 +964,68 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public boolean isTopLevelComponent() {
     return (parentController == null);
   }
+
+  private String getDelegateServiceName() {
+	  String svcName = null;
+		try {
+			UimaContext childContext = parentController.getChildUimaContext(endpointName);
+			svcName = ((UimaContextAdmin) childContext).getQualifiedContextName();
+			if (svcName != null) {
+				if (svcName.startsWith("/")) {
+					svcName = svcName.substring(1);
+					svcName = svcName.replaceAll("/", "_"); // normalize
+					if (svcName.endsWith("_")) {
+						svcName = svcName.substring(0, serviceName.length() - 1);
+					}
+				}
+			}
+		} catch (Exception e) {
+			svcName = delegateKey;
+		}
+		return svcName;
+  }
+  private String getTopLevelServiceName() {
+	  String svcName = null;
+		if (isPrimitive()) {
+			String implementationName = "";
+			if (resourceSpecifier instanceof ResourceCreationSpecifier) {
+				implementationName = ((ResourceCreationSpecifier) resourceSpecifier).getImplementationName();
+			} else if (resourceSpecifier instanceof CustomResourceSpecifier) {
+				implementationName = ((CustomResourceSpecifier) resourceSpecifier).getResourceClassName();
+			}
+
+			if (implementationName.indexOf(".") > 0) {
+				implementationName = implementationName.substring(implementationName.lastIndexOf(".") + 1);
+			}
+			svcName = implementationName;
+		} else {
+			svcName = "Top Level Aggregate Service";
+		}
+		return svcName;
+  }
   private String setupName() {
-    //return ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
-    String serviceName = ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
-    if ( serviceName == null || serviceName.trim().length() == 0 ) {
-      
-      if ( isTopLevelComponent() ) {
-        if ( isPrimitive() ) {
-          String implementationName = ((ResourceCreationSpecifier) resourceSpecifier).getImplementationName();
-          if ( implementationName.indexOf(".") > 0) {
-            implementationName = implementationName.substring(implementationName.lastIndexOf(".")+1);
-          }
-          serviceName = implementationName;
-        } else {
-          serviceName = "Top Level Aggregate Service";
-        }
-      } else {
-        try {
-          UimaContext childContext = parentController.getChildUimaContext(endpointName);
-          serviceName = ((UimaContextAdmin)childContext).getQualifiedContextName();
-          if ( serviceName != null ) {
-            if ( serviceName.startsWith("/")) {
-              serviceName = serviceName.substring(1);
-              serviceName = serviceName.replaceAll("/", "_"); // normalize
-              if ( serviceName.endsWith("_")) {
-                serviceName = serviceName.substring(0, serviceName.length()-1);
-              }
-            }
-          }
-        } catch( Exception e){
-          serviceName = delegateKey;
-        }
-      }
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                "setupName", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_using_generated_name_INFO", new Object[] { serviceName });
-      }
-    
-    } 
-    return serviceName;
+		String svcName = null;
+
+		if (!(resourceSpecifier instanceof CustomResourceSpecifier)) {
+			svcName = ((ResourceCreationSpecifier) resourceSpecifier).getMetaData().getName();
+		}
+
+		if (svcName == null || svcName.trim().length() == 0) {
+
+			if (isTopLevelComponent()) {
+				svcName = getTopLevelServiceName();
+			} else {
+				svcName = getDelegateServiceName();
+			}
+
+		}
+
+		if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+			UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "setupName",
+					UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_using_generated_name_INFO",
+					new Object[] { svcName });
+		}
+		return svcName;
   }
   /**
    * Returns the name of the component. The name comes from the analysis engine descriptor

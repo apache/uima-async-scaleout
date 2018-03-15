@@ -893,12 +893,33 @@ public class TestUimaASExtended extends BaseTestSupport {
         deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
         deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
         runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
-                0, PROCESS_LATCH);
+                1, PROCESS_LATCH);
        
     } catch( Exception e ) {
     	throw e;
     }
   }
+    /**
+     * Test use of a JMS Service Adapter. Invoke from a synchronous aggregate to emulate usage from
+     * RunAE or RunCPE.
+     * 
+     * @throws Exception
+     */
+      @Test
+      public void testJmsServiceAdapterInAsyncAggregate() throws Exception {
+  	  Logger.getLogger(this.getClass()).info("-------------- testJmsServiceAdapter -------------");
+  	  //setUp();
+  	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+      try {
+          deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+          deployService(eeUimaEngine, relativePath + "/Deploy_AsyncAggregateWithJmsService.xml");
+          runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+                  1, PROCESS_LATCH);
+         
+      } catch( Exception e ) {
+      	throw e;
+      }
+    }
   /*
    * Tests Uima AS client placeholder handling and substitution. The Uima Aggregate instantiates
    * UIMA AS client proxy using Jms Client Descriptor that contains a placeholder
