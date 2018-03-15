@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -3231,7 +3232,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Creating new Connection");
       //  Create shared jms connection to a broker
       connection = connectionFactory.createConnection();
-      connection.setClientID("ClientListener");
+      connection.setClientID("ClientListener-"+UIDGenerator.getGUID());
       state = ConnectionState.OPEN;
       stop = false;      
     }
