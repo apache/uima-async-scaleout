@@ -1,4 +1,4 @@
-     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.10.2 README
+     Apache UIMA Asynchronous Scaleout (UIMA-AS) Version 2.10.3 README
      ----------------------------------------------------------------
      
 0. Building from the Source Distribution
@@ -28,17 +28,11 @@ Note that a build with -U option takes much longer to finish.
 
 For more details, please see http://uima.apache.org/building-uima.html   
 
-1. What's New in 2.10.2
+1. What's New in 2.10.3
 ====================== 
-  - Added support to UIMA-AS client to send messages to a specific service instance.
-    See Section 5 in this document for more details.
-  - Updated to use ActiveMQ 5.15.2  (requires Java 1.8+)
-  - Added dependency on UIMA SDK 2.10.2
-  - Fixed merging of type priorities
-  - Fixed per CAS Performance Metrics breakdown 
-  - Fixed dd2spring issues
-  - Other Bug fixes 
-  
+  - Modified client code to assign unique ClientID to broker connection
+  - Fixed ClassCastException when async aggregate initializes delegate with JMS Service Descriptor
+  - Fixed broken classpath and logging for UIMA-AS run configurations
 
 1.1 Contents of Apache UIMA-AS binary distribution
 --------------------------------------------------
@@ -451,7 +445,7 @@ sendAndReceiveCAS(CAS aCAS, List<AnalysisEnginePerformanceMetrics> componentMetr
 
 where serviceId is a unique service identifier as described above.
 
-6. Known problems/limitations with Release 2.10.2
+6. Known problems/limitations with Release 2.10.3
 ================================================
 
   1. When connecting to an AMQ broker behind a firewall, avoid using the maxInactivityDuration=0 

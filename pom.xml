@@ -59,7 +59,7 @@
   </scm>
 
   <properties>
-    <jiraVersion>12340230</jiraVersion> <!-- for 2.10.2AS -->  
+    <jiraVersion>12342746</jiraVersion> <!-- for 2.10.2AS -->  
     <uimaScmProject>${project.artifactId}</uimaScmProject>
     <assemblyFinalName>uima-as-${project.version}</assemblyFinalName> 
     <additionalparam>-Xdoclint:none</additionalparam> 
