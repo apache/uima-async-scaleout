@@ -176,11 +176,11 @@
 
 
                 <copy todir="${eusWork}2/plugins" overwrite="true" failonerror="true">
-                   <fileset dir="${eusWork}/plugins" includes="*.jar" />                 
+                   <fileset dir="${eusWork}/plugins" includes="*.jar,*.jar.pack.gz" />                 
                 </copy>
 
                 <copy todir="${eusWork}2/plugins" overwrite="true" failonerror="true">
-                  <fileset dir="${eclipseUpdateSubSite}/plugins" includes="*.jar" />                 
+                  <fileset dir="${eclipseUpdateSubSite}/plugins" includes="*.jar,*.jar.pack.gz" />                 
                 </copy>
 
 
