@@ -4034,7 +4034,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       //System.out.println("------------- BaseUIMAAsynchronousEngineCommon_impl.create() - Creating new Connection");
       //  Create shared jms connection to a broker
       connection = connectionFactory.createConnection();
-      connection.setClientID("ClientListener");
+      connection.setClientID("ClientListener-"+UIDGenerator.getGUID());
       state = ConnectionState.OPEN;
       stop = false;      
     }
