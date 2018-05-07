@@ -159,25 +159,36 @@ public class DirectOutputChannel implements OutputChannel {
 		replyQueue.add(replyMessage);
 
 	}
-
+	private boolean sendInputCasAsParent() {
+		return controller.isTopLevelComponent() || !controller.isPrimitive();
+	}
 	
+	private boolean isChildCas(CasStateEntry casStateEntry) {
+		return controller.isCasMultiplier() && casStateEntry.isSubordinate();
+	}
 //	public void sendReply(CacheEntry entry, Endpoint anEndpoint) throws AsynchAEException {
 	public void sendReply(CasStateEntry casStateEntry, Endpoint anEndpoint) throws AsynchAEException {
 		@SuppressWarnings("unchecked")
 		BlockingQueue<DirectMessage> replyQueue = (BlockingQueue<DirectMessage>) anEndpoint.getReplyDestination();
 
 		DirectMessage message;
-
-		
-//		casStateEntry = controller.getLocalCache().lookupEntry(entry.getCasReferenceId());
-
 		ServicePerformance casStats = 
 				controller.getCasStatistics(casStateEntry.getCasReferenceId());
 		
-		if (controller.isCasMultiplier() && casStateEntry.isSubordinate()) {
-			String casAncestor = casStateEntry.getParentCasReferenceId();
-			if ( controller.isTopLevelComponent() ) {
+		if ( isChildCas(casStateEntry)) {
+			String casAncestor;
+			// return input CAS to the client since it is the true parent
+			// of all CASes created in this CM. If this controller is an aggregate
+			// it may have multiple CM delegates and the outgoing CAS may have
+			// been created by a parent CAS created in this aggregate. The client
+			// in this cas does not know about this parent. Its local to this 
+			// controller. In this case we send input CAS to this controller as
+			// as a parent of the outgoing child CAS.
+			if ( sendInputCasAsParent() ) {
 				casAncestor = casStateEntry.getInputCasReferenceId();
+			} else {
+				// this should only be for colocated delegate CM. For java remote the above should run
+				casAncestor = casStateEntry.getParentCasReferenceId();
 			}
 			// This CM will send a child CAS to the Client for processing. The 
 			message = new DirectMessage().withCommand(AsynchAEMessage.Process)

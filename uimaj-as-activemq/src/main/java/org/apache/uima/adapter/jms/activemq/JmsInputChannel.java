@@ -935,18 +935,26 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
     }
   }
   private void stopListener(final UimaDefaultMessageListenerContainer mL) throws Exception {
+	 // Thread.currentThread().dumpStack();
 	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener Type:"+mL.getType());
 	  mL.setTerminating();
 	  mL.setAcceptMessagesWhileStopping(false);
 
 	  mL.stop();
-	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener - Calling destroy()");
+	  System.out.println(".... "+getController().getComponentName()+" Stopping "+mL.getType()+" Listener - Calling destroy()");
 	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener - Done Calling destroy()");
 
 	  if ( mL.getTaskExecutor() instanceof ThreadPoolTaskExecutor ) {
 		  System.out.println(".... "+getController().getComponentName()+" Stopping ThreadPoolTaskExecutor");
 		  ThreadPoolTaskExecutor tpe = ((ThreadPoolTaskExecutor)mL.getTaskExecutor());
-		  tpe.destroy();
+		  
+		  try {
+			  tpe.shutdown();
+			  
+		  } catch( Exception e) {
+			  e.printStackTrace();
+		  }
+
 
 	  } else {
 		  System.out.println(".... "+getController().getComponentName()+" ActiveConsumerCount:"+mL.getActiveConsumerCount());
@@ -969,6 +977,7 @@ public class JmsInputChannel implements InputChannel, JmsInputChannelMBean,
 		 
 		  
 	  }
+	 
 	  System.out.println(".... "+getController().getComponentName()+" Stopping Listener - Stopped Task Executor");
 	  mL.shutdown();
 

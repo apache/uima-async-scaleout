@@ -27,6 +27,7 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController_impl;
+import org.apache.uima.as.client.DirectListener.DirectListenerCallback;
 import org.apache.uima.util.Level;
 
 /**
@@ -49,7 +50,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
   
   private boolean isDaemon=false;
   
-  public static AtomicInteger poolIdGenerator = new AtomicInteger();
+  public static final AtomicInteger poolIdGenerator = new AtomicInteger();
   
   private final int poolId = poolIdGenerator.incrementAndGet();
   
@@ -59,6 +60,8 @@ public class UimaAsThreadFactory implements ThreadFactory {
   
   private CountDownLatch latchToCountNumberOfInitedThreads;
 
+  private DirectListenerCallback callback = null;
+  
   public UimaAsThreadFactory() {
 	  
   }
@@ -75,10 +78,16 @@ public class UimaAsThreadFactory implements ThreadFactory {
     this.latchToCountNumberOfTerminatedThreads = latchToCountNumberOfTerminatedThreads;
     this.latchToCountNumberOfInitedThreads = latchToCountNumberOfInitedThreads;
   }
+  
+  public UimaAsThreadFactory withCallback(DirectListenerCallback c) {
+	  callback = c;
+	  return this;
+  }
   public UimaAsThreadFactory withThreadGroup(ThreadGroup tGroup) {
 	  theThreadGroup = tGroup;
 	  return this;
   }
+  
   public UimaAsThreadFactory withPrimitiveController(PrimitiveAnalysisEngineController aController) {
 	  controller = aController;
 	  return this;
@@ -137,6 +146,9 @@ public class UimaAsThreadFactory implements ThreadFactory {
             	  } catch( Exception e) {
             		  initFailed = true;
             		  e.printStackTrace();
+            		  if ( callback != null ) {
+            			  callback.onInitializationError(e);
+            		  }
             		  throw e;
             	  }  finally {
             		  if ( latchToCountNumberOfInitedThreads != null ) {

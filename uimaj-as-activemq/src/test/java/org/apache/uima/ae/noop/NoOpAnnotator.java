@@ -52,7 +52,7 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase {
     super.initialize(aContext);
     // this can be null. The TargetSelectorProperty is optional
     thisServiceTargetId = System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty);
-    
+    System.out.println(">>>>>>>>>>>>>> NoOpAnnotator ServiceTargetId:"+thisServiceTargetId);
     if (getContext().getConfigParameterValue("FailDuringInitialization") != null) {
       throw new ResourceInitializationException(new FileNotFoundException("Simulated Exception"));
     }
@@ -141,8 +141,11 @@ public class NoOpAnnotator extends CasAnnotator_ImplBase {
           throw new IndexOutOfBoundsException();
         }
       }
+	  System.out.println("NoOpAnnotator.process() - thisServiceTargetId="+thisServiceTargetId+" addServiceTargetId="+addServiceTargetId);
+
       if ( addServiceTargetId && thisServiceTargetId != null) {
     	  aCAS.setDocumentText(thisServiceTargetId);
+    	  System.out.println("NoOpAnnotator added target ID to CAS:"+thisServiceTargetId);
       }
      
     } catch (Exception e) {

@@ -29,6 +29,31 @@ import org.apache.uima.as.deployer.AbstractUimaASDeployer;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
 
 public class UimaAsDirectServiceDeployer  extends AbstractUimaASDeployer {
+
+
+	public UimaAsDirectServiceDeployer(CountDownLatch latch) {
+		// pass in a latch object which will block until service
+		// is initialized. The blocking will take place in super.waitUntilInitialized()
+		super(latch);
+		System.out.println("........ UimaAsDirectServiceDeployer() - Direct Deployment");
+	}
+
+	public UimaASService deploy(AnalysisEngineDeploymentDescriptionDocument dd,
+			Map<String, String> deploymentProperties) throws Exception {
+		UimaASService uimaAsService = null;
+		try {
+			uimaAsService = new UimaAsDirectServiceBuilder().build(dd, this);
+			// start listeners
+			uimaAsService.start();
+			// block until all internal components initialize and are ready to process
+			waitUntilInitialized();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return uimaAsService;
+	}
 	public static void main(String[] args) {
 		String dd4 = "../uimaj-as-activemq/src/test/resources/deployment/Deploy_AggregateAnnotator.xml";
 		try {
@@ -49,29 +74,5 @@ public class UimaAsDirectServiceDeployer  extends AbstractUimaASDeployer {
 			e.printStackTrace();
 		}
 
-	}
-
-	public UimaAsDirectServiceDeployer(CountDownLatch latch) {
-		// pass in a latch object which will block until service
-		// is initialized. The blocking will take place in super.waitUntilInitialized()
-		super(latch);
-		System.out.println("........ UimaAsDirectServiceDeployer() - Direct Deployment");
-	}
-
-	public UimaASService deploy(AnalysisEngineDeploymentDescriptionDocument dd,
-			Map<String, String> deploymentProperties) throws Exception {
-		UimaASService uimaAsService = null;
-		try {
-			uimaAsService = new UimaAsDirectServiceBuilder().build(dd, this);
-			// start listeners
-			uimaAsService.start();
-			// 
-			waitUntilInitialized();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
-		return uimaAsService;
 	}
 }

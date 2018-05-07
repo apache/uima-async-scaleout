@@ -938,6 +938,58 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       }
       requestToCache.setSerializationTime(System.nanoTime() - t1);
   }
+   
+  
+  private String handleDelegateTimeout(ClientRequest requestToCache, CAS aCAS) throws Exception {
+      SharedConnection sharedConnection = lookupConnection(getBrokerURI());
+      
+      //  Send Ping to service as getMeta request
+      if ( sharedConnection != null && !serviceDelegate.isAwaitingPingReply() && sharedConnection.isOpen() ) {
+        serviceDelegate.setAwaitingPingReply();
+        // Add the cas to a list of CASes pending reply. Also start the timer if necessary
+		// serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
+    	  
+    	  // since the service is in time out state, we dont send CASes to it just yet. Instead, place
+    	  // a CAS in a pending dispatch list. CASes from this list will be sent once a response to PING
+    	  // arrives.
+        serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId(), aCAS.hashCode(), timerPerCAS); 
+        if ( cpcReadySemaphore.availablePermits() > 0 ) {
+          acquireCpcReadySemaphore();
+        }
+
+        // Send PING Request to check delegate's availability
+        sendMetaRequest();
+        // @@@@@@@@@@@@@@@ Changed on 4/20 serviceDelegate.cancelDelegateTimer();
+        // Start a timer for GetMeta ping and associate a cas id
+        // with this timer. The delegate is currently in a timed out
+        // state due to a timeout on a CAS with a given casReferenceId.
+        //  
+        serviceDelegate.startGetMetaRequestTimer(requestToCache.getCasReferenceId());
+        
+        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(), "sendCAS",
+                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_client_sending_ping__FINE",
+                  new Object[] { serviceDelegate.getKey() });
+        }
+        return requestToCache.getCasReferenceId();
+      } else {
+        if ( !requestToCache.isSynchronousInvocation() && !sharedConnection.isOpen() ) {
+          Exception exception = new BrokerConnectionException("Unable To Deliver CAS:"+requestToCache.getCasReferenceId()+" To Destination. Connection To Broker "+getBrokerURI()+" Has Been Lost");
+          handleException(exception, requestToCache.getCasReferenceId(), null, requestToCache, true);
+          return requestToCache.getCasReferenceId();
+        } else {
+          //  Add to the outstanding list.  
+		  //  serviceDelegate.addCasToOutstandingList(requestToCache.getCasReferenceId());
+    	  // since the service is in time out state, we dont send CASes to it just yet. Instead, place
+    	  // a CAS in a pending dispatch list. CASes from this list will be sent once a response to PING
+    	  // arrives.
+          serviceDelegate.addCasToPendingDispatchList(requestToCache.getCasReferenceId(), aCAS.hashCode(), timerPerCAS);
+          return requestToCache.getCasReferenceId();
+        }
+      }
+    
+
+  }
   /**
    * Sends a given CAS for analysis to the UIMA EE Service.
    * 
@@ -968,7 +1020,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         if ( !clientCache.containsKey(casReferenceId)) {
             clientCache.put(requestToCache.getCasReferenceId(), requestToCache);
         }
- 
+       System.out.println("......... Adding CAS:"+casReferenceId+" to Dispatch Queue");
         // pending message is an object which will be added to the work queue for dispatching
         PendingMessage msg = 
         		new PendingMessageImpl(AsynchAEMessage.Process);
@@ -986,11 +1038,19 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         requestToCache.clearTimeoutException();
 
         // The sendCAS() method is synchronized no need to synchronize the code below
-        if (serviceDelegate.getState() == Delegate.TIMEOUT_STATE ) {
-            if ( remoteService ) {
-           // 	handleDelegateTimeout(requestToCache, aCAS);
-            	return requestToCache.getCasReferenceId();
-            }
+        if (serviceDelegate.getState() == Delegate.TIMEOUT_STATE && remoteService ) {
+        	if ( isRunning() ) {
+               	handleDelegateTimeout(requestToCache, aCAS);
+        	}
+           	return requestToCache.getCasReferenceId();
+        }
+        SharedConnection sharedConnection = lookupConnection(getBrokerURI());
+        
+        if ( sharedConnection != null &&  !sharedConnection.isOpen() ) {
+          if (requestToCache != null && !requestToCache.isSynchronousInvocation() && aCAS != null ) {
+            aCAS.release();
+          }
+          throw new ResourceProcessException(new BrokerConnectionException("Unable To Deliver Message To Destination. Connection To Broker "+sharedConnection.getBroker()+" Has Been Lost")); 
         }
 
         // Incremented number of outstanding CASes sent to a service. When a reply comes
@@ -3112,7 +3172,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
       throw new ResourceProcessException(JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "" +
       		"UIMAJMS_process_timeout_WARNING", 
       		new Object[]{qName, getBrokerURI(), cachedRequest.getHostIpProcessingCAS()},
-      		new UimaASProcessCasTimeout("UIMA AS Client Timed Out Waiting for Reply From Service:"+qName+" Broker:"+getBrokerURI()));
+      		new UimaASProcessCasTimeout("UIMA AS Client Timed Out Waiting for Reply From Service:"+qName+" Broker:"+getBrokerURI()+" CAS:"+cachedRequest.getCasReferenceId()));
     }
     // If a reply contains process exception, throw an exception and let the
     // listener decide what happens next
@@ -3142,7 +3202,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 	   	 CAS cas = null;
     	 int payload = AsynchAEMessage.None;
       // Process reply in the send thread
-      if (transport.equals(Transport.JMS)) {
+      if (transport == null || transport.equals(Transport.JMS)) {
     	 if (!running) {
     	    return casReferenceId;
     	 }

@@ -49,7 +49,7 @@ import org.springframework.jms.listener.SessionAwareMessageListener;
 public class PriorityMessageHandler implements SessionAwareMessageListener {
 
 	private PriorityBlockingQueue<MessageWrapper> queue =
-			new PriorityBlockingQueue<MessageWrapper>();
+			new PriorityBlockingQueue<>();
 	private Semaphore targetedListenerSemaphore = null;
 	private Semaphore processListenerSemaphore = null;
 	

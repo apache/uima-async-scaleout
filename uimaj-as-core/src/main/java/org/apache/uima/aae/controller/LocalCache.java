@@ -516,7 +516,10 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
       synchronized( monitor ) {
         if ( childCasOutstandingFlowCounter.incrementAndGet() == 1  ) {
           try {
+          	System.out.println("::::::::::  Waiting to acquire semaphore - CAS:"+getCasReferenceId()+" ThreadId:"+Thread.currentThread().getId());  
+
             acquireFlowSemaphore();
+          	System.out.println(":::::::::: acquired semaphore - CAS:"+getCasReferenceId()+" ThreadId:"+Thread.currentThread().getId());  
           } catch( InterruptedException e) {
           }
         }
@@ -535,6 +538,8 @@ public class LocalCache extends ConcurrentHashMap<String, LocalCache.CasStateEnt
             childCasOutstandingFlowCounter.decrementAndGet();
           }
           releaseFlowSemaphore();
+        	System.out.println(":::::::::: released semaphore - CAS:"+getCasReferenceId()+" ThreadId:"+Thread.currentThread().getId());  
+
         }
       }
     }

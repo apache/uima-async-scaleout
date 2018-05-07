@@ -29,6 +29,10 @@ public interface UimaASService {
 		Asynchronous,
 		Synchronous
 	};
+	public static final int QUIESCE_AND_STOP = 1000;
+
+	public static final int STOP_NOW = 1001;
+	  
 	public String getEndpoint();
 	public String getId();
 	public void start() throws Exception;

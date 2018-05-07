@@ -79,6 +79,7 @@ import org.springframework.jms.listener.AbstractJmsListeningContainer;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.jms.listener.SessionAwareMessageListener;
 import org.springframework.jms.support.JmsUtils;
+import org.springframework.jms.support.destination.CachingDestinationResolver;
 import org.springframework.jms.support.destination.DestinationResolver;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -168,6 +169,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 	  return transport;
   }
   public void setType(Type t) {
+	  System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>> Listener.setType() - assigning type:"+t);
 	  this.type = t;
   }
   public Type getType() {
@@ -180,7 +182,29 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     this();
     this.freeCasQueueListener = freeCasQueueListener;
   }
-  
+  protected void refreshDestination() {
+		String destName = getDestinationName();
+		Destination d = getDestination();
+		if (destName != null) {
+			System.out.println(">>>>>>>>>>>>>>> refreshDestination() - destination:"+d+" DestName:"+destName+" Type:"+type);
+			DestinationResolver destResolver = getDestinationResolver();
+			if (destResolver instanceof CachingDestinationResolver) {
+				((CachingDestinationResolver) destResolver).removeFromCache(destName);
+			}
+			if( Type.Reply.equals(type) || Type.FreeCAS.equals(type)) {
+				try {
+					ActiveMQConnection c = (ActiveMQConnection)getSharedConnection();
+					Session s = c.createSession(false, Session.AUTO_ACKNOWLEDGE);
+					getDestinationResolver().resolveDestinationName(s,"",false);
+				} catch( Exception e) {
+					e.printStackTrace();
+				}
+
+			}
+
+		}
+	//super.refreshDestination();
+  }
   public void setTargetedListener() {
 	  targetedListener = true;
   }
@@ -198,39 +222,38 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * Overriden Spring's method that tries to recover from lost connection. We dont 
    * want to recover when the service is stopping.
    */
-  protected void refreshConnectionUntilSuccessful() {
-	 // System.out.println("............refreshConnectionUntilSuccessful() called");
-	  while (isRunning()) {
-
-			try {
-				
-				if (sharedConnectionEnabled()) {
-					refreshSharedConnection();
-				} else {
-					Connection con = createConnection();
-					JmsUtils.closeConnection(con);
-				}
-				// Use UIMA-AS custom Destination Resolver to create a new temp queue for this reply listener
-				if( Type.Reply.equals(type) || Type.FreeCAS.equals(type)) {
-					getDestinationResolver().resolveDestinationName(getSharedConnection().createSession(false, Session.AUTO_ACKNOWLEDGE),"",false);
-				}
-				logger.info(getType().name()+" Listener Successfully refreshed JMS Connection to broker: "+getBrokerUrl()+" Endpoint:"+getDestination());
-				logListenerFailure = true;
-				break;
-			}
-			catch (Exception ex) {
-				
-				if (ex instanceof JMSException) {
-					if (logListenerFailure && ex.getCause() instanceof ConnectException) {
-						
-						logger.info(getType().name()+" Listener lost connection to broker: "+getBrokerUrl()+"- Retrying until successfull ...");
-						logListenerFailure = false;
-					} else {
-						invokeExceptionListener((JMSException) ex);
-					}
-				}
-			}
-	  }
+//  protected void refreshConnectionUntilSuccessful() {
+//	 System.out.println("............refreshConnectionUntilSuccessful() called - Listener Hashcode:"+this.hashCode()+ " Thread Name:"+Thread.currentThread().getName());;
+//	  while (isRunning()) {
+//
+//			try {
+//				
+//				if (sharedConnectionEnabled()) {
+//					refreshSharedConnection();
+//				} 
+//				// Use UIMA-AS custom Destination Resolver to create a new temp queue for this reply listener
+//				if( Type.Reply.equals(type) || Type.FreeCAS.equals(type)) {
+//					getDestinationResolver().resolveDestinationName(getSharedConnection().createSession(false, Session.AUTO_ACKNOWLEDGE),"",false);
+//					Thread.currentThread().dumpStack();
+//				}
+//				logger.info(getType().name()+" Listener Successfully refreshed JMS Connection to broker: "+getBrokerUrl()+" Endpoint:"+getDestination());
+//				logListenerFailure = true;
+//				break;
+//			}
+//			catch (Exception ex) {
+//				
+//				if (ex instanceof JMSException) {
+//					if (logListenerFailure && ex.getCause() instanceof ConnectException) {
+//						
+//						logger.info(getType().name()+" Listener lost connection to broker: "+getBrokerUrl()+"- Retrying until successfull ...");
+//						logListenerFailure = false;
+//					} else {
+//						ex.printStackTrace();
+//						invokeExceptionListener((JMSException) ex);
+//					}
+//				}
+//			}
+//	  }
 	  /*
 	  boolean doLogFailureMsg = true;
     try {
@@ -323,12 +346,12 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
     } catch( IllegalStateException e ) {
     }
     */
-  }
-  protected void recoverAfterListenerSetupFailure() {
-	  if ( !terminating ) {
-		  super.recoverAfterListenerSetupFailure();
-	  }
-  }
+  //}
+//  protected void recoverAfterListenerSetupFailure() {
+//	  if ( !terminating ) {
+//		  super.recoverAfterListenerSetupFailure();
+//	  }
+//  }
 
   public void setTerminating() {
     terminating = true;
@@ -635,16 +658,18 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
   /**
    * This method is called by Spring when a listener fails
    */
-  protected void handleListenerSetupFailure(Throwable t, boolean alreadyHandled) {
-    if ( t.getCause() instanceof InterruptedException ) {
-//  	  System.out.println("............handleListenerFailure(Throwable t, boolean alreadyHandled) called - Cause:"+t);
-  	  return;
-    }
-    // If shutdown already, nothing to do
-	    // If controller is stopping no need to recover the connection
-    if (!super.isRunning() || awaitingShutdown || terminating || (controller != null && controller.isStopped()) ) {
-      return;
-    }
+//  protected void handleListenerSetupFailure(Throwable t, boolean alreadyHandled) {
+//    if ( t.getCause() instanceof InterruptedException ) {
+////  	  System.out.println("............handleListenerFailure(Throwable t, boolean alreadyHandled) called - Cause:"+t);
+//  	  return;
+//    }
+//    // If shutdown already, nothing to do
+//	    // If controller is stopping no need to recover the connection
+//    if (!super.isRunning() || awaitingShutdown || terminating || (controller != null && controller.isStopped()) ) {
+//      return;
+//    }
+//    
+    
     /*
     if ( controller != null ) {
       controller.changeState(ServiceState.FAILED);
@@ -711,7 +736,7 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
       failed = true;
     }
     */
-  }
+//  }
   public Endpoint getEndpoint() {
 	  return endpoint;
   }
@@ -1120,18 +1145,21 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
 	  if ( isRunning()) {
 		  return;
 	  }
-	  int consumerThreadCount=-1;
-	  if ( getTaskExecutor() instanceof ThreadPoolTaskExecutor) {
+	//  int consumerThreadCount=-1;
+	  /*
+	  if ( !Type.ProcessCAS.equals(type) && getTaskExecutor() instanceof ThreadPoolTaskExecutor) {
 		  ((ThreadPoolTaskExecutor)getTaskExecutor()).initialize();
 		  // if this listener is a handling Process requests, the prestartAllCoreThreads() below
 		  // will force initialization of AEs if this is a primitive service.
 		  ((ThreadPoolTaskExecutor)getTaskExecutor()).getThreadPoolExecutor().prestartAllCoreThreads();
 	  }
+	  
+	  */
 	  super.afterPropertiesSet();
 	  super.initialize();
 	  super.start();
 	  
-      System.out.println(">>>>>>> Listener Service:"+controller.getComponentName()+" Broker URL:"+getBrokerUrl()+" Endpoint:"+__listenerRef.getEndpoint()+" ConsumerThreadCount:"+consumerThreadCount);
+      System.out.println(">>>>>>> Listener Service:"+controller.getComponentName()+" Broker URL:"+getBrokerUrl()+" Endpoint:"+__listenerRef.getEndpoint()+" ConsumerThreadCount:"+getConcurrentConsumers()+ " Type:"+getType());
 
   }
   private Object getPojoListener() {
@@ -1500,14 +1528,26 @@ public class UimaDefaultMessageListenerContainer extends DefaultMessageListenerC
    * Called by Spring to inject TaskExecutor
    */
   public void setTaskExecutor(TaskExecutor aTaskExecutor) {
-    taskExecutor = aTaskExecutor;
+	  
+  taskExecutor = aTaskExecutor;
+    /*
+    if ( Type.ProcessCAS.equals(getType())) {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1);
+        executor.initialize();
+        super.setTaskExecutor(executor); 
+    } else {
+        super.setTaskExecutor(aTaskExecutor);
+    }
+    */
     super.setTaskExecutor(aTaskExecutor);
   }
-
   public TaskExecutor getTaskExecutor() {
-	return taskExecutor;
+
+	  return taskExecutor;
   }
-  
   /**
    * This method initializes ThreadPoolExecutor with a custom ThreadPool. Each thread produced by
    * the ThreadPool is used to first initialize an instance of the AE before the thread is added to

@@ -461,8 +461,15 @@ public class JmsOutputChannel implements OutputChannel {
           
         }
         */
-        brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
-
+        /*
+        if ( anEndpoint.isFreeCasEndpoint() && anEndpoint.isCasMultiplier() && anEndpoint.isReplyEndpoint()) {
+            brokerConnectionURL = anEndpoint.getServerURI();
+        } else {
+            brokerConnectionURL = (anEndpoint.isReplyEndpoint()) ? serverURI : anEndpoint.getServerURI();
+        }
+        */
+        brokerConnectionURL = anEndpoint.getServerURI();
+        
         String key = getLookupKey(anEndpoint);
         String destination = getDestinationName(anEndpoint);
 
@@ -1063,14 +1070,17 @@ public class JmsOutputChannel implements OutputChannel {
     	if ( destination == null ) {
     		destination = anEndpoint.getDestination();
     	}
-    	System.out.println(".......... Service:"+getAnalysisEngineController().getComponentName()+" replying with GetMeta to reply queue:"+destination);
 
-    	
+    	  if ( analysisEngineController instanceof AggregateAnalysisEngineController ) {
+      		  System.out.println("Aggregate Controller replying with GetMeta");
+      	  }
+     
       anEndpoint.setReplyEndpoint(true);
       // Initialize JMS connection to given endpoint
       JmsEndpointConnection_impl endpointConnection = getEndpointConnection(anEndpoint);
+  	System.out.println(".......... Service:"+getAnalysisEngineController().getComponentName()+" replying with GetMeta to reply queue:"+destination+" Broker:"+endpointConnection.getServerUri());
 
-      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
+     if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "sendReply",
                 JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_produce_txt_msg__FINE",
                 new Object[] {});

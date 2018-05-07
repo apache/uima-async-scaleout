@@ -35,6 +35,7 @@ public class CollectionProcessCompleteResponseCommand  extends AbstractUimaAsCom
 	public void execute() throws Exception {
 		Delegate delegate = super.getDelegate(mc);
 	    try {
+	    	System.out.println("..... Controller:"+controller.getComponentName()+" Handling CPC From "+delegate.getKey());
 	          ((AggregateAnalysisEngineController)controller)
 	                  .processCollectionCompleteReplyFromDelegate(delegate.getKey(), true);
 	      } catch (Exception e) {

@@ -148,6 +148,9 @@ public interface UimaAsynchronousEngine {
    */
   public static final String GetMetaTimeout = "GetMetaTimeout";
 
+  public static final String Protocol = "Protocol";
+  
+  public static final String Provider = "Provider";
   /**
    * Path to the XSLT processor to use when processing a deployment descriptor. The application provides it to the Uima AS 
    * client via System property, either on a command line using -D, or explicitly by using java's 
@@ -439,7 +442,15 @@ public interface UimaAsynchronousEngine {
    */
   public String deploy(String[] aDeploymentDescriptorList, Map anApplicationContext)
           throws Exception;
-
+  
+  /**
+   * Undeploys all UIMA AS services deployed by this client.This method is synchronous
+   * and will block until all deployed services are destroyed.
+   * 
+   * 
+   * @throws Exception error
+   */
+  public void undeploy() throws Exception;
   /**
    * Undeploys specified UIMA AS container and all services running within it. Each UIMA AS
    * container has a unique id assigned to it during the deploy phase. This method is synchronous

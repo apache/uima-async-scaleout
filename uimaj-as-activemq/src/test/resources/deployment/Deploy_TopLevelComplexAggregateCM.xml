@@ -24,12 +24,13 @@
   <description/>
   <version/>
   <vendor/>
-  <deployment protocol="jms" provider="activemq">
+  <deployment protocol="${Protocol}" provider="${Provider}">
     <casPool numberOfCASes="5" initialFsHeapSize="2000000"/>
     <service>
       <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
       <topDescriptor>
         <import location="../descriptors/analysis_engine/CasMultiplierAggregateWith2Multipliers.xml"/>
+        <!--import location="../descriptors/analysis_engine/CasMultiplierAggregateWith2Multipliers.xml"/-->
       </topDescriptor>
       <analysisEngine async="true">
         <casMultiplier poolSize="5" initialFsHeapSize="2000000"/>
@@ -56,16 +57,34 @@
             </asyncAggregateErrorConfiguration>
           </analysisEngine>
 			
-          <remoteAnalysisEngine key="InnerRemoteCMAggregate">
-            <casMultiplier poolSize="5" initialFsHeapSize="2000000"/> 
-            <inputQueue brokerURL="${DefaultBrokerURL}" endpoint="InnerAggregateQueue"/>
-            <serializer method="xmi"/>
+          <!--RemoteAnalysisEngine key="InnerRemoteCMAggregate"-->
+          <analysisEngine key="InnerRemoteCMAggregate" async="true">
+            <casMultiplier processParentLast="true"/> 
+            <!--inputQueue brokerURL="${DefaultBrokerURL}" endpoint="InnerAggregateQueue"/>
+            <serializer method="xmi"/-->
+              <delegates>
+                      <analysisEngine key="InnerTestMultiplier" async="false" inputQueueScaleout="2" internalReplyQueueScaleout="1">
+                       
+                        <scaleout numberOfInstances="1"/>
+                         <casMultiplier poolSize="4" initialFsHeapSize="2000000"/>
+            
+                      </analysisEngine>
+                      <analysisEngine key="NoOpCC" async="false" >
+                       
+                        <scaleout numberOfInstances="1"/>
+                        
+            
+                      </analysisEngine>
+                      
+                      
+                </delegates>       
             <asyncAggregateErrorConfiguration>
               <getMetadataErrors maxRetries="0" timeout="0" errorAction="disable"/>
               <processCasErrors maxRetries="0" timeout="0" continueOnRetryFailure="false" thresholdCount="1" thresholdWindow="0" thresholdAction="terminate"/>
               <collectionProcessCompleteErrors timeout="0" additionalErrorAction="terminate"/>
             </asyncAggregateErrorConfiguration>
-          </remoteAnalysisEngine>
+          </analysisEngine>
+         <!--/remoteAnalysisEngine-->
 			
           <analysisEngine key="NoOpCandidateAnswerCM" async="false">
             <casMultiplier poolSize="3" initialFsHeapSize="2000000"/>

@@ -21,6 +21,7 @@ package org.apache.uima.as.deployer;
 import java.util.Map;
 
 import org.apache.uima.aae.service.UimaASService;
+import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
 
 public interface UimaAsServiceDeployer {
@@ -31,6 +32,6 @@ public interface UimaAsServiceDeployer {
 		LOCAL;
 	};
 	public UimaASService deploy(AnalysisEngineDeploymentDescriptionDocument dd, Map<String, String> deploymentProperties) throws Exception;
-	public void waitUntilInitialized() throws InterruptedException;
+	public void waitUntilInitialized() throws InterruptedException, ResourceInitializationException;
 
 }

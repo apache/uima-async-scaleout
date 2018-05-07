@@ -18,26 +18,26 @@
  */
 package org.apache.uima.as.deployer;
 
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.ControllerCallbackListener;
-import org.apache.uima.aae.service.UimaASService;
-import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
+import org.apache.uima.resource.ResourceInitializationException;
 
 public abstract class AbstractUimaASDeployer 
 implements UimaAsServiceDeployer, ControllerCallbackListener {
 	CountDownLatch latch;
-	
+	private ResourceInitializationException initException = null;
 	protected AbstractUimaASDeployer(CountDownLatch latch) {
 		this.latch = latch;
 	}
-	public abstract UimaASService deploy(AnalysisEngineDeploymentDescriptionDocument dd, Map<String, String> deploymentProperties) throws Exception;
-	
-	public void waitUntilInitialized() throws InterruptedException {
+
+	public void waitUntilInitialized() throws InterruptedException, ResourceInitializationException {
 		latch.await();
+		if ( initException != null ) {
+			throw initException;
+		}
 	}
 	@Override
 	public void notifyOnTermination(String aMessage, EventTrigger cause) {
@@ -49,7 +49,7 @@ implements UimaAsServiceDeployer, ControllerCallbackListener {
 	public void notifyOnInitializationFailure(AnalysisEngineController aController, Exception e) {
 		// TODO Auto-generated method stub
 		System.out.println("------- Controller:"+aController.getName()+" Exception During Initialization - Error:\n");
-		e.printStackTrace();
+		notifyOnInitializationFailure(e);
 	}
 
 	@Override
@@ -60,15 +60,21 @@ implements UimaAsServiceDeployer, ControllerCallbackListener {
 
 	@Override
 	public void notifyOnInitializationFailure(Exception e) {
-		// TODO Auto-generated method stub
+		if ( !(e instanceof ResourceInitializationException) ) {
+			initException = new ResourceInitializationException(e);
+		} else {
+			initException = (ResourceInitializationException) e;
+		}
 		latch.countDown();
+		e.printStackTrace();
+		
 
 	}
 
 	@Override
 	public void notifyOnInitializationSuccess() {
 		// TODO Auto-generated method stub
-
+System.out.println(".................. WHAT?");
 	}
 
 	@Override

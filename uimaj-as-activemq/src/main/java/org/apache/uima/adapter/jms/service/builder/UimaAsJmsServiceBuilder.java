@@ -18,8 +18,12 @@
  */
 package org.apache.uima.adapter.jms.service.builder;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
@@ -182,7 +186,7 @@ public class UimaAsJmsServiceBuilder extends AbstractUimaAsServiceBuilder{
 		// by Spring.
 		TempDestinationResolver resolver = new TempDestinationResolver(controller.getComponentName(),remoteDelegate.getKey());
 		resolver.setConnectionFactory(factory);
-		
+		threadExecutor.initialize();
 		UimaDefaultMessageListenerContainer replyListener =
 				replyListenerBuilder.withController(controller)
 						.withType(Type.Reply)
@@ -202,7 +206,7 @@ public class UimaAsJmsServiceBuilder extends AbstractUimaAsServiceBuilder{
 		if ( controller.getOutputChannel(ENDPOINT_TYPE.JMS) == null) {
 	  		JmsOutputChannel oc = new JmsOutputChannel();
 			oc.setController(controller);
-			oc.setServerURI(brokerURL);
+//			oc.setServerURI(brokerURL);
 			oc.setControllerInputEndpoint("");
 			oc.setServiceInputEndpoint("");
 			oc.initialize();
@@ -236,6 +240,10 @@ public class UimaAsJmsServiceBuilder extends AbstractUimaAsServiceBuilder{
 		// fetch service definition from DD
 		ServiceType s = getService(doc);
 
+		if ( topLevelController.getErrorHandlerChain() == null ) {
+			ErrorHandlerChain errorHandlerChain = createServiceErrorHandlers();
+			topLevelController.setErrorHandlerChain(errorHandlerChain);
+		}
 		AsyncPrimitiveErrorConfigurationType pec;
 		if (s.getAnalysisEngine() != null && s.getAnalysisEngine().getAsyncPrimitiveErrorConfiguration() != null) {
 			pec = s.getAnalysisEngine().getAsyncPrimitiveErrorConfiguration();
@@ -251,10 +259,108 @@ public class UimaAsJmsServiceBuilder extends AbstractUimaAsServiceBuilder{
 		return service;
 	}
 
+	/*
+	protected ErrorHandlerChain getErrorHandlerChain(Map<String, ResourceSpecifier> delegates) {
+
+		Map<String, Threshold> processThresholdMap = new HashMap<String, Threshold>();
+		Map<String, Threshold> getMetaThresholdMap = new HashMap<String, Threshold>();
+		Map<String, Threshold> cpcThresholdMap = new HashMap<String, Threshold>();
+		// for each delegate add error handling configuration
+		for( Entry<String, ResourceSpecifier> entry : delegates.entrySet() ) {
+			// first fetch error handling from deployment descriptor for current delegate
+			Object o = delegateMap.get(entry.getKey()); 
+			
+			GetMetadataErrorsType gmet = null;
+			// the DD may not have error handlers specified. This is ok, we just use defaults
+			if ( o != null ) {
+				if (o instanceof DelegateAnalysisEngineType ) {
+					if ( ((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration() != null && 
+							((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getGetMetadataErrors() != null ) {
+						gmet = ((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getGetMetadataErrors();
+						getMetaThresholdMap.put(entry.getKey(), getThreshold(gmet.getErrorAction(), gmet.getMaxRetries()));
+					}
+					if ( ((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration() != null && 
+							((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getProcessCasErrors() != null ) {
+						ProcessCasErrorsType pcet = ((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getProcessCasErrors();
+						processThresholdMap.put(entry.getKey(), getThreshold(pcet.getThresholdAction(),pcet.getMaxRetries()));
+					}
+					cpcThresholdMap.put(entry.getKey(), newThreshold());
+				} else if ( o instanceof RemoteAnalysisEngineType ){
+					if ( ((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration() != null && 
+							((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getGetMetadataErrors() != null ) {
+						gmet = ((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getGetMetadataErrors();
+						getMetaThresholdMap.put(entry.getKey(), getThreshold(gmet.getErrorAction(), gmet.getMaxRetries()));
+					}
+					if ( ((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration() != null && 
+							((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getProcessCasErrors() != null ) {
+						ProcessCasErrorsType pcet = ((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getProcessCasErrors();
+						processThresholdMap.put(entry.getKey(), getThreshold(pcet.getThresholdAction(),pcet.getMaxRetries()));
+					}
+					cpcThresholdMap.put(entry.getKey(), newThreshold());
+				}
+			}
+		}
+		List<org.apache.uima.aae.error.ErrorHandler> errorHandlers =
+				new ArrayList<org.apache.uima.aae.error.ErrorHandler>();
+		if ( getMetaThresholdMap.size() > 0 ) {
+			errorHandlers.add(new GetMetaErrorHandler(getMetaThresholdMap));
+		}
+		if ( processThresholdMap.size() > 0 ) {
+			errorHandlers.add(new ProcessCasErrorHandler(processThresholdMap));
+		}
+		if ( cpcThresholdMap.size() > 0 ) {
+			errorHandlers.add(new CpcErrorHandler(cpcThresholdMap));
+		}
+		ErrorHandlerChain errorHandlerChain = new ErrorHandlerChain(errorHandlers);
+		return errorHandlerChain;
+	}
+	
+	protected ErrorHandlerChain getErrorHandlerChain(ResourceSpecifier delegate) {
+
+		Map<String, Threshold> processThresholdMap = new HashMap<String, Threshold>();
+		Map<String, Threshold> getMetaThresholdMap = new HashMap<String, Threshold>();
+		Map<String, Threshold> cpcThresholdMap = new HashMap<String, Threshold>();
+		Object o = delegateMap.get(""); 
+		GetMetadataErrorsType gmet = null;
+		if ( o != null ) {
+			if (o instanceof DelegateAnalysisEngineType ) {
+				gmet = ((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getGetMetadataErrors();
+				getMetaThresholdMap.put("", getThreshold(gmet.getErrorAction(), gmet.getMaxRetries()));
+				ProcessCasErrorsType pcet = ((DelegateAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getProcessCasErrors();
+				processThresholdMap.put("", getThreshold(pcet.getThresholdAction(),pcet.getMaxRetries()));
+				cpcThresholdMap.put("", newThreshold());
+			} else if ( o instanceof RemoteAnalysisEngineType ){
+				gmet = ((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getGetMetadataErrors();
+				getMetaThresholdMap.put("", getThreshold(gmet.getErrorAction(), gmet.getMaxRetries()));
+				ProcessCasErrorsType pcet = ((RemoteAnalysisEngineType)o).getAsyncAggregateErrorConfiguration().getProcessCasErrors();
+				processThresholdMap.put("", getThreshold(pcet.getThresholdAction(),pcet.getMaxRetries()));
+				cpcThresholdMap.put("", newThreshold());
+			}
+		}
+		List<org.apache.uima.aae.error.ErrorHandler> errorHandlers = new ArrayList<org.apache.uima.aae.error.ErrorHandler>();
+		if ( getMetaThresholdMap.size() > 0 ) {
+			errorHandlers.add(new GetMetaErrorHandler(getMetaThresholdMap));
+		}
+		if ( processThresholdMap.size() > 0 ) {
+			errorHandlers.add(new ProcessCasErrorHandler(processThresholdMap));
+		}
+		if ( cpcThresholdMap.size() > 0 ) {
+			errorHandlers.add(new CpcErrorHandler(cpcThresholdMap));
+		}
+		ErrorHandlerChain errorHandlerChain = new ErrorHandlerChain(errorHandlers);
+		
+		return errorHandlerChain;
+	
+	}
+	
+	*/
+	
+	
 	private void configureTopLevelService(AnalysisEngineController topLevelController, UimaASJmsService service,
 			AsyncPrimitiveErrorConfigurationType pec) throws Exception {
 		// ResourceSpecifier resourceSpecifier = service.getResourceSpecifier();
 		if (!topLevelController.isPrimitive() && pec != null) {
+		//if ( pec != null) {
 
 			ErrorHandlerChain chain = topLevelController.getErrorHandlerChain();
 			Iterator<ErrorHandler> handlers = chain.iterator();

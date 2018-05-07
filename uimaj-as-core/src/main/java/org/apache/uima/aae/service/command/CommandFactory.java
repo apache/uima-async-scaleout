@@ -89,6 +89,9 @@ public class CommandFactory {
 		case AsynchAEMessage.CollectionProcessComplete:
 			command2Run = CommandBuilder.createCollectionProcessCompleteResponseCommand(mc, controller);
 			break;
+		case AsynchAEMessage.ServiceInfo:
+			command2Run = CommandBuilder.createServiceInfoResponseCommand(mc, controller);
+			break;
 		default:
 			command2Run = CommandBuilder.createNoOpCommand(mc, controller);
 			break;
@@ -144,6 +147,10 @@ public class CommandFactory {
 			return new CollectionProcessCompleteRequestCommand(mc, controller);
 		}
 
+		static UimaAsCommand createServiceInfoResponseCommand(MessageContext mc,
+				AnalysisEngineController controller) {
+			return new ProcessServiceInfoResponseCommand(mc, controller);
+		}
 		static UimaAsCommand createCollectionProcessCompleteResponseCommand(MessageContext mc,
 				AnalysisEngineController controller) {
 			return new CollectionProcessCompleteResponseCommand(mc, controller);

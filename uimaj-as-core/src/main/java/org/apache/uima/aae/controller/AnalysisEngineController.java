@@ -22,6 +22,7 @@ package org.apache.uima.aae.controller;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadFactory;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.aae.AsynchAECasManager;
@@ -47,6 +48,7 @@ import org.apache.uima.as.client.DirectInputChannel;
 import org.apache.uima.as.client.Listener;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.resource.ResourceSpecifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public interface AnalysisEngineController extends ControllerLifecycle {
   public static final String CasPoolSize = "CasPoolSize";
@@ -64,7 +66,8 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public void setJmsInputChannel(InputChannel anInputChannel) throws Exception;
 
   public InputChannel getInputChannel(ENDPOINT_TYPE et);
-
+  public InputChannel getInputChannel();
+  
   public void addInputChannel(InputChannel anInputChannel) throws Exception;
 
   public String getServiceEndpointName();
@@ -77,7 +80,7 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public void takeAction(String anAction, String anEndpointName, ErrorContext anErrorContext);
 
-  public InputChannel getInputChannel();
+  public void setThreadFactory(ThreadPoolTaskExecutor factory);
 
   public List<Listener> getAllListeners();
 

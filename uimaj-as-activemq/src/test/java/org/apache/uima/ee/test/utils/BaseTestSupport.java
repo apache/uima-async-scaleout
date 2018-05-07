@@ -34,6 +34,7 @@ import javax.jms.Message;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
+import org.apache.uima.aae.client.UimaAS;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
@@ -103,7 +104,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
   private Object errorCounterMonitor = new Object();
 
-  private BaseUIMAAsynchronousEngine_impl engine;
+  private UimaAsynchronousEngine uimaAsClient;
 
   protected UimaAsTestCallbackListener listener = new UimaAsTestCallbackListener();
 
@@ -115,17 +116,17 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
   protected long failedCasCountDueToBrokerFailure = 0;
   
-  protected String deployService(Transport transport, BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+  protected String deployService(Transport transport, UimaAsynchronousEngine uimaAsClient,
           String aDeploymentDescriptorPath) throws Exception  {
 	  String serviceId = null;
 	  if ( transport.equals(Transport.Java)) {
-		  serviceId = deployJavaService(eeUimaEngine, aDeploymentDescriptorPath);
+		  serviceId = deployJavaService(uimaAsClient, aDeploymentDescriptorPath);
 	  } else if ( transport.equals(Transport.JMS)) {
-		  serviceId = deployJmsService(eeUimaEngine, aDeploymentDescriptorPath);
+		  serviceId = deployJmsService(uimaAsClient, aDeploymentDescriptorPath);
 	  }
 	  return serviceId;
   }
-  protected String deployJavaService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+  protected String deployJavaService(UimaAsynchronousEngine uimaAsClient,
           String aDeploymentDescriptorPath) throws Exception  {
     System.setProperty("Provider", "java");
     System.setProperty("Protocol", "java");
@@ -135,9 +136,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     Map<String, Object> appCtx = new HashMap<>();
     appCtx.put( AsynchAEMessage.Transport, Transport.Java);
  
-    return deployService(eeUimaEngine, aDeploymentDescriptorPath, appCtx);
+    return deployService(uimaAsClient, aDeploymentDescriptorPath, appCtx);
   }
-  protected String deployJmsService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+  protected String deployJmsService(UimaAsynchronousEngine uimaAsClient,
           String aDeploymentDescriptorPath)  throws Exception  {
      System.setProperty("Provider", "activemq");
      System.setProperty("Protocol", "jms");
@@ -158,13 +159,13 @@ public abstract class BaseTestSupport extends ActiveMQSupport
      Map<String, Object> appCtx = new HashMap<>();
 	 appCtx.put( AsynchAEMessage.Transport, Transport.JMS);
 	 
-	 return deployService(eeUimaEngine, aDeploymentDescriptorPath, appCtx);
+	 return deployService(uimaAsClient, aDeploymentDescriptorPath, appCtx);
   }
   protected String deployService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
           String aDeploymentDescriptorPath) throws Exception {
 	  return deployService(eeUimaEngine, aDeploymentDescriptorPath, new HashMap<String, Object>());
   }
-  protected String deployService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
+  protected String deployService(UimaAsynchronousEngine uimaAsClient,
           String aDeploymentDescriptorPath,  Map<String, Object> appCtx) throws Exception {
 
  // protected String deployService(BaseUIMAAsynchronousEngine_impl eeUimaEngine,
@@ -191,13 +192,13 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     // appCtx.put(UimaAsynchronousEngine.UimaEeDebug, UimaAsynchronousEngine.UimaEeDebug);
     String serviceId = null;
     try {
-    	serviceId = eeUimaEngine.deploy(aDeploymentDescriptorPath, appCtx);
+    	serviceId = uimaAsClient.deploy(aDeploymentDescriptorPath, appCtx);
     } catch (ResourceInitializationException e) {
       if (!ignoreException(ResourceInitializationException.class)) {
         System.out
                 .println(">>>>>>>>>>> runTest: Stopping Client API Due To Initialization Exception");
         isStopping = true;
-        eeUimaEngine.stop();
+        uimaAsClient.stop();
         throw e;
       }
       System.out.println(">>>>>>>>>>> Exception ---:" + e.getClass().getName());
@@ -231,10 +232,13 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     return false;
   }
 
-  public void initialize(BaseUIMAAsynchronousEngine_impl eeUimaEngine, Map<String, Object> appCtx)
+  public void initialize(UimaAsynchronousEngine uimaAsClient, Map<String, Object> appCtx)
           throws Exception {
-    eeUimaEngine.addStatusCallbackListener(listener);
-    eeUimaEngine.initialize(appCtx);
+	  uimaAsClient.addStatusCallbackListener(listener);
+	  System.out.println("... Client calling initialize");
+	  uimaAsClient.initialize(appCtx);
+	  System.out.println("... Client Done calling initialize");
+
   }
 
   protected void setDoubleByteText(String aDoubleByteText) {
@@ -370,11 +374,14 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     // Instantiate Uima EE Client
     isStopped = false;
     isStopping = false;
-    final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    // Deploy Uima EE Primitive Service
-    final String containerId = deployJavaService(eeUimaEngine, serviceDeplyDescriptor);
+    uimaAsClient = 
+  		  UimaAS.newInstance(Transport.JMS);
 
-    engine = eeUimaEngine;
+//    final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    // Deploy Uima EE Primitive Service
+    final String containerId = deployJmsService(uimaAsClient, serviceDeplyDescriptor);
+
+    //uimaAsClient = eeUimaEngine;
 
     Thread t1 = null;
     Thread t2 = null;
@@ -383,7 +390,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, aGetMetaTimeout);
     appCtx.put(UimaAsynchronousEngine.Timeout, 1000);
 
-    initialize(eeUimaEngine, appCtx);
+    initialize(uimaAsClient, appCtx);
 
     // Wait until the top level service returns its metadata
     waitUntilInitialized();
@@ -405,7 +412,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
             try {
               mux.wait(5000);
               // Undeploy service container
-              eeUimaEngine.undeploy(containerId);
+              uimaAsClient.undeploy(containerId);
             } catch (Exception e) {
             }
           }
@@ -416,7 +423,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
     // Spin runner threads and start sending CASes
     for (int i = 0; i < howManyRunningThreads; i++) {
-      SynchRunner runner = new SynchRunner(eeUimaEngine, howManyCASesPerRunningThread, listener);
+      SynchRunner runner = new SynchRunner(uimaAsClient, howManyCASesPerRunningThread, listener);
       Thread runnerThread = new Thread(runner, "Runner" + i);
       runnerThread.start();
       System.out.println("runTest: Started Runner Thread::Id=" + runnerThread.getId());
@@ -429,7 +436,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     if (!isStopped && !unexpectedException) {
       System.out.println("runTest: Sending CPC");
       // Send CPC
-      eeUimaEngine.collectionProcessingComplete();
+      uimaAsClient.collectionProcessingComplete();
     }
 
     // If have skipped CPC trip the latch
@@ -438,29 +445,29 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     }
     t1.join();
     isStopping = true;
-    eeUimaEngine.stop();
+    uimaAsClient.stop();
   }
 
-  protected void runCrTest(BaseUIMAAsynchronousEngine_impl aUimaEeEngine, int howMany)
+  protected void runCrTest(UimaAsynchronousEngine uimaAsClient, int howMany)
           throws Exception {
-    engine = aUimaEeEngine;
+    this.uimaAsClient = uimaAsClient;
     final Semaphore ctrlSemaphore = new Semaphore(1);
     spinMonitorThread(ctrlSemaphore, howMany, PROCESS_LATCH);
-    aUimaEeEngine.process();
+    uimaAsClient.process();
     waitOnMonitor(ctrlSemaphore);
   }
 
-  protected void runTest(Map appCtx, BaseUIMAAsynchronousEngine_impl aUimaEeEngine,
+  protected void runTest(Map appCtx, UimaAsynchronousEngine uimaAsClient,
           String aBrokerURI, String aTopLevelServiceQueueName, int howMany, int aLatchKind)
           throws Exception {
-    runTest(appCtx, aUimaEeEngine, aBrokerURI, aTopLevelServiceQueueName, howMany, aLatchKind,
+    runTest(appCtx, uimaAsClient, aBrokerURI, aTopLevelServiceQueueName, howMany, aLatchKind,
             SEND_CAS_ASYNCHRONOUSLY);
   }
 
-  protected void runTest2(Map appCtx, BaseUIMAAsynchronousEngine_impl aUimaEeEngine,
+  protected void runTest2(Map appCtx, UimaAsynchronousEngine uimaAsClient,
           String aBrokerURI, String aTopLevelServiceQueueName, int howMany, int aLatchKind)
           throws Exception {
-    runTest2(appCtx, aUimaEeEngine, aBrokerURI, aTopLevelServiceQueueName, howMany, aLatchKind,
+    runTest2(appCtx, uimaAsClient, aBrokerURI, aTopLevelServiceQueueName, howMany, aLatchKind,
             SEND_CAS_ASYNCHRONOUSLY);
   }
 
@@ -478,14 +485,14 @@ public abstract class BaseTestSupport extends ActiveMQSupport
    * @param sendCasAsynchronously
    * @throws Exception
    */
-  protected void runTest(Map appCtx, BaseUIMAAsynchronousEngine_impl aUimaEeEngine,
+  protected void runTest(Map appCtx, UimaAsynchronousEngine uimaAsClient,
           String aBrokerURI, String aTopLevelServiceQueueName, int howMany, int aLatchKind,
           boolean sendCasAsynchronously) throws Exception {
     Thread t1 = null;
     Thread t2 = null;
     serviceShutdownException = false;
     unexpectedException = false;
-    engine = aUimaEeEngine;
+    this.uimaAsClient = uimaAsClient;
     isStopped = false;
     isStopping = false;
 
@@ -493,7 +500,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
       appCtx = buildContext(aBrokerURI, aTopLevelServiceQueueName, 0);
     }
     try {
-      initialize(aUimaEeEngine, appCtx);
+      initialize(uimaAsClient, appCtx);
     } catch (ResourceInitializationException e) {
       if (ignoreException(ResourceInitializationException.class)) {
         return;
@@ -527,7 +534,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         if (!isStopped) {
           // Send an in CAS to the top level service
           try {
-            sendCAS(aUimaEeEngine, howMany, sendCasAsynchronously);
+            sendCAS(uimaAsClient, howMany, sendCasAsynchronously);
           } catch( Exception e) {}
         }
         // Wait until ALL CASes return from the service
@@ -544,7 +551,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           
           if (!serviceShutdownException && !isStopped && !unexpectedException) {
             System.out.println("runTest: Sending CPC");
-            aUimaEeEngine.collectionProcessingComplete();
+            uimaAsClient.collectionProcessingComplete();
           } else {
             System.out
                     .println(">>>>>>>>>>>>>>>> runTest: Not Sending CPC Due To Exception [serviceShutdownException="
@@ -577,7 +584,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 */
     isStopping = true;
     
-    aUimaEeEngine.stop();
+    uimaAsClient.stop();
 
     // Finally fail test if unhappy ... must be last call as acts like "throw"
     if (unexpectedException) {
@@ -600,19 +607,19 @@ public abstract class BaseTestSupport extends ActiveMQSupport
    * @param sendCasAsynchronously
    * @throws Exception
    */
-  protected void runTest2(Map appCtx, BaseUIMAAsynchronousEngine_impl aUimaEeEngine,
+  protected void runTest2(Map appCtx, UimaAsynchronousEngine uimaAsClient,
           String aBrokerURI, String aTopLevelServiceQueueName, int howMany, int aLatchKind,
           boolean sendCasAsynchronously) throws Exception {
     Thread t1 = null;
     Thread t2 = null;
-    engine = aUimaEeEngine;
+    this.uimaAsClient = uimaAsClient;
     isStopped = false;
     isStopping = false;
 
     if (appCtx == null) {
       appCtx = buildContext(aBrokerURI, aTopLevelServiceQueueName, 0);
     }
-    initialize(aUimaEeEngine, appCtx);
+    initialize(uimaAsClient, appCtx);
 
     // Wait until the top level service returns its metadata
     waitUntilInitialized();
@@ -637,7 +644,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         			append(i+1).append(" CAS of ").append(howMany);
         	System.out.println(sb.toString());
           // Send an in CAS to the top level service
-          sendCAS(aUimaEeEngine, 1, sendCasAsynchronously);
+          sendCAS(uimaAsClient, 1, sendCasAsynchronously);
         }
         // Wait until ALL CASes return from the service
         if (t2 != null) {
@@ -652,7 +659,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
             }
 
             // Send CPC
-            aUimaEeEngine.collectionProcessingComplete();
+            uimaAsClient.collectionProcessingComplete();
           }
         }
 
@@ -668,7 +675,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
     isStopping = true;
     //aUimaEeEngine.stop();
-    aUimaEeEngine.undeploy();
+    uimaAsClient.undeploy();
 
     // Finally fail test if unhappy ... must be last call as acts like "throw"
     if (unexpectedException) {
@@ -688,15 +695,15 @@ public abstract class BaseTestSupport extends ActiveMQSupport
    *          - use either synchronous or asynchronous API
    * @throws Exception
    */
-  protected void sendCAS(BaseUIMAAsynchronousEngine_impl eeUimaEngine, int howMany,
+  protected void sendCAS(UimaAsynchronousEngine uimaAsClient, int howMany,
           boolean sendCasAsynchronously) throws Exception {
-    engine = eeUimaEngine;
+    this.uimaAsClient = uimaAsClient;
     for (int i = 0; i < howMany; i++) {
  
     	if (isStopping) {
     		break;
     	}
-      CAS cas = eeUimaEngine.getCAS();
+      CAS cas = uimaAsClient.getCAS();
       if (cas == null) {
         if (isStopping) {
           System.out.println(">> runTest: stopping after sending " + i + " of " + howMany
@@ -712,9 +719,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         cas.setDocumentText(text);
       }
       if (sendCasAsynchronously) {
-        eeUimaEngine.sendCAS(cas);
+    	  uimaAsClient.sendCAS(cas);
       } else {
-        eeUimaEngine.sendAndReceiveCAS(cas);
+    	  uimaAsClient.sendAndReceiveCAS(cas);
       }
     }
   }
@@ -829,7 +836,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
                   || (e.getCause() != null && e.getCause() instanceof ServiceShutdownException)) {
             serviceShutdownException = true;
             isStopping = true;
-            engine.stop();
+            try {
+                uimaAsClient.stop();
+            } catch( Exception ex) {ex.printStackTrace();}
           } else if (ignoreException(e.getClass())) {
             expectedException = true;
           } else if (e instanceof ResourceProcessException && isProcessTimeout(e)) {
@@ -837,14 +846,17 @@ public abstract class BaseTestSupport extends ActiveMQSupport
               System.out.println("runTest: Incrementing ProcessTimeout Counter");
               timeoutCounter++;
             }
-          } else if (engine != null && (e instanceof UimaASPingTimeout || (e.getCause() != null && e.getCause() instanceof UimaASPingTimeout) )) {
+          } else if (uimaAsClient != null && (e instanceof UimaASPingTimeout || (e.getCause() != null && e.getCause() instanceof UimaASPingTimeout) )) {
             System.out.println("runTest: Ping Timeout - service Not Responding To Ping");
             if (cpcLatch != null) {
               cpcLatch.countDown();
             }
             isStopping = true;
-            engine.stop();
-          } else if ( engine != null && e instanceof UimaASProcessCasTimeout) {
+            try {
+                uimaAsClient.stop();
+            } catch( Exception ex) {ex.printStackTrace();}
+            
+          } else if ( uimaAsClient != null && e instanceof UimaASProcessCasTimeout) {
             if ( e.getCause() != null && e.getCause() instanceof UimaASPingTimeout) {
               if ( countPingRetries ) {
                 if ( pingTimeoutCount > maxPingRetryCount ) {
@@ -852,7 +864,9 @@ public abstract class BaseTestSupport extends ActiveMQSupport
                     cpcLatch.countDown();
                   }
                   isStopping = true;
-                  engine.stop();
+                  try {
+                      uimaAsClient.stop();
+                  } catch( Exception ex) {ex.printStackTrace();}
                   
                 } else {
                   pingTimeoutCount++;
@@ -1063,15 +1077,15 @@ public abstract class BaseTestSupport extends ActiveMQSupport
    * 
    */
   public class SynchRunner implements Runnable {
-    private BaseUIMAAsynchronousEngine_impl uimaClient = null;
+    private UimaAsynchronousEngine uimaClient = null;
 
     private long howManyCASes = 1;
     private UimaAsTestCallbackListener callbackListener;
-    public SynchRunner(BaseUIMAAsynchronousEngine_impl aUimaClient, int howMany) {
-      this(aUimaClient, howMany, null);
+    public SynchRunner(UimaAsynchronousEngine uimaClient, int howMany) {
+      this(uimaClient, howMany, null);
     }
-    public SynchRunner(BaseUIMAAsynchronousEngine_impl aUimaClient, int howMany, UimaAsTestCallbackListener aListener) {
-      uimaClient = aUimaClient;
+    public SynchRunner(UimaAsynchronousEngine uimaClient, int howMany, UimaAsTestCallbackListener aListener) {
+      this.uimaClient = uimaClient;
       howManyCASes = howMany;
       callbackListener = aListener;
     }
@@ -1087,8 +1101,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
 
           try {
             // Send CAS and wait for a response
-            String casReferenceId = uimaClient.sendAndReceiveCAS(cas, pt);
-            status = new UimaASProcessStatusImpl(pt, cas, casReferenceId);
+        	  if ( uimaClient instanceof BaseUIMAAsynchronousEngine_impl ) {
+        		  String casReferenceId = 
+        				  ((BaseUIMAAsynchronousEngine_impl)uimaClient).sendAndReceiveCAS(cas, pt);
+                  status = new UimaASProcessStatusImpl(pt, cas, casReferenceId);
+        	  }
+           
           } catch (ResourceProcessException rpe) {
             //rpe.printStackTrace();
             status = new UimaASProcessStatusImpl(pt);
@@ -1108,12 +1126,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
     }
   }
 
-  protected void spinShutdownThread(final BaseUIMAAsynchronousEngine_impl uimaEEEngine, long when)
+  protected void spinShutdownThread(final UimaAsynchronousEngine uimaAsClient, long when)
           throws Exception {
-    spinShutdownThread(uimaEEEngine, when, null, 0);
+    spinShutdownThread(uimaAsClient, when, null, 0);
   }
 
-  protected void spinShutdownThread(final BaseUIMAAsynchronousEngine_impl uimaEEEngine, long when,
+  protected void spinShutdownThread(final UimaAsynchronousEngine uimaAsClient, long when,
           final String[] aSpringContainerIds, final int stop_level) throws Exception {
     Date timeToRun = new Date(System.currentTimeMillis() + when);
     final Timer timer = new Timer();
@@ -1124,7 +1142,12 @@ public abstract class BaseTestSupport extends ActiveMQSupport
         if (aSpringContainerIds == null) {
           isStopping = true;
           System.out.println(">>>> runTest: Stopping UIMA EE Engine");
-          uimaEEEngine.stop();
+          try {
+        	  uimaAsClient.stop();
+          } catch( Exception ex) {
+        	 ex.printStackTrace();;
+          }
+          
           isStopping = false;
           isStopped = true;
           System.out.println(">>>> runTest: UIMA EE Engine Stopped");
@@ -1139,7 +1162,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
           try {
             System.out.println(">>>> runTest: Quiescing Service And Stopping it");
             for( int i = aSpringContainerIds.length; i > 0; i--) {
-              uimaEEEngine.undeploy(aSpringContainerIds[i-1], stop_level);
+            	uimaAsClient.undeploy(aSpringContainerIds[i-1], stop_level);
             }
           } catch (Exception e) {
             e.printStackTrace();

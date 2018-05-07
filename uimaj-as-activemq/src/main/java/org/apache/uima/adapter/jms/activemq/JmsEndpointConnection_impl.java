@@ -181,7 +181,9 @@ public class JmsEndpointConnection_impl implements ConsumerListener {
           ServiceShutdownException, ConnectException {
 	  synchronized (lock) {
 		    try {
-
+if ( !controller.isPrimitive() && isReplyEndpoint ) {
+	System.out.println("JmsOutputChannel.openChannel()");
+}
 		        // If replying to http request, reply to a queue managed by this service broker using tcp
 		        // protocol
 		        if (isReplyEndpoint && brokerUri.startsWith("http")) {

@@ -61,9 +61,59 @@ public class DirectMessageContext implements MessageContext {
 			append(message.getAsString(AsynchAEMessage.CasReference))
 			.append("\n");
 		}
-		
+		String command = decodeIntToString(AsynchAEMessage.Command,message.getAsInt(AsynchAEMessage.Command));
+		String msgType =decodeIntToString(AsynchAEMessage.MessageType, message.getAsInt(AsynchAEMessage.MessageType));
+		sb.append(" - Command:").append(command).append("\n").
+		   append(" - MsgType:").append(msgType).append("\n");
 		System.out.println(sb.toString());
 	}
+	  private String decodeIntToString(String aTypeToDecode, int aValueToDecode) {
+		    if (AsynchAEMessage.MessageType.equals(aTypeToDecode)) {
+		      switch (aValueToDecode) {
+		        case AsynchAEMessage.Request:
+		          return "Request";
+		        case AsynchAEMessage.Response:
+		          return "Response";
+		      }
+		    } else if (AsynchAEMessage.Command.equals(aTypeToDecode)) {
+		      switch (aValueToDecode) {
+		        case AsynchAEMessage.Process:
+		          return "Process";
+		        case AsynchAEMessage.GetMeta:
+		          return "GetMetadata";
+		        case AsynchAEMessage.CollectionProcessComplete:
+		          return "CollectionProcessComplete";
+		        case AsynchAEMessage.ReleaseCAS:
+		          return "ReleaseCAS";
+		        case AsynchAEMessage.Stop:
+		          return "Stop";
+		        case AsynchAEMessage.Ping:
+		          return "Ping";
+		        case AsynchAEMessage.ServiceInfo:
+		          return "ServiceInfo";
+		      }
+
+		    } else if (AsynchAEMessage.Payload.equals(aTypeToDecode)) {
+		      switch (aValueToDecode) {
+		        case AsynchAEMessage.XMIPayload:
+		          return "XMIPayload";
+		        case AsynchAEMessage.BinaryPayload:
+		          return "BinaryPayload";
+		        case AsynchAEMessage.CASRefID:
+		          return "CASRefID";
+		        case AsynchAEMessage.Metadata:
+		          return "Metadata";
+		        case AsynchAEMessage.Exception:
+		          return "Exception";
+		          // 5/2013 xcas not used
+//		        case AsynchAEMessage.XCASPayload:
+//		          return "XCASPayload";
+		        case AsynchAEMessage.None:
+		          return "None";
+		      }
+		    }
+		    return "UNKNOWN";
+		  }
 
 	public String getMessageStringProperty(String aMessagePropertyName) throws AsynchAEException {
 		return (String)message.get(aMessagePropertyName);

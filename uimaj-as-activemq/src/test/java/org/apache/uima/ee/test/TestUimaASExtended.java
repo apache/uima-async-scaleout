@@ -60,9 +60,11 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.InputChannel.ChannelType;
 import org.apache.uima.aae.UimaClassFactory;
+import org.apache.uima.aae.client.UimaAS;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.error.ServiceShutdownException;
 import org.apache.uima.aae.error.UimaASPingTimeout;
@@ -162,6 +164,18 @@ public class TestUimaASExtended extends BaseTestSupport {
       eeUimaEngine.stop();
     }
 */
+    @Test
+    public void testDeploy() throws Exception {
+    	UimaAsynchronousEngine uimaAs = 
+    			UimaAS.newInstance(Transport.Java);
+    
+    	Map ctx = new HashMap<>();
+    	ctx.put(UimaAsynchronousEngine.Provider,"java");
+        ctx.put(UimaAsynchronousEngine.Protocol,"java");
+        
+        uimaAs.deploy(relativePath + "/Deploy_NoOpAnnotator.xml", ctx);
+    
+    }
     
     /**
      * This test starts a secondary broker, starts NoOp Annotator, and
@@ -255,6 +269,7 @@ public class TestUimaASExtended extends BaseTestSupport {
      * 
      * @throws Exception
      */
+    /*
     @Test
     public void testMultipleSyncClientsRecoveryFromBrokerStopAndRestart() throws Exception  {
       System.out.println("-------------- testMultipleSyncClientsRecoveryFromBrokerStopAndRestart -------------");
@@ -335,6 +350,7 @@ public class TestUimaASExtended extends BaseTestSupport {
         }
       }
   }
+  */
     @Test
     public void testClient() throws Exception {
       System.out.println("-------------- testClient -------------");
@@ -550,7 +566,7 @@ public class TestUimaASExtended extends BaseTestSupport {
     		  , 10, TimeUnit.SECONDS);
 
 
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 5; i++) {
           CAS cas = uimaAsEngine.getCAS();
           cas.setDocumentText("Some Text");
           try {
@@ -900,6 +916,28 @@ public class TestUimaASExtended extends BaseTestSupport {
     	throw e;
     }
   }
+    /**
+     * Test use of a JMS Service Adapter. Invoke from a synchronous aggregate to emulate usage from
+     * RunAE or RunCPE.
+     * 
+     * @throws Exception
+     */
+     @Test
+      public void testJmsServiceAdapterInAsyncAggregate() throws Exception {
+  	  Logger.getLogger(this.getClass()).info("-------------- testJmsServiceAdapter -------------");
+  	  //setUp();
+  	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+      try {
+          deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+  //        deployService(eeUimaEngine, relativePath + "/Deploy_AsyncAggregateWithJmsService.xml");
+//          runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+          runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "NoOpAnnotatorQueue",
+                  1, PROCESS_LATCH);
+         
+      } catch( Exception e ) {
+      	throw e;
+      }
+    }
   /*
    * Tests Uima AS client placeholder handling and substitution. The Uima Aggregate instantiates
    * UIMA AS client proxy using Jms Client Descriptor that contains a placeholder
@@ -1007,6 +1045,7 @@ public class TestUimaASExtended extends BaseTestSupport {
 
     runTest(null, uimaAsEngine, String.valueOf(getMasterConnectorURI(broker)),
             "MeetingDetectorTaeQueue", 3, PROCESS_LATCH);
+    uimaAsEngine.stop();
   }
 
   
@@ -1031,7 +1070,17 @@ public class TestUimaASExtended extends BaseTestSupport {
 		runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 		            100, PROCESS_LATCH);
   }
+  @Test
+  public void testSimpleTestAggregateWithInnerCMAggregate() throws Exception {
+		System.out
+		            .println("-------------- testSimpleTestAggregateWithInnerCMAggregate -------------");
+		System.setProperty("BrokerURL", getMasterConnectorURI(broker));
 
+		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployService(eeUimaEngine, relativePath + "/Deploy_SimpleAggregateMultiplier.xml");
+		runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+		            1, PROCESS_LATCH);
+  }
   /**
    * Tests programmatic generation of DD for deployment
    * 
@@ -1268,7 +1317,9 @@ public class TestUimaASExtended extends BaseTestSupport {
           cas.release();
       }
       */
-      
+   	System.setProperty(UimaAsynchronousEngine.Provider,"activemq");
+   	System.setProperty(UimaAsynchronousEngine.Protocol,"jms");
+
       String id = deployService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
       deployService(uimaAsEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
       // Deploy Uima AS Primitive Service
@@ -1413,6 +1464,9 @@ public class TestUimaASExtended extends BaseTestSupport {
   public void testClientHttpTunnellingToAggregate() throws Exception {
 	  System.out.println("-------------- testClientHttpTunnellingToAggregate -------------");
     // Add HTTP Connector to the broker. 
+	    System.setProperty("Protocol","jms");
+	    System.setProperty("Provider","activemq");
+
     String httpURI = getHttpURI();
     // Create Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
@@ -1912,10 +1966,10 @@ public class TestUimaASExtended extends BaseTestSupport {
         } 
         CAS cas = uimaClient1.getCAS();
         cas.setDocumentText("Some Text");
-//        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+        System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
         try {
           uimaClient1.sendAndReceiveCAS(cas);
-   //       System.out.println("UIMA AS Client Received Reply For CAS#" + (i + 1) );
+          System.out.println("UIMA AS Client Received Reply For CAS#" + (i + 1) );
         } catch( Exception e) {
           errorCount++;
           System.out.println("UIMA AS Client Received Expected Error on CAS:"+(i+1));
@@ -2208,6 +2262,9 @@ private class Killer {
   public void testDeployPrimitiveService() throws Exception {
     System.out.println("-------------- testDeployPrimitiveService -------------");
     // Instantiate Uima-AS Client
+    System.setProperty("Protocol","jms");
+    System.setProperty("Provider","activemq");
+
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy Uima-AS Primitive Service
     deployService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
@@ -2272,6 +2329,7 @@ private class Killer {
           eeUimaEngine.sendCAS(cas, tsId);
           //cas.release();
       }
+      
     } catch( Exception e) {
     	e.printStackTrace();
     } finally {
@@ -2383,6 +2441,9 @@ private class Killer {
   @Test
   public void testDeployAggregateWithDelegateCpCException() throws Exception {
     System.out.println("-------------- testDeployAggregateWithDelegateCpCException -------------");
+    System.setProperty("Protocol","jms");
+    System.setProperty("Provider","activemq");
+ 
     // Instantiate Uima-AS Client
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
     // Deploy Uima-AS Primitive Service
@@ -2562,7 +2623,8 @@ private class Killer {
   public void testDeployAggregateService() throws Exception {
     System.out.println("-------------- testDeployAggregateService -------------");
     BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-    
+    System.setProperty("Protocol","jms");
+    System.setProperty("Provider","activemq");
     
  //   System.setProperty("BrokerURL", "tcp::/localhost:61616");
 

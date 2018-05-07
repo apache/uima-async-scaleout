@@ -112,7 +112,7 @@ public class UimaAsDirectServiceBuilder extends AbstractUimaAsServiceBuilder  {
 		// resolve if placeholder used
 		String endpoint = resolvePlaceholder(serviceDefinition.getInputQueue().getEndpoint());
 		
-		int howMany = 1;
+		int howMany = 1;  // default
 		AsynchronousUimaASService service = null;
 		
 		// is this the only one resource specifier type supported  by the current uima-as?

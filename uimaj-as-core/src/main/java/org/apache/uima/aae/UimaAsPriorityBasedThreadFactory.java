@@ -138,6 +138,7 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
              
 			  if ( !initFailed && !controller.getState().equals(ServiceState.FAILED) ) {
             	  try {
+            		  System.out.println(".....UimaAsPriorityBasedThreadFactory.run() - callint AE.initialize() - Thread:"+Thread.currentThread().getId());
             		  ((PrimitiveAnalysisEngineController)controller).initializeAnalysisEngine();
             	  } catch( Exception e) {
             		  initFailed = true;
@@ -148,6 +149,7 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
             	  return; // there was failure previously so just return
               }
             }
+            System.out.println("............ Worker Thread Waiting for messages");
             // runs forever until controll is stopped
             while (!controller.isStopped()) {
             	// block until a message arrives or timeout. On timeout, the pool returns null
@@ -157,6 +159,7 @@ public class UimaAsPriorityBasedThreadFactory implements ThreadFactory {
             		// nothing received, try again
             		continue;
             	}
+            	System.out.println(">>>>>>>>>>>>>>>>>> GOT MESSAGE .....");
             	// 'poison pill' sent when controller stops
             	if (m.getMessage() == null
             			&& m.getSemaphore() == null

@@ -38,9 +38,10 @@ import java.util.concurrent.Future;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerService;
-
+import org.apache.log4j.Logger;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel.ChannelType;
+import org.apache.uima.aae.client.UimaAS;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
@@ -50,14 +51,12 @@ import org.apache.uima.aae.service.UimaASService;
 import org.apache.uima.aae.service.UimaAsServiceRegistry;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsInputChannel;
-import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.TypeSystem;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.collection.CollectionReaderDescription;
 import org.apache.uima.collection.EntityProcessStatus;
 import org.apache.uima.ee.test.utils.BaseTestSupport;
-import org.apache.uima.ee.test.utils.UimaASJunitTestFailFastListener;
 import org.apache.uima.ee.test.utils.UimaASTestRunner;
 import org.apache.uima.internal.util.XMLUtils;
 import org.apache.uima.resource.ResourceInitializationException;
@@ -67,14 +66,27 @@ import org.apache.uima.resourceSpecifier.factory.impl.ServiceContextImpl;
 import org.apache.uima.util.XMLInputSource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.BlockJUnit4ClassRunner;
 
 import junit.framework.Assert;
-import org.apache.log4j.Logger;
 @RunWith(UimaASTestRunner.class)
 public class TestUimaASNoErrors extends BaseTestSupport {
 	
+	private UimaAsynchronousEngine getClient(Transport transport) throws Exception {
+ 	   UimaAsynchronousEngine client;
+ 	   
+		switch(transport) {
+ 	    case JMS:
+ 	    	client = UimaAS.newInstance(transport);
+ 	    	break;
+ 	    case Java:
+ 	    	client = UimaAS.newInstance(transport);
+ 	    	break;
+ 	    default:
+ 	    	throw new IllegalArgumentException("*** ERROR Invalid Transport");	
+ 	    }
+		return client;
+
+	}
 	private Map<String, Object> defaultContext(String aTopLevelServiceQueueName) {
 		Map<String, Object> appCtx = new HashMap<>();
 	    appCtx.put(UimaAsynchronousEngine.ENDPOINT, aTopLevelServiceQueueName);
@@ -85,19 +97,19 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		return appCtx;
 	}
 	
-	private String deployTopLevelService(Map<String, Object> appCtx, Transport transport, BaseUIMAAsynchronousEngine_impl client, String topLevelDescriptor, String topLevelQueueName) 
+	private String deployTopLevelService(Map<String, Object> appCtx, Transport transport, UimaAsynchronousEngine uimaAsClient, String topLevelDescriptor, String topLevelQueueName) 
 	throws Exception {
 		String serviceId = null;
 
 		if (Transport.Java.equals(transport)) {
-			serviceId = deployJavaService(client, topLevelDescriptor);
+			serviceId = deployJavaService(uimaAsClient, topLevelDescriptor);
 		    appCtx.put(UimaAsynchronousEngine.ServerUri, "java");
 			appCtx.put(UimaAsynchronousEngine.ClientTransport, Transport.Java);
 
 		} else if (Transport.JMS.equals(transport)) {
 		    appCtx.put(UimaAsynchronousEngine.ServerUri, String.valueOf(getMasterConnectorURI(broker)));
 			appCtx.put(UimaAsynchronousEngine.ClientTransport, Transport.JMS);
-			serviceId = deployJmsService(client, topLevelDescriptor);
+			serviceId = deployJmsService(uimaAsClient, topLevelDescriptor);
 		} else {
 			throw new IllegalArgumentException(
 					"Invalid Client Transport - Expected either Transport.JMS or Transport.Java");
@@ -115,7 +127,22 @@ public class TestUimaASNoErrors extends BaseTestSupport {
     }  
     
     
+    @Test
+    public void testDeploy() throws Exception {
+    	UimaAsynchronousEngine uimaAS = getClient(Transport.Java);
+    
+    	Map ctx = new HashMap<>();
+    	
+    	ctx.put(UimaAsynchronousEngine.Provider,"activemq");
+        ctx.put(UimaAsynchronousEngine.Protocol,"jms");
+        uimaAS.deploy(relativePath + "/Deploy_NoOpAnnotator.xml", ctx);
 
+	    runTest2(null, uimaAS, getMasterConnectorURI(broker),
+	            "NoOpAnnotatorQueue", 1, PROCESS_LATCH);
+
+	    uimaAS.stop();
+    
+    }
     /*
      * 
      * 	 
@@ -276,16 +303,17 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	public void testCancelProcessAggregateWithRemoteMultiplier(Transport transport) throws Exception {
 		System.out.println("-------------- testStopAggregateWithRemoteMultiplier -------------");
 		System.setProperty("BrokerURL", getMasterConnectorURI(broker));
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
 
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplierWith1MillionDocs.xml");
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml", "TopLevelTaeQueue");
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplierWith1MillionDocs.xml");
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml", "TopLevelTaeQueue");
 //		Service(eeUimaEngine, relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml");
 		// Spin a thread to cancel Process after 20 seconds
-		spinShutdownThread(eeUimaEngine, 20000);
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
+		spinShutdownThread(uimaAsClient, 20000);
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
 				EXCEPTION_LATCH);
 	}
 	@Test
@@ -300,12 +328,13 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 	public void testProcessWithAggregateUsingRemoteMerger(Transport transport) throws Exception {
 		System.out.println("-------------- testProcessWithAggregateUsingRemoteMerger -------------");
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMerger.xml");
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMerger.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWithRemoteMerger.xml",
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWithRemoteMerger.xml",
 				"TopLevelTaeQueue");
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
 				PROCESS_LATCH);
 	}
 
@@ -321,14 +350,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 	public void testProcessWithAggregateUsingCollocatedMerger(Transport transport) throws Exception {
 		System.out.println("-------------- testProcessWithAggregateUsingCollocatedMerger -------------");
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine,
+		deployTopLevelService(appCtx, transport, uimaAsClient,
 				relativePath + "/Deploy_AggregateWithCollocatedMerger.xml", "TopLevelTaeQueue");
 
 		// deployJavaService(eeUimaEngine, relativePath +
 		// "/Deploy_AggregateWithCollocatedMerger.xml");
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
 				PROCESS_LATCH);
 	}
 	@Test
@@ -343,7 +373,8 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 	public void testDeployAggregateServiceWithBrokerPlaceholder(final Transport transport) throws Exception {
 		System.out.println("-------------- testDeployAggregateServiceWithBrokerPlaceholder -------------");
-		final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		final UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//final BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 
 		System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
 
@@ -362,9 +393,9 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 								bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
 						System.setProperty("NoOpBroker",
 								bs.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
-						deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorUsingPlaceholder.xml");
+						deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorUsingPlaceholder.xml");
 						Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-						deployTopLevelService(appCtx, transport, eeUimaEngine,
+						deployTopLevelService(appCtx, transport, uimaAsClient,
 								relativePath + "/Deploy_AggregateAnnotatorUsingPlaceholder.xml", "TopLevelTaeQueue");
 
 						// deployJavaService(eeUimaEngine, relativePath
@@ -374,7 +405,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 					    if ( transport.equals(Transport.JMS)) {
 							appCtx.put(UimaAsynchronousEngine.ServerUri, System.getProperty("AggregateBroker"));
 					    }
-						runTest(appCtx, eeUimaEngine, System.getProperty("AggregateBroker"), "TopLevelTaeQueue", 1,
+						runTest(appCtx, uimaAsClient, System.getProperty("AggregateBroker"), "TopLevelTaeQueue", 1,
 								PROCESS_LATCH);
 					} catch (InterruptedException e) {
 					} catch (Exception e) {
@@ -413,16 +444,17 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		System.out.println("-------------- testStopAggregateWithRemoteMultiplier -------------");
 
 		System.setProperty("BrokerURL", getMasterConnectorURI(broker));
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithExceptionOn5thCAS.xml");
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplier.xml");
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorWithExceptionOn5thCAS.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
 
-		deployTopLevelService(appCtx, transport, eeUimaEngine,
+		deployTopLevelService(appCtx, transport, uimaAsClient,
 				relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml", "TopLevelTaeQueue");
 		// deployService(eeUimaEngine, relativePath +
 		// "/Deploy_AggregateWithRemoteMultiplier.xml");
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
 				EXCEPTION_LATCH);
 	}
 
@@ -438,19 +470,20 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		System.out.println("-------------- testAggregateHttpTunnelling -------------");
 
 		// Create Uima-AS Client
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		// Deploy remote service
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		// Deploy top level aggregate that communicates with the remote via Http
 		// Tunnelling
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine,
+		deployTopLevelService(appCtx, transport, uimaAsClient,
 				relativePath + "/Deploy_AggregateAnnotatorWithHttpDelegate.xml","TopLevelTaeQueue");
 //		deployJmsService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithHttpDelegate.xml");
 	    //appCtx.put(UimaAsynchronousEngine.ClientTransport, Transport.JMS);
 
 		// Initialize and run the Test. Wait for a completion and cleanup resources.
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10, CPC_LATCH);
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10, CPC_LATCH);
 	}
 	
 
@@ -466,15 +499,16 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 	public void testJmsServiceAdapterWithOverride(Transport transport) throws Exception {
 		System.out.println("-------------- testJmsServiceAdapterWithOverride -------------");
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_SingleInstancePersonTitleAnnotator.xml");
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_SingleInstancePersonTitleAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine,
+		deployTopLevelService(appCtx, transport, uimaAsClient,
 				relativePath + "/Deploy_SyncAggregateWithJmsServiceAndScaleoutOverride.xml", "TopLevelTaeQueue");
 
 		// deployJavaService(eeUimaEngine, relativePath +
 		// "/Deploy_SyncAggregateWithJmsServiceAndScaleoutOverride.xml");
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10,
 				PROCESS_LATCH);
 	}
     
@@ -490,15 +524,16 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 	public void testJmsServiceAdapterWithPlaceholder(Transport transport) throws Exception {
 		System.out.println("-------------- testJmsServiceAdapterWithPlaceholder -------------");
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine,
+		deployTopLevelService(appCtx, transport, uimaAsClient,
 				relativePath + "/Deploy_SyncAggregateWithJmsServiceUsingPlaceholder.xml", "TopLevelTaeQueue");
 
 		// deployJavaService(eeUimaEngine, relativePath +
 		// "/Deploy_SyncAggregateWithJmsServiceUsingPlaceholder.xml");
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10,
 				PROCESS_LATCH);
 	}
 	@Test
@@ -514,17 +549,18 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	public void testScaledSyncAggregateProcess(Transport transport) throws Exception {
 		System.out.println("-------------- testScaledSyncAggregateProcess -------------");
 		// Instantiate Uima-AS Client
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		// Deploy Uima-AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine,
+		deployTopLevelService(appCtx, transport, uimaAsClient,
 				relativePath + "/Deploy_ScaledPrimitiveAggregateAnnotator.xml", "TopLevelTaeQueue");
 
 		// deployJavaService(eeUimaEngine, relativePath +
 		// "/Deploy_ScaledPrimitiveAggregateAnnotator.xml");
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 5,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 5,
 				PROCESS_LATCH);
-		System.out.println(eeUimaEngine.getPerformanceReport());
+		System.out.println(uimaAsClient.getPerformanceReport());
 	}
     @Test
 	public void testComplexDeploymentOverJava() throws Exception {
@@ -538,10 +574,13 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    System.out.println("-------------- testComplexDeployment -------------");
 	    Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
 	    
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+        UimaAsynchronousEngine uimaAsClient = getClient(transport);
+        Map anApplicationContext = new HashMap<>();
+         uimaAsClient.deploy(relativePath + "/Deploy_NoOpAnnotator.xml", anApplicationContext);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy replicated services for the inner remote aggregate CM
 	    StringBuilder sb = new StringBuilder(relativePath).append("/Deploy_NoOpAnnotator.xml");
-	    deployService(transport, eeUimaEngine, sb.toString()) ; //relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployService(transport, uimaAsClient, sb.toString()) ; //relativePath + "/Deploy_NoOpAnnotator.xml");
 //	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
 //	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
 //	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -550,11 +589,11 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 //	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_CMAggregateWithCollocatedCM.xml");
 	    sb.setLength(0);   // clear
 	    sb.append(relativePath).append("/Deploy_CMAggregateWithCollocatedCM.xml");
-	    deployService(transport, eeUimaEngine, sb.toString()); //relativePath + "/Deploy_CMAggregateWithCollocatedCM.xml");
+	    deployService(transport, uimaAsClient, sb.toString()); //relativePath + "/Deploy_CMAggregateWithCollocatedCM.xml");
 	    // Deploy top level Aggregate Cas Multiplier with 2 collocated Cas Multipliers
 	    // CM1 --> CM2 --> Remote AggregateCM --> Candidate Answer --> CC
-	    deployTopLevelService(appCtx, transport,eeUimaEngine,relativePath + "/Deploy_TopLevelComplexAggregateCM.xml","TopLevelTaeQueue");
-	    runTest2(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+	    deployTopLevelService(appCtx, transport,uimaAsClient,relativePath + "/Deploy_TopLevelComplexAggregateCM.xml","TopLevelTaeQueue");
+	    runTest2(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
 	            "TopLevelTaeQueue", 1, PROCESS_LATCH);
 	  }
 	  @Test
@@ -569,11 +608,11 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	public void testDeployAggregateWithCollocatedAggregateService(Transport transport) throws Exception {
 		System.out.println("-------------- testDeployAggregateWithCollocatedAggregateService -------------");
 	    Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	    deployTopLevelService(appCtx,transport,eeUimaEngine,relativePath + "/Deploy_ComplexAggregate.xml","TopLevelTaeQueue");
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10,
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployTopLevelService(appCtx,transport,uimaAsClient,relativePath + "/Deploy_ComplexAggregate.xml","TopLevelTaeQueue");
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 10,
 				PROCESS_LATCH);
 
 	}
@@ -593,18 +632,18 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		BrokerService broker2 = setupSecondaryBroker(true);
 		System.setProperty("BrokerURL", broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
 	    Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	    deployTopLevelService(appCtx,transport,eeUimaEngine,relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml","TopLevelTaeQueue");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplier.xml");
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployTopLevelService(appCtx,transport,uimaAsClient,relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml","TopLevelTaeQueue");
 
 //		Map<String, Object> appCtx = new HashMap<>();
 		appCtx.put(UimaAsynchronousEngine.ServerUri,
 				broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString());
 //		appCtx.put(UimaAsynchronousEngine.ENDPOINT, "TopLevelTaeQueue");
 //		appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
-		runTest(appCtx, eeUimaEngine, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(),
+		runTest(appCtx, uimaAsClient, broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(),
 				"TopLevelTaeQueue", 10, PROCESS_LATCH);
 		super.cleanBroker(broker2);
 
@@ -626,13 +665,13 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		System.out.println("-------------- testProcessWithAggregateUsingRemoteMultiplier -------------");
 		System.setProperty("BrokerURL", getMasterConnectorURI(broker));
 	    Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplier.xml");
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployTopLevelService(appCtx, transport,uimaAsClient,relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml","TopLevelTaeQueue");
 
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	    deployTopLevelService(appCtx, transport,eeUimaEngine,relativePath + "/Deploy_AggregateWithRemoteMultiplier.xml","TopLevelTaeQueue");
-
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
 				PROCESS_LATCH);
 	}
 
@@ -647,15 +686,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
  public void testClientProcessWithRemoteMultiplier(Transport transport) throws Exception {
    System.out.println("-------------- testClientProcessWithRemoteMultiplier -------------");
    Map<String, Object> appCtx = defaultContext("TestMultiplierQueue");
-
-   BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-   deployTopLevelService(appCtx,transport,eeUimaEngine,relativePath + "/Deploy_RemoteCasMultiplier.xml","TestMultiplierQueue");
+   UimaAsynchronousEngine uimaAsClient = getClient(transport);
+   //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+   deployTopLevelService(appCtx,transport,uimaAsClient,relativePath + "/Deploy_RemoteCasMultiplier.xml","TestMultiplierQueue");
 
 //   Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
 //           "TestMultiplierQueue");
    appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
    appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(1));
-   runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+   runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
            "TestMultiplierQueue", 1, PROCESS_LATCH);
  }
 
@@ -672,12 +711,12 @@ public class TestUimaASNoErrors extends BaseTestSupport {
    System.out
            .println("-------------- testClientProcessWithComplexAggregateRemoteMultiplier -------------");
    Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-
-   BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-   deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-   deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_1.xml");
-   deployTopLevelService(appCtx, transport,eeUimaEngine,relativePath + "/Deploy_CasMultiplierAggregateWithRemoteCasMultiplier.xml","TopLevelTaeQueue");
-   runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+   UimaAsynchronousEngine uimaAsClient = getClient(transport);
+   //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+   deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+   deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_1.xml");
+   deployTopLevelService(appCtx, transport,uimaAsClient,relativePath + "/Deploy_CasMultiplierAggregateWithRemoteCasMultiplier.xml","TopLevelTaeQueue");
+   runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
            1, PROCESS_LATCH);
  }
 
@@ -693,14 +732,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
    System.out
            .println("-------------- testProcessWithAggregateUsing2RemoteMultipliers -------------");
    Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
+   UimaAsynchronousEngine uimaAsClient = getClient(transport);
+   //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+   deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+   deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_1.xml");
+   deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_2.xml");
+   deployTopLevelService(appCtx, transport,uimaAsClient,relativePath + "/Deploy_AggregateWith2RemoteMultipliers.xml","TopLevelTaeQueue");
 
-   BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-   deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-   deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_1.xml");
-   deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_2.xml");
-   deployTopLevelService(appCtx, transport,eeUimaEngine,relativePath + "/Deploy_AggregateWith2RemoteMultipliers.xml","TopLevelTaeQueue");
-
-   runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+   runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
            1, PROCESS_LATCH);
  }
 
@@ -719,15 +758,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
 		//Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-
-		BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplier.xml");
-		deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateMultiplier.xml","TopLevelTaeQueue");
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		//BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplier.xml");
+		deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateMultiplier.xml","TopLevelTaeQueue");
 //		Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue");
 		appCtx.remove(UimaAsynchronousEngine.ShadowCasPoolSize);
 		appCtx.put(UimaAsynchronousEngine.ShadowCasPoolSize, Integer.valueOf(1));
-		runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
+		runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue", 1,
 				PROCESS_LATCH);
 		System.out.println("-------------- End testClientWithAggregateMultiplier -------------");
 
@@ -736,30 +775,32 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    public void testClient() throws Exception {
 	      System.out.println("-------------- testClient -------------");
 	      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
-
-	      BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
-	      BaseUIMAAsynchronousEngine_impl uimaAsEngine2 = new BaseUIMAAsynchronousEngine_impl();
-	      String sid1= deployJmsService(uimaAsEngine1, relativePath.concat( "/Deploy_AggregateMultiplierWith30SecDelay.xml") );
-	      String sid2 = deployJavaService(uimaAsEngine2, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
+	      UimaAsynchronousEngine uimaAsClient1 = getClient(Transport.JMS);
+	      UimaAsynchronousEngine uimaAsClient2 = getClient(Transport.JMS);
+	      //BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
+	      //BaseUIMAAsynchronousEngine_impl uimaAsEngine2 = new BaseUIMAAsynchronousEngine_impl();
+	      String sid1= deployJmsService(uimaAsClient1, relativePath.concat( "/Deploy_AggregateMultiplierWith30SecDelay.xml") );
+	      String sid2 = deployJavaService(uimaAsClient2, relativePath + "/Deploy_AggregateMultiplierWith30SecDelay.xml");
 	      
-	      uimaAsEngine1.undeploy(sid1);
+	      uimaAsClient1.undeploy(sid1);
 	      
-	      uimaAsEngine2.undeploy(sid2);
+	      uimaAsClient2.undeploy(sid2);
 	    }
 	    
 	    @Test
 	    public void testClientWithPrimitives() throws Exception {
 	      System.out.println("-------------- testClientRecoveryFromBrokerFailure -------------");
 	      System.setProperty("BrokerURL", broker.getConnectorByName(DEFAULT_BROKER_URL_KEY).getUri().toString());
-
-	      BaseUIMAAsynchronousEngine_impl uimaAsEngine1 = new BaseUIMAAsynchronousEngine_impl();
-	      BaseUIMAAsynchronousEngine_impl uimaAsEngine2 = new BaseUIMAAsynchronousEngine_impl();
-	      String sid1= deployJmsService(uimaAsEngine1, relativePath + "/Deploy_NoOpAnnotator.xml");
-	      String sid2 = deployJavaService(uimaAsEngine2, relativePath + "/Deploy_NoOpAnnotator.xml");
+	      UimaAsynchronousEngine uimaAsClient1 = getClient(Transport.JMS);
+	      UimaAsynchronousEngine uimaAsClient2 = getClient(Transport.JMS);
+	      //BaseUIMAAsynchronousEngine_impl uimaAsClient1 = new BaseUIMAAsynchronousEngine_impl();
+	      //BaseUIMAAsynchronousEngine_impl uimaAsEngine2 = new BaseUIMAAsynchronousEngine_impl();
+	      String sid1= deployJmsService(uimaAsClient1, relativePath + "/Deploy_NoOpAnnotator.xml");
+	      String sid2 = deployJavaService(uimaAsClient2, relativePath + "/Deploy_NoOpAnnotator.xml");
 	      
-	      uimaAsEngine1.undeploy(sid1);
+	      uimaAsClient1.undeploy(sid1);
 	      
-	      uimaAsEngine2.undeploy(sid2);
+	      uimaAsClient2.undeploy(sid2);
 	      
 	    }
 
@@ -820,11 +861,12 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testCompressedTypeFiltering(Transport transport) throws Exception {
 	    System.out.println("-------------- testCompressedTypeFiltering -------------");
 	    // Instantiate Uima-AS Client
-	    final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	    final UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Service
-  	    deployJmsService(uimaAsEngine, relativePath + "/Deploy_RoomNumberAnnotator.xml");
+  	    deployJmsService(uimaAsClient, relativePath + "/Deploy_RoomNumberAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("MeetingDetectorTaeQueue");
-		deployTopLevelService(appCtx, transport, uimaAsEngine, relativePath + "/Deploy_MeetingDetectorTAE_RemoteRoomNumberBinary.xml","MeetingDetectorTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_MeetingDetectorTAE_RemoteRoomNumberBinary.xml","MeetingDetectorTaeQueue");
 
 //	    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)), "MeetingDetectorTaeQueue");
 	    // Set an explicit getMeta (Ping)timeout
@@ -833,7 +875,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    appCtx.put(UimaAsynchronousEngine.Timeout, 1000);
 	    appCtx.put(UimaAsynchronousEngine.SERIALIZATION_STRATEGY, "binary");
 
-	    runTest(appCtx, uimaAsEngine, String.valueOf(getMasterConnectorURI(broker)),
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
 	            "MeetingDetectorTaeQueue", 1, PROCESS_LATCH);
 	  }
 
@@ -897,15 +939,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		  
 		// create Map to hold required parameters
 		  Map<String,Object> appCtx = new HashMap<String,Object>();
-		  
-		  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		  UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		  //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		  String aSpringContainerId =
-				  deployTopLevelService(appCtx, transport, eeUimaEngine, tempFile.getAbsolutePath(), "");
+				  deployTopLevelService(appCtx, transport, uimaAsClient, tempFile.getAbsolutePath(), "");
 
 //		      eeUimaEngine.deploy(tempFile.getAbsolutePath(), appCtx);
 		  
-		  eeUimaEngine.undeploy(aSpringContainerId);
-		  eeUimaEngine.stop();
+		  uimaAsClient.undeploy(aSpringContainerId);
+		  uimaAsClient.stop();
 		  
 		  
 	  }
@@ -919,28 +961,29 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		  testSendAndReceive(Transport.JMS);
 	  }
 	  public void testSendAndReceive(Transport transport) throws Exception  {
-	      BaseUIMAAsynchronousEngine_impl uimaAsEngine 
-	      	= new BaseUIMAAsynchronousEngine_impl();
-	      deployJmsService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	      deployJmsService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+		  UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	      //BaseUIMAAsynchronousEngine_impl uimaAsEngine 
+	      //	= new BaseUIMAAsynchronousEngine_impl();
+	      deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	      deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		  Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		  deployTopLevelService(appCtx, transport, uimaAsEngine, relativePath + "/Deploy_AggregateAnnotator.xml", "TopLevelTaeQueue");
+		  deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotator.xml", "TopLevelTaeQueue");
 	      
 //	      appCtx.put(UimaAsynchronousEngine.Timeout, 1100);
 	      appCtx.put(UimaAsynchronousEngine.Timeout, 0);
 	      appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
-	      initialize(uimaAsEngine, appCtx);
+	      initialize(uimaAsClient, appCtx);
 	      waitUntilInitialized();
 	      int errorCount = 0;
 	      List<AnalysisEnginePerformanceMetrics> componentMetricsList = 
 	    		  new ArrayList<AnalysisEnginePerformanceMetrics>();
 	      for (int i = 0; i < 1; i++) {
-	        CAS cas = uimaAsEngine.getCAS();
+	        CAS cas = uimaAsClient.getCAS();
 	        cas.reset();
 	        cas.setDocumentText("Some Text");
 	  //      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
 	        try {
-	          uimaAsEngine.sendAndReceiveCAS(cas,componentMetricsList);
+	        	uimaAsClient.sendAndReceiveCAS(cas,componentMetricsList);
 	          System.out.println("-------> Client Received Performance Metrics of Size:"+componentMetricsList.size());
 	          for( AnalysisEnginePerformanceMetrics m :componentMetricsList ) {
 	        	  System.out.println(".............. Component:"+m.getName()+" AnalysisTime:"+m.getAnalysisTime());
@@ -967,7 +1010,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 					
 				}
 		  }	
-	      uimaAsEngine.stop();
+		  uimaAsClient.stop();
 	  }
 
 	  
@@ -978,10 +1021,11 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    // Add HTTP Connector to the broker. 
 	    String httpURI = getHttpURI();
 	    // Create Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(Transport.JMS);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy remote service
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_AggregateAnnotator.xml");
 	    // Initialize and run the Test. Wait for a completion and cleanup resources.
 	    System.out.println("-------- Connecting Client To Service: "+httpURI);
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
@@ -990,16 +1034,17 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    appCtx.put(UimaAsynchronousEngine.ClientTransport, Transport.JMS);
 
 	    
-	    runTest(appCtx, eeUimaEngine, httpURI, "TopLevelTaeQueue", 1, CPC_LATCH);
+	    runTest(appCtx, uimaAsClient, httpURI, "TopLevelTaeQueue", 1, CPC_LATCH);
 	  }
 	  @Test
 	  public void testClientHttpTunnelling() throws Exception {
 	    System.out.println("-------------- testClientHttpTunnelling -------------");
 	    String httpURI = getHttpURI();
 	    // Create Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(Transport.JMS);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		Map<String, Object> appCtx = defaultContext("NoOpAnnotatorQueue");
-		deployTopLevelService(appCtx, Transport.JMS, eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml", "NoOpAnnotatorQueue");
+		deployTopLevelService(appCtx, Transport.JMS, uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml", "NoOpAnnotatorQueue");
 
 	    // Deploy remote service
 //	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
@@ -1008,7 +1053,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    appCtx.put(UimaAsynchronousEngine.ServerUri, httpURI);
 	    appCtx.put(UimaAsynchronousEngine.ClientTransport, Transport.JMS);
 
-	    runTest(appCtx, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, PROCESS_LATCH);
+	    runTest(appCtx, uimaAsClient, httpURI, "NoOpAnnotatorQueue", 1, PROCESS_LATCH);
 	  }
 
 
@@ -1035,10 +1080,11 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 	        String httpURI = getHttpURI();
 	      // Create Uima-AS Client
-	        BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	        UimaAsynchronousEngine uimaAsClient = getClient(Transport.JMS);
+	        //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	        // Deploy remote service
 			Map<String, Object> appCtx = defaultContext("NoOpAnnotatorQueue");
-			deployTopLevelService(appCtx, Transport.JMS, eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml", "NoOpAnnotatorQueue");
+			deployTopLevelService(appCtx, Transport.JMS, uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml", "NoOpAnnotatorQueue");
 
 //	        deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
 	        
@@ -1057,7 +1103,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		    appCtx.put(UimaAsynchronousEngine.ServerUri, httpURI);
 		    appCtx.put(UimaAsynchronousEngine.ClientTransport, Transport.JMS);
 
-	        runTest(appCtx, eeUimaEngine, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
+	        runTest(appCtx, uimaAsClient, httpURI, "NoOpAnnotatorQueue", 1, CPC_LATCH);
 	      }
 	    } catch (Exception e) {
 	      // Double-Byte Text file not present. Continue on with the next test
@@ -1083,14 +1129,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		    super.resetCASesProcessed();
 		    
 		    // Instantiate Uima AS Client
-		    final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+		    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		    //final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
 //		    UIMAFramework.getLogger(BaseUIMAAsynchronousEngineCommon_impl.class).setLevel(Level.FINEST);
 //		    UIMAFramework.getLogger(BaseUIMAAsynchronousEngine_impl.class).setLevel(Level.FINEST);
 //		    UIMAFramework.getLogger().setLevel(Level.FINEST);
 //		    UIMAFramework.getLogger().setOutputStream(System.out);
 		    // Deploy Uima AS Primitive Service
 			Map<String, Object> appCtx = defaultContext("NoOpAnnotatorQueueLongDelay");
-			deployTopLevelService(appCtx, transport, uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml", "NoOpAnnotatorQueueLongDelay");
+			deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml", "NoOpAnnotatorQueueLongDelay");
 
 //		    deployJavaService(uimaAsEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml");
 //		    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
@@ -1115,19 +1162,19 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	             		setParameterValue("InputDirectory", relativeDataPath);
 	             CollectionReader collectionReader = UIMAFramework
 	                     .produceCollectionReader(collectionReaderDescription);
-	             uimaAsEngine.setCollectionReader(collectionReader);	    
+	             uimaAsClient.setCollectionReader(collectionReader);	    
 	         } catch( Throwable e) {
 	        	 e.printStackTrace();
 	         }
 		    
-		    initialize(uimaAsEngine, appCtx);
+		    initialize(uimaAsClient, appCtx);
 		    waitUntilInitialized();
 		    
-		    uimaAsEngine.process();
+		    uimaAsClient.process();
 
 		    Assert.assertEquals(8, getNumberOfCASesProcessed());
 		    System.clearProperty("DefaultBrokerURL");
-		    uimaAsEngine.stop();
+		    uimaAsClient.stop();
 		  }
 
 	  @Test
@@ -1142,10 +1189,11 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    System.out.println("-------------- testClientProcess -------------");
 	    
 	    // Instantiate Uima AS Client
-	    final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //final BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("PersonTitleAnnotatorQueue");
-		deployTopLevelService(appCtx, transport, uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml", "PersonTitleAnnotatorQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_PersonTitleAnnotator.xml", "PersonTitleAnnotatorQueue");
 
 //	    deployJavaService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
 	    
@@ -1158,19 +1206,19 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 //	    appCtx.put(UimaAsynchronousEngine.Timeout, 0);
 	    appCtx.put(UimaAsynchronousEngine.CpcTimeout, 1100);
 	    appCtx.put(UimaAsynchronousEngine.CasPoolSize,2);
-	    initialize(uimaAsEngine, appCtx);
+	    initialize(uimaAsClient, appCtx);
 	    waitUntilInitialized();
 
 	    for (int i = 0; i < 500; i++) {
-	      CAS cas = uimaAsEngine.getCAS();
+	      CAS cas = uimaAsClient.getCAS();
 	      cas.setDocumentText("Some Text");
 	      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
-	      uimaAsEngine.sendCAS(cas);
+	      uimaAsClient.sendCAS(cas);
 	    }
 	    
-	    uimaAsEngine.collectionProcessingComplete();
+	    uimaAsClient.collectionProcessingComplete();
 	    System.clearProperty("DefaultBrokerURL");
-	    uimaAsEngine.stop();
+	    uimaAsClient.stop();
 	  }
 	  
 	 @Test
@@ -1185,25 +1233,26 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    System.out.println("-------------- testClientBrokerPlaceholderSubstitution -------------");
 	    System.setProperty( "defaultBrokerURL", getMasterConnectorURI(broker));
 	    // Instantiate Uima AS Client
-	    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("PersonTitleAnnotatorQueue");
-		deployTopLevelService(appCtx, transport, uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml", "PersonTitleAnnotatorQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_PersonTitleAnnotator.xml", "PersonTitleAnnotatorQueue");
 
 	  //  deployJavaService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
 
 	   // Map<String, Object> appCtx = buildContext("${defaultBrokerURL}","PersonTitleAnnotatorQueue");
 
-	    initialize(uimaAsEngine, appCtx);
+	    initialize(uimaAsClient, appCtx);
 	    waitUntilInitialized();
 	    for (int i = 0; i < 10; i++) {
-	      CAS cas = uimaAsEngine.getCAS();
+	      CAS cas = uimaAsClient.getCAS();
 	      cas.setDocumentText("Some Text");
 	 //     System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
-	      uimaAsEngine.sendCAS(cas);
+	      uimaAsClient.sendCAS(cas);
 	    }
-	    uimaAsEngine.collectionProcessingComplete();
-	    uimaAsEngine.stop();
+	    uimaAsClient.collectionProcessingComplete();
+	    uimaAsClient.stop();
 	    
 	  }
 
@@ -1218,7 +1267,8 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testClientEndpointPlaceholderSubstitution(Transport transport) throws Exception {
 		    System.out.println("-------------- testClientEndpointPlaceholderSubstitution -------------");
 		    // Instantiate Uima AS Client
-		    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+		    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		    //BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
 		    // Nest the placeholders in the broker & endpoint strings
 		    String url = getMasterConnectorURI(broker);
 		    System.setProperty( "defaultBrokerURL", url.substring(2,url.length()-2));
@@ -1227,23 +1277,23 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		    String endpoint = "Person${PersonTitleEndpoint}Queue";  // "PersonTitleAnnotatorQueue"
 		    // Deploy Uima AS Primitive Service
 			Map<String, Object> appCtx = defaultContext(endpoint);
-			deployTopLevelService(appCtx, transport, uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml",endpoint);
+			deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_PersonTitleAnnotator.xml",endpoint);
 
 //		    deployJavaService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
 
 
 		    //Map<String, Object> appCtx = buildContext(brokerUrl, endpoint);
 
-		    initialize(uimaAsEngine, appCtx);
+		    initialize(uimaAsClient, appCtx);
 		    waitUntilInitialized();
 		    for (int i = 0; i < 10; i++) {
-		      CAS cas = uimaAsEngine.getCAS();
+		      CAS cas = uimaAsClient.getCAS();
 		      cas.setDocumentText("Some Text");
 //		      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
-		      uimaAsEngine.sendCAS(cas);
+		      uimaAsClient.sendCAS(cas);
 		    }
-		    uimaAsEngine.collectionProcessingComplete();
-		    uimaAsEngine.stop();
+		    uimaAsClient.collectionProcessingComplete();
+		    uimaAsClient.stop();
 		    
 		  }
 	   /**
@@ -1267,14 +1317,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testDeployPrimitiveService(Transport transport) throws Exception {
 	    System.out.println("-------------- testDeployPrimitiveService -------------");
 	    // Instantiate Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("PersonTitleAnnotatorQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
 
 	//    deployJavaService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
-	            "PersonTitleAnnotatorQueue", 1000, PROCESS_LATCH);
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
+	            "PersonTitleAnnotatorQueue", 1, PROCESS_LATCH);
 	    System.out.println("-------------- Terminating testDeployPrimitiveService -------------");
 	  }
 	 @Test
@@ -1288,25 +1339,26 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testTypeSystemMerge(Transport transport) throws Exception {
 	    System.out.println("-------------- testTypeSystemMerge -------------");
 	    // Instantiate Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Service
-	    deployJmsService(eeUimaEngine, relativePath+ "/Deploy_GovernmentOfficialRecognizer.xml");
-	    deployJmsService(eeUimaEngine, relativePath+ "/Deploy_NamesAndPersonTitlesRecognizer.xml");
-	    deployJmsService(eeUimaEngine, relativePath+ "/Deploy_TokenSentenceRecognizer.xml");
+	    deployJmsService(uimaAsClient, relativePath+ "/Deploy_GovernmentOfficialRecognizer.xml");
+	    deployJmsService(uimaAsClient, relativePath+ "/Deploy_NamesAndPersonTitlesRecognizer.xml");
+	    deployJmsService(uimaAsClient, relativePath+ "/Deploy_TokenSentenceRecognizer.xml");
 	    
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateToTestTSMerge.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateToTestTSMerge.xml","TopLevelTaeQueue");
 
 	   // deployJavaService(eeUimaEngine, relativePath+ "/Deploy_AggregateToTestTSMerge.xml");
 //	    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
 //	    "TopLevelTaeQueue");
 	    
 	    try {
-	      initialize(eeUimaEngine, appCtx);
+	      initialize(uimaAsClient, appCtx);
 	      waitUntilInitialized();
 	      //  Check if the type system returned from the service contains
 	      //  expected types
-	      CAS cas = eeUimaEngine.getCAS();
+	      CAS cas = uimaAsClient.getCAS();
 	      TypeSystem ts = cas.getTypeSystem();
 	      //  "example.EmailsAddress" type was 'contributed' by the Flow Controller
 	      if ( ts.getType("example.EmailAddress") == null ) {
@@ -1329,7 +1381,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	        fail("Initialization Exception");
 	    } catch (Exception e) {
 	    } finally {
-	      eeUimaEngine.stop();
+	    	uimaAsClient.stop();
 	    }
 	  }
 	 /**
@@ -1348,22 +1400,23 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testCpCWithNoCASesSent(Transport transport) throws Exception {
 	    System.out.println("-------------- testCpCWithNoCASesSent -------------");
 	    // Instantiate Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("PersonTitleAnnotatorQueue");
-		deployTopLevelService(appCtx, transport, uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
 
 	//    deployJavaService(uimaAsEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
 //	    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
 //	            "PersonTitleAnnotatorQueue");
-	    initialize(uimaAsEngine, appCtx);
+	    initialize(uimaAsClient, appCtx);
 	    waitUntilInitialized();
 
 	    for (int i = 0; i < 10; i++) {
 	      System.out.println("UIMA AS Client Sending CPC Request to a Service");
-	      uimaAsEngine.collectionProcessingComplete();
+	      uimaAsClient.collectionProcessingComplete();
 	    }
-	    uimaAsEngine.stop();
+	    uimaAsClient.stop();
 	  }
 
 	 @Test
@@ -1376,14 +1429,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	 }
 	  public void testDeployAggregateService(Transport transport) throws Exception {
 	    System.out.println("-------------- testDeployAggregateService -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    
 	    
 	    //   System.setProperty("BrokerURL", "tcp::/localhost:61616");
 	       System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
 //	       deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
 			Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-			deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml","TopLevelTaeQueue");
+			deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotator.xml","TopLevelTaeQueue");
 
 	//       deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
 
@@ -1397,7 +1451,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	       addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class); 
 	       
 //	       runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
-	       runTest(appCtx, eeUimaEngine, "tcp://localhost:61616", "TopLevelTaeQueue",
+	       runTest(appCtx, uimaAsClient, "tcp://localhost:61616", "TopLevelTaeQueue",
 	               1, PROCESS_LATCH);
 	  }
 	 
@@ -1456,10 +1510,11 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testDeployAggregateServiceWithScaledInnerNoOp(Transport transport) throws Exception {
 		    System.out.println("-------------- testDeployAggregateServiceWithScaledInnerNoOp -------------");
-		    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
 			Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-			deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithScaledInnerNoOp.xml","TopLevelTaeQueue");
+			deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotatorWithScaledInnerNoOp.xml","TopLevelTaeQueue");
 
 //		    deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithScaledInnerNoOp.xml");
 //		    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
@@ -1470,7 +1525,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		    
 		    addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class); 
 		    
-		    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+		    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 		            10, PROCESS_LATCH);
 		    System.out.println("-------------- End testDeployAggregateServiceWithScaledInnerNoOp -------------");
 
@@ -1493,13 +1548,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testDeployAggregateServiceWithTempReplyQueue(Transport transport) throws Exception {
 	    System.out.println("-------------- testDeployAggregateServiceWithTempReplyQueue -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateUsingRemoteTempQueue.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateUsingRemoteTempQueue.xml","TopLevelTaeQueue");
 
 //	    deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateUsingRemoteTempQueue.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 
 	  }
@@ -1519,17 +1575,18 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testProcessAggregateServiceWith1000Docs(Transport transport) throws Exception {
 	    System.out.println("-------------- testProcessAggregateServiceWith1000Docs -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithInternalCM1000Docs.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotatorWithInternalCM1000Docs.xml","TopLevelTaeQueue");
 
 //	    deployJavaService(eeUimaEngine, relativePath
 //	            + "/Deploy_AggregateAnnotatorWithInternalCM1000Docs.xml");
 	    
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 
 	  }
@@ -1544,13 +1601,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testProcessAggregateWithInnerAggregateCM(Transport transport) throws Exception {
 	    System.out.println("-------------- testProcessAggregateWithInnerAggregateCM() -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_ComplexAggregateWithInnerAggregateCM.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_ComplexAggregateWithInnerAggregateCM.xml","TopLevelTaeQueue");
 
 //	    deployJavaService(eeUimaEngine, relativePath + "/Deploy_ComplexAggregateWithInnerAggregateCM.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	    System.out.println("-------------- End testProcessAggregateWithInnerAggregateCM() -------------");
 
@@ -1566,13 +1624,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  
 	  public void testAggregateWithInnerSynchAggregateCM(Transport transport) throws Exception {
 		    System.out.println("-------------- testAggregateWithInnerSynchAggregateCM() -------------");
-		    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		    System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
 			Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-			deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_ComplexAggregateWithInnerUimaAggregateCM.xml","TopLevelTaeQueue");
+			deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_ComplexAggregateWithInnerUimaAggregateCM.xml","TopLevelTaeQueue");
 
 		   // deployJavaService(eeUimaEngine, relativePath + "/Deploy_ComplexAggregateWithInnerUimaAggregateCM.xml");
-		    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+		    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 		            1, PROCESS_LATCH);
 		    System.out.println("-------------- testAggregateWithInnerSynchAggregateCM() -------------");
 
@@ -1595,13 +1654,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testPrimitiveServiceProcess(Transport transport) throws Exception {
 	    System.out.println("-------------- testPrimitiveServiceProcess -------------");
 	    // Instantiate Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("PersonTitleAnnotatorQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
 
 //	    deployJavaService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
 	            "PersonTitleAnnotatorQueue", 5, PROCESS_LATCH);
 	  }
 
@@ -1622,13 +1682,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testSyncAggregateProcess(Transport transport) throws Exception {
 	    System.out.println("-------------- testSyncAggregateProcess -------------");
 	    // Instantiate Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("MeetingDetectorQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_MeetingDetectorAggregate.xml","MeetingDetectorQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_MeetingDetectorAggregate.xml","MeetingDetectorQueue");
 
 //	    deployJavaService(eeUimaEngine, relativePath + "/Deploy_MeetingDetectorAggregate.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
 	            "MeetingDetectorQueue", 5, PROCESS_LATCH);
 	  }
 
@@ -1647,10 +1708,11 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testPrimitiveProcessCallWithLongDelay(Transport transport) throws Exception {
 	    System.out.println("-------------- testPrimitiveProcessCallWithLongDelay -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Service
 		Map<String, Object> appCtx = defaultContext("NoOpAnnotatorQueueLongDelay");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml","NoOpAnnotatorQueueLongDelay");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml","NoOpAnnotatorQueueLongDelay");
 
 //	    deployJavaService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithLongDelay.xml");
 	    // We expect 18000ms to be spent in process method
@@ -1660,7 +1722,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 //	            "NoOpAnnotatorQueueLongDelay");
 	    appCtx.remove(UimaAsynchronousEngine.ReplyWindow);
 	    appCtx.put(UimaAsynchronousEngine.ReplyWindow, 1);
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
 	            "NoOpAnnotatorQueueLongDelay", 4, PROCESS_LATCH, true);
 	  }
 
@@ -1684,14 +1746,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testAggregateProcessCallWithLongDelay(Transport transport) throws Exception {
 
 	    System.out.println("-------------- testAggregateProcessCallWithLongDelay -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Services each with 6000ms delay in process()
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorAWithLongDelay.xml");
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorBWithLongDelay.xml");
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorCWithLongDelay.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorAWithLongDelay.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorBWithLongDelay.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorCWithLongDelay.xml");
 	    
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithLongDelay.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotatorWithLongDelay.xml","TopLevelTaeQueue");
 
 //	    deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithLongDelay.xml");
 	    // We expect 18000ms to be spent in process method
@@ -1701,7 +1764,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    appCtx.remove(UimaAsynchronousEngine.ReplyWindow);
 	    // make sure we only send 1 CAS at a time
 	    appCtx.put(UimaAsynchronousEngine.ReplyWindow, 1);
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
 	            "TopLevelTaeQueue", 1, PROCESS_LATCH, true);
 	    System.out.println("///////////////");
 	  }
@@ -1722,13 +1785,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testAggregateProcessCallWithLastCM(Transport transport) throws Exception {
 	    System.out.println("-------------- testAggregateProcessCallWithLastCM -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    // Deploy Uima-AS Primitive Services each with 6000ms delay in process()
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWithLastCM.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWithLastCM.xml","TopLevelTaeQueue");
 
 	    //deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateWithLastCM.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH, true);
 	  }
 
@@ -1748,14 +1812,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testProcessWithParallelFlow(Transport transport) throws Exception {
 	    System.out.println("-------------- testProcessWithParallelFlow -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator2.xml");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator2.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWithParallelFlow.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWithParallelFlow.xml","TopLevelTaeQueue");
 
 	    //deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateWithParallelFlow.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	  }
 
@@ -1771,13 +1836,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testProcessWithAggregateUsingCollocatedMultiplier(Transport transport) throws Exception {
 	    System.out
 	            .println("-------------- testProcessWithAggregateUsingCollocatedMultiplier -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotator.xml","TopLevelTaeQueue");
 
 	   // deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	  }
 
@@ -1793,14 +1859,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    System.out
 	            .println("-------------- testParentProcessLast -------------");
 	    System.setProperty("BrokerURL", getMasterConnectorURI(broker));
-
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_1.xml");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_RemoteCasMultiplierWith10Docs_1.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithProcessParentLastCMs.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotatorWithProcessParentLastCMs.xml","TopLevelTaeQueue");
 
 	   // deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotatorWithProcessParentLastCMs.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	  }
 
@@ -1835,13 +1901,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testProcessWithAggregateUsing2CollocatedMultipliers(Transport transport) throws Exception {
 	    System.out
 	            .println("-------------- testProcessWithAggregateUsing2CollocatedMultipliers -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWith2Multipliers.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWith2Multipliers.xml","TopLevelTaeQueue");
 
 	   // deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateWith2Multipliers.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	  }
 
@@ -1855,12 +1922,13 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testProcessAggregateWithInnerCMAggregate(Transport transport) throws Exception {
 	    System.out.println("-------------- testProcessAggregateWithInnerCMAggregate -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_TopAggregateWithInnerAggregateCM.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_TopAggregateWithInnerAggregateCM.xml","TopLevelTaeQueue");
 
 	   // deployJavaService(eeUimaEngine, relativePath + "/Deploy_TopAggregateWithInnerAggregateCM.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	  }
 
@@ -1876,12 +1944,13 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testTypesystemMergeWithMultiplier(Transport transport) throws Exception {
 	    System.out.println("-------------- testTypesystemMergeWithMultiplier -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWithMergedTypes.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWithMergedTypes.xml","TopLevelTaeQueue");
 
 	    //deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateWithMergedTypes.xml");
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	  } 
 
@@ -1896,15 +1965,16 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testCancelProcessAggregateWithCollocatedMultiplier(Transport transport) throws Exception {
 	    System.out
 	            .println("-------------- testCancelProcessAggregateWithCollocatedMultiplier -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
-	    deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_ComplexAggregateWith1MillionDocs.xml","TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_ComplexAggregateWith1MillionDocs.xml","TopLevelTaeQueue");
 
 	   // deployJavaService(eeUimaEngine, relativePath + "/Deploy_ComplexAggregateWith1MillionDocs.xml");
 	    // Spin a thread to cancel Process after 20 seconds
-	    spinShutdownThread(eeUimaEngine, 20000);
-	    runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	    spinShutdownThread(uimaAsClient, 20000);
+	    runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	            1, PROCESS_LATCH);
 	  }
 
@@ -1928,9 +1998,10 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testCollectionReader(Transport transport) throws Exception {
 	    System.out.println("-------------- testCollectionReader -------------");
 	    // Instantiate Uima-AS Client
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 		Map<String, Object> appCtx = defaultContext("PersonTitleAnnotatorQueue");
-		deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_PersonTitleAnnotator.xml","PersonTitleAnnotatorQueue");
 
 //	    deployJavaService(eeUimaEngine, relativePath + "/Deploy_PersonTitleAnnotator.xml");
 //	    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
@@ -1953,14 +2024,14 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	            .parseCollectionReaderDescription(new XMLInputSource(collectionReaderDescriptor));
 	    CollectionReader collectionReader = UIMAFramework
 	            .produceCollectionReader(collectionReaderDescription);
-	    eeUimaEngine.setCollectionReader(collectionReader);
-	    initialize(eeUimaEngine, appCtx);
+	    uimaAsClient.setCollectionReader(collectionReader);
+	    initialize(uimaAsClient, appCtx);
 	    waitUntilInitialized();
-	    runCrTest(eeUimaEngine, 7);
+	    runCrTest(uimaAsClient, 7);
 	    synchronized (this) {
 	      wait(50);
 	    }
-	    eeUimaEngine.stop();
+	    uimaAsClient.stop();
 	  }
 
 
@@ -1976,15 +2047,16 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  public void testDeployAgainAndAgain(Transport transport) throws Exception {
 	    System.out.println("-------------- testDeployAgainAndAgain -------------");
 	    for (int num = 1; num <= 50; num++) {
-	      BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl(); 
+	    	UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	      //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl(); 
 	      System.out.println("\nRunning iteration " + num);
-	      deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-	      deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator2.xml");
+	      deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
+	      deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator2.xml");
 		  Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		  deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWithParallelFlow.xml","TopLevelTaeQueue");
+		  deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWithParallelFlow.xml","TopLevelTaeQueue");
 
 	      //deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateWithParallelFlow.xml");
-	      runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)),
+	      runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)),
 	              "TopLevelTaeQueue", 1, PROCESS_LATCH);
 	    }
 	  }
@@ -1995,18 +2067,20 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		    class RunnableClient implements Runnable {
 		    	String brokerURL;
 		    	BaseTestSupport testSupport;
-	          BaseUIMAAsynchronousEngine_impl uimaAsEngine;
+		    	UimaAsynchronousEngine uimaAsClient;// = getClient(transport);
+	          //BaseUIMAAsynchronousEngine_impl uimaAsEngine;
 	          String serviceEndpoint;
 	          
 	          
-	          RunnableClient(BaseTestSupport testSupport, String brokerURL,String serviceEndpoint) {
+	          RunnableClient(BaseTestSupport testSupport, String brokerURL,String serviceEndpoint) throws Exception {
 		    		this.brokerURL = brokerURL;
 		    		this.testSupport = testSupport;
 		    		this.serviceEndpoint = serviceEndpoint;
-		    		uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
+		    		uimaAsClient = getClient(Transport.JMS);
+		    		//uimaAsEngine = new BaseUIMAAsynchronousEngine_impl();
 		    	}
-		    	public BaseUIMAAsynchronousEngine_impl getUimaAsClient() {
-		    		return uimaAsEngine;
+		    	public UimaAsynchronousEngine getUimaAsClient() {
+		    		return uimaAsClient;
 		    	}
 		    	public void initialize() throws Exception {
 		    		@SuppressWarnings("unchecked")
@@ -2025,7 +2099,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 						e.printStackTrace();
 					} finally {
 						try {
-					        uimaAsEngine.stop();
+							uimaAsClient.stop();
 						} catch( Exception e) {
 							e.printStackTrace();
 						}
@@ -2044,7 +2118,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		    
 		    RunnableClient client1 = 
 		    		new RunnableClient(this, getMasterConnectorURI(broker), "NoOpAnnotatorQueue");
-		    BaseUIMAAsynchronousEngine_impl engine = client1.getUimaAsClient();
+		    UimaAsynchronousEngine engine = client1.getUimaAsClient();
 		    serviceId1 = deployJmsService(engine, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
 
 		    final BrokerService broker2 = setupSecondaryBroker(true);
@@ -2054,7 +2128,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 		    RunnableClient client2 = 
 		    		new RunnableClient(this, "failover:tcp://f5n633:51514,tcp://f12n1133:51514","NoOpAnnotatorQueue");//broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
 		    		//new RunnableClient(this, "failover:ssl://f5n6:51514,ssl://f12n11:51514","NoOpAnnotatorQueue");//broker2.getConnectorByName(DEFAULT_BROKER_URL_KEY_2).getUri().toString(), "NoOpAnnotatorQueue");
-		    BaseUIMAAsynchronousEngine_impl engine2 = client2.getUimaAsClient();
+		    UimaAsynchronousEngine engine2 = client2.getUimaAsClient();
 //		    serviceId2 = deployService(engine2, relativePath + "/Deploy_NoOpAnnotatorWithPlaceholder.xml");
 
 		    
@@ -2134,17 +2208,18 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	  }
 	  public void testAsynchronousTerminate(Transport transport) throws Exception {
 	    System.out.println("-------------- testAsynchronousTerminate -------------");
-	    BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+	    UimaAsynchronousEngine uimaAsClient = getClient(transport);
+	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 //	    Map<String, Object> appCtx = buildContext(String.valueOf(getMasterConnectorURI(broker)),
 //	    "TopLevelTaeQueue");
 	    try {
-	      deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotatorWithDelay.xml");
-	      deployJmsService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator2.xml");
+	      deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorWithDelay.xml");
+	      deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator2.xml");
 		  Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-		  deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_AggregateWithParallelFlow.xml","TopLevelTaeQueue");
+		  deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateWithParallelFlow.xml","TopLevelTaeQueue");
 
 	     // deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateWithParallelFlow.xml");
-	      initialize(eeUimaEngine, appCtx);
+	      initialize(uimaAsClient, appCtx);
 	      // Wait until the top level service returns its metadata
 	      waitUntilInitialized();
 	    } catch( Exception e) {
@@ -2152,15 +2227,15 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    }
 
 
-	    CAS cas = eeUimaEngine.getCAS();
+	    CAS cas = uimaAsClient.getCAS();
 	    System.out.println(" Sending CAS to kick off aggregate w/colocated CasMultiplier");
-	    eeUimaEngine.sendCAS(cas);
+	    uimaAsClient.sendCAS(cas);
 
 	    System.out.println(" Waiting 1 seconds");
 	    Thread.sleep(1000);
 
 	    System.out.println(" Trying to stop service");
-	    eeUimaEngine.stop();
+	    uimaAsClient.stop();
 	    System.out.println(" stop() returned!");
 	    Object o = new Object();
 	    
@@ -2185,15 +2260,16 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    public void testJmsServiceAdapter(Transport transport) throws Exception {
 		  Logger.getLogger(this.getClass()).info("-------------- testJmsServiceAdapter -------------");
 		  //setUp();
-		  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+		  UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		  //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    try {
 
-	        deployJmsService(eeUimaEngine, relativePath.concat("/Deploy_NoOpAnnotator.xml"));
+	        deployJmsService(uimaAsClient, relativePath.concat("/Deploy_NoOpAnnotator.xml"));
 			Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
-			deployTopLevelService(appCtx, transport, eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml","TopLevelTaeQueue");
+			deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_SyncAggregateWithJmsService.xml","TopLevelTaeQueue");
 
 	        //deployJavaService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
-	        runTest(appCtx, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+	        runTest(appCtx, uimaAsClient, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
 	                1, PROCESS_LATCH);
 	       
 	    } catch( Exception e ) {

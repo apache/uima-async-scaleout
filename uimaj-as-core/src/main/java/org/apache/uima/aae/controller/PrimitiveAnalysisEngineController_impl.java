@@ -540,9 +540,14 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     long start = super.getCpuTime();
     localCache.dumpContents();
     try {
+    	String delegateKey = getKey();
+    	System.out.println("...... "+delegateKey+".collectionProcessComplete() - calling checkout instance");;
       ae = aeInstancePool.checkout();
+  	System.out.println("...... "+delegateKey+".collectionProcessComplete() - got instance");;
       if (ae != null) {
         ae.collectionProcessComplete();
+      	System.out.println("...... "+delegateKey+".collectionProcessComplete() - ae.CPC() returned");;
+
       }
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, getClass().getName(),
@@ -561,7 +566,11 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
         getOutputChannel().sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint, null, false);
       }
 */
+      
+    	System.out.println("...... "+delegateKey+".collectionProcessComplete() - trying to send CPC reply");;
+
       getOutputChannel(anEndpoint).sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint, null, false);
+    	System.out.println("...... "+delegateKey+".collectionProcessComplete() - sent CPC reply");;
 
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(),
@@ -570,6 +579,7 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
 
     } catch (Exception e) {
+    	e.printStackTrace();
       ErrorContext errorContext = new ErrorContext();
       errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.CollectionProcessComplete);
       errorContext.add(AsynchAEMessage.Endpoint, anEndpoint);

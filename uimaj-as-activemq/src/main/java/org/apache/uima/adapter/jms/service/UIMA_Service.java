@@ -19,24 +19,22 @@
 
 package org.apache.uima.adapter.jms.service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InvalidClassException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Scanner;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UimaASApplicationExitEvent;
 import org.apache.uima.aae.UimaAsVersion;
-import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.client.UimaAS;
+import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.jmx.monitor.BasicUimaJmxMonitorListener;
 import org.apache.uima.aae.jmx.monitor.JmxMonitor;
 import org.apache.uima.aae.jmx.monitor.JmxMonitorListener;
 import org.apache.uima.aae.service.UimaASService;
-import org.apache.uima.aae.service.UimaAsServiceRegistry;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
@@ -60,6 +58,19 @@ public class UIMA_Service implements ApplicationListener {
   private JmxMonitor monitor = null;
 
   private Thread monitorThread = null;
+  
+  private void setDefaultBrokerURL(String[] args) {
+	    String brokerURL = getArg("-brokerURL", args);
+	    // Check if broker URL is specified on the command line. If it is not, use the default
+	    // localhost:61616. In either case, set the System property defaultBrokerURL. It will be used
+	    // by Spring Framework to substitute a place holder in Spring xml.
+	    if (brokerURL != "") {
+	      System.setProperty("defaultBrokerURL", brokerURL);
+	      System.out.println(">>> Setting defaultBrokerURL to:" + brokerURL);
+	    } else if ( System.getProperty("defaultBrokerURL") == null) {  
+	      System.setProperty("defaultBrokerURL", "tcp://localhost:61616");
+	    }
+  }
 
   /**
    * Parse command args, run dd2spring on the deployment descriptors to generate Spring context
@@ -74,99 +85,32 @@ public class UIMA_Service implements ApplicationListener {
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
             "UIMA-AS version " + UimaAsVersion.getFullVersionString());
 
-    int nbrOfArgs = args.length;
-    String[] springConfigFileArray;
     String[] deploymentDescriptors = getMultipleArg("-d", args);
     if (deploymentDescriptors.length == 0) {
       // allow multiple args for one key
       deploymentDescriptors = getMultipleArg2("-dd", args);
     }
-    /*
-    String saxonURL = getArg("-saxonURL", args);
-    String xslTransform = getArg("-xslt", args);
-    String uimaAsDebug = getArg("-uimaEeDebug", args);
-
-    if (nbrOfArgs < 1
-            || (args[0].startsWith("-") && (deploymentDescriptors.length == 0
-                    || saxonURL.equals("") || xslTransform.equals("")))) {
-      printUsageMessage();
-      return null;
-    }
-    */
-    String brokerURL = getArg("-brokerURL", args);
-    // Check if broker URL is specified on the command line. If it is not, use the default
-    // localhost:61616. In either case, set the System property defaultBrokerURL. It will be used
-    // by Spring Framework to substitute a place holder in Spring xml.
-    if (brokerURL != "") {
-      System.setProperty("defaultBrokerURL", brokerURL);
-      System.out.println(">>> Setting defaultBrokerURL to:" + brokerURL);
-    } else if ( System.getProperty("defaultBrokerURL") == null) {  // perhaps already set using -D
-      System.setProperty("defaultBrokerURL", "tcp://localhost:61616");
-    }
+    
+    setDefaultBrokerURL(args);
 
     if (System.getProperty(JmsConstants.SessionTimeoutOverride) != null) {
       System.out.println(">>> Setting Inactivity Timeout To: "
               + System.getProperty(JmsConstants.SessionTimeoutOverride));
     }
-    /*
-    if (deploymentDescriptors.length == 0) {
-      // array of context files passed in
-      springConfigFileArray = args;
-    } else {
-      // create a String array of spring context files
-      springConfigFileArray = new String[deploymentDescriptors.length];
 
-      Dd2spring aDd2Spring = new Dd2spring();
-      for (int dd = 0; dd < deploymentDescriptors.length; dd++) {
-        String deploymentDescriptor = deploymentDescriptors[dd];
-
-        File springConfigFile = aDd2Spring.convertDd2Spring(deploymentDescriptor, xslTransform,
-                saxonURL, uimaAsDebug);
-
-        // if any are bad, fail
-        if (null == springConfigFile) {
-          return null;
-        }
-        springConfigFileArray[dd] = springConfigFile.getAbsolutePath();
-
-        // get the descriptor to register with the engine controller
-        String deployDescriptor = "";
-        File afile = null;
-        FileInputStream fis = null;
-        try {
-          afile = new File(deploymentDescriptor);
-          fis = new FileInputStream(afile);
-          byte[] bytes = new byte[(int) afile.length()];
-          fis.read(bytes);
-          deployDescriptor = new String(bytes);
-          // Log Deployment Descriptor
-          UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "main",
-                  JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_deploy_desc__FINEST",
-                  new Object[] { deployDescriptor });
-        } catch (IOException e) {
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                    "initialize", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                    "UIMAJMS_exception__WARNING", e);
-          }
-        } finally {
-          if (fis != null) {
-            try {
-              fis.close();
-            } catch (IOException e) {
-            }
-          }
-        }
-      }
-    }
-    
-    return springConfigFileArray;
-    */
     return deploymentDescriptors;
   }
+  /**
+   * @deprecated Spring context files are no longer generated or used in favor of direct parsing of deployment descriptors.
+   * @param springContextFiles
+   * @param listener
+   * @return
+   * @throws Exception
+   */
   public SpringContainerDeployer deploy(String[] springContextFiles, ApplicationListener<ApplicationEvent> listener) throws Exception {
-	    SpringContainerDeployer springDeployer;
+	    SpringContainerDeployer springDeployer = null;
 	    
+	    /*
 	    if ( listener == null ) {
 	    	springDeployer = new SpringContainerDeployer(this);
         } else {
@@ -193,7 +137,7 @@ public class UIMA_Service implements ApplicationListener {
 	    FileSystemXmlApplicationContext context = springDeployer.getSpringContext();
 	    context.addApplicationListener(this);
 	    springDeployer.startListeners();
-	    
+	    */
 	    return springDeployer;
 	  
   }
@@ -411,15 +355,11 @@ public class UIMA_Service implements ApplicationListener {
 
   /**
    * The main routine for starting the deployment of a UIMA-AS instance. The args are either: 1 or
-   * more "paths" to Spring XML descriptors representing the information needed or some number of
+   * more "paths" to DD XML descriptors representing the information needed or some number of
    * parameters, preceeded by a "-" sign. If the first arg doesn't start with a "-" it is presumed
    * to be the first format.
    * 
-   * For the 2nd style, the arguments are: -saxonURL a-URL-to-the-saxon-jar usually starting with
-   * "file:", -xslt path-to-the-dd2spring.xsl file, -d path-to-UIMA-deployment-descriptor [-d
-   * path-to-another-dd ...] these arguments may be in any order)
-   * 
-   * For the 3rd style, like #2 but with multiple dd-files following a single -dd Useful for calling
+   * For the 2nd style, like #2 but with multiple dd-files following a single -dd Useful for calling
    * from scripts.
    * 
    * @param args
@@ -427,43 +367,18 @@ public class UIMA_Service implements ApplicationListener {
   public static void main(String[] args) {
     try {
       UIMA_Service service = new UIMA_Service();
-      /*
-      // parse command args and run dd2spring to generate spring context
-      // files from deployment descriptors
-      String contextFiles[] = service.initialize(args);
-      // If no context files generated there is nothing to do
-      if (contextFiles == null) {
-        return;
-      }
-      */
-      String dd[] = service.initialize(args);
-      /*
-      // Deploy components defined in Spring context files. This method blocks until
-      // the container is fully initialized and all UIMA-AS components are succefully
-      // deployed.
-      SpringContainerDeployer serviceDeployer = service.deploy(contextFiles);
-      if (serviceDeployer == null) {
-        System.out.println(">>> Failed to Deploy UIMA Service. Check Logs for Details");
-        System.exit(0);
-      }
+      // fetch deployment descriptors from the command line
+      String[] dd = service.initialize(args);
+
+      UimaAsynchronousEngine uimaAS = 
+    		  UimaAS.newInstance(Transport.JMS);
       
-      // remove temporary spring context files generated from DD
-      for( String contextFile: contextFiles) {
-        File file = new File(contextFile);
-        if ( file.exists()) {
-          file.delete();
-        }
-      }
-      */
-      BaseUIMAAsynchronousEngine_impl engine = 
-    		  new BaseUIMAAsynchronousEngine_impl();
-      
+      List<String> serviceList = new ArrayList<>();
       for( String deploymentDescriptorPath : dd ) {
-    	  engine.deploy(deploymentDescriptorPath, new HashMap<>());
+    	  serviceList.add(uimaAS.deploy(deploymentDescriptorPath, new HashMap<>()));
       }
       // Add a shutdown hook to catch kill signal and to force quiesce and stop
-      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(engine);
-//      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
+      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(uimaAS);
       Runtime.getRuntime().addShutdownHook(shutdownHook);
       // Check if we should start an optional JMX-based monitor that will provide service metrics
       // The monitor is enabled by existence of -Duima.jmx.monitor.interval=<number> parameter. By
@@ -476,39 +391,43 @@ public class UIMA_Service implements ApplicationListener {
         service.startMonitor(Long.parseLong(monitorCheckpointFrequency));
       }
       
-//      AnalysisEngineController topLevelControllor = serviceDeployer.getTopLevelController();
       String prompt = "Press 'q'+'Enter' to quiesce and stop the service or 's'+'Enter' to stop it now.\nNote: selected option is not echoed on the console.";
-  //    if (topLevelControllor != null) {
-        System.out.println(prompt);
+       System.out.println(prompt);
         // Loop forever or until the service is stopped
-        while ( engine.isRunning() ) {
-//            while (!topLevelControllor.isStopped()) {
+        boolean stop = false;
+        while ( !stop) {
+        	Scanner in = null;
+        	try {
+               	in = new Scanner(System.in);
+            	String cmd = in.nextLine();
+            	System.out.println("You've Entered .... "+cmd);
+            	
+            	if ( cmd.equalsIgnoreCase("s")) {
+            		System.out.println("Calling STOP....");
+            		for( String serviceId : serviceList ) {
+            			uimaAS.undeploy(serviceId, UimaASService.STOP_NOW);
+            		}
+            		
+            		stop = true;
+            	//	System.exit(0);
+            	} else if ( cmd.equalsIgnoreCase("q") ) {
+            		for( String serviceId : serviceList ) {
+                   		System.out.println("Calling QUIT....");
+                   	 
+                   		uimaAS.undeploy(serviceId, UimaASService.QUIESCE_AND_STOP);
+            		}
 
-          if (System.in.available() > 0) {
-            int c = System.in.read();
-            if (c == 's') {
-              service.stopMonitor();
-              engine.undeploy();
-              //serviceDeployer.undeploy(SpringContainerDeployer.STOP_NOW);
-              System.exit(0);
-            } else if (c == 'q') {
-            	engine.undeploy();
-              //service.stopMonitor();
-             // serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
-              System.exit(0);
+            		stop = true;
 
-            } else if (Character.isLetter(c) || Character.isDigit(c)) {
-              System.out.println(prompt);
-            }
-          }
-          // This is a polling loop. Sleep for 1 sec
-//          try {
-//        	if (!topLevelControllor.isStopped()) 
-//              Thread.sleep(1000);
-//          } catch (InterruptedException ex) {
-//          }
-        } // while
-      //}
+            	}
+        	} finally {
+        		if ( in != null ) {
+        			in.close();
+        		}
+        	}
+        }
+		System.exit(0);
+
     } catch (Exception e) {
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
@@ -520,13 +439,14 @@ public class UIMA_Service implements ApplicationListener {
   
   static class ServiceShutdownHook extends Thread {
     public SpringContainerDeployer serviceDeployer;
-    BaseUIMAAsynchronousEngine_impl engine;
+
+    private UimaAsynchronousEngine client;
     
     public ServiceShutdownHook(SpringContainerDeployer serviceDeployer) {
       this.serviceDeployer = serviceDeployer;
     }
-    public ServiceShutdownHook(BaseUIMAAsynchronousEngine_impl engine) {
-        this.engine = engine;
+    public ServiceShutdownHook(UimaAsynchronousEngine client) {
+        this.client = client;
     }
     public void run() {
       try {
@@ -538,7 +458,7 @@ public class UIMA_Service implements ApplicationListener {
                 "UIMAJMS_caught_signal__INFO", new Object[] { "TopLevelService" });
 //          "UIMAJMS_caught_signal__INFO", new Object[] { topLevelController.getComponentName() });
       	 // serviceDeployer.undeploy(SpringContainerDeployer.QUIESCE_AND_STOP);
-    	  engine.undeploy();
+    	  client.undeploy();
 
       	  Runtime.getRuntime().halt(0);
     	  //} 

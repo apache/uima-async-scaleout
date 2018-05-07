@@ -119,7 +119,11 @@ public class DirectListener implements Listener, JavaQueueListener {
 				ThreadGroup threadGroup = new ThreadGroup("VmThreadGroup" + 1 + "_" + controller.getComponentName());
 				executor = new ThreadPoolExecutor(scaleout, scaleout, Long.MAX_VALUE, TimeUnit.DAYS, workQueue);
 				UimaAsThreadFactory tf = null;
+				
+				DirectListenerCallback callback = new DirectListenerCallback(this);
+				
 				tf = new UimaAsThreadFactory().
+						withCallback(callback).
 						withThreadGroup(threadGroup).
 						withPrimitiveController((PrimitiveAnalysisEngineController)controller).
 						withTerminatedThreadsLatch(latchToCountNumberOfTerminatedThreads).
@@ -128,6 +132,9 @@ public class DirectListener implements Listener, JavaQueueListener {
 				((ThreadPoolExecutor)executor).setThreadFactory(tf);
 				((ThreadPoolExecutor)executor).prestartAllCoreThreads();
 				latchToCountNumberOfInitedThreads.await();
+				if ( callback.failedInitialization() ) {
+					throw callback.getException();
+				}
 				System.out.println("Executor Started - All Process Threads Initialized");
 			} else {
 				 executor = Executors.newFixedThreadPool(consumerCount);
@@ -213,5 +220,24 @@ public class DirectListener implements Listener, JavaQueueListener {
 		}
 		return controller.getKey();
 	}
-
+	public class DirectListenerCallback {
+		private DirectListener dl;
+		private boolean initializationFailed = false;
+		private Exception exception;
+		
+		public DirectListenerCallback(DirectListener l) {
+			this.dl = l;
+		}
+		
+		public void onInitializationError(Exception e) {
+			initializationFailed = true;
+			exception = e;
+		}
+		public boolean failedInitialization() {
+			return initializationFailed;
+		}
+		public Exception getException() {
+			return exception;
+		}
+	}
 }

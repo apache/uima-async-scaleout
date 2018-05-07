@@ -31,6 +31,7 @@ import org.apache.uima.aae.handler.Handler;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.MessageWrapper;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.aae.service.command.CommandFactory;
 import org.apache.uima.aae.service.command.UimaAsCommand;
@@ -575,5 +576,12 @@ public class DirectInputChannel implements InputChannel  {
 	public void createListenerForTargetedMessages() throws Exception {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void onMessage(MessageWrapper message) {
+		// TODO Auto-generated method stub
+		
+		System.out.println("........... DirectInputChannel.onMessage(MessageWrapper) Called - WHY????????????????");
 	}
 }

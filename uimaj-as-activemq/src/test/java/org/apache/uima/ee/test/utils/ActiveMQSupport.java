@@ -112,12 +112,12 @@ public class ActiveMQSupport extends TestCase {
     Logger.getRootLogger().addAppender(console);
     */
     broker = createBroker();  // sets uri
-    /*
-    broker.setUseJmx(false);
+    
+    broker.setUseJmx(true);
     if ( broker.isUseJmx()) {
         broker.getManagementContext().setConnectorPort(1098);
     }
-    */
+    
     SystemUsage su = new SystemUsage();
     MemoryUsage mu = new MemoryUsage();
     mu.setPercentOfJvmHeap(50);
@@ -305,6 +305,8 @@ public class ActiveMQSupport extends TestCase {
       if ( enableJMX ) {
           broker.setUseJmx(enableJMX);
     	  broker.getManagementContext().setConnectorPort(defaultJMXPort);
+    	  System.out.println("************** ACTIVEMQ JMX Connector Enabled Port:"+defaultJMXPort+"****************");
+
       } else {
     	  broker.setUseJmx(false);
     	  System.out.println("************** ACTIVEMQ JMX Connector Not Enabled ****************");

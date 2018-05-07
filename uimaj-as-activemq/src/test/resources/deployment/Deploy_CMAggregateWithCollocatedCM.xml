@@ -24,7 +24,7 @@
   <description/>
   <version/>
   <vendor/>
-  <deployment protocol="jms" provider="activemq">
+  <deployment protocol="${Protocol}" provider="${Provider}">
     <casPool numberOfCASes="3" initialFsHeapSize="2000000"/> 
     <service>
       <inputQueue endpoint="InnerAggregateQueue" brokerURL="${DefaultBrokerURL}" prefetch="0"/>

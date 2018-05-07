@@ -18,6 +18,7 @@
  */
 package org.apache.uima.adapter.jms.service;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -26,9 +27,12 @@ import java.util.concurrent.ThreadFactory;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.command.ActiveMQDestination;
 import org.apache.activemq.command.ActiveMQQueue;
+import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.AsynchAECasManager_impl;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InputChannel.ChannelType;
+import org.apache.uima.aae.client.UimaAsynchronousEngine;
+import org.apache.uima.aae.UimaAsPriorityBasedThreadFactory;
 import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -44,14 +48,17 @@ import org.apache.uima.aae.handler.input.ProcessResponseHandler;
 import org.apache.uima.aae.service.AbstractUimaASService;
 import org.apache.uima.aae.service.ScaleoutSpecification;
 import org.apache.uima.aae.service.UimaASService;
+import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsInputChannel;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
+import org.apache.uima.adapter.jms.activemq.PriorityMessageHandler;
 import org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer;
 import org.apache.uima.adapter.jms.service.builder.ActiveMQFactory;
 import org.apache.uima.adapter.jms.service.builder.JmsMessageListenerBuilder;
 import org.apache.uima.as.client.Listener.Type;
 import org.apache.uima.resource.ResourceManager;
 import org.apache.uima.resource.ResourceSpecifier;
+import org.apache.uima.util.Level;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public class UimaASJmsService extends AbstractUimaASService 
@@ -189,31 +196,76 @@ implements UimaASService {
 		}
 		return true;
 	}
-	private UimaDefaultMessageListenerContainer createListener(Type type, int scaleout) throws Exception{
+	private UimaDefaultMessageListenerContainer createListener(Type type, int consumerCount) throws Exception{
 		if ( inputChannel == null ) {
 			withInputChannel();
 		}
 		if ( outputChannel == null ) {
 			withOutputChannel();
-			outputChannel.setServerURI(getBrokerURL());
 		}
-		ThreadPoolTaskExecutor threadExecutor = new ThreadPoolTaskExecutor();
-		if (controller.isPrimitive() && Type.ProcessCAS.equals(type)) {
+		PriorityMessageHandler h = null;
+		
+		ThreadPoolTaskExecutor jmsListenerThreadExecutor = 
+				new ThreadPoolTaskExecutor();
+		
+		
+		if ( Type.ProcessCAS.equals(type)) {
+			outputChannel.setServerURI(getBrokerURL());
+/*
 			
 			 // Create a Custom Thread Factory. Provide it with an instance of
 		      // PrimitiveController so that every thread can call it to initialize
 		      // the next available instance of a AE.
-		      ThreadFactory tf = new UimaAsThreadFactory().
-		    		  withThreadGroup(Thread.currentThread().getThreadGroup()).
-		    		  withPrimitiveController((PrimitiveAnalysisEngineController) controller).
-		    		  withTerminatedThreadsLatch(latchToCountNumberOfTerminatedThreads).
-		    		  withInitedThreadsLatch(latchToCountNumberOfInitedThreads);
-		      ((UimaAsThreadFactory)tf).setDaemon(true);
-		      // This ThreadExecutor will use custom thread factory instead of defult one
-		      ((ThreadPoolTaskExecutor) threadExecutor).setThreadFactory(tf);
-		}
-		threadExecutor.setCorePoolSize(scaleout);
-		threadExecutor.setMaxPoolSize(scaleout);
+//		      ThreadFactory tf = new UimaAsThreadFactory().
+//		    		  withThreadGroup(Thread.currentThread().getThreadGroup()).
+//		    		  withPrimitiveController((PrimitiveAnalysisEngineController) controller).
+//		    		  withTerminatedThreadsLatch(latchToCountNumberOfTerminatedThreads).
+//		    		  withInitedThreadsLatch(latchToCountNumberOfInitedThreads);
+//		      ((UimaAsThreadFactory)tf).setDaemon(true);
+		      
+		*/      
+		      if ( controller.isPrimitive() ) {
+				  h = new PriorityMessageHandler(consumerCount);
+				  ThreadPoolTaskExecutor threadExecutor = 
+						  new ThreadPoolTaskExecutor();
+	              controller.setThreadFactory(threadExecutor);
+	              
+				  latchToCountNumberOfTerminatedThreads = new CountDownLatch(consumerCount);
+			      // Create a Custom Thread Factory. Provide it with an instance of
+			      // PrimitiveController so that every thread can call it to initialize
+			      // the next available instance of a AE.
+				  ThreadFactory tf = 
+						  new UimaAsPriorityBasedThreadFactory(Thread.currentThread().
+								  getThreadGroup(), controller, latchToCountNumberOfTerminatedThreads)
+				          .withQueue(h.getQueue()).withChannel(controller.getInputChannel(ENDPOINT_TYPE.JMS));
+				     
+				  
+				  ((UimaAsPriorityBasedThreadFactory)tf).setDaemon(true);
+				  // This ThreadExecutor will use custom thread factory instead of default one
+				   threadExecutor.setThreadFactory(tf);
+				   threadExecutor.setCorePoolSize(consumerCount);
+				   threadExecutor.setMaxPoolSize(consumerCount);
+
+				  // Initialize the thread pool
+				  threadExecutor.initialize();
+
+				  // Make sure all threads are started. This forces each thread to call
+				  // PrimitiveController to initialize the next instance of AE
+				  threadExecutor.getThreadPoolExecutor().prestartAllCoreThreads();
+			      // This ThreadExecutor will use custom thread factory instead of default one
+//			      threadExecutor.setThreadFactory(tf);
+			     
+		    	  
+		      }
+			
+		} 
+		jmsListenerThreadExecutor.setCorePoolSize(consumerCount);
+		jmsListenerThreadExecutor.setMaxPoolSize(consumerCount);
+		jmsListenerThreadExecutor.initialize();
+		
+		
+//		threadExecutor.setCorePoolSize(consumerCount);
+//		threadExecutor.setMaxPoolSize(consumerCount);
 		
 		// destination can be NULL if this listener is meant for a 
 		// a temp queue. Such destinations are created on demand 
@@ -232,13 +284,15 @@ implements UimaASService {
 				listenerBuilder.withController(controller)
 		       			.withType(type)
 						.withConectionFactory(factory)
-						.withThreadPoolExecutor(threadExecutor)
-						.withConsumerCount(scaleout)
+						.withThreadPoolExecutor(jmsListenerThreadExecutor)
+						.withConsumerCount(consumerCount)
 						.withInputChannel(inputChannel)
+						.withPriorityMessageHandler(h)
 						.withSelector(getSelector(type))
 						.withDestination(destination)
 						.build();
 		messageListener.setReceiveTimeout(500);
+//		messageListener.setMessageListener(h);
 		return messageListener;
 	}
 	public HandlerBase getMessageHandler(AnalysisEngineController controller) {
@@ -261,14 +315,14 @@ implements UimaASService {
 		}
 		return metaHandler;
 	}
-	public UimaASJmsService build(int scaleout) throws Exception {
+	public UimaASJmsService build(int consumerCount) throws Exception {
 		// First create Connection Factory. This is needed by
 		// JMS listeners.
 		createConnectionFactory();
 		// counts number of initialized threads
-		latchToCountNumberOfInitedThreads = new CountDownLatch(scaleout);
+		latchToCountNumberOfInitedThreads = new CountDownLatch(consumerCount);
 		// counts number of terminated threads
-		latchToCountNumberOfTerminatedThreads = new CountDownLatch(scaleout);
+		latchToCountNumberOfTerminatedThreads = new CountDownLatch(consumerCount);
 		// Add one instance of JmsOutputChannel 
 		if ( controller.getOutputChannel(ENDPOINT_TYPE.JMS) == null ) {
 			withOutputChannel();
@@ -296,8 +350,68 @@ implements UimaASService {
 		
 		// listener to handle process CAS requests
 		UimaDefaultMessageListenerContainer processListener 
-		    = createListener(Type.ProcessCAS, scaleout);
+		    = createListener(Type.ProcessCAS, consumerCount);
 		inputChannel.addListenerContainer(processListener);
+		
+		
+		
+		 
+		
+		
+		  String targetStringSelector = "";
+		  if ( System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty) != null ) {
+			  targetStringSelector = System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty);
+		  } else {
+			  // the default selector is IP:PID 
+			  String ip = InetAddress.getLocalHost().getHostAddress();
+			  targetStringSelector = ip+":"+controller.getPID();
+		  }
+		  UimaDefaultMessageListenerContainer targetedListener = 
+				  new UimaDefaultMessageListenerContainer();
+		  targetedListener.setType(Type.Target);
+		  // setup jms selector
+		  if ( controller.isCasMultiplier()) {
+			  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.CM_PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+	          } else {
+				  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+	          }
+		  
+		  // use shared ConnectionFactory
+          targetedListener.setConnectionFactory(processListener.getConnectionFactory());
+          // mark the listener as a 'Targeted' listener
+          targetedListener.setTargetedListener();
+          targetedListener.setController(controller);
+          // there will only be one delivery thread. Its job will be to
+          // add a targeted message to a BlockingQueue. Such thread will block
+          // in an enqueue if a dequeue is not available. This will be prevent
+          // the overwhelming the service with messages.
+  		  ThreadPoolTaskExecutor threadExecutor = new ThreadPoolTaskExecutor();
+		  threadExecutor.setCorePoolSize(1);
+		  threadExecutor.setMaxPoolSize(1);
+		  targetedListener.setTaskExecutor(threadExecutor);
+          targetedListener.setConcurrentConsumers(1);
+		  if ( processListener.getMessageListener() instanceof PriorityMessageHandler ) {
+			  // the targeted listener will use the same message handler as the
+			  // Process listener. This handler will add a message wrapper 
+			  // to enable prioritizing messages. 
+			  targetedListener.setMessageListener(processListener.getMessageListener());
+		  }
+		  // Same queue as the Process queue
+		  targetedListener.setDestination(processListener.getDestination());
+          //registerListener(targetedListener);
+ //         targetedListener.afterPropertiesSet();
+		  threadExecutor.initialize();
+		  
+          //targetedListener.initialize();
+          //targetedListener.start();
+          if (UIMAFramework.getLogger(getClass()).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(getClass()).logrb(Level.INFO, getClass().getName(),
+                    "createListenerForTargetedMessages", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_TARGET_LISTENER__INFO",
+                    new Object[] {targetedListener.getMessageSelector(), controller.getComponentName() });
+          }
+		
+        inputChannel.addListenerContainer(targetedListener);
 		
 		listeners.add(processListener);
 		// listener to handle GetMeta requests

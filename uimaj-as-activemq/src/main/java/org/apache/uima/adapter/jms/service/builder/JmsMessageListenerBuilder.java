@@ -19,6 +19,7 @@
 package org.apache.uima.adapter.jms.service.builder;
 
 import javax.jms.Destination;
+import javax.jms.MessageListener;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.command.ActiveMQDestination;
@@ -35,6 +36,7 @@ import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.adapter.jms.activemq.ConcurrentMessageListener;
 import org.apache.uima.adapter.jms.activemq.JmsInputChannel;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
+import org.apache.uima.adapter.jms.activemq.PriorityMessageHandler;
 import org.apache.uima.adapter.jms.activemq.TempDestinationResolver;
 import org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer;
 import org.apache.uima.as.client.Listener.Type;
@@ -53,6 +55,7 @@ public class JmsMessageListenerBuilder {
 	private ThreadPoolTaskExecutor threadExecutor=null;
 	private Type type;
 	private TempDestinationResolver tempQueueDestinationResolver = null;
+	private PriorityMessageHandler priorityHandler = null;
 	
 	public static void main(String[] args) {
 		try {
@@ -168,7 +171,7 @@ public class JmsMessageListenerBuilder {
 			jmsGetMetaMessageListener.initialize();
 			jmsGetMetaMessageListener.start();
 			
-
+// !!!!!!!!!!!!!! WHY replyListener not added to input channel like the two above?
 			replyListener.afterPropertiesSet();
 			replyListener.initialize();
 			replyListener.start();
@@ -227,6 +230,11 @@ public class JmsMessageListenerBuilder {
 		this.selector = selector;
 		return this;
 	}
+	public JmsMessageListenerBuilder withPriorityMessageHandler(PriorityMessageHandler priorityHandler ) {
+		this.priorityHandler = priorityHandler;
+		return this;
+	}
+
 	public JmsMessageListenerBuilder withDestination(Destination destination ) {
 		this.destination = destination;
 		return this;
@@ -258,7 +266,7 @@ public class JmsMessageListenerBuilder {
 	       return (endpoint != null && endpoint.isRemote()  && endpoint.isCasMultiplier() );
 	}
 	public UimaDefaultMessageListenerContainer build() throws Exception{
-		UimaDefaultMessageListenerContainer listener = 
+		UimaDefaultMessageListenerContainer listenerContainer = 
 				new UimaDefaultMessageListenerContainer();
 		/*
 		 * 
@@ -267,17 +275,21 @@ public class JmsMessageListenerBuilder {
 		 */
 		// make sure all required properties are set
 		validate();
+		if ( type != null ) {
+			listenerContainer.setType(type);
+		}
+
 		if ( threadExecutor != null ) {
 			threadExecutor.setThreadNamePrefix(controller.getComponentName()+"-"+type.name()+"Listener-Thread");
-			listener.setTaskExecutor(threadExecutor);
+			listenerContainer.setTaskExecutor(threadExecutor);
 			
 		}
 		
-		listener.setConcurrentConsumers(consumerCount);
-		listener.setController(controller);
+		listenerContainer.setConcurrentConsumers(consumerCount);
+		listenerContainer.setController(controller);
 		
 		if ( selector != null ) {
-			listener.setMessageSelector(selector);
+			listenerContainer.setMessageSelector(selector);
 		}
 		
         if (isRemoteCasMultiplier(endpoint) ) {
@@ -291,16 +303,24 @@ public class JmsMessageListenerBuilder {
     		// is ConcurrentMessageListener which imposes order of replies (parent last) before delegating 
     		// msgs to the inputchannel. When stopping the service, all listeners must be registered with 
     		// an inputchannel which is responsible for shutting down all listeners.
-    		((JmsInputChannel)inputChannel).registerListener(listener);
-            listener.setMessageListener(concurrentListener);
+    		((JmsInputChannel)inputChannel).registerListener(listenerContainer);
+    		listenerContainer.setMessageListener(concurrentListener);
             concurrentListener.setAnalysisEngineController(controller);
         } else {
-    		((JmsInputChannel)inputChannel).registerListener(listener);
-    		listener.setMessageListener(inputChannel);
+    		((JmsInputChannel)inputChannel).registerListener(listenerContainer);
+    		// Message priority handler is an intermediary object between JMS Message Listener
+    		// and an InputChannel. Its main role is to intercept messages and add them to 
+    		// the priority queue shared with an InputChannel. This is done to support processing
+    		// of targeted messages ahead of regular priority (process) msgs.
+    		if ( priorityHandler != null ) {
+        		listenerContainer.setMessageListener(priorityHandler);
+    		} else {
+        		listenerContainer.setMessageListener(inputChannel);
+    		}
         }
 
-		listener.setTargetEndpoint(endpoint);
-		listener.setConnectionFactory(connectionFactory);
+        listenerContainer.setTargetEndpoint(endpoint);
+        listenerContainer.setConnectionFactory(connectionFactory);
 		// is this listener processing replies from a remote service. This can
 		// only be true if the controller is an aggregate. Primitive controller
 		// can only handle requests from remote services. An aggregate can send
@@ -309,25 +329,22 @@ public class JmsMessageListenerBuilder {
 			String e = Type.FreeCAS.equals(type) ? "FreeCASEndpoint" :endpoint.getDelegateKey();
 			TempDestinationResolver resolver = new
 					TempDestinationResolver(controller.getComponentName(), e);
-			resolver.setListener(listener);
+			resolver.setListener(listenerContainer);
 			resolver.setConnectionFactory(connectionFactory);
-			listener.setDestinationResolver(resolver);
-			listener.setDestinationName("");
+			listenerContainer.setDestinationResolver(resolver);
+			listenerContainer.setDestinationName("");
 			if ( Type.FreeCAS.equals(type)) {
-				listener.setBeanName(controller.getComponentName()+"-"+type.name()+"Listener For FreeCas Listener");
+				listenerContainer.setBeanName(controller.getComponentName()+"-"+type.name()+"Listener For FreeCas Listener");
 			} else {
-				listener.setBeanName(controller.getComponentName()+"-"+type.name()+"Listener For Delegate:"+endpoint.getDelegateKey());
+				listenerContainer.setBeanName(controller.getComponentName()+"-"+type.name()+"Listener For Delegate:"+endpoint.getDelegateKey());
 			}
 		} else if ( destination != null ) {
-			listener.setDestinationName(((ActiveMQDestination)destination).getPhysicalName());
-			listener.setDestination(destination);
-			listener.setBeanName(controller.getComponentName()+"-"+type.name()+"Listener");
+			listenerContainer.setDestinationName(((ActiveMQDestination)destination).getPhysicalName());
+			listenerContainer.setDestination(destination);
+			listenerContainer.setBeanName(controller.getComponentName()+"-"+type.name()+"Listener");
 
 		}
 
-		if ( type != null ) {
-			listener.setType(type);
-		}
-		return listener;
+		return listenerContainer;
 	}
 }

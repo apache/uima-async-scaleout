@@ -109,6 +109,7 @@ import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
 import org.apache.uima.util.Level;
 import org.apache.xmlbeans.XmlDocumentProperties;
+import org.apache.xmlbeans.XmlOptions;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -165,14 +166,25 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   
   private Thread dispatchThread;
   
+  private Transport transport;
+  
   protected volatile boolean stopped = false;
   public BaseUIMAAsynchronousEngine_impl() {
+	  this(Transport.JMS);  // default
+	  /*
 	  super();
     UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
             "UIMA Version " + UIMAFramework.getVersionString() +
     " UIMA-AS Version " + UimaAsVersion.getVersionString());
+    */
   }
-
+  public BaseUIMAAsynchronousEngine_impl(Transport transport) {
+	super();
+	this.transport = transport;
+    UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
+            "UIMA Version " + UIMAFramework.getVersionString() +
+    " UIMA-AS Version " + UimaAsVersion.getVersionString());
+  }
   protected void beforeProcessReply(String casReferenceId) {
 	  if ( service != null ) {
 		  service.removeFromCache(casReferenceId);
@@ -698,13 +710,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		// Create a singleton shared connection object
 		SharedConnection sharedConnection = sharedConnections.get(aBrokerURI);
 		sharedConnection.setConnectionFactory(connectionFactory);
-/*
-		new SharedConnection(
-				connectionFactory,
-				//new ActiveMQConnectionFactory(aBrokerURI),
-				aBrokerURI);
-		sharedConnection.setSemaphore(semaphore);
-	*/
+
 		// Add AMQ specific connection validator
 		sharedConnection
 				.setConnectionValidator(connectionValidator);
@@ -798,7 +804,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   private void addPrefetch(ActiveMQConnection aConnection) {
     ActiveMQPrefetchPolicy prefetchPolicy = new ActiveMQPrefetchPolicy();
     prefetchPolicy.setQueuePrefetch(5);
-    ((ActiveMQConnection) aConnection).setPrefetchPolicy(prefetchPolicy);
+    aConnection.setPrefetchPolicy(prefetchPolicy);
   }
 
   protected SharedConnection validateConnection(String aBrokerURI) throws Exception {
@@ -971,12 +977,16 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     reset();
     Properties performanceTuningSettings = new Properties();
     fetchRequiredProperties(anApplicationContext, performanceTuningSettings);
-    transport = (Transport)anApplicationContext.get(UimaAsynchronousEngine.ClientTransport);
+    //transport = (Transport)anApplicationContext.get(UimaAsynchronousEngine.ClientTransport);
     if ( Transport.JMS.equals(transport)) {
     	initializeJMS(anApplicationContext);
     } else if ( Transport.Java.equals(transport)) {
     	if ( service == null ) {
     		service = UimaAsServiceRegistry.getInstance().lookupByEndpoint(endpoint);
+    	}
+    	if ( !(service instanceof AsynchronousUimaASService ) ) {
+    		// WRONG SERVICE TYPE FOR THIS CLIENT
+    		throw new ResourceInitializationException(); 
     	}
     	brokerURI = "java";
     	initializeLocal(anApplicationContext);
@@ -1145,7 +1155,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 	private AnalysisEngineDeploymentDescriptionDocument parseDD(String descriptorPath) throws Exception {
 		org.apache.xmlbeans.XmlOptions options = new org.apache.xmlbeans.XmlOptions();
-		
+		options.setValidateOnSet();
 		
 		XMLReader xmlReader = XMLReaderFactory.createXMLReader();
 		xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
@@ -1165,23 +1175,13 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		 provider = UimaAsDirectServiceBuilder.resolvePlaceholder(provider);
 		 System.out.println("...... provider() - "+provider);
 
-		 if (Provider.JAVA.get().equals(provider)) {
-			 return Provider.JAVA;
-		 } else if (Provider.ACTIVEMQ.get().equals(provider)) {
-			 return Provider.ACTIVEMQ;
+		 if (org.apache.uima.as.deployer.ServiceDeployers.Provider.JAVA.get().equals(provider)) {
+			 return org.apache.uima.as.deployer.ServiceDeployers.Provider.JAVA;
+		 } else if (org.apache.uima.as.deployer.ServiceDeployers.Provider.ACTIVEMQ.get().equals(provider)) {
+			 return org.apache.uima.as.deployer.ServiceDeployers.Provider.ACTIVEMQ;
 		 } else {
-			 throw new RuntimeException("Invalid provider attribute value in Deployment Descriptor :{"+provider+"} please check <deployment> element. Expected \"java\" or \"activemq\"");
+			 throw new IllegalArgumentException("Invalid provider attribute value in Deployment Descriptor :{"+provider+"} please check <deployment> element. Expected \"java\" or \"activemq\"");
 		 }
-
-		 /*
-		 if (Provider.JAVA.get().equals(provider)) {
-			 return Provider.JAVA;
-		 } else if (Provider.ACTIVEMQ.get().equals(provider)) {
-			 return Provider.ACTIVEMQ;
-		 } else {
-			 throw new RuntimeException("Invalid provider attribute value in Deployment Descriptor :{"+provider+"} please check <deployment> element. Expected \"java\" or \"activemq\"");
-		 }
-		 */
 	}
 	private Protocol protocol( AnalysisEngineDeploymentDescriptionDocument dd) {
 	     String protocol =
@@ -1190,23 +1190,14 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		 protocol = UimaAsDirectServiceBuilder.resolvePlaceholder(protocol);
 		 
 		 System.out.println("...... protocol() - "+protocol);
-	     if (Protocol.JAVA.get().equalsIgnoreCase(protocol) ) {
-			 return Protocol.JAVA;
-		 } else if (Protocol.JMS.get().equalsIgnoreCase(protocol)  ) {
-			 return Protocol.JMS;
+	     if (org.apache.uima.as.deployer.ServiceDeployers.Protocol.JAVA.get().equalsIgnoreCase(protocol) ) {
+			 return org.apache.uima.as.deployer.ServiceDeployers.Protocol.JAVA;
+		 } else if (org.apache.uima.as.deployer.ServiceDeployers.Protocol.JMS.get().equalsIgnoreCase(protocol)  ) {
+			 return org.apache.uima.as.deployer.ServiceDeployers.Protocol.JMS;
 		 } else {
 			 throw new RuntimeException("Invalid protocol attribute value in Deployment Descriptor :{"+protocol+"} please check <deployment> element. Expected \"java\" or \"jms\"");
 		 }
 
-		 /*
-	     if (Protocol.JAVA.get().equals(protocol)) {
-			 return Protocol.JAVA;
-		 } else if (Protocol.JMS.get().equals(protocol)) {
-			 return Protocol.JMS;
-		 } else {
-			 throw new RuntimeException("Invalid protocol attribute value in Deployment Descriptor :{"+protocol+"} please check <deployment> element. Expected \"java\" or \"jms\"");
-		 }
-		 */
 	}
   /**
    * First generates a Spring context from a given deploy descriptor and than deploys the context
@@ -1220,38 +1211,81 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * @return - a unique spring container id
    * 
    */
-  public String deploy(String deploymentDescriptorPath, Map anApplicationContext) throws Exception {
-	  AnalysisEngineDeploymentDescriptionDocument dd =
-	            parseDD(deploymentDescriptorPath);
-		  
-		  XmlDocumentProperties dp = dd.documentProperties();
-		  System.out.println(dp.getSourceName());
+	public String deploy(String deploymentDescriptorPath, Map anApplicationContext) throws Exception {
+		// parse provided deployment descriptor and produce object representation for it
+		AnalysisEngineDeploymentDescriptionDocument dd = parseDD(deploymentDescriptorPath);
+/*		
+		ArrayList<?> validationErrors = new ArrayList<>();
+		XmlOptions validationOptions = new XmlOptions();
+		validationOptions.setErrorListener(validationErrors);
+		validationOptions.setLoadLineNumbers(XmlOptions.LOAD_LINE_NUMBERS_END_ELEMENT);
+		validationOptions.setLoadLineNumbers();
+		boolean isValid = dd.validate(validationOptions);
+		if ( !isValid ) {
+			 Iterator<?> iter = validationErrors.iterator();
+			 System.out.println("*** *** *** *** *** *** *** *** *** ***");
+			    while (iter.hasNext())
+			    {
+			        System.out.println("*** DD Validation ERROR>> " + iter.next() + "\n");
+			    }
+			    throw new AsynchAEException("*** ERROR deployment descriptor validation failed");
+		}
+		*/
+		XmlDocumentProperties dp = dd.documentProperties();
+		System.out.println(dp.getSourceName());
+		
+		String protocolOverride = null;
+		if ( anApplicationContext!= null && anApplicationContext.containsKey(UimaAsynchronousEngine.Protocol) ) {
+			protocolOverride = (String)anApplicationContext.get(UimaAsynchronousEngine.Protocol);
+		}
+		String providerOverride = null;
+		if ( anApplicationContext!= null && anApplicationContext.containsKey(UimaAsynchronousEngine.Provider)) {
+			providerOverride = (String)anApplicationContext.get(UimaAsynchronousEngine.Provider);
+		}
+		UimaAsServiceDeployer deployer;
+		// if client does not override provider and protocol, use
+		// the DD settings 
+		if ( protocolOverride == null && providerOverride == null) {
+			// Use factory to create deployer instance for a given 
+			// protocol and provider defined in the DD
+			deployer = 
+					ServiceDeployers.newDeployer(protocol(dd), provider(dd));
+		} else {
+			Protocol deploymentProtocol = null;
+			try {
+				deploymentProtocol =
+						org.apache.uima.as.deployer.ServiceDeployers.Protocol.valueOf(protocolOverride.toUpperCase());
+			} catch( IllegalArgumentException e) {
+				System.out.println("***\n*** ERROR specified  protocol not supported. Only 'java' and 'jms' are expected. You've provided "+protocolOverride+"\n***");
+				throw e;
+			}
+			Provider deploymentProvider = null;
+			try {
+				deploymentProvider =
+						org.apache.uima.as.deployer.ServiceDeployers.Provider.valueOf(providerOverride.toUpperCase());
 
-		  // Use factory to create deployer instance for a given protocol and provider
-		  UimaAsServiceDeployer deployer = 
-				  ServiceDeployers.newDeployer(protocol(dd), provider(dd));
-		  
-		  service = deployer.deploy(dd, anApplicationContext);
-		  
-		  UimaAsServiceRegistry.getInstance().register(service);
+			} catch( IllegalArgumentException e) {
+				System.out.println("***\n*** ERROR specified provider not supported. Only 'java' and 'activemq' are expected. You've provided "+providerOverride+" \n***");
+				throw e;
 
-		  return service.getId();
+			}
+			deployer = 
+					ServiceDeployers.newDeployer(deploymentProtocol, deploymentProvider);
+		}
 
-  }
+		service = deployer.deploy(dd, anApplicationContext);
+
+		UimaAsServiceRegistry.getInstance().register(service);
+
+		return service.getId();
+
+	}
   
-  protected UimaASService getServiceReference()  {
-	  return service;
-  }
-  
-  private void disposeContextFiles(String ...contextFiles) {
-    for( String contextFile: contextFiles) {
-      File file = new File(contextFile);
-      if ( file.exists()) {
-        file.delete();
-      }
-    }
-  }
-  /**
+	protected UimaASService getServiceReference() {
+		return service;
+	}
+
+	 /**
 	 * 
 	 */
   public String deploy(String[] aDeploymentDescriptorList, Map anApplicationContext)
@@ -1334,8 +1368,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     */
   }
 
-  public void undeploy(String aSpringContainerId) throws Exception {
-    this.undeploy(aSpringContainerId, SpringContainerDeployer.STOP_NOW);
+  public void undeploy(String serviceId) throws Exception {
+    this.undeploy(serviceId, SpringContainerDeployer.STOP_NOW);
   }
 
   /**
@@ -1343,124 +1377,36 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    * registered in the local registry under a unique id.
    * 
    */
-  public void undeploy(String aSpringContainerId, int stop_level) throws Exception {
-    if (aSpringContainerId == null  ) {
+  public void undeploy(String serviceId, int stop_level) throws Exception {
+    if (serviceId == null  ) {
       return;
     }
     
 //    UimaEEAdminSpringContext adminContext = null;
     final UimaASService deployedService =
-    		UimaAsServiceRegistry.getInstance().lookupById(aSpringContainerId);
+    		UimaAsServiceRegistry.getInstance().lookupById(serviceId);
     if ( deployedService == null ) {
         throw new InvalidContainerException(
                 "Spring Container Does Not Contain Valid UimaEEAdminSpringContext Object");
       }
     switch (stop_level) {
-    case SpringContainerDeployer.QUIESCE_AND_STOP:
-      //((AnalysisEngineController) ctrer).quiesceAndStop();
-        //service.stop();
+    case UimaASService.QUIESCE_AND_STOP:
     	deployedService.quiesce();
 
       break;
-    case SpringContainerDeployer.STOP_NOW:
-     // ((AnalysisEngineController) ctrer).terminate();
-        //service.stop();
+    case UimaASService.STOP_NOW:
         deployedService.stop();
-        
- 
-      break;
+        break;
+    default:
+        throw new UnsupportedOperationException(
+                "Unsupported argument value in the undeploy() call. Please use stop level "
+                        + "UimaASService.QUIESCE_AND_STOP" + " OR " + "UimaASService.STOP_NOW"
+                        + " as an argument to undeploy() method.");
+
+     
   }
     UimaAsServiceRegistry.getInstance().unregister(deployedService);
-    /*
-//    if (!springContainerRegistry.containsKey(aSpringContainerId)) {
-//        return;
-//        // throw new InvalidContainerException("Invalid Spring container Id:" + aSpringContainerId +
-//        // ". Unable to undeploy the Spring container");
-//      }
-//      // Fetch an administrative context which contains a Spring Container
-//      adminContext = (UimaEEAdminSpringContext) springContainerRegistry.get(aSpringContainerId);
-//      if (adminContext == null) {
-//        throw new InvalidContainerException(
-//                "Spring Container Does Not Contain Valid UimaEEAdminSpringContext Object");
-//      }
-      // Fetch instance of the Container from its context
-      ApplicationContext ctx = adminContext.getSpringContainer();
-      // Query the container for objects that implement
-      // ControllerLifecycle interface. These
-      // objects are typically of type AnalysisEngineController or
-      // UimacppServiceController.
-      String[] asyncServiceList = ctx
-              .getBeanNamesForType(org.apache.uima.aae.controller.ControllerLifecycle.class);
-      // Given a valid list of controllers select the first from the list
-      // and
-      // initiate a shutdown. We don't care which controller will be
-      // invoked. In case of
-      // AggregateAnalysisEngineController the terminate event will
-      // propagate all the way
-      // to the top controller in the hierarchy and the shutdown will take
-      // place from there.
-      // If the controller is of kind UimecppServiceController or
-      // PrimitiveAnalysisController
-      // the termination logic will be immediately triggered in the
-      // terminate() method.
-      if (asyncServiceList != null && asyncServiceList.length > 0) {
-        boolean topLevelController = false;
-        ControllerLifecycle ctrer = null;
-        int indx = 0;
-        while (!topLevelController) {
-          ctrer = (ControllerLifecycle) ctx.getBean(asyncServiceList[indx++]);
-          if (ctrer instanceof UimacppServiceController
-                  || ((AnalysisEngineController) ctrer).isTopLevelComponent()) {
-            topLevelController = true;
-          }
-        }
-        // Send a trigger to initiate shutdown.
-        if (ctrer != null) {
-          if (ctrer instanceof AnalysisEngineController &&
-        		  ((AnalysisEngineController) ctrer).getControllerLatch() != null ) {
-            ((AnalysisEngineController) ctrer).getControllerLatch().release();
-          }
-          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-              String msg = "++++++++++++++++++++++ calling terminate()-service:"+((AnalysisEngineController) ctrer).getComponentName();
-              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
-                     JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
-                      new Object[] { msg });
-          }
-          switch (stop_level) {
-            case SpringContainerDeployer.QUIESCE_AND_STOP:
-                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-                    String msg = "++++++++++++++++++++++ calling quiesceAndStop()";
-                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
-                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
-                            new Object[] { msg });
-                }
-              ((AnalysisEngineController) ctrer).quiesceAndStop();
 
-              break;
-            case SpringContainerDeployer.STOP_NOW:
-                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-                    String msg = "++++++++++++++++++++++ calling terminate()";
-                    UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
-                           JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
-                            new Object[] { msg });
-                }
-              ((AnalysisEngineController) ctrer).terminate();
-              break;
-          }
-        }
-      }
-      if (ctx instanceof FileSystemXmlApplicationContext) {
-        ((FileSystemXmlApplicationContext) ctx).destroy();
-        if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
-            String msg = "---------------------- Destroying Application Context:"+((FileSystemXmlApplicationContext) ctx).getApplicationName();
-            UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, CLASS_NAME.getName(), "undeploy",
-                   JmsConstants.JMS_LOG_RESOURCE_BUNDLE, "UIMAJMS_debug_msg__FINEST",
-                    new Object[] { msg });
-        }
-      }
-      // Remove the container from a local registry
-      springContainerRegistry.remove(aSpringContainerId);
-      */
   }
   private void initJMX() throws Exception {
 	  	// Generate unique identifier
@@ -1715,33 +1661,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	                "UIMAJMS_exception__WARNING", e);
 	      }
 	    }
-	    /*
-	  PendingMessage msg = new PendingMessageImpl(AsynchAEMessage.Stop);
-	     msg.addProperty(AsynchAEMessage.Destination, cmFreeCasQueue);
-		 msg.addProperty(AsynchAEMessage.CasReference, casReferenceId);
-	     try {
-	    	 if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
-                 UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
-                         "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                         "UIMAJMS_client_sending_stop_to_service__INFO", new Object[] {casReferenceId,cmFreeCasQueue});
-             }
-		     sender.dispatchMessage(msg, this, false);
- 
-	     } catch (Exception ex) {
-	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-	              UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-	                      "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-	                      "UIMAJMS_exception__WARNING",
-	                      ex);
-	          }
-	          if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                          "stopProducingCases", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
-                          "UIMAJMS_client_unable_to_send_stop_to_cm__WARNING");
-              }
-	     }
 
-	 */
   }
   protected void dispatchFreeCasRequest(String casReferenceId, Message message) throws Exception {
      PendingMessage msg = new PendingMessageImpl(AsynchAEMessage.ReleaseCAS);

@@ -39,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadFactory;
 
 import javax.management.ObjectName;
 
@@ -69,6 +70,7 @@ import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.aae.error.ForcedMessageTimeoutException;
 import org.apache.uima.aae.error.UimaAsUncaughtExceptionHandler;
+import org.apache.uima.aae.error.handler.CpcErrorHandler;
 import org.apache.uima.aae.error.handler.ProcessCasErrorHandler;
 import org.apache.uima.aae.jmx.JmxManagement;
 import org.apache.uima.aae.jmx.JmxManager;
@@ -101,6 +103,7 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resource.Resource_ImplBase;
 import org.apache.uima.util.Level;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public abstract class BaseAnalysisEngineController extends Resource_ImplBase implements
         AnalysisEngineController, EventSubscriber {
@@ -273,6 +276,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   private String serviceId="";
   
   protected UimaContext uimaContext=null;
+  
+  private ThreadPoolTaskExecutor threadFactory=null;
   
   public abstract void dumpState(StringBuffer buffer, String lbl1);
   
@@ -524,6 +529,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	  return uimaContext;
   }
 
+
+  public void setThreadFactory(ThreadPoolTaskExecutor factory) {
+	  threadFactory = factory;
+  }
   public String getPID() {
     return processPid;
   }
@@ -1539,7 +1548,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     }
     List errorHandlerList = new ArrayList();
     errorHandlerList.add(new ProcessCasErrorHandler());
+//    errorHandlerList.add(new CpcErrorHandler(aDelegateMap))
     errorHandlerChain = new ErrorHandlerChain(errorHandlerList);
+    
+    
   }
 
   public void setErrorHandlerChain(ErrorHandlerChain errorHandlerChain) {
@@ -2071,6 +2083,12 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       } catch (Exception e) {
       }
 
+    if ( threadFactory != null ) {
+    	
+    	// stop ThreadPoolFactory which handles priority based
+    	// messages between PriorityMessageHandler and InputChannel.
+    	threadFactory.shutdown();
+    }
     /*
      * Send an exception to the client if this is a top level service
      */
@@ -2338,6 +2356,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   }
 
   public void terminate(Throwable cause, String aCasReferenceId) {
+//	  Thread.currentThread().dumpStack();
       if (stopLatch.getCount() > 0) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
           UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, getClass().getName(), "terminate",
@@ -2758,6 +2777,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (controllerListeners.isEmpty()) {
       return;
     }
+    boolean createTargetListener = true;
     for (int i = 0; i < controllerListeners.size(); i++) {
       // If there is an exception, notify listener with failure
       if (e != null) {
@@ -2767,7 +2787,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     	 
               InputChannel ic = getInputChannel();
               try {
-                  ic.createListenerForTargetedMessages();
+       //     	  if ( createTargetListener ) {
+     //       		  createTargetListener = false; // only one needed
+   //                   ic.createListenerForTargetedMessages();
+      //      	  }
                   ((ControllerCallbackListener) controllerListeners.get(i))
                   .notifyOnInitializationSuccess(this);
               } catch( Exception ex) {

@@ -24,6 +24,7 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.command.ActiveMQDestination;
 import org.springframework.jms.support.destination.DestinationResolver;
 
 public class TempDestinationResolver implements DestinationResolver {
@@ -52,15 +53,20 @@ public class TempDestinationResolver implements DestinationResolver {
   public Destination resolveDestinationName(Session session, String destinationName,
           boolean pubSubDomain) throws JMSException {
 	  System.out.println("************ resolveDestinationName() Controller:"+serviceName+" Endpoint:"+endpoint+"************************");
-
-	  synchronized (mutex) {
-      if (destination == null) {
-        destination = session.createTemporaryQueue();
-        if (listener != null) {
-          listener.setDestination(destination);
-        }
-      }
-    }
+	  try {
+		  synchronized (mutex) {
+		    //  if (destination == null) {
+			  if ( listener.getDestination() == null || ((ActiveMQDestination)listener.getDestination()).isTemporary() ) {
+		        destination = session.createTemporaryQueue();
+		        if (listener != null) {
+		          listener.setDestination(destination);
+		        }
+		      }
+		  }
+	  } catch( Exception e) {
+		  e.printStackTrace();
+		  throw e;
+	  }
     return destination;
   }
 

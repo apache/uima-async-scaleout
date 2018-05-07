@@ -46,6 +46,15 @@ public class UimaAsJmsServiceDeployer extends AbstractUimaASDeployer {
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			try {
+				if ( uimaAsService != null ) {
+					uimaAsService.stop();
+				}
+			} catch( Exception ee) {
+				ee.printStackTrace();
+			}
+			
+			
 			throw e;
 		}
 		return uimaAsService;

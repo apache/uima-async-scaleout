@@ -26,7 +26,7 @@
   <name>Top Level TAE</name>
   <description></description>
   
-  <deployment protocol="jms" provider="activemq">
+  <deployment protocol="${Protocol}" provider="${Provider}">
     <casPool numberOfCASes="5" initialFsHeapSize="500"/>
     <service>
       <inputQueue endpoint="TopLevelTaeQueue" brokerURL="${DefaultBrokerURL}" prefetch="1"/>
@@ -39,6 +39,7 @@
           <analysisEngine key="TestMultiplier">
 	        <casMultiplier poolSize="5"/> 
           </analysisEngine>
+
 
           <remoteAnalysisEngine key="NoOp" remoteReplyQueueScaleout="3">
 	                  <inputQueue endpoint="NoOpAnnotatorQueue" brokerURL="${DefaultBrokerURL}"/>

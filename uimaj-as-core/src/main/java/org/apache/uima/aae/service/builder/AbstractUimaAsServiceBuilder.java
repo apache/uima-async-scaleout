@@ -45,10 +45,12 @@ import org.apache.uima.aae.controller.DelegateEndpoint;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController_impl;
+import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.aae.error.Threshold;
 import org.apache.uima.aae.error.Thresholds;
+import org.apache.uima.aae.error.Thresholds.Action;
 import org.apache.uima.aae.error.UimaAsDelegateException;
 import org.apache.uima.aae.error.handler.CpcErrorHandler;
 import org.apache.uima.aae.error.handler.GetMetaErrorHandler;
@@ -76,7 +78,9 @@ import org.apache.uima.resource.ResourceCreationSpecifier;
 import org.apache.uima.resource.ResourceManager;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
+import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionType;
 import org.apache.uima.resourceSpecifier.AnalysisEngineType;
+import org.apache.uima.resourceSpecifier.AsyncAggregateErrorConfigurationType;
 import org.apache.uima.resourceSpecifier.AsyncPrimitiveErrorConfigurationType;
 import org.apache.uima.resourceSpecifier.CasMultiplierType;
 import org.apache.uima.resourceSpecifier.CasPoolType;
@@ -85,9 +89,13 @@ import org.apache.uima.resourceSpecifier.DelegateAnalysisEngineType;
 import org.apache.uima.resourceSpecifier.DelegatesType;
 import org.apache.uima.resourceSpecifier.EnvironmentVariableType;
 import org.apache.uima.resourceSpecifier.EnvironmentVariablesType;
+import org.apache.uima.resourceSpecifier.ImportType;
+import org.apache.uima.resourceSpecifier.InputQueueType;
 import org.apache.uima.resourceSpecifier.ProcessCasErrorsType;
 import org.apache.uima.resourceSpecifier.RemoteAnalysisEngineType;
+import org.apache.uima.resourceSpecifier.ScaleoutType;
 import org.apache.uima.resourceSpecifier.ServiceType;
+import org.apache.uima.resourceSpecifier.TopDescriptorType;
 import org.apache.uima.resourceSpecifier.TopLevelAnalysisEngineType;
 import org.apache.xmlbeans.XmlDocumentProperties;
 
@@ -226,6 +234,26 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		}
 		return scaleout;
     }
+    private ScaleoutType getScaleout(AnalysisEngineDeploymentDescriptionDocument d) {
+    	ScaleoutType scaleoutConfiguration = getService(d).getAnalysisEngine().getScaleout();;
+    	if ( scaleoutConfiguration == null ) {
+    		scaleoutConfiguration = getService(d).getAnalysisEngine().addNewScaleout();
+    		scaleoutConfiguration.setNumberOfInstances(1);  // default
+    	}
+    	/*
+		if ( getService(d).getAnalysisEngine() != null &&
+			getService(d).getAnalysisEngine().getScaleout() != null	) {
+			// fetch scaleout from the DD spec for this delegate
+			scaleoutConfiguration = getService(d).getAnalysisEngine().getScaleout();
+		} else {
+			
+		}
+		*/
+		return scaleoutConfiguration;
+    }
+    
+//	dd.getAnalysisEngineDeploymentDescription().getDeployment().getService().getAnalysisEngine().getScaleout();
+
     private int getReplyScaleout(AnalysisEngineDelegate d) {
 		int scaleout = 1;  // default
 		if ( d != null && d.getReplyScaleout() > 1 ) {
@@ -523,20 +551,163 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		}
 		return metaHandler;
 	}
-	protected void validateColocatedDelegates(DelegatesType dt, ResourceSpecifier resourceSpecifier) throws Exception {
+	protected void validateColocatedDelegates(String parentContextName, DelegatesType dt, ResourceSpecifier aggregateResourceSpecifier) throws Exception {
+		StringBuilder context = new StringBuilder(parentContextName).append("/");
 		for( DelegateAnalysisEngineType delegate : dt.getAnalysisEngineArray()) {
-			checkDelegateKey(delegate.getKey(), resourceSpecifier);
+			StringBuilder delegateContext = new StringBuilder(context.toString());
+			delegateContext.append(delegate.getKey());
+			if ( delegate.getKey() == null ||  delegate.getKey().trim().isEmpty()) {
+				StringBuilder sb = 
+						new StringBuilder("*** ERROR ** The delegate key in the deployment descriptor not specified. The delegate key is required and must match a delegate in the referenced descriptor");
+				throw new AsynchAEException(sb.toString()); 
+			}
+
+			String asyncValue = delegate.getAsync();
+			if ( asyncValue == null || asyncValue.equalsIgnoreCase("false") ) {
+				
+				validateInternalReplyQueueScaleout(delegateContext.toString(), delegate);
+				validateInputQueueScaleout(delegateContext.toString(), delegate);
+			}
+		    ResourceSpecifier delegateResourceSpecifier = getDelegateResourceSpecifier(delegate.getKey(), aggregateResourceSpecifier );
+		    
+			if ( delegateResourceSpecifier == null ) {
+				StringBuilder sb = 
+						new StringBuilder("*** ERROR ** The delegate in the deployment descriptor with key=").
+						append(context.toString()).append(delegate.getKey()).append(" does not match any delegates in the referenced descriptor");
+				throw new AsynchAEException(sb.toString());
+
+			}
+			if ( delegate.isSetCasMultiplier() && !isCasMultiplier(delegateResourceSpecifier) ) {
+				StringBuilder sb = 
+						new StringBuilder("*** ERROR ** The delegate in the deployment descriptor with key=").
+						append(context.toString()).append(delegate.getKey()).append(" specifies a casMultiplier element, but the analysisEngine is not a CAS multiplier");
+				throw new AsynchAEException(sb.toString());
+
+			}
+		    
+			checkIfDelegateServiceAsyncValid(context.toString(), delegate, delegateResourceSpecifier);
+		    
+
+		    if ( delegate.getDelegates() != null ) {
+		    	// check thresholds in aggregate error configuration
+		    	validateDelegateErrorConfiguration(delegateContext.toString(), delegate.getKey(), delegate.getAsyncAggregateErrorConfiguration());
+				
+		    	// primitive delegate cannot have delegates
+		    	if ( asyncValue != null && asyncValue.equalsIgnoreCase("false") ) {
+					StringBuilder sb = 
+							new StringBuilder("*** ERROR ** The delegate in the deployment descriptor with key=").
+							append(context.toString()).append(delegate.getKey()).append(" specifies false for the async attribute, but contains a delegates element, which is not allowed in this case.");
+					throw new AsynchAEException(sb.toString());
+
+		    	}
+		    	validateDelegates(delegateContext.toString(), delegate, delegateResourceSpecifier);
+		    }
+		}
+		    
+		    
+			//checkDelegateKey(delegate.getKey(), delegateResourceSpecifier);
+		
+	}
+	private void validateTopLevelErrorConfiguration( AsyncPrimitiveErrorConfigurationType primitiveErrorConfiguration) throws Exception  {
+		if ( primitiveErrorConfiguration  != null ) {
+			validateProcessErrorConfiguration("","",primitiveErrorConfiguration.getProcessCasErrors() );
+		}
+		 
+	}
+	private void validateDelegateErrorConfiguration(String context, String delegateKey, AsyncAggregateErrorConfigurationType aggregateErrorConfiguration) throws Exception  {
+		if ( aggregateErrorConfiguration  != null ) {
+			validateProcessErrorConfiguration(context,delegateKey,aggregateErrorConfiguration.getProcessCasErrors() );
 		}
 	}
+	private void validateProcessErrorConfiguration(String context, String key, ProcessCasErrorsType processErrorCongfiguration) throws Exception{
+		if ( processErrorCongfiguration != null &&
+				 processErrorCongfiguration.getThresholdWindow() > 0 &&
+						(processErrorCongfiguration.getThresholdCount() >
+				         processErrorCongfiguration.getThresholdWindow() ) ) {
+					StringBuilder sb = 
+							new StringBuilder("*** ERROR ** The delegate in the deployment descriptor with key=").
+							append(context).
+							append( (context.endsWith(key) ? "" : key)).
+							append(" specifies invalid error configuration. The 'processCasErrors/threasholdWindow' must be either 0 or larger than 'processCasErrors/thresholdCount'");
+					throw new AsynchAEException(sb.toString());
+			}
+	}
+	private boolean isCasMultiplier(ResourceSpecifier resourceSpecifier) {
+		return ((AnalysisEngineDescription)resourceSpecifier).getAnalysisEngineMetaData().getOperationalProperties().getOutputsNewCASes();
+		
+	}
+    private ResourceSpecifier getDelegateResourceSpecifier(String delegateKey, ResourceSpecifier aggregateResourceSpecifier ) throws Exception {
+    	Map<String,ResourceSpecifier> delegateResourceSpecifiers =
+    			((AnalysisEngineDescription)aggregateResourceSpecifier).getDelegateAnalysisEngineSpecifiers();
+    	return  delegateResourceSpecifiers.get(delegateKey);
 
-	protected void validateRemoteDelegates(DelegatesType dt, ResourceSpecifier resourceSpecifier) throws Exception {
+    }
+	private void validateInternalReplyQueueScaleout(String context, DelegateAnalysisEngineType delegate) {
+		if ( delegate.getInternalReplyQueueScaleout() != null ) {
+			   StringBuilder sb = 
+					new StringBuilder("*** WARN deployment descriptor for delegate analysis engine ").
+					append(context).
+					append(delegate.getKey()).
+					append(" specifies 'internalReplyQueueScaleout=").
+					append(delegate.getInternalReplyQueueScaleout()).
+					append("' this is ignored for async=false");
+			   System.out.println(sb.toString());
+			}
+
+	}
+	private void validateInputQueueScaleout(String context, DelegateAnalysisEngineType delegate) {
+		if ( delegate.getInputQueueScaleout() != null ) {
+			   StringBuilder sb = 
+					new StringBuilder("*** WARN deployment descriptor for delegate analysis engine ").
+					append(context).
+					append(delegate.getKey()).
+					append(" specifies 'inputQueueScaleout=").
+					append(delegate.getInputQueueScaleout()).
+					append("' this is ignored for async=false");
+			   System.out.println(sb.toString());
+			   delegate.setInputQueueScaleout("1");  
+		}
+
+	}
+	protected void validateRemoteDelegates(String parentContextName, DelegatesType dt, ResourceSpecifier resourceSpecifier) throws Exception {
+		StringBuilder context = new StringBuilder(parentContextName).append("/");
 		for( RemoteAnalysisEngineType remoteDelegate : dt.getRemoteAnalysisEngineArray() ) {
+			StringBuilder delegateContext = new StringBuilder(context.toString());
+			if ( remoteDelegate.getInputQueue() == null ) {
+				   StringBuilder sb = 
+							new StringBuilder("*** ERROR deployment descriptor for remote delegate analysis engine ").
+							append(delegateContext).
+							append(remoteDelegate.getKey()).
+								append(" is missing required 'inputQueue' element");
+				   System.out.println(sb.toString());
+				   throw new AsynchAEException(sb.toString());
+			}
+			checkIfInputQueueEndpointIsDefined(remoteDelegate.getInputQueue(),
+					new StringBuilder(" delegate ").append(remoteDelegate.getKey()).toString() );
+			
+			checkBrokerUrlForVmProtocol(remoteDelegate);
+			
 			checkDelegateKey(remoteDelegate.getKey(), resourceSpecifier);
+			//remoteDelegate
+	    	// check thresholds in aggregate error configuration
+	    	validateDelegateErrorConfiguration(delegateContext.toString(), remoteDelegate.getKey(), remoteDelegate.getAsyncAggregateErrorConfiguration());
+
 		}
 		
 
 	}
 
+	private void checkBrokerUrlForVmProtocol(RemoteAnalysisEngineType remoteDelegate ) throws AsynchAEException {
+		if( remoteDelegate.getInputQueue().getBrokerURL().equals("vm://localhost")) {
+			   StringBuilder sb = 
+						new StringBuilder("*** ERROR deployment descriptor for remote delegate analysis engine ").
+							append(remoteDelegate.getKey()).
+							append(" specifies invalid broker protocol ").append("vm://localhost");
+			   System.out.println(sb.toString());
+			   throw new AsynchAEException(sb.toString());
+
+		}
+	}
 	private void addCasMultiplierProperties(Endpoint endpoint, AnalysisEngineDelegate aed  ) {
 		if ( aed.isCasMultiplier() ) {
 			endpoint.setIsCasMultiplier(true);
@@ -625,21 +796,180 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 	protected void validateDD(AnalysisEngineDeploymentDescriptionDocument dd, ResourceSpecifier resourceSpecifier) throws Exception {
 
 		if (resourceSpecifier instanceof AnalysisEngineDescription) {
-			AnalysisEngineDescription aeDescriptor = (AnalysisEngineDescription) resourceSpecifier;
-			// verify delegate keys in DD if this is an aggregate uima-as service
-			if (!aeDescriptor.isPrimitive()) {  
-				AnalysisEngineType aet = getService(dd).getAnalysisEngine();
-				if ( aet == null ) {
-					aet = getService(dd).addNewAnalysisEngine();
-				}
-				if ( aet.getDelegates() != null ) {
-					DelegatesType dt = aet.getDelegates();
-					if ( dt.getAnalysisEngineArray() != null ) {
-						validateRemoteDelegates(dt, resourceSpecifier);
-						validateColocatedDelegates(dt, resourceSpecifier);
-					}
-				}
+			if ( getService(dd) == null ) {
+				StringBuilder sb = new StringBuilder("*** ERROR 'service' element is required but is missing in your deployment descriptor file");
+				System.out.println(sb.toString());
+				throw new IllegalArgumentException(sb.toString());
 			}
+			
+			addAnalysisEngineTypeIfMissing(dd);
+
+			if ( getService(dd).getTopDescriptor() == null ) {
+				StringBuilder sb = new StringBuilder("*** ERROR 'import' element is required but is missing in your deployment descriptor file");
+				System.out.println(sb.toString());
+				throw new IllegalArgumentException(sb.toString());
+	
+			}
+			
+			// For C++ service frameworkImplementation must be
+			// org.apache.uima.cpp and the <custom name="run_top_level_CPP_service_as_separate_process">
+//			String frameworkImplementation = 
+//					((AnalysisEngineDescription)resourceSpecifier).getFrameworkImplementation();
+//			getService(dd).get
+			
+			
+			ImportType serviceImport;
+			if ( (serviceImport = getService(dd).getTopDescriptor().getImport()) == null ) {
+				StringBuilder sb = new StringBuilder("*** ERROR 'topDescriptor' element is required but is missing in your deployment descriptor file");
+				System.out.println(sb.toString());
+				throw new IllegalArgumentException(sb.toString());
+
+			}
+			if ( !serviceImport.isSetLocation() && !serviceImport.isSetName() ) {
+				StringBuilder sb = new StringBuilder("*** ERROR import missing location or name attribute");
+				System.out.println(sb.toString());
+				throw new IllegalArgumentException(sb.toString());
+
+			}
+
+			checkIfTopLevelInputQueueIsDefined(dd);
+			
+			checkIfTopDescriptorIsDefined(dd);
+			
+			checkIfTopServiceAsyncValid(dd);
+
+			validateTopLevelErrorConfiguration(getService(dd).getAnalysisEngine().getAsyncPrimitiveErrorConfiguration());
+			// verify delegate keys in DD if this is an aggregate uima-as service
+			if (isAggregate(dd)) {  
+				validateDelegates("",getService(dd).getAnalysisEngine(), resourceSpecifier);
+				//validateDelegates(dd, resourceSpecifier);
+			
+			}
+			// Make sure the service CAS Pool is the same size as scaleout
+			adjustCasPoolOnScaleoutMismatch(dd);
+		}
+	}
+	private void checkIfTopLevelInputQueueIsDefined(AnalysisEngineDeploymentDescriptionDocument dd) throws AsynchAEException {
+		InputQueueType serviceQueue = getService(dd).getInputQueue();
+		if ( serviceQueue == null ) {
+			StringBuilder sb = new StringBuilder("*** ERROR top level service element must have an inputQueue");
+			System.out.println(sb.toString());
+			throw new AsynchAEException(sb.toString());
+		}
+		checkIfInputQueueEndpointIsDefined(getService(dd).getInputQueue()," top level service");
+		
+	}
+	private void checkIfInputQueueEndpointIsDefined(InputQueueType serviceQueue, String label) throws AsynchAEException {
+//		InputQueueType serviceQueue = getService(dd).getInputQueue();
+
+		if ( serviceQueue.getEndpoint() == null || serviceQueue.getEndpoint().trim().isEmpty() ) {
+			StringBuilder sb = new StringBuilder("*** ERROR missing endpoint name in inputQueue element for ").append(label);
+			System.out.println(sb.toString());
+			throw new AsynchAEException(sb.toString());
+	
+		}
+	}
+	private void checkIfTopDescriptorIsDefined(AnalysisEngineDeploymentDescriptionDocument dd)
+			throws AsynchAEException {
+		TopDescriptorType serviceDescriptor = getService(dd).getTopDescriptor();
+		if ( serviceDescriptor == null ) {
+			StringBuilder sb = new StringBuilder("*** ERROR top level service missing required topDescriptor element");
+			System.out.println(sb.toString());
+			throw new AsynchAEException(sb.toString());
+		}
+		
+	}
+	private void checkIfTopServiceAsyncValid(AnalysisEngineDeploymentDescriptionDocument dd) throws AsynchAEException {
+		String asyncValue="";
+		if ( (asyncValue = getService(dd).getAnalysisEngine().getAsync()) != null ) {
+			if ( !asyncValue.equalsIgnoreCase("true") && !asyncValue.equalsIgnoreCase("false")) {
+				StringBuilder sb = new StringBuilder("*** ERROR deployment descriptor for analysisEngine:  specifies async=").
+						append(asyncValue).
+						append(", but only true or false are allowed as values.");
+				System.out.println(sb.toString());
+				throw new AsynchAEException(sb.toString());
+			}
+			if (isPrimitive(dd) && asyncValue.equals("true")) {
+				StringBuilder sb = new StringBuilder("*** ERROR deployment descriptor for top analysisEngine:  specifies async=").
+						append(asyncValue).
+						append(", but the analysis engine is primitive");
+				System.out.println(sb.toString());
+				throw new AsynchAEException(sb.toString());
+				
+			}
+		}
+	}
+
+	private void checkIfDelegateServiceAsyncValid(String context, DelegateAnalysisEngineType delegate, ResourceSpecifier resourceSpecifier ) throws AsynchAEException {
+		String asyncValue="";
+		if ( (asyncValue = delegate.getAsync()) != null ) {
+			boolean primitiveAe = true;
+			if (resourceSpecifier instanceof AnalysisEngineDescription) {
+				primitiveAe = ((AnalysisEngineDescription)resourceSpecifier).isPrimitive();
+			}
+			if (primitiveAe && asyncValue.equals("true")) {
+				StringBuilder sb = new StringBuilder("*** ERROR deployment descriptor for delegate analysis engine:").
+						append(context).
+						append(delegate.getKey()).
+						append(" specifies async=").
+						append(asyncValue).
+						append(", but the analysis engine is primitive.");
+				System.out.println(sb.toString());
+				throw new AsynchAEException(sb.toString());
+				
+			}
+		}
+	}
+
+	private void addAnalysisEngineTypeIfMissing(AnalysisEngineDeploymentDescriptionDocument dd) {
+		AnalysisEngineType aet = getService(dd).getAnalysisEngine();
+		if ( aet == null ) {
+			aet = getService(dd).addNewAnalysisEngine();
+		}
+	}
+	//private void validateDelegates(AnalysisEngineDeploymentDescriptionDocument dd,ResourceSpecifier resourceSpecifier ) throws Exception {
+	private void validateDelegates(String parentContextName, AnalysisEngineType aet,ResourceSpecifier resourceSpecifier ) throws Exception {
+		//AnalysisEngineDescription aeDescriptor = (AnalysisEngineDescription) resourceSpecifier;
+//		if (!aeDescriptor.isPrimitive()) {  
+//		AnalysisEngineType aet = getService(dd).getAnalysisEngine();
+//		if ( aet == null ) {
+//			aet = getService(dd).addNewAnalysisEngine();
+//		}
+
+		//AnalysisEngineType aet = getService(dd).getAnalysisEngine();
+		if ( aet.getDelegates() != null ) {
+			DelegatesType dt = aet.getDelegates();
+			if ( dt.getAnalysisEngineArray() != null ) {
+				validateRemoteDelegates(parentContextName, dt, resourceSpecifier);
+				
+				validateColocatedDelegates(parentContextName, dt, resourceSpecifier);
+			}
+		}
+	}
+	private void adjustCasPoolOnScaleoutMismatch(AnalysisEngineDeploymentDescriptionDocument dd) {
+		// get service Cas Pool spec defined in DD. This is optional so when missing
+		// create a default instance with default settings
+		CasPoolType serviceCasPoolConfiguration = 
+				getCasPoolConfiguration(dd);
+		// get service scaleout spec defined in DD. This is optional so when missing
+		// create a default instance with default settings
+		ScaleoutType serviceScaleoutConfiguration = 
+				getScaleout(dd);
+
+		if ( isPrimitive(getService(dd)) && 
+				serviceCasPoolConfiguration.getNumberOfCASes() > serviceScaleoutConfiguration.getNumberOfInstances()) {
+					// For Primitive services, the service Cas Pool should equal scaleout.
+					// If it is larger, force it to be equal.
+
+				StringBuilder sb = new StringBuilder();
+				sb.append("*** WARN:  Top level Async Primitive specifies a scaleout of ")
+					.append(serviceScaleoutConfiguration.getNumberOfInstances())
+					.append(" , but also specifies a Cas Pool size of ")
+					.append(serviceCasPoolConfiguration.getNumberOfCASes())
+					.append(" .  The Cas Pool size is being forced to be the same as the scaleout.");
+				System.out.println(sb.toString());
+				serviceCasPoolConfiguration.
+				     setNumberOfCASes(serviceScaleoutConfiguration.getNumberOfInstances());
 		}
 	}
 	protected boolean validDelegate(ResourceSpecifier resourceSpecifier, String delegateKey) throws Exception {
@@ -661,13 +991,17 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 	}
 	
 	protected void checkDelegateKey(String key, ResourceSpecifier resourceSpecifier) throws Exception {
-		if ( key == null || key.trim().length() == 0) {
-			throw new UimaAsDelegateException("*** ERROR ** The delegate key in the deployment descriptor not specified. The delegate key is required and must match a delegate in the referenced descriptor", 
-					new RuntimeException("Invalid Delegate Key in Deployment Descriptor ("+key+")"));
+		if ( key == null || key.trim().isEmpty()) {
+			StringBuilder sb = 
+					new StringBuilder("*** ERROR ** The delegate key in the deployment descriptor not specified. The delegate key is required and must match a delegate in the referenced descriptor");
+			throw new AsynchAEException(sb.toString()); 
 		}
 		if (!validDelegate(resourceSpecifier, key)) {
-			throw new UimaAsDelegateException("*** ERROR ** The delegate in the deployment descriptor with key="+key+" does not match any delegates in the referenced descriptor", 
-					new RuntimeException("Invalid Delegate in Deployment Descriptor ("+key+")"));
+
+			StringBuilder sb = 
+					new StringBuilder("*** ERROR ** The delegate in the deployment descriptor with key=").
+					append(key).append(" does not match any delegates in the referenced descriptor");
+			throw new AsynchAEException(sb.toString());
 		}
 	}
 	protected boolean isDelegate(String parentController) {
@@ -743,7 +1077,7 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		} else if ( s.getTopDescriptor().getImport().getLocation() != null ) {
 			aeDescriptor = s.getTopDescriptor().getImport().getLocation();
 		} else {
-			throw new RuntimeException("Missing <import> element in the deployment descriptor");
+			throw new RuntimeException("Import missing location or name attribute in the deployment descriptor");
 		}
 		  XmlDocumentProperties dp = doc.documentProperties();
 		  System.out.println(dp.getSourceName());
@@ -832,7 +1166,8 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		
 		for( RemoteAnalysisEngineType remote : remoteAnalysisEngineArray) {
 			String key = remote.getKey();
-			Threshold defaultThreshold = Thresholds.newThreshold();
+			
+			//Threshold defaultThreshold = Thresholds.newThreshold();
 			RemoteAnalysisEngineDelegate delegate = new RemoteAnalysisEngineDelegate(key);
 			String brokerURL = resolvePlaceholder(remote.getInputQueue().getBrokerURL());
 			String queueName = resolvePlaceholder(remote.getInputQueue().getEndpoint());
@@ -867,9 +1202,9 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 
 			} else {
 				// Error configuration is optional in the DD. Add defaults.
-				getMetaThresholdMap.put(key, defaultThreshold);
-				processThresholdMap.put(key, defaultThreshold);
-				cpcThresholdMap.put(key, defaultThreshold);
+				getMetaThresholdMap.put(key, Thresholds.newThreshold(Action.TERMINATE));
+				processThresholdMap.put(key, Thresholds.newThreshold(Action.TERMINATE));
+				cpcThresholdMap.put(key, Thresholds.newThreshold(Action.CONTINUE));
 			}
 			
 			aggregate.addDelegate(delegate);
@@ -900,6 +1235,12 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 			aggregate.addDelegate(parse(delegate));
 		}
 	}
+	protected boolean isAggregate(AnalysisEngineDeploymentDescriptionDocument dd) {
+		// this method (isAggregate) is just a convenience to test for positive outcome (aggregate) 
+		// instead of saying !isPrimitive()
+		
+		return isPrimitive(dd) ? false : true;
+	}
 	private boolean isAggregate(AnalysisEngineType aet) {
 		// Is this an aggregate? An aggregate has a property async=true or has delegates.
 		System.out.println("......"+aet.getKey()+" aet.getAsync()="+aet.getAsync()+" aet.isSetAsync()="+aet.isSetAsync()+" aet.isSetDelegates()="+aet.isSetDelegates() );
@@ -909,7 +1250,7 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		}
 		return false;
 	}
-	private ErrorHandlerChain createServiceErrorHandlers() {
+	protected ErrorHandlerChain createServiceErrorHandlers() {
 		List<org.apache.uima.aae.error.ErrorHandler> errorHandlers = 
 				new ArrayList<>();
 		// There is a dedicated handler for each of GetMeta, ProcessCas, and CPC
@@ -951,6 +1292,8 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		} else {
 			// This is a primitive
 			delegate = new AnalysisEngineDelegate(aet.getKey());
+//			ErrorHandlerChain errorHandlerChain = createServiceErrorHandlers();
+//			delegate.set
 		}
 		if ( Boolean.parseBoolean(aet.getAsync()) ) {
 			delegate.setAsync(true);
@@ -1000,6 +1343,18 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		   value = System.getenv(placeholderName);
 		}
 		return value;
+	}
+	protected boolean isPrimitive(AnalysisEngineDeploymentDescriptionDocument dd ) {
+		return isPrimitive( dd.getAnalysisEngineDeploymentDescription().getDeployment().getService());
+	}
+	protected boolean isPrimitive(ServiceType dDserviceConfiguration) {
+		AnalysisEngineType dDaEConfiguration =
+				dDserviceConfiguration.getAnalysisEngine();
+		
+		return  dDaEConfiguration == null ||
+				// async property not defined and delegates element not defined
+				(dDaEConfiguration.getAsync() == null && dDaEConfiguration.getDelegates() == null ) ||
+				(dDaEConfiguration.getAsync() != null && dDaEConfiguration.getAsync().equals("false") );
 	}
 	protected boolean isPrimitive(AnalysisEngineDescription aeDescriptor, ServiceType st) {
 		if ( aeDescriptor.isPrimitive()) {

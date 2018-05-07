@@ -125,6 +125,7 @@ public class ProcessChildCasRequestCommand extends AbstractUimaAsCommand {
 			// the aggregate will send FREE CAS request to the delegate deployed
 			// in the same JVM
 			childCasStateEntry.setFreeCasNotificationEndpoint(freeCasNotificationEndpoint);
+			System.out.println("............... Service:"+controller.getComponentName()+" Saved FreeCasQueue for CAS:"+childCasStateEntry.getCasReferenceId());
 		}
 	}
 	private CasStateEntry getParentCasStateEntry(String parentCasReferenceId, Delegate delegateCasMultiplier ) throws AsynchAEException {
@@ -210,6 +211,7 @@ public class ProcessChildCasRequestCommand extends AbstractUimaAsCommand {
 			Endpoint e = ((AggregateAnalysisEngineController_impl)controller).
 					getDestinations().get(delegateCasMultiplier.getKey());
 
+			System.out.println("??????????? ProcessChildCasRequest.executeDirectRequest()- Controller:"+controller.getComponentName() +" Delegate:"+delegateCasMultiplier.getKey() + " isJavaRemote="+e.isJavaRemote()+" CAS:"+childCasStateEntry.getCasReferenceId());
 			// delegate of this aggregate can be deployed in the same JVM but its deployed
 			// with a Java queue instead of JMS. Such service is called JavaRemote delegate.
 			// This is an independent CM service and we need to send explicit FreeCAS request

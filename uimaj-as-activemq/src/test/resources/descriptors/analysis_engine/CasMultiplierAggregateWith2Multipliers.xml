@@ -68,7 +68,7 @@
       <nameValuePair>
         <name>NumberToGenerate</name>
         <value>
-          <integer>3</integer>
+          <integer>1</integer>
         </value>
       </nameValuePair>
     </configurationParameterSettings>
