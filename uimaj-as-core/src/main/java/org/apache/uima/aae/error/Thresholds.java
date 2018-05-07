@@ -8,7 +8,20 @@ import org.apache.uima.resourceSpecifier.GetMetadataErrorsType;
 import org.apache.uima.resourceSpecifier.ProcessCasErrorsType;
 
 public class Thresholds {
+	public enum Action { TERMINATE, CONTINUE, DISABLE};
+	
+ 	public static Threshold newThreshold(Action action) {
+		Threshold t = new Threshold();
+		t.setAction(action.name().toLowerCase());
+		t.setContinueOnRetryFailure(false);
+		t.setMaxRetries(0);
+		t.setThreshold(1);
+		t.setWindow(0);
+		return t;
+	}
   	public static Threshold newThreshold() {
+  		return newThreshold(Action.TERMINATE);
+  		/*
 		Threshold t = new Threshold();
 		t.setAction("terminate");
 		t.setContinueOnRetryFailure(false);
@@ -16,6 +29,7 @@ public class Thresholds {
 		t.setThreshold(1);
 		t.setWindow(0);
 		return t;
+*/
 	}
 	public static Threshold getThreshold(String action, int maxRetries ) {
 		Threshold t1 = newThreshold();
@@ -64,7 +78,7 @@ public class Thresholds {
 				delegate.setGetMetaTimeout(errorHandler.getTimeout());
 				thresholdMap.put(delegate.getKey(), t);
 			} else {
-				thresholdMap.put(delegate.getKey(), newThreshold());
+				thresholdMap.put(delegate.getKey(), newThreshold(Action.TERMINATE));
 			}
 		}
 		public static void addDelegateErrorThreshold(AnalysisEngineDelegate delegate, ProcessCasErrorsType errorHandler, Map<String, Threshold> thresholdMap) {
@@ -73,7 +87,7 @@ public class Thresholds {
 				delegate.setProcessTimeout(errorHandler.getTimeout());
 				thresholdMap.put(delegate.getKey(), t);
 			} else {
-				thresholdMap.put(delegate.getKey(), newThreshold());
+				thresholdMap.put(delegate.getKey(), newThreshold(Action.TERMINATE));
 			}
 		}
 		public static void addDelegateErrorThreshold(AnalysisEngineDelegate delegate, CollectionProcessCompleteErrorsType  errorHandler, Map<String, Threshold> thresholdMap) {
@@ -82,7 +96,7 @@ public class Thresholds {
 				delegate.setProcessTimeout(errorHandler.getTimeout());
 				thresholdMap.put(delegate.getKey(), t);
 			} else {
-				thresholdMap.put(delegate.getKey(), newThreshold());
+				thresholdMap.put(delegate.getKey(), newThreshold(Action.CONTINUE));
 			}
 		}
 
