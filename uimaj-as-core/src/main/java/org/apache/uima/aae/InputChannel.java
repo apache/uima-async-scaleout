@@ -81,7 +81,7 @@ public interface InputChannel extends Channel {
   public void terminate();
   
  
- // public void onMessage(MessageWrapper message);
+  public void onMessage(MessageWrapper message);
   
   public ENDPOINT_TYPE getType();
 }
