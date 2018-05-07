@@ -126,9 +126,9 @@
   </complexType>
   <complexType name="asyncAggregateErrorConfigurationType">
     <sequence>
-      <element type="res:getMetadataErrorsType" name="getMetadataErrors" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
-      <element type="res:processCasErrorsType" name="processCasErrors" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
-      <element type="res:collectionProcessCompleteErrorsType" name="collectionProcessCompleteErrors" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
+      <element type="res:getMetadataErrorsType" name="getMetadataErrors" xmlns:res="http://uima.apache.org/resourceSpecifier" minOccurs="0"/>
+      <element type="res:processCasErrorsType" name="processCasErrors" xmlns:res="http://uima.apache.org/resourceSpecifier" minOccurs="0"/>
+      <element type="res:collectionProcessCompleteErrorsType" name="collectionProcessCompleteErrors" xmlns:res="http://uima.apache.org/resourceSpecifier" minOccurs="0"/>
     </sequence>
   </complexType>
   
@@ -167,6 +167,7 @@
       <element type="res:scaleoutType" name="scaleout" minOccurs="0" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
       <element type="res:delegatesType" name="delegates" minOccurs="0" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
       <element type="res:casMultiplierType" name="casMultiplier" minOccurs="0" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
+     
     </sequence>
     <attribute type="string" name="key" use="optional"/>
     <attribute type="string" name="async" use="optional"/>
@@ -228,22 +229,22 @@
   
   <complexType name="asyncPrimitiveErrorConfigurationType">
     <sequence>
-      <element type="res:processCasErrorsType" name="processCasErrors" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
-      <element type="res:collectionProcessCompleteErrorsType" name="collectionProcessCompleteErrors" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
+      <element type="res:processCasErrorsType" name="processCasErrors" xmlns:res="http://uima.apache.org/resourceSpecifier" minOccurs="0"/>
+      <element type="res:collectionProcessCompleteErrorsType" name="collectionProcessCompleteErrors" xmlns:res="http://uima.apache.org/resourceSpecifier" minOccurs="0"/>
     </sequence>
   </complexType>
   <complexType name="serviceType">
     <sequence>
       <element type="res:inputQueueType" name="inputQueue" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
       <element type="res:topDescriptorType" minOccurs="1" maxOccurs="1" name="topDescriptor" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
-      <element type="res:environmentVariablesType" name="environmentVariables" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
+      <element type="res:environmentVariablesType" name="environmentVariables" xmlns:res="http://uima.apache.org/resourceSpecifier" minOccurs="0"/>
       <element type="res:topLevelAnalysisEngineType" minOccurs="1" maxOccurs="1" name="analysisEngine" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
     </sequence>
   </complexType>
   <complexType name="deploymentType">
     <sequence>
       <element type="res:casPoolType" name="casPool" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
-      <element type="res:serviceType" name="service" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
+      <element type="res:serviceType" name="service" xmlns:res="http://uima.apache.org/resourceSpecifier" minOccurs="1" maxOccurs="1"/>
     </sequence>
     <attribute type="string" name="protocol"/>
     <attribute type="string" name="provider"/>
@@ -252,8 +253,8 @@
     <sequence>
       <element type="string" name="name"/>
       <element type="string" name="description"/>
-      <element type="string" name="version"/>
-      <element type="string" name="vendor"/>
+      <element type="string" name="version" minOccurs="0"/>
+      <element type="string" name="vendor" minOccurs="0"/>
       <element type="res:deploymentType" name="deployment" xmlns:res="http://uima.apache.org/resourceSpecifier"/>
     </sequence>
   </complexType>
