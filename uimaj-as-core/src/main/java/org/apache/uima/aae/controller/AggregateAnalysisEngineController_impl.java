@@ -2151,17 +2151,6 @@ implements
 	//  marked as dead and now exists in the Dead Client Map.
 	if ( replyEndpoint.getDestination() != null &&
 			isClientDead(replyEndpoint.getDestination().toString() )) {
-	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
-           UIMAFramework.getLogger(CLASS_NAME).logrb(
-                Level.FINE,
-                CLASS_NAME.getName(),
-                "sendReplyToRemoteClient",
-                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                "UIMAEE_client_dead__FINE",
-                new Object[] { getComponentName(), replyEndpoint.getDestination().toString(), casStateEntry.getCasReferenceId()});
-        }
-
-
   	  dropCAS(casStateEntry.getCasReferenceId(), true);
 	  // If the cache is empty change the state of the Aggregate to idle
 	  if (getInProcessCache().isEmpty()) {
