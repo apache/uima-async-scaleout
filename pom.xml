@@ -553,5 +553,6 @@
   <modules>
     <module>uima-as-parent</module>
     <module>aggregate-uima-as</module>
+    <module>uimaj-as-connectors</module>
   </modules>
 </project>
