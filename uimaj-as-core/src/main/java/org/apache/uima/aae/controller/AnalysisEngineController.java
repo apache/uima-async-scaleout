@@ -40,6 +40,7 @@ import org.apache.uima.aae.jmx.JmxManagement;
 import org.apache.uima.aae.jmx.ServiceErrors;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.jmx.ServicePerformance;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.spi.transport.UimaMessageListener;
 import org.apache.uima.aae.spi.transport.UimaTransport;
@@ -55,6 +56,8 @@ public interface AnalysisEngineController extends ControllerLifecycle {
 
   public static final String AEInstanceCount = "AEInstanceCount";
 
+  public Origin getOrigin();
+  
   public void sendMetadata(Endpoint anEndpoint) throws AsynchAEException;
 
   public ControllerLatch getControllerLatch();

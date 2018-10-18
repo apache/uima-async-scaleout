@@ -44,20 +44,20 @@ import org.apache.uima.util.Level;
 public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 	private static final Class<?> CLASS_NAME = ProcessInputCasRequestCommand.class;
 
-	private MessageContext mc;
+//	private MessageContext mc;
 	// controls access to Aggregates semaphore which
 	// throttles processing of CASes from a service input queue
 	private Object lock = new Object();
 
 	public ProcessInputCasRequestCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+//		this.mc = mc;
 	}
 
 	public void execute() throws Exception {
 
-		int payload = mc.getMessageIntProperty(AsynchAEMessage.Payload);
-		String inputCasReferenceId = super.getCasReferenceId(this.getClass(), mc);
+		int payload = super.getMessageIntProperty(AsynchAEMessage.Payload);
+		String inputCasReferenceId = super.getCasReferenceId(this.getClass());
 		if (inputCasReferenceId == null) {
 			// LOG THIS
 			System.out.println(
@@ -87,33 +87,33 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 
 	}
 
-	private void saveReplyTo()  throws AsynchAEException {
+	private void saveReplyTo()  throws Exception {
 		// !!!!!!!!!!!!!!!!! HACK !!!!!!!!!!!!!!!!!!!
 		// Save true replyTo endpoint to the service sending the request
 		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		Object replyTo = mc.getMessageObjectProperty(AsynchAEMessage.ReplyToEndpoint);
-		mc.getEndpoint().setReplyDestination(replyTo);
+		Object replyTo = super.getMessageObjectProperty(AsynchAEMessage.ReplyToEndpoint);
+		super.getEndpoint().setReplyDestination(replyTo);
 
 	}
-	private void saveDelegateKey() throws AsynchAEException{
-		String delegateKey = mc.getMessageStringProperty(AsynchAEMessage.DelegateKey);
+	private void saveDelegateKey() throws Exception{
+		String delegateKey = super.getMessageStringProperty(AsynchAEMessage.DelegateKey);
 		if ( delegateKey == null ) {
-			delegateKey =  mc.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+			delegateKey =  super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
 		}
-		mc.getEndpoint().setDelegateKey(delegateKey);
+		super.getEndpoint().setDelegateKey(delegateKey);
 
 	}
-	private void saveEndpointName() throws AsynchAEException {
-		String endpointName = mc.getMessageStringProperty(AsynchAEMessage.EndpointName);
+	private void saveEndpointName() throws Exception {
+		String endpointName = super.getMessageStringProperty(AsynchAEMessage.EndpointName);
 		if (endpointName == null ) {
-			endpointName = mc.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+			endpointName = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
 		}
-		mc.getEndpoint().setEndpoint(endpointName);
+		super.getEndpoint().setEndpoint(endpointName);
 
 	}
 	private void addMessageOrigin(CacheEntry inputCasCacheEntry) {
 		if (!controller.isPrimitive()) {
-			   ((AggregateAnalysisEngineController) controller).addMessageOrigin(inputCasCacheEntry.getCasReferenceId(), mc.getEndpoint());
+			   ((AggregateAnalysisEngineController) controller).addMessageOrigin(inputCasCacheEntry.getCasReferenceId(), super.getEndpoint());
 			}
 
 	}
@@ -148,7 +148,7 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 			// Create a CasStateEntry in a local cache 
 			CasStateEntry localStateEntry = getCasStateEntry(inputCasCacheEntry.getCasReferenceId());
 			// associate client endpoint with the input CAS. We need to reply to this client
-			localStateEntry.setClientEndpoint(mc.getEndpoint());
+			localStateEntry.setClientEndpoint(super.getEndpoint());
 			localStateEntry.setInputCasReferenceId(inputCasCacheEntry.getCasReferenceId());
 			
 
@@ -163,7 +163,7 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 			process(inputCasCacheEntry, false);
 
 		} catch (AsynchAEException e) { 
-		    controller.getErrorHandlerChain().handle(e, super.populateErrorContext(mc), controller);
+		    controller.getErrorHandlerChain().handle(e, super.populateErrorContext(), controller);
 			e.printStackTrace();
 		} catch (Exception e) {
 //			if (UIMAFramework.getLogger(getClass()).isLoggable(Level.WARNING)) {
@@ -178,7 +178,7 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 //				e = new AsynchAEException(e);
 //			}
 			e = new AsynchAEException(e);
-		    controller.getErrorHandlerChain().handle(e, super.populateErrorContext(mc), controller);
+		    controller.getErrorHandlerChain().handle(e, super.populateErrorContext(), controller);
 
 			e.printStackTrace();
 		} finally {
@@ -219,12 +219,12 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 			}
 			long inTime = System.nanoTime();
 
-			SerializationResult result = super.deserializeInputCAS(mc); 
+			SerializationResult result = super.deserializeInputCAS(); 
 			
 			// Time how long we wait on Cas Pool to fetch a new CAS
 			long t1 = controller.getCpuTime();
 
-			inputCasCacheEntry = controller.getInProcessCache().register(result.getCas(), mc, result.getDeserSharedData(),
+			inputCasCacheEntry = controller.getInProcessCache().register(result.getCas(), super.getMessageContext(), result.getDeserSharedData(),
 					result.getReuseInfo(), inputCasReferenceId, result.getMarker(), result.acceptsDeltaCas());
 			
 			saveStats(inputCasCacheEntry, inTime, t1, result.getTimeWaitingForCAS());
@@ -250,12 +250,12 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 			if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
 				UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, CLASS_NAME.getName(), "executeRemoteRequest",
 						UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_deserialized_cas_ready_to_process_FINE",
-						new Object[] { mc.getEndpoint().getEndpoint() });
+						new Object[] { super.getEndpoint().getEndpoint() });
 			}
 			process(inputCasCacheEntry, waitForCompletion);
 
 		} catch (Exception e) {
-			super.handleError(e, inputCasCacheEntry, mc);
+			super.handleError(e, inputCasCacheEntry);
 		}
 
 	}
@@ -267,7 +267,7 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 		// Process the CAS
 		// *****************************************************************
 		if (controller.isPrimitive()) {
-			controller.process(entry.getCas(), entry.getCasReferenceId(), mc.getEndpoint());
+			controller.process(entry.getCas(), entry.getCasReferenceId(), super.getEndpoint());
 		} else {
 			controller.process(entry.getCas(), entry.getCasReferenceId());
 

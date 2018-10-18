@@ -37,11 +37,11 @@ import org.apache.uima.cas.CAS;
 import org.apache.uima.util.Level;
 
 public class ProcessChildCasResponseCommand extends AbstractUimaAsCommand  {
-	private MessageContext mc;
+//	private MessageContext mc;
 
 	public ProcessChildCasResponseCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+//		this.mc = mc;
 	}
 	public void execute() throws Exception {
 //		System.out.println(">>>>>>>>>>>>>>> in ProcessChildCasResponseCommand.execute(");
@@ -76,21 +76,21 @@ public class ProcessChildCasResponseCommand extends AbstractUimaAsCommand  {
 	    CacheEntry cacheEntry = null;
 
 	    try {
-	      casReferenceId = mc.getMessageStringProperty(AsynchAEMessage.CasReference);
+	      casReferenceId = super.getMessageStringProperty(AsynchAEMessage.CasReference);
 	      cacheEntry = controller.getInProcessCache().getCacheEntryForCAS(casReferenceId);
 	      CasStateEntry casStateEntry = ((AggregateAnalysisEngineController)controller)
 	              .getLocalCache().lookupEntry(casReferenceId);
 
 	      CAS cas = cacheEntry.getCas();
 	      String delegateKey = null;
-	      if ( mc.getEndpoint().getEndpoint() == null || mc.getEndpoint().getEndpoint().trim().length()==0) {
-	    	  String fromEndpoint = mc
+	      if ( super.getEndpoint().getEndpoint() == null || super.getEndpoint().getEndpoint().trim().length()==0) {
+	    	  String fromEndpoint = super
 	                  .getMessageStringProperty(AsynchAEMessage.MessageFrom);
 	    	  delegateKey = ((AggregateAnalysisEngineController) controller)
 	                  .lookUpDelegateKey(fromEndpoint);
 	      } else {
 	          delegateKey = ((AggregateAnalysisEngineController) controller)
-	                  .lookUpDelegateKey(mc.getEndpoint().getEndpoint());
+	                  .lookUpDelegateKey(super.getEndpoint().getEndpoint());
 	      }
 	      Delegate delegate = ((AggregateAnalysisEngineController) controller)
 	              .lookupDelegate(delegateKey);
@@ -101,7 +101,7 @@ public class ProcessChildCasResponseCommand extends AbstractUimaAsCommand  {
 	      delegate.removeCasFromOutstandingList(casReferenceId);
 
 	      if (cas != null) {
-	        cancelTimerAndProcess(mc, casReferenceId, cas);
+	        cancelTimerAndProcess(casReferenceId, cas);
 	      } else {
 	        if (UIMAFramework.getLogger(getClass()).isLoggable(Level.INFO)) {
 	          UIMAFramework.getLogger(getClass()).logrb(
@@ -111,7 +111,7 @@ public class ProcessChildCasResponseCommand extends AbstractUimaAsCommand  {
 	                  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 	                  "UIMAEE_cas_not_in_cache__INFO",
 	                  new Object[] { controller.getName(), casReferenceId,
-	                      mc.getEndpoint().getEndpoint() });
+	                		  super.getEndpoint().getEndpoint() });
 	        }
 	        throw new AsynchAEException("CAS with Reference Id:" + casReferenceId
 	                + " Not Found in CasManager's CAS Cache");
@@ -121,13 +121,13 @@ public class ProcessChildCasResponseCommand extends AbstractUimaAsCommand  {
 	      ErrorContext errorContext = new ErrorContext();
 	      errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
 	      errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
-	      errorContext.add(AsynchAEMessage.Endpoint, mc.getEndpoint());
+	      errorContext.add(AsynchAEMessage.Endpoint, super.getEndpoint());
 	      controller.getErrorHandlerChain().handle(e, errorContext, controller);
 	    } finally {
-	      incrementDelegateProcessCount(mc);
+	      incrementDelegateProcessCount();
 	      if (controller instanceof AggregateAnalysisEngineController) {
 	        try {
-	          String endpointName = mc.getEndpoint().getEndpoint();
+	          String endpointName = super.getEndpoint().getEndpoint();
 	          String delegateKey = ((AggregateAnalysisEngineController) controller)
 	                  .lookUpDelegateKey(endpointName);
 	          if (delegateKey != null) {
@@ -164,8 +164,8 @@ public class ProcessChildCasResponseCommand extends AbstractUimaAsCommand  {
 	    }
 
 	}
-	 private void incrementDelegateProcessCount(MessageContext aMessageContext) {
-		    Endpoint endpoint = aMessageContext.getEndpoint();
+	 private void incrementDelegateProcessCount() {
+		    Endpoint endpoint = super.getEndpoint();
 		    if (endpoint != null && controller instanceof AggregateAnalysisEngineController) {
 		      try {
 		        String delegateKey = ((AggregateAnalysisEngineController) controller)
@@ -186,7 +186,7 @@ public class ProcessChildCasResponseCommand extends AbstractUimaAsCommand  {
 	private void executeRemoteRequest(String casReferenceId) throws AsynchAEException {
 
 	}
-    private void cancelTimerAndProcess(MessageContext aMessageContext, String aCasReferenceId,
+    private void cancelTimerAndProcess( String aCasReferenceId,
            CAS aCAS) throws AsynchAEException {
 //      computeStats(aMessageContext, aCasReferenceId);
 //      ((AggregateAnalysisEngineController) controller).process(aCAS, anInputCasReferenceId,

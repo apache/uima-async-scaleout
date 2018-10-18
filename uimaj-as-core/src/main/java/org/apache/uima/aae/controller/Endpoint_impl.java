@@ -20,11 +20,13 @@
 package org.apache.uima.aae.controller;
 
 import java.util.Timer;
+import java.util.UUID;
 
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.TypeSystemImpl;
 import org.apache.uima.resource.ResourceSpecifier;
@@ -32,6 +34,8 @@ import org.apache.uima.resource.ResourceSpecifier;
 public class Endpoint_impl implements Endpoint, Cloneable {
   private static final Class<?> CLASS_NAME = Endpoint_impl.class;
 
+  private String uniqueId = UUID.randomUUID().toString();
+  
   private volatile boolean javaRemote=false;
   
   private volatile Object destination = null;
@@ -130,6 +134,18 @@ public class Endpoint_impl implements Endpoint, Cloneable {
   
  private ResourceSpecifier resourceSpecifier;
   
+ private Origin messageOrigin;
+ 
+ public void setMessageOrigin(Origin origin) {
+	 this.messageOrigin = origin;
+ }
+ 
+ public Origin getMessageOrigin() {
+	 return messageOrigin;
+ }
+  public String getUniqueId() {
+	  return uniqueId;
+  }
   public void setJavaRemote() {
 	 javaRemote = true;
   }

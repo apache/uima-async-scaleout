@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.uima.aae.component.TopLevelServiceComponent;
+import org.apache.uima.aae.component.dd.DeploymentDescriptorProcessor;
 import org.apache.uima.aae.service.UimaASService;
 import org.apache.uima.aae.service.builder.UimaAsDirectServiceBuilder;
 import org.apache.uima.as.deployer.AbstractUimaASDeployer;
@@ -42,7 +44,21 @@ public class UimaAsDirectServiceDeployer  extends AbstractUimaASDeployer {
 			Map<String, String> deploymentProperties) throws Exception {
 		UimaASService uimaAsService = null;
 		try {
-			uimaAsService = new UimaAsDirectServiceBuilder().build(dd, this);
+			DeploymentDescriptorProcessor ddProcessor = 
+					new DeploymentDescriptorProcessor(dd);
+			
+			// process dd producing TopLevelServiceComponent. If the dd
+			// is an aggregate, the component object will include a tree
+			// of delegates. It basically combines information from both
+			// a dd and resource specifier for all parts of the pipeline
+			// aggregating instances of AnalysisEngineComponent created
+			// for every delegate.
+			TopLevelServiceComponent topLevelComponent = 
+					ddProcessor.newComponent();
+			
+			// create an instance of a service for the client to use
+			uimaAsService = new UimaAsDirectServiceBuilder().build(topLevelComponent, this);
+			
 			// start listeners
 			uimaAsService.start();
 			// block until all internal components initialize and are ready to process

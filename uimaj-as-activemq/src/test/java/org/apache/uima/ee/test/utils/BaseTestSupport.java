@@ -659,6 +659,7 @@ public abstract class BaseTestSupport extends ActiveMQSupport
             }
 
             // Send CPC
+            System.out.println("............. Sending CPC");
             uimaAsClient.collectionProcessingComplete();
           }
         }

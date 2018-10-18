@@ -20,6 +20,7 @@ package org.apache.uima.aae.service;
 
 import java.util.concurrent.BlockingQueue;
 
+import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.as.client.DirectMessage;
 import org.apache.uima.cas.CAS;
@@ -34,6 +35,7 @@ public interface UimaASService {
 	public static final int STOP_NOW = 1001;
 	  
 	public String getEndpoint();
+	public int getScaleout();
 	public String getId();
 	public void start() throws Exception;
 	public void stop() throws Exception;
@@ -46,5 +48,5 @@ public interface UimaASService {
 	public void releaseCAS(String casReferenceId, BlockingQueue<DirectMessage> releaseCASQueue ) throws Exception;
 	public AnalysisEngineMetaData getMetaData() throws Exception; 
 	public void removeFromCache(String casReferenceId);
-
+	public UimaASService withInProcessCache(InProcessCache cache);
 }

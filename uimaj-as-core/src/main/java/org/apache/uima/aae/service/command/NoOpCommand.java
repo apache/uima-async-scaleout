@@ -23,16 +23,16 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
 
 public class NoOpCommand extends AbstractUimaAsCommand {
-	MessageContext mc;
+//	MessageContext mc;
 	public NoOpCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+//		this.mc = mc;
 	}
 	public void execute() throws Exception {
 		System.out.println("*******************************************************"
 				+ "\nNoOpCommand.execute() - Either wrong command or message type - Command:"+
-				mc.getMessageIntProperty(AsynchAEMessage.Command) + " MessageType:"+
-				mc.getMessageIntProperty(AsynchAEMessage.MessageType) + " Service:"+controller.getComponentName() +
+				super.getMessageIntProperty(AsynchAEMessage.Command) + " MessageType:"+
+				super.getMessageIntProperty(AsynchAEMessage.MessageType) + " Service:"+controller.getComponentName() +
 				"\n*******************************************************");
 	}
 }

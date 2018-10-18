@@ -28,17 +28,17 @@ import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.util.Level;
 
 public class StopRequestCommand extends AbstractUimaAsCommand {
-	private MessageContext mc;
+	//private MessageContext mc;
 
 	public StopRequestCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+		//this.mc = mc;
 	}
 
 	public void execute() throws Exception {
 
 		try {
-			String casReferenceId = mc.getMessageStringProperty(AsynchAEMessage.CasReference);
+			String casReferenceId = super.getMessageStringProperty(AsynchAEMessage.CasReference);
 			if (UIMAFramework.getLogger(getClass()).isLoggable(Level.INFO)) {
 				UIMAFramework.getLogger(getClass()).logrb(Level.INFO, getClass().getName(), "execute",
 						UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_received_stop_request__INFO",

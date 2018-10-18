@@ -99,7 +99,7 @@ public class LocalDispatcher implements Runnable  {
 		while (client.isRunning()) {
 			PendingMessage pm = null;
 			try {
-				System.out.println("LocalDispatcher.run()- waiting for new message ...");
+				System.out.println("LocalDispatcher.run()- waiting for new message ... queue hashcode:"+messageQueue.hashCode());
 				pm = messageQueue.take();
 				System.out.println("LocalDispatcher.run()-got new message to dispatch");
 			} catch (InterruptedException e) {
@@ -122,9 +122,12 @@ public class LocalDispatcher implements Runnable  {
 					}
 				}
 				try {
+					System.out.println(".................... calling LocalDispatch.beforeDispatch()");
 					client.beforeDispatch(pm);
 					
+					System.out.println(".................... calling LocalDispatch.dispatch()");
 					dispatch(pm);
+					System.out.println(".................... LocalDispatch.dispatch() returned");
 				} catch (Exception e) {
 					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
 						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "run",

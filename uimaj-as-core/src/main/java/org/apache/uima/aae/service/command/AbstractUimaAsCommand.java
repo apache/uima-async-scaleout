@@ -47,27 +47,30 @@ import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.BinaryCasSerDes6.ReuseInfo;
 import org.apache.uima.cas.impl.Serialization;
 import org.apache.uima.cas.impl.XmiSerializationSharedData;
+import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.util.Level;
 
 public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 	protected AnalysisEngineController controller;
 	private Object mux = new Object();
-
-	protected AbstractUimaAsCommand(AnalysisEngineController controller) {
+	private final MessageContext messageContext;
+	
+	protected AbstractUimaAsCommand(AnalysisEngineController controller, MessageContext aMessageContext) {
 		this.controller = controller;
+		this.messageContext = aMessageContext;
 	}
 
-	protected String getCasReferenceId(Class<?> concreteClassName, MessageContext aMessageContext) throws AsynchAEException {
-		if (!aMessageContext.propertyExists(AsynchAEMessage.CasReference)) {
+	protected String getCasReferenceId(Class<?> concreteClassName/*, MessageContext aMessageContext */) throws AsynchAEException {
+		if (!messageContext.propertyExists(AsynchAEMessage.CasReference)) {
 			if (UIMAFramework.getLogger(concreteClassName).isLoggable(Level.INFO)) {
 				UIMAFramework.getLogger(concreteClassName).logrb(Level.INFO, concreteClassName.getName(),
 						"getCasReferenceId", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 						"UIMAEE_message_has_cas_refid__INFO",
-						new Object[] { aMessageContext.getEndpoint().getEndpoint() });
+						new Object[] { messageContext.getEndpoint().getEndpoint() });
 			}
 			return null;
 		}
-		return aMessageContext.getMessageStringProperty(AsynchAEMessage.CasReference);
+		return messageContext.getMessageStringProperty(AsynchAEMessage.CasReference);
 	}
 
 	protected CacheEntry getCacheEntryForCas(String casReferenceId) {
@@ -95,7 +98,7 @@ public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 		return (controller.isTopLevelComponent() && controller instanceof AggregateAnalysisEngineController);
 	}
 
-	protected void handleError(Exception e, CacheEntry cacheEntry, MessageContext mc) {
+	protected void handleError(Exception e, CacheEntry cacheEntry/*, MessageContext mc */) {
 		if (UIMAFramework.getLogger(getClass()).isLoggable(Level.WARNING)) {
 			UIMAFramework.getLogger(getClass()).logrb(Level.WARNING, getClass().getName(), "handleError",
 					UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_service_exception_WARNING",
@@ -105,7 +108,7 @@ public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 					UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_exception__WARNING", e);
 		}
 		ErrorContext errorContext = new ErrorContext();
-		errorContext.add(AsynchAEMessage.Endpoint, mc.getEndpoint());
+		errorContext.add(AsynchAEMessage.Endpoint, messageContext.getEndpoint());
 		errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
 		errorContext.add(AsynchAEMessage.CasReference, cacheEntry.getCasReferenceId());
 		controller.dropCAS(cacheEntry.getCas());
@@ -154,31 +157,69 @@ public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 
 	}
 
-	protected static ErrorContext populateErrorContext(MessageContext aMessageCtx) {
+	protected ErrorContext populateErrorContext(/*MessageContext aMessageCtx */) {
 		ErrorContext errorContext = new ErrorContext();
-		if (aMessageCtx != null) {
+		if (messageContext != null) {
 			try {
-				if (aMessageCtx.propertyExists(AsynchAEMessage.Command)) {
+				if (messageContext.propertyExists(AsynchAEMessage.Command)) {
 					errorContext.add(AsynchAEMessage.Command,
-							aMessageCtx.getMessageIntProperty(AsynchAEMessage.Command));
+							messageContext.getMessageIntProperty(AsynchAEMessage.Command));
 				}
 
-				if (aMessageCtx.propertyExists(AsynchAEMessage.MessageType)) {
+				if (messageContext.propertyExists(AsynchAEMessage.MessageType)) {
 					errorContext.add(AsynchAEMessage.MessageType,
-							aMessageCtx.getMessageIntProperty(AsynchAEMessage.MessageType));
+							messageContext.getMessageIntProperty(AsynchAEMessage.MessageType));
 				}
 
-				if (aMessageCtx.propertyExists(AsynchAEMessage.CasReference)) {
+				if (messageContext.propertyExists(AsynchAEMessage.CasReference)) {
 					errorContext.add(AsynchAEMessage.CasReference,
-							aMessageCtx.getMessageStringProperty(AsynchAEMessage.CasReference));
+							messageContext.getMessageStringProperty(AsynchAEMessage.CasReference));
 				}
-				errorContext.add(UIMAMessage.RawMsg, aMessageCtx.getRawMessage());
+				errorContext.add(UIMAMessage.RawMsg, messageContext.getRawMessage());
 			} catch (Exception e) { /* ignore */
 			}
 		}
 		return errorContext;
 	}
-
+	protected Endpoint getEndpoint() {
+		return messageContext.getEndpoint();
+	}
+	protected int getMessageIntProperty(String propertyName) throws Exception {
+		return messageContext.getMessageIntProperty(propertyName);
+	}
+	protected String getMessageStringProperty(String propertyName) throws Exception {
+		return messageContext.getMessageStringProperty(propertyName);
+	}
+	protected ResourceMetaData getResourceMetaData() throws Exception {
+		return (ResourceMetaData)messageContext.getMessageObjectProperty(AsynchAEMessage.AEMetadata);
+	}
+	protected String getStringMessage() throws Exception {
+		return messageContext.getStringMessage();
+	}
+	protected Object getMessageObjectProperty(String propertyName) throws Exception {
+		return messageContext.getMessageObjectProperty(propertyName);
+	}
+	protected boolean getMessageBooleanProperty(String propertyName) throws Exception {
+		return messageContext.getMessageBooleanProperty(propertyName);
+	}
+	protected long getMessageLongProperty( String propertyName) throws Exception {
+		return messageContext.getMessageLongProperty(propertyName);
+	}
+	protected boolean propertyExists(String propertyName) throws Exception {
+		return messageContext.propertyExists(propertyName);
+	}
+	protected String getEndpointName() {
+		return messageContext.getEndpointName();
+	}
+	protected Object getObjectMessage() throws Exception {
+		return messageContext.getObjectMessage();
+	}
+	protected byte[] getByteMessage() throws Exception {
+		return messageContext.getByteMessage();
+	}
+	protected MessageContext getMessageContext() {
+		return messageContext;
+	}
 	protected Endpoint fetchParentCasOrigin(String parentCasId) throws AsynchAEException {
 		Endpoint endpoint = null;
 		String parentId = parentCasId;
@@ -224,8 +265,8 @@ public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 		return cas;
 	}
 
-	protected SerializationResult deserializeChildCAS(String casMultiplierDelegateKey, Endpoint endpoint,
-			MessageContext mc) throws Exception {
+	protected SerializationResult deserializeChildCAS(String casMultiplierDelegateKey, Endpoint endpoint
+			/*MessageContext mc*/) throws Exception {
 		SerializationResult result = new SerializationResult();
 
 		// Aggregate time spent waiting for a CAS in the shadow cas pool
@@ -250,17 +291,17 @@ public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 		// Create deserialized wrapper for XMI, BINARY, COMPRESSED formats. To add
 		// a new serialization format add a new class which implements
 		// UimaASDeserializer and modify DeserializerFactory class.
-		UimaASDeserializer deserializer = DeserializerFactory.newDeserializer(endpoint, mc);
+		UimaASDeserializer deserializer = DeserializerFactory.newDeserializer(endpoint, messageContext);
 		deserializer.deserialize(result);
 
 		return result;
 	}
 
-	protected SerializationResult deserializeInputCAS( MessageContext mc)
+	protected SerializationResult deserializeInputCAS()
 			throws Exception {
 		SerializationResult result = new SerializationResult();
-		String origin = mc.getEndpoint().getEndpoint();
-		Endpoint endpoint = mc.getEndpoint();
+		String origin = messageContext.getEndpoint().getEndpoint();
+		Endpoint endpoint = messageContext.getEndpoint();
 		
 		// Time how long we wait on Cas Pool to fetch a new CAS
 		long t1 = controller.getCpuTime();
@@ -276,20 +317,20 @@ public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 			return null;
 		}
 
-		UimaASDeserializer deserializer = DeserializerFactory.newDeserializer(endpoint, mc);
+		UimaASDeserializer deserializer = DeserializerFactory.newDeserializer(endpoint, messageContext);
 		deserializer.deserialize(result);
 
 		return result;
 	}
-	protected Delegate getDelegate(MessageContext mc) throws AsynchAEException {
+	protected Delegate getDelegate(/* MessageContext mc */) throws AsynchAEException {
 		String delegateKey = null;
-		if (mc.getEndpoint().getEndpoint() == null || mc.getEndpoint().getEndpoint().trim().length() == 0) {
-			String fromEndpoint = mc.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+		if (messageContext.getEndpoint().getEndpoint() == null || messageContext.getEndpoint().getEndpoint().trim().length() == 0) {
+			String fromEndpoint = messageContext.getMessageStringProperty(AsynchAEMessage.MessageFrom);
 			delegateKey = ((AggregateAnalysisEngineController) controller)
 					.lookUpDelegateKey(fromEndpoint);
 		} else {
 			delegateKey = ((AggregateAnalysisEngineController) controller)
-					.lookUpDelegateKey(mc.getEndpoint().getEndpoint());
+					.lookUpDelegateKey(messageContext.getEndpoint().getEndpoint());
 		}
 		return ((AggregateAnalysisEngineController) controller).lookupDelegate(delegateKey);
 	}

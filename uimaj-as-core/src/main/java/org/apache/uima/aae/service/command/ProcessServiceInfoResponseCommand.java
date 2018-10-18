@@ -29,22 +29,22 @@ import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.util.Level;
 
 public class ProcessServiceInfoResponseCommand extends AbstractUimaAsCommand {
-	private MessageContext mc;
+//	private MessageContext mc;
 
 	public ProcessServiceInfoResponseCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+	//	this.mc = mc;
 	}
 
 	public void execute() throws Exception {
 
 	    String casReferenceId = null;
 	    try {
-	      casReferenceId = mc.getMessageStringProperty(AsynchAEMessage.CasReference);
+	      casReferenceId = super.getMessageStringProperty(AsynchAEMessage.CasReference);
 	      if ( casReferenceId == null ) {
 	    	  return;  // nothing to do
 	      }
-	      Endpoint freeCasEndpoint = mc.getEndpoint();
+	      Endpoint freeCasEndpoint = super.getEndpoint();
 	      CasStateEntry casStateEntry = ((AggregateAnalysisEngineController) controller)
 	              .getLocalCache().lookupEntry(casReferenceId);
 	      if (casStateEntry != null) {
@@ -52,7 +52,7 @@ public class ProcessServiceInfoResponseCommand extends AbstractUimaAsCommand {
 	        //  Fetch host IP where the CAS is being processed. When the UIMA AS service
 	        //  receives a CAS it immediately sends ServiceInfo Reply message containing 
 	        //  IP of the host where the service is running.
-	        String serviceHostIp = mc.getMessageStringProperty(AsynchAEMessage.ServerIP);
+	        String serviceHostIp = super.getMessageStringProperty(AsynchAEMessage.ServerIP);
 	        if ( serviceHostIp != null ) {
 	          casStateEntry.setHostIpProcessingCAS(serviceHostIp);
 	        }

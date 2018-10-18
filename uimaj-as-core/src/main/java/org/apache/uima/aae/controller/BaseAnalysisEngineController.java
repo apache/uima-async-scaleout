@@ -78,6 +78,8 @@ import org.apache.uima.aae.jmx.ServiceErrors;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.message.Origin;
+import org.apache.uima.aae.message.UimaAsOrigin;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.MonitorBaseImpl;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
@@ -111,6 +113,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	JMS,
 	DIRECT
   };
+  private final Origin origin;
   private static final Class<?> CLASS_NAME = BaseAnalysisEngineController.class;
   private static final String JMS_PROVIDER_HOME = "ACTIVEMQ_HOME";
   public enum ServiceState { INITIALIZING, RUNNING, DISABLED, STOPPING, FAILED };
@@ -284,7 +287,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   protected abstract void doWarmUp(CAS cas, String casReferenceId) throws Exception;
 
   public BaseAnalysisEngineController() {
-
+	  origin = new UimaAsOrigin("");
   }
  
   public BaseAnalysisEngineController(AnalysisEngineController aParentController,
@@ -316,7 +319,7 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           Map aDestinationMap, JmxManagement aJmxManagement,boolean disableJCasCache) throws Exception {
     
 	System.out.println("C'tor Called Descriptor:"+aDescriptor);
-
+    origin = new UimaAsOrigin(anEndpointName);
 	casManager = aCasManager;
     inProcessCache = anInProcessCache;
     localCache = new LocalCache(this);
@@ -529,7 +532,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
 	  return uimaContext;
   }
 
-
+  public Origin getOrigin() {
+	  return origin;
+  }
   public void setThreadFactory(ThreadPoolTaskExecutor factory) {
 	  threadFactory = factory;
   }

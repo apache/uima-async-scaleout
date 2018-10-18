@@ -51,6 +51,7 @@ import org.apache.uima.aae.service.UimaASService;
 import org.apache.uima.aae.service.UimaAsServiceRegistry;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsInputChannel;
+import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.TypeSystem;
 import org.apache.uima.collection.CollectionReader;
@@ -129,12 +130,16 @@ public class TestUimaASNoErrors extends BaseTestSupport {
     
     @Test
     public void testDeploy() throws Exception {
+    	
     	UimaAsynchronousEngine uimaAS = getClient(Transport.Java);
     
     	Map ctx = new HashMap<>();
-    	
+    	ctx.put(UimaAsynchronousEngine.Provider,"java");
+        ctx.put(UimaAsynchronousEngine.Protocol,"java");
+/*
     	ctx.put(UimaAsynchronousEngine.Provider,"activemq");
         ctx.put(UimaAsynchronousEngine.Protocol,"jms");
+        */
         uimaAS.deploy(relativePath + "/Deploy_NoOpAnnotator.xml", ctx);
 
 	    runTest2(null, uimaAS, getMasterConnectorURI(broker),
@@ -143,6 +148,21 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    uimaAS.stop();
     
     }
+    @Test
+    public void testJmsServiceAdapter() throws Exception {
+	  Logger.getLogger(this.getClass()).info("-------------- testJmsServiceAdapter -------------");
+	  //setUp();
+	  BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
+    try {
+        deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+        deployService(eeUimaEngine, relativePath + "/Deploy_SyncAggregateWithJmsService.xml");
+        runTest(null, eeUimaEngine, String.valueOf(getMasterConnectorURI(broker)), "TopLevelTaeQueue",
+                0, PROCESS_LATCH);
+       
+    } catch( Exception e ) {
+    	throw e;
+    }
+  }
     /*
      * 
      * 	 
@@ -1419,6 +1439,27 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    uimaAsClient.stop();
 	  }
 
+	@Test
+	public void testDeployAsyncAggregateServiceOverJava() throws Exception {
+		testDeployAsyncAggregateService(Transport.Java);
+	}
+
+	public void testDeployAsyncAggregateService(Transport transport) throws Exception {
+		System.out.println("-------------- testDeployAggregateService -------------");
+		UimaAsynchronousEngine uimaAsClient = getClient(transport);
+		System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
+		Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
+		deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AsyncAggregate.xml",
+				"TopLevelTaeQueue");
+
+		appCtx.put(UimaAsynchronousEngine.Timeout, 0);
+		appCtx.put(UimaAsynchronousEngine.GetMetaTimeout, 0);
+
+		addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class);
+
+		runTest(appCtx, uimaAsClient, "tcp://localhost:61616", "TopLevelTaeQueue", 200, PROCESS_LATCH);
+	}
+
 	 @Test
 	 public void testDeployAggregateServiceOverJava() throws Exception {
 		 testDeployAggregateService(Transport.Java);
@@ -1433,10 +1474,12 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    //BaseUIMAAsynchronousEngine_impl eeUimaEngine = new BaseUIMAAsynchronousEngine_impl();
 	    
 	    
-	    //   System.setProperty("BrokerURL", "tcp::/localhost:61616");
+	       System.setProperty("NoOpBroker", "tcp::/localhost:61616");
 	       System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
 //	       deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
-			Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
+			deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorUsingPlaceholder.xml");
+
+	       Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");
 			deployTopLevelService(appCtx, transport, uimaAsClient, relativePath + "/Deploy_AggregateAnnotator.xml","TopLevelTaeQueue");
 
 	//       deployJavaService(eeUimaEngine, relativePath + "/Deploy_AggregateAnnotator.xml");

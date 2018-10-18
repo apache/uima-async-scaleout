@@ -26,15 +26,15 @@ import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.util.Level;
 
 public class ReleaseCASRequestCommand extends AbstractUimaAsCommand {
-	private MessageContext mc;
+	//private MessageContext mc;
 
 	public ReleaseCASRequestCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+		//this.mc = mc;
 	}
 
 	public void execute() throws Exception {
-	    String casReferenceId = mc.getMessageStringProperty(AsynchAEMessage.CasReference);
+	    String casReferenceId = super.getMessageStringProperty(AsynchAEMessage.CasReference);
 	    if (UIMAFramework.getLogger(getClass()).isLoggable(Level.FINE)) {
 	      UIMAFramework.getLogger(getClass()).logrb(Level.FINE, getClass().getName(),
 	              "execute", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,

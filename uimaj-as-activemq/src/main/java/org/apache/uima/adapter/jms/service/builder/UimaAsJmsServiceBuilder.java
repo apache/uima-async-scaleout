@@ -18,20 +18,29 @@
  */
 package org.apache.uima.adapter.jms.service.builder;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadFactory;
 import java.util.UUID;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.ActiveMQPrefetchPolicy;
+import org.apache.activemq.command.ActiveMQDestination;
+import org.apache.activemq.command.ActiveMQQueue;
+import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.InputChannel.ChannelType;
+import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
+import org.apache.uima.aae.component.TopLevelServiceComponent;
 import org.apache.uima.aae.OutputChannel;
+import org.apache.uima.aae.UimaAsPriorityBasedThreadFactory;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
@@ -46,12 +55,20 @@ import org.apache.uima.aae.error.handler.CpcErrorHandler;
 import org.apache.uima.aae.error.handler.GetMetaErrorHandler;
 import org.apache.uima.aae.error.handler.ProcessCasErrorHandler;
 import org.apache.uima.aae.handler.Handler;
+import org.apache.uima.aae.handler.HandlerBase;
+import org.apache.uima.aae.handler.input.MetadataRequestHandler_impl;
+import org.apache.uima.aae.handler.input.MetadataResponseHandler_impl;
+import org.apache.uima.aae.handler.input.ProcessRequestHandler_impl;
+import org.apache.uima.aae.handler.input.ProcessResponseHandler;
+import org.apache.uima.aae.service.AsynchronousUimaASService;
 import org.apache.uima.aae.service.UimaASService;
 import org.apache.uima.aae.service.builder.AbstractUimaAsServiceBuilder;
 import org.apache.uima.aae.service.delegate.AnalysisEngineDelegate;
 import org.apache.uima.aae.service.delegate.RemoteAnalysisEngineDelegate;
+import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.JmsInputChannel;
 import org.apache.uima.adapter.jms.activemq.JmsOutputChannel;
+import org.apache.uima.adapter.jms.activemq.PriorityMessageHandler;
 import org.apache.uima.adapter.jms.activemq.TempDestinationResolver;
 import org.apache.uima.adapter.jms.activemq.UimaDefaultMessageListenerContainer;
 import org.apache.uima.adapter.jms.service.UimaASJmsService;
@@ -65,6 +82,7 @@ import org.apache.uima.resourceSpecifier.CasPoolType;
 import org.apache.uima.resourceSpecifier.CollectionProcessCompleteErrorsType;
 import org.apache.uima.resourceSpecifier.ProcessCasErrorsType;
 import org.apache.uima.resourceSpecifier.ServiceType;
+import org.apache.uima.util.Level;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public class UimaAsJmsServiceBuilder extends AbstractUimaAsServiceBuilder{
@@ -102,6 +120,276 @@ public class UimaAsJmsServiceBuilder extends AbstractUimaAsServiceBuilder{
 			e.printStackTrace();
 		}
 	}
+	
+	/***   NEW CODE  */
+	
+	public UimaASService build(TopLevelServiceComponent topLevelComponent, ControllerCallbackListener callback)
+			throws Exception {
+		UimaASService service = null;
+		
+		// is this the only one resource specifier type supported  by the current uima-as?
+		if (topLevelComponent.getResourceSpecifier() instanceof AnalysisEngineDescription) {
+			AnalysisEngineDescription aeDescriptor = 
+					(AnalysisEngineDescription) topLevelComponent.getResourceSpecifier();
+			String endpoint = resolvePlaceholder(topLevelComponent.getEndpoint().getEndpoint());
+			// Create a Top Level Service (TLS) wrapper. This wrapper may contain
+			// references to multiple TLS service instances if the TLS is scaled
+			// up.
+			service = new UimaASJmsService().
+					withName(aeDescriptor.
+					getAnalysisEngineMetaData().getName())
+					.withResourceSpecifier(aeDescriptor).
+					withBrokerURL(topLevelComponent.getEndpoint().getServerURI()).
+					withInputQueue(endpoint);
+
+			this.buildAndDeploy(topLevelComponent, service, callback);
+			
+
+		}
+		return service;
+	}
+	
+	public UimaASService buildAndDeploy(TopLevelServiceComponent topLevelComponent, UimaASService service, ControllerCallbackListener callback) throws Exception {
+		// create ResourceManager, CasManager, and InProcessCache
+		initialize(service, topLevelComponent.getComponentCasPool(), Transport.Java); 
+
+		AnalysisEngineController topLevelController = 
+				createController(topLevelComponent, callback, service.getId());
+		
+		service.withInProcessCache(super.cache);
+		System.setProperty("BrokerURI", "Direct");
+		configureTopLevelService(topLevelController, service /*, topLevelComponent.getScaleout() */);
+		return service;
+
+	}
+
+	
+	private void configureTopLevelService(AnalysisEngineController topLevelController,	UimaASService service) throws Exception {
+		// First create Connection Factory. This is needed by
+		// JMS listeners.
+		createConnectionFactory();
+		// counts number of initialized threads
+		CountDownLatch latchToCountNumberOfInitedThreads = 
+				new CountDownLatch(service.getScaleout());
+		// counts number of terminated threads
+		CountDownLatch latchToCountNumberOfTerminatedThreads = 
+				new CountDownLatch(service.getScaleout());
+		OutputChannel outputChannel;
+		;
+		// Add one instance of JmsOutputChannel 
+		if ( topLevelController.getOutputChannel(ENDPOINT_TYPE.JMS) == null ) {
+			outputChannel = new JmsOutputChannel();
+			outputChannel.setController(topLevelController);
+			outputChannel.setServerURI(brokerURL);
+			outputChannel.setServiceInputEndpoint(service.getEndpoint());
+			topLevelController.addOutputChannel(outputChannel);
+		} else {
+			outputChannel = (JmsOutputChannel)topLevelController.getOutputChannel(ENDPOINT_TYPE.JMS);
+			outputChannel.setServiceInputEndpoint(service.getEndpoint());
+		}
+		JmsInputChannel inputChannel;
+		// Add one instance of JmsInputChannel
+		if ( topLevelController.getInputChannel(ENDPOINT_TYPE.JMS) == null ) {
+			inputChannel = new JmsInputChannel(ChannelType.REQUEST_REPLY);
+			topLevelController.setInputChannel(inputChannel);
+		} else {
+			inputChannel = (JmsInputChannel)topLevelController.getInputChannel(ENDPOINT_TYPE.JMS);
+		}
+		
+		inputChannel.setController(topLevelController);
+		
+		inputChannel.setMessageHandler(getMessageHandler(topLevelController));
+		
+		// Create service JMS listeners to handle Process, GetMeta and optional FreeCas
+		// requests.
+		
+		// listener to handle process CAS requests
+		UimaDefaultMessageListenerContainer processListener 
+		    = createListener(Type.ProcessCAS, service.getScaleout(), inputChannel, outputChannel);
+		inputChannel.addListenerContainer(processListener);
+		
+		
+		
+		 
+		
+		
+		  String targetStringSelector = "";
+		  if ( System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty) != null ) {
+			  targetStringSelector = System.getProperty(UimaAsynchronousEngine.TargetSelectorProperty);
+		  } else {
+			  // the default selector is IP:PID 
+			  String ip = InetAddress.getLocalHost().getHostAddress();
+			  targetStringSelector = ip+":"+topLevelController.getPID();
+		  }
+		  UimaDefaultMessageListenerContainer targetedListener = 
+				  new UimaDefaultMessageListenerContainer();
+		  targetedListener.setType(Type.Target);
+		  // setup jms selector
+		  if ( topLevelController.isCasMultiplier()) {
+			  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.CM_PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+	          } else {
+				  targetedListener.setMessageSelector(UimaAsynchronousEngine.TargetSelectorProperty+" = '"+targetStringSelector+"' AND"+UimaDefaultMessageListenerContainer.PROCESS_SELECTOR_SUFFIX);//(Command=2000 OR Command=2002)");
+	          }
+		  
+		  // use shared ConnectionFactory
+          targetedListener.setConnectionFactory(processListener.getConnectionFactory());
+          // mark the listener as a 'Targeted' listener
+          targetedListener.setTargetedListener();
+          targetedListener.setController(topLevelController);
+          // there will only be one delivery thread. Its job will be to
+          // add a targeted message to a BlockingQueue. Such thread will block
+          // in an enqueue if a dequeue is not available. This will be prevent
+          // the overwhelming the service with messages.
+  		  ThreadPoolTaskExecutor threadExecutor = new ThreadPoolTaskExecutor();
+		  threadExecutor.setCorePoolSize(1);
+		  threadExecutor.setMaxPoolSize(1);
+		  targetedListener.setTaskExecutor(threadExecutor);
+          targetedListener.setConcurrentConsumers(1);
+		  if ( processListener.getMessageListener() instanceof PriorityMessageHandler ) {
+			  // the targeted listener will use the same message handler as the
+			  // Process listener. This handler will add a message wrapper 
+			  // to enable prioritizing messages. 
+			  targetedListener.setMessageListener(processListener.getMessageListener());
+		  }
+		  // Same queue as the Process queue
+		  targetedListener.setDestination(processListener.getDestination());
+          //registerListener(targetedListener);
+ //         targetedListener.afterPropertiesSet();
+		  threadExecutor.initialize();
+		  
+          //targetedListener.initialize();
+          //targetedListener.start();
+          if (UIMAFramework.getLogger(getClass()).isLoggable(Level.INFO)) {
+            UIMAFramework.getLogger(getClass()).logrb(Level.INFO, getClass().getName(),
+                    "createListenerForTargetedMessages", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+                    "UIMAJMS_TARGET_LISTENER__INFO",
+                    new Object[] {targetedListener.getMessageSelector(), topLevelController.getComponentName() });
+          }
+		
+        inputChannel.addListenerContainer(targetedListener);
+		
+		//listeners.add(processListener);
+		// listener to handle GetMeta requests
+		UimaDefaultMessageListenerContainer getMetaListener 
+	        = createListener(Type.GetMeta, 1);
+		inputChannel.addListenerContainer(getMetaListener);
+		//listeners.add(getMetaListener);
+		
+		if ( topLevelController.isCasMultiplier()) {
+			// listener to handle Free CAS requests
+			UimaDefaultMessageListenerContainer freeCasListener 
+		        = createListener(Type.FreeCAS, 1);
+			inputChannel.addListenerContainer(freeCasListener);
+			//listeners.add(freeCasListener);
+		}
+	}
+	
+	private UimaDefaultMessageListenerContainer createListener(Type type, int consumerCount, InputChannel inputChannel, OutputChannel outputChannel) throws Exception{
+		PriorityMessageHandler h = null;
+		
+		ThreadPoolTaskExecutor jmsListenerThreadExecutor = 
+				new ThreadPoolTaskExecutor();
+		
+		if ( Type.ProcessCAS.equals(type)) {
+			outputChannel.setServerURI(getBrokerURL());
+		      if ( controller.isPrimitive() ) {
+				  h = new PriorityMessageHandler(consumerCount);
+				  ThreadPoolTaskExecutor threadExecutor = 
+						  new ThreadPoolTaskExecutor();
+	              controller.setThreadFactory(threadExecutor);
+	              
+				  CountDownLatch latchToCountNumberOfTerminatedThreads = 
+						  new CountDownLatch(consumerCount);
+			      // Create a Custom Thread Factory. Provide it with an instance of
+			      // PrimitiveController so that every thread can call it to initialize
+			      // the next available instance of a AE.
+				  ThreadFactory tf = 
+						  new UimaAsPriorityBasedThreadFactory(Thread.currentThread().
+								  getThreadGroup(), controller, latchToCountNumberOfTerminatedThreads)
+				          .withQueue(h.getQueue()).withChannel(controller.getInputChannel(ENDPOINT_TYPE.JMS));
+				     
+				  
+				  ((UimaAsPriorityBasedThreadFactory)tf).setDaemon(true);
+				  // This ThreadExecutor will use custom thread factory instead of default one
+				   threadExecutor.setThreadFactory(tf);
+				   threadExecutor.setCorePoolSize(consumerCount);
+				   threadExecutor.setMaxPoolSize(consumerCount);
+
+				  // Initialize the thread pool
+				  threadExecutor.initialize();
+
+				  // Make sure all threads are started. This forces each thread to call
+				  // PrimitiveController to initialize the next instance of AE
+				  threadExecutor.getThreadPoolExecutor().prestartAllCoreThreads();
+			      // This ThreadExecutor will use custom thread factory instead of default one
+		    	  
+		      }
+			
+		} 
+		jmsListenerThreadExecutor.setCorePoolSize(consumerCount);
+		jmsListenerThreadExecutor.setMaxPoolSize(consumerCount);
+		jmsListenerThreadExecutor.initialize();
+		
+		
+//		threadExecutor.setCorePoolSize(consumerCount);
+//		threadExecutor.setMaxPoolSize(consumerCount);
+		
+		// destination can be NULL if this listener is meant for a 
+		// a temp queue. Such destinations are created on demand 
+		// using destination resolver which is plugged into the 
+		// listener. The resolver creates a temp queue lazily on
+		// listener startup.
+		ActiveMQDestination destination = null;
+		
+		if ( !isTempQueueListener(type) ) {
+			destination = new ActiveMQQueue(queueName);
+		}
+		JmsMessageListenerBuilder listenerBuilder = 
+				new JmsMessageListenerBuilder();
+
+		UimaDefaultMessageListenerContainer messageListener =
+				listenerBuilder.withController(controller)
+		       			.withType(type)
+						.withConectionFactory(factory)
+						.withThreadPoolExecutor(jmsListenerThreadExecutor)
+						.withConsumerCount(consumerCount)
+						.withInputChannel(inputChannel)
+						.withPriorityMessageHandler(h)
+						.withSelector(getSelector(type))
+						.withDestination(destination)
+						.build();
+		messageListener.setReceiveTimeout(500);
+//		messageListener.setMessageListener(h);
+		return messageListener;
+	}
+	public HandlerBase getMessageHandler(AnalysisEngineController controller) {
+		MetadataRequestHandler_impl metaHandler = new MetadataRequestHandler_impl("MetadataRequestHandler");
+		metaHandler.setController(controller);
+		ProcessRequestHandler_impl processHandler = new ProcessRequestHandler_impl("ProcessRequestHandler");
+		processHandler.setController(controller);
+		metaHandler.setDelegate(processHandler);
+		if ( !controller.isPrimitive() ) {
+			MetadataResponseHandler_impl metaResponseHandler = 
+					new MetadataResponseHandler_impl("MetadataResponseHandler");
+			metaResponseHandler.setController(controller);
+			processHandler.setDelegate(metaResponseHandler);
+			
+			ProcessResponseHandler processResponseHandler = 
+					new ProcessResponseHandler("ProcessResponseHandler");
+			processResponseHandler.setController(controller);
+			metaResponseHandler.setDelegate(processResponseHandler);
+			
+		}
+		return metaHandler;
+	}
+	
+	
+	
+	
+	/* OLD CODE */
+	
+	
+	
 	
 	
 	public static InputChannel createInputChannel(ChannelType type) {
@@ -388,7 +676,10 @@ public class UimaAsJmsServiceBuilder extends AbstractUimaAsServiceBuilder{
 	}
 
 	public UimaASService build(AnalysisEngineDeploymentDescriptionDocument dd, ControllerCallbackListener callback)
-			throws Exception {
+     throws Exception {
+		
+		
+
 		// get the top level AnalysisEngine descriptor
 		String aeDescriptorPath = getAEDescriptorPath(dd);
 		// parse AE descriptor

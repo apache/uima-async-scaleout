@@ -27,21 +27,21 @@ import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.util.Level;
 
 public class PingRequestCommand extends AbstractUimaAsCommand  {
-	private MessageContext mc;
+//	private MessageContext mc;
 
 	public PingRequestCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+//		this.mc = mc;
 	}
 
 	public void execute() throws Exception {
 		try {
 			ENDPOINT_TYPE et = ENDPOINT_TYPE.DIRECT; // default
-			if ( mc.getEndpoint().isRemote() ) {
+			if ( super.getEndpoint().isRemote() ) {
 				et = ENDPOINT_TYPE.JMS;
 			} 
 				
-			controller.getOutputChannel(et).sendReply(AsynchAEMessage.Ping, mc.getEndpoint(), null, false);
+			controller.getOutputChannel(et).sendReply(AsynchAEMessage.Ping, super.getEndpoint(), null, false);
 		} catch (Exception e) {
 			if (UIMAFramework.getLogger(this.getClass()).isLoggable(Level.WARNING)) {
 				if (controller != null) {

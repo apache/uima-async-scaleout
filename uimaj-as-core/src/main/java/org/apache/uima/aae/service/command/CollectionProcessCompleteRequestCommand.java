@@ -23,14 +23,14 @@ import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.message.MessageContext;
 
 public class CollectionProcessCompleteRequestCommand  extends AbstractUimaAsCommand {
-	private MessageContext mc;
+//	private MessageContext mc;
 	
 	public CollectionProcessCompleteRequestCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+//		this.mc = mc;
 	}
 	public void execute() throws Exception {
-        Endpoint endpoint = mc.getEndpoint();
-        controller.collectionProcessComplete(endpoint);
+//        Endpoint endpoint = mc.getEndpoint();
+        controller.collectionProcessComplete(super.getEndpoint());
 	}
 }

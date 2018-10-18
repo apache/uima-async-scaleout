@@ -25,7 +25,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.controller.AnalysisEngineController;

@@ -23,6 +23,7 @@ import org.apache.uima.aae.controller.Endpoint_impl;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.cas.SerialFormat;
 
 public class DirectMessageContext implements MessageContext {
@@ -47,6 +48,8 @@ public class DirectMessageContext implements MessageContext {
 		endpoint.setEndpoint(anEndpointName);
 		endpoint.setReplyDestination(message.get(AsynchAEMessage.ReplyToEndpoint));
 		endpoint.setDelegateKey(message.getAsString(AsynchAEMessage.DelegateKey));
+		endpoint.setMessageOrigin((Origin)message.get(AsynchAEMessage.MessageFrom));
+		
 		StringBuilder sb = new StringBuilder();
 		if ( controllerName != null && !controllerName.trim().isEmpty()) {
 			sb.append("Service:"+controllerName+" ");

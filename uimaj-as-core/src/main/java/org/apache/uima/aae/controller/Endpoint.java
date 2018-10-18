@@ -21,6 +21,7 @@ package org.apache.uima.aae.controller;
 
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.ServiceInfo;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.cas.SerialFormat;
 import org.apache.uima.cas.impl.TypeSystemImpl;
 
@@ -31,6 +32,12 @@ public interface Endpoint {
 
   public static final int DISABLED = 3;
 
+  public void setMessageOrigin(Origin origin);
+  
+  public Origin getMessageOrigin();
+  
+  public String getUniqueId();
+  
   public boolean isJavaRemote();
   
   public void setJavaRemote();

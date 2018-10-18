@@ -58,23 +58,18 @@ import org.apache.activemq.command.ActiveMQBytesMessage;
 import org.apache.activemq.command.ActiveMQTempDestination;
 import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.uima.UIMAFramework;
-import org.apache.uima.UIMA_IllegalArgumentException;
 import org.apache.uima.UIMA_IllegalStateException;
 import org.apache.uima.aae.AsynchAECasManager_impl;
-import org.apache.uima.aae.UIMAEE_Constants;
-import org.apache.uima.aae.VersionCompatibilityChecker;
 import org.apache.uima.aae.UimaASApplicationEvent.EventTrigger;
 import org.apache.uima.aae.UimaASApplicationExitEvent;
 import org.apache.uima.aae.UimaAsVersion;
+import org.apache.uima.aae.VersionCompatibilityChecker;
 import org.apache.uima.aae.client.UimaASStatusCallbackListener;
 import org.apache.uima.aae.client.UimaAsBaseCallbackListener;
 import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.ControllerCallbackListener;
-import org.apache.uima.aae.controller.ControllerLifecycle;
 import org.apache.uima.aae.controller.Endpoint;
-import org.apache.uima.aae.controller.UimacppServiceController;
-import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.UimaASMetaRequestTimeout;
 import org.apache.uima.aae.jmx.JmxManager;
 import org.apache.uima.aae.message.AsynchAEMessage;
@@ -84,9 +79,7 @@ import org.apache.uima.aae.service.UimaASService;
 import org.apache.uima.aae.service.UimaAsServiceRegistry;
 import org.apache.uima.aae.service.builder.UimaAsDirectServiceBuilder;
 import org.apache.uima.adapter.jms.JmsConstants;
-import org.apache.uima.adapter.jms.activemq.ConnectionFactoryIniter;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
-import org.apache.uima.adapter.jms.activemq.UimaEEAdminSpringContext;
 import org.apache.uima.adapter.jms.message.PendingMessage;
 import org.apache.uima.adapter.jms.message.PendingMessageImpl;
 import org.apache.uima.adapter.jms.service.Dd2spring;
@@ -99,7 +92,6 @@ import org.apache.uima.as.deployer.UimaAsServiceDeployer;
 import org.apache.uima.as.dispatcher.LocalDispatcher;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.SerialFormat;
-import org.apache.uima.impl.UimaVersion;
 import org.apache.uima.internal.util.UUIDGenerator;
 import org.apache.uima.resource.Resource;
 import org.apache.uima.resource.ResourceConfigurationException;
@@ -109,11 +101,8 @@ import org.apache.uima.resource.ResourceProcessException;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
 import org.apache.uima.util.Level;
 import org.apache.xmlbeans.XmlDocumentProperties;
-import org.apache.xmlbeans.XmlOptions;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
@@ -171,12 +160,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   protected volatile boolean stopped = false;
   public BaseUIMAAsynchronousEngine_impl() {
 	  this(Transport.JMS);  // default
-	  /*
-	  super();
-    UIMAFramework.getLogger(CLASS_NAME).log(Level.INFO,
-            "UIMA Version " + UIMAFramework.getVersionString() +
-    " UIMA-AS Version " + UimaAsVersion.getVersionString());
-    */
   }
   public BaseUIMAAsynchronousEngine_impl(Transport transport) {
 	super();
@@ -393,7 +376,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
 	public void stop() {
 		try {
-			  if ( brokerURI != null && !brokerURI.equals("java")) {
+			  if ( isServiceRemote() ) {
+//			  if ( brokerURI != null && !brokerURI.equals("java")) {
 				  if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(
 							Level.INFO)) {
 				     UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO,
@@ -475,8 +459,6 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
   }
   protected boolean isServiceRemote() {
 	  return transport.equals(Transport.JMS);
-//	  return (service instanceof UimaASJmsService);
-//	  return service == null;
   }
   private void startLocalConsumer(Map anApplicationContext) {
 
@@ -519,7 +501,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     	// start dispatcher in its own thread. It will fetch messages from a shared 'pendingMessageQueue'
       	LocalDispatcher dispatcher =
       			new LocalDispatcher(this, service, pendingMessageQueue);
-      	dispatchThread = new Thread(dispatcher);
+      	dispatchThread = new Thread(dispatcher,"LocalDispatcher");
       	dispatchThread.start();
     }
 
@@ -1231,9 +1213,21 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 			    throw new AsynchAEException("*** ERROR deployment descriptor validation failed");
 		}
 		*/
+		// use xmlbeans framework to parse dd and create java beans for it
 		XmlDocumentProperties dp = dd.documentProperties();
 		System.out.println(dp.getSourceName());
-		
+		// based on deployment options create relevant deployer
+		UimaAsServiceDeployer deployer = newServiceDeployer(dd, anApplicationContext);
+		// deploy (instantiate) uima-as service(s)
+		service = deployer.deploy(dd, anApplicationContext);
+
+		UimaAsServiceRegistry.getInstance().register(service);
+
+		return service.getId();
+
+	}
+  
+	private UimaAsServiceDeployer newServiceDeployer(AnalysisEngineDeploymentDescriptionDocument dd, Map anApplicationContext) throws Exception {
 		String protocolOverride = null;
 		if ( anApplicationContext!= null && anApplicationContext.containsKey(UimaAsynchronousEngine.Protocol) ) {
 			protocolOverride = (String)anApplicationContext.get(UimaAsynchronousEngine.Protocol);
@@ -1247,7 +1241,7 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 		// the DD settings 
 		if ( protocolOverride == null && providerOverride == null) {
 			// Use factory to create deployer instance for a given 
-			// protocol and provider defined in the DD
+			// protocol and provider
 			deployer = 
 					ServiceDeployers.newDeployer(protocol(dd), provider(dd));
 		} else {
@@ -1272,15 +1266,8 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 			deployer = 
 					ServiceDeployers.newDeployer(deploymentProtocol, deploymentProvider);
 		}
-
-		service = deployer.deploy(dd, anApplicationContext);
-
-		UimaAsServiceRegistry.getInstance().register(service);
-
-		return service.getId();
-
+		return deployer;
 	}
-  
 	protected UimaASService getServiceReference() {
 		return service;
 	}

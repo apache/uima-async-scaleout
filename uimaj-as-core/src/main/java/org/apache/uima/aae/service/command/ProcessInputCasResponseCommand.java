@@ -60,22 +60,22 @@ import org.apache.uima.util.Level;
 
 public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 
-	private MessageContext mc;
+	//private MessageContext mc;
 
 	public ProcessInputCasResponseCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+		//this.mc = mc;
 	}
 
 	public void execute() throws Exception {
 
-		int payload = mc.getMessageIntProperty(AsynchAEMessage.Payload);
-		String casReferenceId = super.getCasReferenceId(this.getClass(), mc);
-		String msgFrom = mc.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+		int payload = super.getMessageIntProperty(AsynchAEMessage.Payload);
+		String casReferenceId = super.getCasReferenceId(this.getClass());
+		String msgFrom = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
 
 		System.out.println(">>>>>>>>>>>>>>> Controller:" + controller.getComponentName()
 				+ " in ProcessInputCasResponseCommand.execute() - Input CAS:" + casReferenceId + " from "
-				+ mc.getMessageStringProperty(AsynchAEMessage.MessageFrom)+" Payload:"+payload);
+				+ super.getMessageStringProperty(AsynchAEMessage.MessageFrom)+" Payload:"+payload);
 
 		if (casReferenceId == null) {
 			// LOG THIS
@@ -98,7 +98,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 			executeRemoteRequest(casReferenceId);
 		} else if (failedProcessReply(payload)) {
 	        if (key == null) {
-	            key = ((Endpoint) mc.getEndpoint()).getEndpoint();
+	            key = ((Endpoint) super.getEndpoint()).getEndpoint();
 	          }
 	          handleProcessResponseWithException(key);
 	        } else {
@@ -117,16 +117,16 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	private boolean remoteProcessReply(int payload) {
 		return (AsynchAEMessage.XMIPayload == payload || AsynchAEMessage.BinaryPayload == payload);
 	}
-	private Object getCause() throws AsynchAEException {
+	private Object getCause() throws Exception {
 		Object object = null;
 		
-		if ( ( object = mc.getObjectMessage() ) == null ) {
+		if ( ( object = super.getObjectMessage() ) == null ) {
 	        // Could be a C++ exception. In this case the exception is just a String in the message
 	        // cargo
-	        if (mc.getStringMessage() != null) {
-	          object = new UimaEEServiceException(mc.getStringMessage());
+	        if (super.getStringMessage() != null) {
+	          object = new UimaEEServiceException(super.getStringMessage());
 	        } else {
-	        	object = mc.getMessageObjectProperty(AsynchAEMessage.ErrorCause);
+	        	object = super.getMessageObjectProperty(AsynchAEMessage.ErrorCause);
 	        }
 		}
 
@@ -142,17 +142,17 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	                      UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 	                      "UIMAEE_handling_exception_from_delegate_FINE",
 	                      new Object[] { controller.getName(),
-	                          mc.getEndpoint().getEndpoint() });
+	                    		  super.getEndpoint().getEndpoint() });
 	    }
 	    boolean isCpCError = false;
 	    String casReferenceId = null;
 
 	    try {
 	      // If a Process Request, increment number of docs processed
-	      if (mc.getMessageIntProperty(AsynchAEMessage.MessageType) == AsynchAEMessage.Response
-	              && mc.getMessageIntProperty(AsynchAEMessage.Command) == AsynchAEMessage.Process) {
+	      if (super.getMessageIntProperty(AsynchAEMessage.MessageType) == AsynchAEMessage.Response
+	              && super.getMessageIntProperty(AsynchAEMessage.Command) == AsynchAEMessage.Process) {
 	        // Increment number of CASes processed by a delegate
-	        incrementDelegateProcessCount(mc);
+	        incrementDelegateProcessCount( );
 	      }
 	      Object object = getCause();
 	      if (ignoreException(object)) {
@@ -160,13 +160,13 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	      }
 
 	      if (controller instanceof AggregateAnalysisEngineController
-	              && mc.propertyExists(AsynchAEMessage.Command)
-	              && mc.getMessageIntProperty(AsynchAEMessage.Command) == AsynchAEMessage.CollectionProcessComplete) {
+	              && super.propertyExists(AsynchAEMessage.Command)
+	              && super.getMessageIntProperty(AsynchAEMessage.Command) == AsynchAEMessage.CollectionProcessComplete) {
 	        isCpCError = true;
 	        ((AggregateAnalysisEngineController) controller)
 	                .processCollectionCompleteReplyFromDelegate(delegateKey, false);
 	      } else {
-	        casReferenceId = mc.getMessageStringProperty(AsynchAEMessage.CasReference);
+	        casReferenceId = super.getMessageStringProperty(AsynchAEMessage.CasReference);
 	      }
 
 	      if (object != null && (object instanceof Exception || object instanceof Throwable)) {
@@ -180,14 +180,14 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	                + controllerName + " Received Exception " + casid_msg + " From Delegate:"
 	                + delegateKey, (Exception) object);
 	        ErrorContext errorContext = new ErrorContext();
-	        errorContext.add(AsynchAEMessage.Command, mc
+	        errorContext.add(AsynchAEMessage.Command, super
 	                .getMessageIntProperty(AsynchAEMessage.Command));
-	        errorContext.add(AsynchAEMessage.MessageType, mc
+	        errorContext.add(AsynchAEMessage.MessageType, super
 	                .getMessageIntProperty(AsynchAEMessage.MessageType));
 	        if (!isCpCError) {
 	          errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
 	        }
-	        errorContext.add(AsynchAEMessage.Endpoint, mc.getEndpoint());
+	        errorContext.add(AsynchAEMessage.Endpoint, super.getEndpoint());
 	        controller.getErrorHandlerChain().handle(remoteException, errorContext,
 	        		controller);
 	      }
@@ -195,7 +195,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	      ErrorContext errorContext = new ErrorContext();
 	      errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
 	      errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
-	      errorContext.add(AsynchAEMessage.Endpoint, mc.getEndpoint());
+	      errorContext.add(AsynchAEMessage.Endpoint, super.getEndpoint());
 	      controller.getErrorHandlerChain().handle(e, errorContext, controller);
 	    }
 
@@ -230,7 +230,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		CacheEntry cacheEntry = null;
 		Delegate delegate = null;
 		try {
-			casReferenceId = mc.getMessageStringProperty(AsynchAEMessage.CasReference);
+			casReferenceId = super.getMessageStringProperty(AsynchAEMessage.CasReference);
 			// find an entry for a given cas id in a global cache
 			cacheEntry = super.getCacheEntryForCas(casReferenceId);
 			if (cacheEntry == null) {
@@ -240,7 +240,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 			// find an entry for a given cas id in this aggregate's local cache
 			CasStateEntry casStateEntry = controller.getLocalCache().lookupEntry(casReferenceId);
 			// find delegate which sent the reply
-			delegate = super.getDelegate(mc);
+			delegate = super.getDelegate();
 			if (casStateEntry != null) {
 				casStateEntry.setReplyReceived();
 				casStateEntry.setLastDelegate(delegate);
@@ -251,22 +251,22 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 			delegate.removeCasFromOutstandingList(casReferenceId);
 
 			if (cacheEntry.getCas() != null) {
-				computeStats(mc, cacheEntry);
+				computeStats(cacheEntry);
 				((AggregateAnalysisEngineController) controller).process(cacheEntry.getCas(), casReferenceId);
 
 			} else {
 				if (UIMAFramework.getLogger(getClass()).isLoggable(Level.INFO)) {
 					UIMAFramework.getLogger(getClass()).logrb(Level.INFO, getClass().getName(), "executeDirectRequest",
 							UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_cas_not_in_cache__INFO",
-							new Object[] { controller.getName(), casReferenceId, mc.getEndpoint().getEndpoint() });
+							new Object[] { controller.getName(), casReferenceId, super.getEndpoint().getEndpoint() });
 				}
 				throw new AsynchAEException(
 						"CAS with Reference Id:" + casReferenceId + " Not Found in CasManager's CAS Cache");
 			}
 		} catch (Exception e) {
-			super.handleError(e, cacheEntry, mc);
+			super.handleError(e, cacheEntry);
 		} finally {
-			incrementDelegateProcessCount(mc);
+			incrementDelegateProcessCount();
 			if (delegate != null) {
 				handleAbortedCasMultiplier(delegate, cacheEntry);
 			}
@@ -290,9 +290,9 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		    //String casReferenceId = null;
 		    Endpoint endpointWithTimer = null;
 		    try {
-		      final int payload = mc.getMessageIntProperty(AsynchAEMessage.Payload);
+		      final int payload = super.getMessageIntProperty(AsynchAEMessage.Payload);
 		      //casReferenceId = aMessageContext.getMessageStringProperty(AsynchAEMessage.CasReference);
-		      endpointWithTimer = lookupEndpoint(mc.getEndpoint().getEndpoint(),
+		      endpointWithTimer = lookupEndpoint(super.getEndpoint().getEndpoint(),
 		              casReferenceId);
 
 		      if (endpointWithTimer == null) {
@@ -300,12 +300,12 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		          UIMAFramework.getLogger(getClass()).logrb(Level.WARNING, getClass().getName(),
 		                  "handleProcessResponseFromRemote", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 		                  "UIMAEE_invalid_endpoint__WARNING",
-		                  new Object[] { mc.getEndpoint().getEndpoint(), casReferenceId });
+		                  new Object[] { super.getEndpoint().getEndpoint(), casReferenceId });
 		        }
 		        return;
 		      }
 		      String delegateKey = ((AggregateAnalysisEngineController) controller)
-		              .lookUpDelegateKey(mc.getEndpoint().getEndpoint());
+		              .lookUpDelegateKey(super.getEndpoint().getEndpoint());
 		      Delegate delegate = ((AggregateAnalysisEngineController) controller)
 		              .lookupDelegate(delegateKey);
 		      boolean casRemovedFromOutstandingList = delegate.removeCasFromOutstandingList(casReferenceId);
@@ -327,14 +327,14 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		        }
 		      }
 
-		      String xmi = mc.getStringMessage();
+		      String xmi = super.getStringMessage();
 
 		      // Fetch entry from the cache for a given Cas Id. The entry contains a CAS that will be used
 		      // during deserialization
 		      CacheEntry cacheEntry = controller.getInProcessCache().getCacheEntryForCAS(
 		              casReferenceId);
 		      // check if the client requested Performance Metrics for the CAS
-		      if ( mc.propertyExists(AsynchAEMessage.CASPerComponentMetrics) ) {
+		      if ( super.propertyExists(AsynchAEMessage.CASPerComponentMetrics) ) {
 		        try {
 		          // find top ancestor of this CAS. All metrics are accumulated there since
 		          // this is what will be returned to the client
@@ -345,7 +345,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		          if ( ancestor != null ) {
 		        	// fetch Performance Metrics from remote delegate reply
 		            List<AnalysisEnginePerformanceMetrics> metrics = 
-		                    UimaSerializer.deserializePerformanceMetrics(mc.getMessageStringProperty(AsynchAEMessage.CASPerComponentMetrics));
+		                    UimaSerializer.deserializePerformanceMetrics(super.getMessageStringProperty(AsynchAEMessage.CASPerComponentMetrics));
 		            List<AnalysisEnginePerformanceMetrics> adjustedMetrics =
 		                    new ArrayList<AnalysisEnginePerformanceMetrics>();
 		            for(AnalysisEnginePerformanceMetrics delegateMetric : metrics ) {
@@ -422,14 +422,14 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		        UIMAFramework.getLogger(getClass()).logrb(Level.FINEST, getClass().getName(),
 		                "handleProcessResponseFromRemote", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 		                "UIMAEE_rcvd_reply_FINEST",
-		                new Object[] { mc.getEndpoint().getEndpoint(), casReferenceId, xmi });
+		                new Object[] { super.getEndpoint().getEndpoint(), casReferenceId, xmi });
 		      }
 		      long t1 = controller.getCpuTime();
 		      /* --------------------- */
 		      /** DESERIALIZE THE CAS. */
 		      /* --------------------- */
 		      //all subsequent serialization must be complete CAS.
-		      if ( !mc.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas))  {
+		      if ( !super.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas))  {
 		    	cacheEntry.setAcceptsDeltaCas(false);
 		      }
 
@@ -445,14 +445,14 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		                    new Object[] { casStateEntry.howManyDelegatesResponded(), casReferenceId });
 		          }
 		          // If a delta CAS, merge it while checking that no pre-existing FSs are modified.
-		          if (mc.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas)) {
+		          if (super.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas)) {
 		            switch (serialFormat) {
 		            case XMI:
 		              int highWaterMark = cacheEntry.getHighWaterMark();
 		              deserialize(xmi, cas, casReferenceId, highWaterMark, AllowPreexistingFS.disallow);
 		              break;
 		            case COMPRESSED_FILTERED:
-		              deserialize(mc.getByteMessage(), cas, cacheEntry, endpointWithTimer.getTypeSystemImpl(), AllowPreexistingFS.disallow);
+		              deserialize(super.getByteMessage(), cas, cacheEntry, endpointWithTimer.getTypeSystemImpl(), AllowPreexistingFS.disallow);
 		              break;
 		            default:
 		              throw new UIMARuntimeException(new Exception("Internal error"));
@@ -471,7 +471,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		          casStateEntry.incrementHowManyDelegatesResponded();
 		        }
 		      } else { // Processing a reply from a non-parallel delegate (binary or delta xmi or xmi)
-		        byte[] binaryData = mc.getByteMessage();
+		        byte[] binaryData = super.getByteMessage();
 		        ByteArrayInputStream istream = new ByteArrayInputStream(binaryData);
 		        switch (serialFormat) {
 		        case BINARY:
@@ -482,7 +482,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		          bcs.deserialize(istream, AllowPreexistingFS.allow);
 		          break;
 		        case XMI:
-		          if (mc.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas)) {
+		          if (super.getMessageBooleanProperty(AsynchAEMessage.SentDeltaCas)) {
 		            int highWaterMark = cacheEntry.getHighWaterMark();
 		            deserialize(xmi, cas, casReferenceId, highWaterMark, AllowPreexistingFS.allow);
 		          } else {
@@ -505,7 +505,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		        statistic.increment(timeToDeserializeCAS);
 		      }
 
-		      computeStats(mc, casReferenceId);
+		      computeStats( casReferenceId);
 
 		      // Send CAS for processing when all delegates reply
 		      // totalNumberOfParallelDelegatesProcessingCas indicates how many delegates are processing CAS
@@ -517,7 +517,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		      if (totalNumberOfParallelDelegatesProcessingCas == 1
 		              || receivedAllResponsesFromParallelDelegates(casStateEntry,
 		                      totalNumberOfParallelDelegatesProcessingCas)) {
-		        invokeProcess(cas, casReferenceId, null, mc, null);
+		        invokeProcess(cas, casReferenceId, null, null);
 		      }
 
 		    } catch (Exception e) {
@@ -550,10 +550,10 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		      ErrorContext errorContext = new ErrorContext();
 		      errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.Process);
 		      errorContext.add(AsynchAEMessage.CasReference, casReferenceId);
-		      errorContext.add(AsynchAEMessage.Endpoint, mc.getEndpoint());
+		      errorContext.add(AsynchAEMessage.Endpoint, super.getEndpoint());
 		      controller.getErrorHandlerChain().handle(e, errorContext, controller);
 		    } finally {
-		      incrementDelegateProcessCount(mc);
+		      incrementDelegateProcessCount();
 		    }
 		
 		
@@ -562,13 +562,13 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		
 	}
 	  public void invokeProcess(CAS aCAS, String anInputCasReferenceId, String aNewCasReferenceId,
-	          MessageContext aMessageContext, String aNewCasProducedBy) throws AsynchAEException {
+	           String aNewCasProducedBy) throws AsynchAEException {
 	    try {
 	      // Use empty string as key. Top level component stats are stored under this key.
 	      controller.getMonitor().incrementCount("", Monitor.ProcessCount);
 
 	      if (controller instanceof AggregateAnalysisEngineController) {
-	        boolean isNewCAS = aMessageContext.propertyExists(AsynchAEMessage.CasSequence);
+	        boolean isNewCAS = super.propertyExists(AsynchAEMessage.CasSequence);
 	        if (isNewCAS) {
 	          ((AggregateAnalysisEngineController) controller).process(aCAS, anInputCasReferenceId,
 	                  aNewCasReferenceId, aNewCasProducedBy);
@@ -577,7 +577,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	        }
 	      } else if (controller instanceof PrimitiveAnalysisEngineController) {
 	        ((PrimitiveAnalysisEngineController) controller).process(aCAS, anInputCasReferenceId,
-	                aMessageContext.getEndpoint());
+	        		super.getEndpoint());
 	      } else {
 	        throw new AsynchAEException(
 	                "Invalid Controller. Expected AggregateController or PrimitiveController. Got:"
@@ -590,21 +590,21 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	    }
 
 	  }
-	  protected void computeStats(MessageContext aMessageContext, String aCasReferenceId)
-	          throws AsynchAEException {
-	    if (aMessageContext.propertyExists(AsynchAEMessage.TimeInService)) {
+	  protected void computeStats(String aCasReferenceId)
+	          throws Exception {
+	    if (super.propertyExists(AsynchAEMessage.TimeInService)) {
 	      long departureTime = controller.getTime(aCasReferenceId,
-	              aMessageContext.getEndpoint().getEndpoint());
+	    		  super.getEndpoint().getEndpoint());
 	      long currentTime = System.nanoTime();
 	      long roundTrip = currentTime - departureTime;
-	      long timeInService = aMessageContext.getMessageLongProperty(AsynchAEMessage.TimeInService);
+	      long timeInService = super.getMessageLongProperty(AsynchAEMessage.TimeInService);
 	      long totalTimeInComms = currentTime - (departureTime - timeInService);
 
 	      if (UIMAFramework.getLogger(getClass()).isLoggable(Level.FINE)) {
 	        UIMAFramework.getLogger(getClass()).logrb( Level.FINE, getClass().getName(),
 	                "computeStats",  UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 	                "UIMAEE_show_roundtrip_time__FINE",
-	                new Object[] { aCasReferenceId, aMessageContext.getEndpoint(),
+	                new Object[] { aCasReferenceId, super.getEndpoint(),
 	                    (double) roundTrip / (double) 1000000 });
 
 	        UIMAFramework.getLogger(getClass()).logrb(
@@ -614,7 +614,7 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 	                "UIMAEE_show_time_spent_in_delegate__FINE",
 	                new Object[] { aCasReferenceId, (double) timeInService / (double) 1000000,
-	                    aMessageContext.getEndpoint() });
+	                		super.getEndpoint() });
 
 	        UIMAFramework.getLogger(getClass()).logrb(
 	                Level.FINE,
@@ -623,28 +623,27 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	                UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
 	                "UIMAEE_show_time_spent_in_comms__FINE",
 	                new Object[] { aCasReferenceId, (double) totalTimeInComms / (double) 1000000,
-	                    aMessageContext.getEndpoint() });
+	                		super.getEndpoint() });
 	      }
 	    }
 
 	    if (controller instanceof AggregateAnalysisEngineController) {
-	      aggregateDelegateStats(aMessageContext, aCasReferenceId);
+	      aggregateDelegateStats(aCasReferenceId);
 	    }
 	  }
-	  protected synchronized void aggregateDelegateStats(MessageContext aMessageContext,
-	          String aCasReferenceId) throws AsynchAEException {
+	  protected synchronized void aggregateDelegateStats(String aCasReferenceId) throws AsynchAEException {
 	    String delegateKey = "";
 	    try {
 
 	    	
-	        if ( aMessageContext.getEndpoint().getEndpoint() == null || aMessageContext.getEndpoint().getEndpoint().trim().length()==0) {
-	      	  String fromEndpoint = aMessageContext
+	        if ( super.getEndpoint().getEndpoint() == null || super.getEndpoint().getEndpoint().trim().length()==0) {
+	      	  String fromEndpoint = super
 	                    .getMessageStringProperty(AsynchAEMessage.MessageFrom);
 	      	  delegateKey = ((AggregateAnalysisEngineController) controller)
 	                    .lookUpDelegateKey(fromEndpoint);
 	        } else {
 	            delegateKey = ((AggregateAnalysisEngineController) controller)
-	                    .lookUpDelegateKey(aMessageContext.getEndpoint().getEndpoint());
+	                    .lookUpDelegateKey(super.getEndpoint().getEndpoint());
 	        }
 	 //     delegateKey = ((AggregateAnalysisEngineController) getController())
 	   //           .lookUpDelegateKey(aMessageContext.getEndpoint().getEndpoint());
@@ -672,8 +671,8 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	      ServicePerformance delegateServicePerformance = ((AggregateAnalysisEngineController) controller)
 	              .getServicePerformance(delegateKey);
 
-	      if (aMessageContext.propertyExists(AsynchAEMessage.TimeToSerializeCAS)) {
-	        long timeToSerializeCAS = ((Long) aMessageContext
+	      if (super.propertyExists(AsynchAEMessage.TimeToSerializeCAS)) {
+	        long timeToSerializeCAS = ((Long) super
 	                .getMessageLongProperty(AsynchAEMessage.TimeToSerializeCAS)).longValue();
 	        if (timeToSerializeCAS > 0) {
 	          if (delegateServicePerformance != null) {
@@ -681,8 +680,8 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	          }
 	        }
 	      }
-	      if (aMessageContext.propertyExists(AsynchAEMessage.TimeToDeserializeCAS)) {
-	        long timeToDeserializeCAS = ((Long) aMessageContext
+	      if (super.propertyExists(AsynchAEMessage.TimeToDeserializeCAS)) {
+	        long timeToDeserializeCAS = ((Long) super
 	                .getMessageLongProperty(AsynchAEMessage.TimeToDeserializeCAS)).longValue();
 	        if (timeToDeserializeCAS > 0) {
 	          if (delegateServicePerformance != null) {
@@ -691,21 +690,21 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	        }
 	      }
 
-	      if (aMessageContext.propertyExists(AsynchAEMessage.IdleTime)) {
-	        long idleTime = ((Long) aMessageContext.getMessageLongProperty(AsynchAEMessage.IdleTime))
+	      if (super.propertyExists(AsynchAEMessage.IdleTime)) {
+	        long idleTime = ((Long) super.getMessageLongProperty(AsynchAEMessage.IdleTime))
 	                .longValue();
 	        if (idleTime > 0 && delegateServicePerformance != null) {
-	          Endpoint endp = aMessageContext.getEndpoint();
+	          Endpoint endp = super.getEndpoint();
 	          if (endp != null && endp.isRemote()) {
 	            delegateServicePerformance.incrementIdleTime(idleTime);
 	          }
 	        }
 	      }
 
-	      if (aMessageContext.propertyExists(AsynchAEMessage.TimeWaitingForCAS)) {
-	        long timeWaitingForCAS = ((Long) aMessageContext
+	      if (super.propertyExists(AsynchAEMessage.TimeWaitingForCAS)) {
+	        long timeWaitingForCAS = ((Long) super
 	                .getMessageLongProperty(AsynchAEMessage.TimeWaitingForCAS)).longValue();
-	        if (timeWaitingForCAS > 0 && aMessageContext.getEndpoint().isRemote()) {
+	        if (timeWaitingForCAS > 0 && super.getEndpoint().isRemote()) {
 	          entry.incrementTimeWaitingForCAS(timeWaitingForCAS);
 	          delegateServicePerformance.incrementCasPoolWaitTime(timeWaitingForCAS
 	                  - delegateServicePerformance.getRawCasPoolWaitTime());
@@ -714,10 +713,10 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 	          }
 	        }
 	      }
-	      if (aMessageContext.propertyExists(AsynchAEMessage.TimeInProcessCAS)) {
-	        long timeInProcessCAS = ((Long) aMessageContext
+	      if (super.propertyExists(AsynchAEMessage.TimeInProcessCAS)) {
+	        long timeInProcessCAS = ((Long) super
 	                .getMessageLongProperty(AsynchAEMessage.TimeInProcessCAS)).longValue();
-	        Endpoint endp = aMessageContext.getEndpoint();
+	        Endpoint endp = super.getEndpoint();
 	        if (endp != null && endp.isRemote()) {
 	          if (delegateServicePerformance != null) {
 	            // calculate the time spent in analysis. The remote service returns total time
@@ -815,8 +814,8 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 		}
 	}
 
-	private void incrementDelegateProcessCount(MessageContext aMessageContext) {
-		Endpoint endpoint = aMessageContext.getEndpoint();
+	private void incrementDelegateProcessCount() {
+		Endpoint endpoint = super.getEndpoint();
 		if (endpoint != null && controller instanceof AggregateAnalysisEngineController) {
 			try {
 				String delegateKey = ((AggregateAnalysisEngineController) controller)
@@ -836,50 +835,50 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 
 	}
 
-	protected void computeStats(MessageContext aMessageContext, CacheEntry cacheEntry) throws AsynchAEException {
-		if (aMessageContext.propertyExists(AsynchAEMessage.TimeInService)) {
+	protected void computeStats(CacheEntry cacheEntry) throws Exception {
+		if (super.propertyExists(AsynchAEMessage.TimeInService)) {
 			long departureTime = controller.getTime(cacheEntry.getCasReferenceId(),
-					aMessageContext.getEndpoint().getEndpoint());
+					super.getEndpoint().getEndpoint());
 			long currentTime = System.nanoTime();
 			long roundTrip = currentTime - departureTime;
-			long timeInService = aMessageContext.getMessageLongProperty(AsynchAEMessage.TimeInService);
+			long timeInService = super.getMessageLongProperty(AsynchAEMessage.TimeInService);
 			long totalTimeInComms = currentTime - (departureTime - timeInService);
 
 			if (UIMAFramework.getLogger(getClass()).isLoggable(Level.FINE)) {
 				UIMAFramework.getLogger(getClass()).logrb(Level.FINE, getClass().getName(), "computeStats",
 						UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_show_roundtrip_time__FINE",
-						new Object[] { cacheEntry.getCasReferenceId(), aMessageContext.getEndpoint(),
+						new Object[] { cacheEntry.getCasReferenceId(), super.getEndpoint(),
 								(double) roundTrip / (double) 1000000 });
 
 				UIMAFramework.getLogger(getClass()).logrb(Level.FINE, getClass().getName(), "computeStats",
 						UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_show_time_spent_in_delegate__FINE",
 						new Object[] { cacheEntry.getCasReferenceId(), (double) timeInService / (double) 1000000,
-								aMessageContext.getEndpoint() });
+								super.getEndpoint() });
 
 				UIMAFramework.getLogger(getClass()).logrb(Level.FINE, getClass().getName(), "computeStats",
 						UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE, "UIMAEE_show_time_spent_in_comms__FINE",
 						new Object[] { cacheEntry.getCasReferenceId(), (double) totalTimeInComms / (double) 1000000,
-								aMessageContext.getEndpoint() });
+								super.getEndpoint() });
 			}
 		}
 
 		if (controller instanceof AggregateAnalysisEngineController) {
-			aggregateDelegateStats(aMessageContext, cacheEntry);
+			aggregateDelegateStats( cacheEntry);
 		}
 	}
 
-	protected synchronized void aggregateDelegateStats(MessageContext aMessageContext, CacheEntry cacheEntry)
+	protected synchronized void aggregateDelegateStats(CacheEntry cacheEntry)
 			throws AsynchAEException {
 		String delegateKey = "";
 		try {
 
-			if (aMessageContext.getEndpoint().getEndpoint() == null
-					|| aMessageContext.getEndpoint().getEndpoint().trim().length() == 0) {
-				String fromEndpoint = aMessageContext.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+			if (super.getEndpoint().getEndpoint() == null
+					|| super.getEndpoint().getEndpoint().trim().length() == 0) {
+				String fromEndpoint = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
 				delegateKey = ((AggregateAnalysisEngineController) controller).lookUpDelegateKey(fromEndpoint);
 			} else {
 				delegateKey = ((AggregateAnalysisEngineController) controller)
-						.lookUpDelegateKey(aMessageContext.getEndpoint().getEndpoint());
+						.lookUpDelegateKey(super.getEndpoint().getEndpoint());
 			}
 			CacheEntry parentCasEntry = null;
 			String parentCasReferenceId = cacheEntry.getInputCasReferenceId();
@@ -897,8 +896,8 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 			ServicePerformance delegateServicePerformance = ((AggregateAnalysisEngineController) controller)
 					.getServicePerformance(delegateKey);
 
-			if (aMessageContext.propertyExists(AsynchAEMessage.TimeToSerializeCAS)) {
-				long timeToSerializeCAS = ((Long) aMessageContext
+			if (super.propertyExists(AsynchAEMessage.TimeToSerializeCAS)) {
+				long timeToSerializeCAS = ((Long) super
 						.getMessageLongProperty(AsynchAEMessage.TimeToSerializeCAS)).longValue();
 				if (timeToSerializeCAS > 0) {
 					if (delegateServicePerformance != null) {
@@ -906,8 +905,8 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 					}
 				}
 			}
-			if (aMessageContext.propertyExists(AsynchAEMessage.TimeToDeserializeCAS)) {
-				long timeToDeserializeCAS = ((Long) aMessageContext
+			if (super.propertyExists(AsynchAEMessage.TimeToDeserializeCAS)) {
+				long timeToDeserializeCAS = ((Long) super
 						.getMessageLongProperty(AsynchAEMessage.TimeToDeserializeCAS)).longValue();
 				if (timeToDeserializeCAS > 0) {
 					if (delegateServicePerformance != null) {
@@ -916,20 +915,20 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 				}
 			}
 
-			if (aMessageContext.propertyExists(AsynchAEMessage.IdleTime)) {
-				long idleTime = ((Long) aMessageContext.getMessageLongProperty(AsynchAEMessage.IdleTime)).longValue();
+			if (super.propertyExists(AsynchAEMessage.IdleTime)) {
+				long idleTime = ((Long) super.getMessageLongProperty(AsynchAEMessage.IdleTime)).longValue();
 				if (idleTime > 0 && delegateServicePerformance != null) {
-					Endpoint endp = aMessageContext.getEndpoint();
+					Endpoint endp = super.getEndpoint();
 					if (endp != null && endp.isRemote()) {
 						delegateServicePerformance.incrementIdleTime(idleTime);
 					}
 				}
 			}
 
-			if (aMessageContext.propertyExists(AsynchAEMessage.TimeWaitingForCAS)) {
-				long timeWaitingForCAS = ((Long) aMessageContext
+			if (super.propertyExists(AsynchAEMessage.TimeWaitingForCAS)) {
+				long timeWaitingForCAS = ((Long) super
 						.getMessageLongProperty(AsynchAEMessage.TimeWaitingForCAS)).longValue();
-				if (timeWaitingForCAS > 0 && aMessageContext.getEndpoint().isRemote()) {
+				if (timeWaitingForCAS > 0 && super.getEndpoint().isRemote()) {
 					cacheEntry.incrementTimeWaitingForCAS(timeWaitingForCAS);
 					delegateServicePerformance.incrementCasPoolWaitTime(
 							timeWaitingForCAS - delegateServicePerformance.getRawCasPoolWaitTime());
@@ -938,10 +937,10 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 					}
 				}
 			}
-			if (aMessageContext.propertyExists(AsynchAEMessage.TimeInProcessCAS)) {
-				long timeInProcessCAS = ((Long) aMessageContext
+			if (super.propertyExists(AsynchAEMessage.TimeInProcessCAS)) {
+				long timeInProcessCAS = ((Long) super
 						.getMessageLongProperty(AsynchAEMessage.TimeInProcessCAS)).longValue();
-				Endpoint endp = aMessageContext.getEndpoint();
+				Endpoint endp = super.getEndpoint();
 				if (endp != null && endp.isRemote()) {
 					if (delegateServicePerformance != null) {
 						// calculate the time spent in analysis. The remote service returns total time

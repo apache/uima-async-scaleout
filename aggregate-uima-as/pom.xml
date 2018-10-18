@@ -66,5 +66,6 @@
     <module>../uimaj-as-jms</module>
     <module>../aggregate-uima-as-eclipse-plugins</module>
     <module>../uima-as-docbooks</module>
+    <module>../uimaj-as-connectors</module>
   </modules>
 </project>

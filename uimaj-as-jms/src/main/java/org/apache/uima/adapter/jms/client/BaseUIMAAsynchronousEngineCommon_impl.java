@@ -55,6 +55,7 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.DestinationDoesNotExistException;
+import org.apache.activemq.transport.TransportFactory;
 import org.apache.activemq.transport.TransportListener;
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.UIMARuntimeException;
@@ -407,9 +408,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
   }
 
   private void addMessage(PendingMessage msg) {
-	  System.out.println("Client addMessage() - adding message to pendingMessageQueue");
-
-    pendingMessageQueue.add(msg);
+	  System.out.println("Client addMessage() - adding message to pendingMessageQueue - queue hashcode:"+pendingMessageQueue.hashCode());
+      pendingMessageQueue.add(msg);
   }
 
   protected void acquireCpcReadySemaphore() {
@@ -1044,14 +1044,18 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
         	}
            	return requestToCache.getCasReferenceId();
         }
-        SharedConnection sharedConnection = lookupConnection(getBrokerURI());
-        
-        if ( sharedConnection != null &&  !sharedConnection.isOpen() ) {
-          if (requestToCache != null && !requestToCache.isSynchronousInvocation() && aCAS != null ) {
-            aCAS.release();
-          }
-          throw new ResourceProcessException(new BrokerConnectionException("Unable To Deliver Message To Destination. Connection To Broker "+sharedConnection.getBroker()+" Has Been Lost")); 
+        if ( isServiceRemote() ) {
+//        if ( !Transport.Java.toString().toLowerCase().equals(getBrokerURI().toLowerCase())) {
+            SharedConnection sharedConnection = lookupConnection(getBrokerURI());
+            
+            if ( sharedConnection != null &&  !sharedConnection.isOpen() ) {
+              if (requestToCache != null && !requestToCache.isSynchronousInvocation() && aCAS != null ) {
+                aCAS.release();
+              }
+              throw new ResourceProcessException(new BrokerConnectionException("Unable To Deliver Message To Destination. Connection To Broker "+sharedConnection.getBroker()+" Has Been Lost")); 
+            }
         }
+
 
         // Incremented number of outstanding CASes sent to a service. When a reply comes
         // this counter is decremented
@@ -1721,7 +1725,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 	      }
 	      int payload = -1;
 	      String casReferenceId = message.asString(AsynchAEMessage.CasReference);
-	    
+	      System.out.println("Client processing reply with CAS Id:"+casReferenceId);
 	//      beforeProcessReply(casReferenceId);
 	      
 	      // Determine the type of payload in the message (XMI,Cas Reference,Exception,etc)
@@ -1777,6 +1781,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 	      // cachedRequest is only null if we are receiving child CASes from a 
 	      // Cas Multiplier. Otherwise, we drop the message as it is out of band
 	      if ( cachedRequest == null && !casMultiplierDelegate ) {
+	    	  System.out.println("............... cachedRequest is null - not processing ");
 	      	// most likely a reply came in after the thread was interrupted
 	      	return;
 	      }
@@ -2414,6 +2419,8 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           System.out.println("1 /////////////////////////////////// Client.hashCode()-"+this.hashCode()+" calling removeFromCache()- CAS:"+message.asString(AsynchAEMessage.CasReference));
 
           removeFromCache(message.asString(AsynchAEMessage.CasReference));
+          
+          System.out.println("1 /////////////////////////////////// removeFromCache() returned");
         }
       }
     }
@@ -2526,6 +2533,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
 			  break;
 		  case AsynchAEMessage.Process:    // received Process reply from a service
 			  System.out.println("onMessage() - recv'd Process reply");
+			  
 			  handleProcessReply(message, true, null);
 			  break;
 

@@ -31,25 +31,25 @@ import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.util.XMLInputSource;
 
 public class GetMetaResponseCommand extends AbstractUimaAsCommand {
-	private MessageContext mc;
+//	private MessageContext mc;
 	
 	public GetMetaResponseCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+	//	this.mc = mc;
 	}
 	public void execute() throws Exception {
 		System.out.println(".......... GetMetaResponseCommand.execute()- handling GetMeta response - Controller:"+controller.getName());
       //  Endpoint endpoint = mc.getEndpoint();
-        int payload = mc
-                .getMessageIntProperty(AsynchAEMessage.Payload);
+        int payload = //mc
+                super.getMessageIntProperty(AsynchAEMessage.Payload);
         
 
        if (AsynchAEMessage.Exception == payload) {
             return;
           }
        
-       String fromEndpoint = mc
-           .getMessageStringProperty(AsynchAEMessage.MessageFrom);
+       String fromEndpoint =// mc
+           super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
 
        String delegateKey = ((AggregateAnalysisEngineController) controller)
                .lookUpDelegateKey(fromEndpoint);
@@ -58,18 +58,22 @@ public class GetMetaResponseCommand extends AbstractUimaAsCommand {
 //          ((MessageContext) anObjectToHandle).getMessageIntProperty(AsynchAEMessage.SERIALIZATION);
 
           if ( serializationSupportedByRemote == AsynchAEMessage.None ) {
-          	resource = (ResourceMetaData)
-          			((MessageContext)mc).getMessageObjectProperty(AsynchAEMessage.AEMetadata);
+          	resource = super.getResourceMetaData();
+          			//(ResourceMetaData)
+          			//((MessageContext)mc).getMessageObjectProperty(AsynchAEMessage.AEMetadata);
           } else {
-              String analysisEngineMetadata = ((MessageContext) mc).getStringMessage();
+              String analysisEngineMetadata = super.getStringMessage();
+            		  //((MessageContext) mc).getStringMessage();
               ByteArrayInputStream bis = new ByteArrayInputStream(analysisEngineMetadata.getBytes());
               XMLInputSource in1 = new XMLInputSource(bis, null);
               resource = UIMAFramework.getXMLParser().parseResourceMetaData(in1);
           }
           String fromServer = null;
-          if (((MessageContext) mc).propertyExists(AsynchAEMessage.EndpointServer)) {
-            fromServer = ((MessageContext) mc)
-                    .getMessageStringProperty(AsynchAEMessage.EndpointServer);
+//          if (((MessageContext) mc).propertyExists(AsynchAEMessage.EndpointServer)) {
+            if ( super.propertyExists(AsynchAEMessage.EndpointServer)) {
+            fromServer = super.getMessageStringProperty(AsynchAEMessage.EndpointServer);
+            		//((MessageContext) mc)
+                    //.getMessageStringProperty(AsynchAEMessage.EndpointServer);
           }
           ((AggregateAnalysisEngineController)controller).changeCollocatedDelegateState(delegateKey, ServiceState.RUNNING);
           // If old service does not echo back the external broker name then the queue name must

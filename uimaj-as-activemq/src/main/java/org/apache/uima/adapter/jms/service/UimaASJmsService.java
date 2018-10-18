@@ -476,5 +476,10 @@ implements UimaASService {
 	public String getName() {
 		return name;
 	}
+	@Override
+	public int getScaleout() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
 }

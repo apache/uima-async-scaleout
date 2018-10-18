@@ -26,14 +26,14 @@ import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
 
 public class CollectionProcessCompleteResponseCommand  extends AbstractUimaAsCommand {
-	private MessageContext mc;
+//	private MessageContext mc;
 	
 	public CollectionProcessCompleteResponseCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller,mc);
+//		this.mc = mc;
 	}
 	public void execute() throws Exception {
-		Delegate delegate = super.getDelegate(mc);
+		Delegate delegate = super.getDelegate();
 	    try {
 	    	System.out.println("..... Controller:"+controller.getComponentName()+" Handling CPC From "+delegate.getKey());
 	          ((AggregateAnalysisEngineController)controller)
@@ -41,7 +41,7 @@ public class CollectionProcessCompleteResponseCommand  extends AbstractUimaAsCom
 	      } catch (Exception e) {
 	        ErrorContext errorContext = new ErrorContext();
 	        errorContext.add(AsynchAEMessage.Command, AsynchAEMessage.CollectionProcessComplete);
-	        errorContext.add(AsynchAEMessage.Endpoint, mc.getEndpoint());
+	        errorContext.add(AsynchAEMessage.Endpoint, super.getEndpoint());
 	        controller.getErrorHandlerChain().handle(e, errorContext, controller);
 	      }
 	}

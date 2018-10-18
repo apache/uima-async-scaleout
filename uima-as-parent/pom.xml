@@ -190,7 +190,6 @@ ${uimaASNoticeText}
 				<scope>compile</scope>
 			</dependency>
 
-
 			<!-- Active MQ Stuff -->
 			<dependency>
 				<groupId>org.apache.activemq</groupId>

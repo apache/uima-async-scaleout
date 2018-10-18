@@ -22,10 +22,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
+import org.apache.uima.aae.controller.Endpoint;
+import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.message.Origin;
+import org.apache.uima.aae.message.UimaAsMessage;
+import org.apache.uima.aae.message.UimaAsOrigin;
 import org.apache.uima.resource.metadata.ProcessingResourceMetaData;
 
-public class DirectMessage {
+public class DirectMessage implements UimaAsMessage {
 	
 	private static final long serialVersionUID = 1L;
 	private Map<String, Object> stateMap = 
@@ -78,7 +83,7 @@ public class DirectMessage {
 		store(AsynchAEMessage.MessageType, messageType);
 		return this;
 	}
-	public DirectMessage withOrigin(String origin) {
+	public DirectMessage withOrigin(Origin origin) {
 		store(AsynchAEMessage.MessageFrom, origin);
 		return this;
 	}
@@ -103,6 +108,9 @@ public class DirectMessage {
 		store(AsynchAEMessage.ReplyToEndpoint, replyDestination);
 		return this;
 	}
+	public Object getReplyDestination() {
+		return stateMap.get(AsynchAEMessage.ReplyToEndpoint);
+	}
 	public DirectMessage withDelegateKey(Object delegateKey) {
 		store(AsynchAEMessage.DelegateKey, delegateKey);
 		return this;
@@ -121,5 +129,70 @@ public class DirectMessage {
 	}
 	public boolean propertyExists(String key) {
 		return stateMap.containsKey(key);
+	}
+	@Override
+	public String getMessageStringProperty(String aMessagePropertyName) throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public int getMessageIntProperty(String aMessagePropertyName) throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	@Override
+	public long getMessageLongProperty(String aMessagePropertyName) throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	@Override
+	public Object getMessageObjectProperty(String aMessagePropertyName) throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public boolean getMessageBooleanProperty(String aMessagePropertyName) throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	@Override
+	public Endpoint getEndpoint() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public String getStringMessage() throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Object getObjectMessage() throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public byte[] getByteMessage() throws AsynchAEException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Object getRawMessage() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void setMessageArrivalTime(long anArrivalTime) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public long getMessageArrivalTime() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	@Override
+	public String getEndpointName() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

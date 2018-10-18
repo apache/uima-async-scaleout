@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,9 +38,15 @@ import org.apache.uima.aae.OutputChannel;
 import org.apache.uima.aae.UimaASUtils;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
+import org.apache.uima.aae.component.AggregateAnalysisEngineComponent;
+import org.apache.uima.aae.component.AnalysisEngineComponent;
+import org.apache.uima.aae.component.ComponentCasPool;
+import org.apache.uima.aae.component.RemoteAnalysisEngineComponent;
+import org.apache.uima.aae.component.TopLevelServiceComponent;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
 import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.DelegateEndpoint;
 import org.apache.uima.aae.controller.Endpoint;
@@ -51,7 +58,6 @@ import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.aae.error.Threshold;
 import org.apache.uima.aae.error.Thresholds;
 import org.apache.uima.aae.error.Thresholds.Action;
-import org.apache.uima.aae.error.UimaAsDelegateException;
 import org.apache.uima.aae.error.handler.CpcErrorHandler;
 import org.apache.uima.aae.error.handler.GetMetaErrorHandler;
 import org.apache.uima.aae.error.handler.ProcessCasErrorHandler;
@@ -78,7 +84,6 @@ import org.apache.uima.resource.ResourceCreationSpecifier;
 import org.apache.uima.resource.ResourceManager;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
-import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionType;
 import org.apache.uima.resourceSpecifier.AnalysisEngineType;
 import org.apache.uima.resourceSpecifier.AsyncAggregateErrorConfigurationType;
 import org.apache.uima.resourceSpecifier.AsyncPrimitiveErrorConfigurationType;
@@ -109,6 +114,246 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 	}
     
     protected abstract void addListenerForReplyHandling( AggregateAnalysisEngineController controller, Endpoint_impl endpoint, RemoteAnalysisEngineDelegate remoteDelegate) throws Exception;
+
+//    public AnalysisEngineController createController( AnalysisEngineComponent component, int howManyInstances) throws Exception {
+    public AnalysisEngineController createController( AnalysisEngineComponent component, ControllerCallbackListener aListener, String serviceId) throws Exception {
+    	AnalysisEngineController controller =
+    			createController(component, null /*, component.getScaleout() */);
+    	controller.setServiceId(serviceId);
+    	controller.addControllerCallbackListener(aListener);
+    	return controller;
+    }
+
+    /**
+     * Recursively walks through the AE descriptor creating instances of AnalysisEngineController
+     * and linking them in parent-child tree. 
+     * 
+     * @param d - wrapper around delegate defined in DD (may be null)
+     * @param resourceSpecifier - AE descriptor specifier
+     * @param name - name of the delegate
+     * @param parentController - reference to a parent controller. TopLevel has no parent
+     * @param howManyInstances - scalout for the delegate
+     * 
+     * @return
+     * @throws Exception
+     */
+    public AnalysisEngineController createController( AnalysisEngineComponent component, AnalysisEngineController parentController/*, int howManyInstances */) throws Exception {
+
+    	AnalysisEngineController controller = null;
+     	System.out.println("---------Controller:"+
+     			component.getKey()+
+     			" resourceSpecifier:"+
+     			component.getResourceSpecifier().getClass().getName()+
+     			" ResourceCreationSpecifier:"+(component.getResourceSpecifier() instanceof ResourceCreationSpecifier) );
+
+     	if ( component.isPrimitive()) {
+       		controller = new PrimitiveAnalysisEngineController_impl(parentController, component.getKey(), component.getResourceSpecifier().getSourceUrlString(),casManager, cache, 10, component.getScaleout());
+     	} else {
+    		// add an endpoint for each delegate in this aggregate. The endpoint Map is required
+    		// during initialization of an aggregate controller.
+    		Map<String, Endpoint> endpoints = new HashMap<>();
+    		AggregateAnalysisEngineComponent aggregate;
+    		if ( component instanceof AggregateAnalysisEngineComponent) {
+    			aggregate = (AggregateAnalysisEngineComponent)component;
+    		} else if ( component instanceof TopLevelServiceComponent) {
+    			aggregate = ((TopLevelServiceComponent)component).aggregateComponent();
+    		} else {
+    			throw new RuntimeException("Expected instance of AggregateAnalysisEngineComponent, instead is instanceof "+component.getClass().getName());
+    		}
+//    		List<AnalysisEngineComponent> delegateComponents = ((AggregateAnalysisEngineComponent)component).getChildren();
+    		List<AnalysisEngineComponent> delegateComponents = aggregate.getChildren();
+    		for( AnalysisEngineComponent delegateComponent : delegateComponents ) {
+    			endpoints.put(delegateComponent.getKey(), delegateComponent.getEndpoint());
+    		}
+    		controller = new AggregateAnalysisEngineController_impl(parentController, component.getKey(), component.getResourceSpecifier().getSourceUrlString(), casManager, cache, endpoints);
+    		addFlowController((AggregateAnalysisEngineController)controller, (AnalysisEngineDescription)component.getResourceSpecifier());
+    		// recursively create delegate controllers for all async delegates
+    		createDelegateControllers(aggregate, controller);
+     	}
+   	    if ( !controller.isTopLevelComponent() ) {
+       		UimaASService service = createUimaASServiceWrapper(controller, component);
+    	    service.start();
+	    }
+
+    	return controller;
+    }
+
+	
+
+	private void createDelegateControllers(AggregateAnalysisEngineComponent aggregateComponent, AnalysisEngineController controller) throws Exception {
+		for (AnalysisEngineComponent delegateComponent : aggregateComponent.getChildren()) {
+			// if error handling threshold has not been defined for the delegate, add
+			// default thresholds.
+			addDelegateDefaultErrorHandling(controller, delegateComponent.getKey());
+			if (delegateComponent.isRemote()) {
+				Endpoint endpoint = delegateComponent.getEndpoint();
+				if ("java".equals(endpoint.getServerURI()) ) {
+					endpoint.setJavaRemote();
+				}
+				
+			} else {
+				if (Objects.isNull(controller.getOutputChannel(ENDPOINT_TYPE.DIRECT))) {
+					OutputChannel oc = new DirectOutputChannel().withController(controller);
+					oc.initialize();
+					controller.addOutputChannel(oc);
+				}
+				if (Objects.isNull(controller.getInputChannel(ENDPOINT_TYPE.DIRECT))) {
+					DirectInputChannel inputChannel = new DirectInputChannel(ChannelType.REQUEST_REPLY)
+							.withController(controller);
+// 10/11/18 For Direct messaging the message handlers are not needed. Its using command factory
+//					inputChannel.setMessageHandler(getMessageHandler(controller));
+					controller.addInputChannel(inputChannel);
+					
+				}
+				createController(delegateComponent,	controller /*, scaleout */);
+			}
+
+		}
+
+	}
+	
+	
+    private UimaASService createUimaASServiceWrapper(AnalysisEngineController controller, AnalysisEngineComponent component) throws Exception {
+        
+    	AsynchronousUimaASService service = 
+    			new AsynchronousUimaASService(controller.getComponentName()).withController(controller);
+    	// Need an OutputChannel to dispatch messages from this service
+    	OutputChannel outputChannel;
+		if ( ( outputChannel = controller.getOutputChannel(ENDPOINT_TYPE.DIRECT)) == null) {
+			outputChannel = getOutputChannel(controller);
+		}
+    	 
+    	// Need an InputChannel to handle incoming messages
+    	InputChannel inputChannel;
+    	if ((inputChannel = controller.getInputChannel(ENDPOINT_TYPE.DIRECT)) == null) {
+    		inputChannel = getInputChannel(controller);
+    		Handler messageHandlerChain = getMessageHandler(controller);
+			inputChannel.setMessageHandler(messageHandlerChain);
+			controller.addInputChannel(inputChannel);
+    	}
+
+		// add reply queue listener to the parent aggregate controller
+		if ( !controller.isTopLevelComponent() ) {
+			// For every delegate the parent controller needs a reply listener.
+			DirectListener replyListener = 
+					addDelegateReplyListener(controller, component);
+			// add process, getMeta, reply queues to an endpoint
+			setDelegateDestinations(controller, service, replyListener);
+		}
+		DirectListener processListener =		
+				createDirectListener(controller,component.getScaleout(),(DirectInputChannel)inputChannel,service.getProcessRequestQueue(),Type.ProcessCAS);
+		inputChannel.registerListener(processListener);
+		
+		DirectListener getMetaListener =
+				createDirectListener(controller,component.getScaleout(),(DirectInputChannel)inputChannel,service.getMetaRequestQueue(),Type.GetMeta);
+		inputChannel.registerListener(getMetaListener);
+		if (controller.isCasMultiplier()) {
+			DirectListener freCASChannelListener = 
+				createDirectListener(controller,component.getScaleout(),(DirectInputChannel)inputChannel,service.getFreeCasQueue(),Type.FreeCAS);	
+			inputChannel.registerListener(freCASChannelListener);
+			((DirectOutputChannel)outputChannel).setFreeCASQueue(service.getFreeCasQueue());
+		}			
+		
+		/*
+		DirectListener processListener = new DirectListener(Type.ProcessCAS).
+				withController(controller).
+				withConsumerThreads(component.getScaleout()).
+				withInputChannel((DirectInputChannel)inputChannel).
+				withQueue(service.getProcessRequestQueue()).
+				initialize();
+		inputChannel.registerListener(processListener);
+		
+		DirectListener getMetaListener = new DirectListener(Type.GetMeta).
+				withController(controller).
+				withConsumerThreads(getReplyScaleout(d)).
+				withInputChannel((DirectInputChannel)inputChannel).
+				withQueue(service.getMetaRequestQueue()).initialize();
+		inputChannel.registerListener(getMetaListener);
+
+		if (controller.isCasMultiplier()) {
+			DirectListener freCASChannelListener = 
+					new DirectListener(Type.FreeCAS).
+					withController(controller).
+					withConsumerThreads(component.getScaleout()).
+					withInputChannel((DirectInputChannel)inputChannel).
+					withQueue(service.getFreeCasQueue()).
+					initialize();
+			inputChannel.registerListener(freCASChannelListener);
+			((DirectOutputChannel)outputChannel).setFreeCASQueue(service.getFreeCasQueue());
+		}
+    	*/
+    	return service;
+    }
+	private DirectListener createDirectListener(AnalysisEngineController controller, int scaleout, DirectInputChannel inputChannel, BlockingQueue<DirectMessage> q, Type type) throws Exception{
+//		DirectListener listener = new DirectListener(type).
+		return new DirectListener(type).
+				withController(controller).
+				withConsumerThreads(scaleout).
+				withInputChannel(inputChannel).
+				withQueue(q).initialize();
+//		inputChannel.registerListener(listener);
+//		return listener;
+	}
+    private DirectListener addDelegateReplyListener(AnalysisEngineController controller, AnalysisEngineComponent component) throws Exception {
+		DirectInputChannel parentInputChannel;
+		// create parent controller's input channel if necessary
+		if ((controller.getParentController().getInputChannel(ENDPOINT_TYPE.DIRECT)) == null) {
+			// create delegate 
+			parentInputChannel = new DirectInputChannel(ChannelType.REQUEST_REPLY).
+					withController(controller.getParentController());
+			Handler messageHandlerChain = getMessageHandler(controller.getParentController());
+			parentInputChannel.setMessageHandler(messageHandlerChain);
+			controller.getParentController().addInputChannel(parentInputChannel);
+		} else {
+			parentInputChannel = (DirectInputChannel) controller.
+					getParentController().getInputChannel(ENDPOINT_TYPE.DIRECT);
+		}
+		int replyScaleout = 1;
+		if ( component instanceof RemoteAnalysisEngineComponent) {
+			((RemoteAnalysisEngineComponent)component).getReplyConsumerCount();
+		}
+
+		// USE FACTORY HERE. CHANGE DirectListener to interface
+		// DirectListner replyListener = DirectListenerFactory.newReplyListener();
+		DirectListener replyListener = new DirectListener(Type.Reply).
+				withController(controller.getParentController()).
+				withConsumerThreads(replyScaleout).
+				withInputChannel(parentInputChannel).
+				withQueue(new LinkedBlockingQueue<DirectMessage>()).
+				withName(controller.getKey()).
+				initialize();
+		parentInputChannel.registerListener(replyListener);
+		
+		return replyListener;
+    }
+	protected void initialize(UimaASService service, ComponentCasPool cp, Transport transport) {
+
+		resourceManager = UimaClassFactory.produceResourceManager();
+		casManager = new AsynchAECasManager_impl(resourceManager);
+		casManager.setCasPoolSize(cp.getPoolSize());
+		casManager.setDisableJCasCache(cp.isDisableJCasCache());
+		casManager.setInitialFsHeapSize(cp.getInitialHeapSize());
+
+		if ( transport.equals(Transport.JMS)) {
+			cache = new InProcessCache();
+		} else if ( transport.equals(Transport.Java)) {
+			
+			// ?????????????????????????? is this test necessary?
+			if ( (cache = (InProcessCache)System.getProperties().get("InProcessCache")) == null) {
+				cache = new InProcessCache();
+				System.getProperties().put("InProcessCache", cache);
+			} 
+	
+		}
+//		if ( cache == null ) {
+//			cache = new InProcessCache();
+//		}
+	}
+	
+	
+    /* 
+     * OLD CODE *****************************
+     */
     
     public AsyncPrimitiveErrorConfigurationType addDefaultErrorHandling(ServiceType s) {
     	AsyncPrimitiveErrorConfigurationType pec;
@@ -196,13 +441,16 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 		return null;
     }
     private void addDelegateDefaultErrorHandling(AnalysisEngineController controller, String delegatKey) {
-    	ErrorHandlerChain erc = controller.getErrorHandlerChain();
-    	for( ErrorHandler eh : erc ) {
-    		if ( !eh.getEndpointThresholdMap().containsKey(delegatKey) ) {
-    			// add default error handling
-    			eh.getEndpointThresholdMap().put(delegatKey, Thresholds.newThreshold());
-    		}
-    	}	
+    	if ( Objects.nonNull(controller.getErrorHandlerChain()) ) {
+    	   	ErrorHandlerChain erc = controller.getErrorHandlerChain();
+        	for( ErrorHandler eh : erc ) {
+        		if ( !eh.getEndpointThresholdMap().containsKey(delegatKey) ) {
+        			// add default error handling
+        			eh.getEndpointThresholdMap().put(delegatKey, Thresholds.newThreshold());
+        		}
+        	}	
+    	}
+ 
     }
     private OutputChannel getOutputChannel(AnalysisEngineController controller ) throws Exception {
     	OutputChannel outputChannel = null;
@@ -1244,7 +1492,7 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 	private boolean isAggregate(AnalysisEngineType aet) {
 		// Is this an aggregate? An aggregate has a property async=true or has delegates.
 		System.out.println("......"+aet.getKey()+" aet.getAsync()="+aet.getAsync()+" aet.isSetAsync()="+aet.isSetAsync()+" aet.isSetDelegates()="+aet.isSetDelegates() );
-
+		Objects.requireNonNull(aet, "AnalysisEngineType must be non-null");
 		if ( "true".equals(aet.getAsync()) || aet.isSetDelegates() ) {
 			return true;
 		}

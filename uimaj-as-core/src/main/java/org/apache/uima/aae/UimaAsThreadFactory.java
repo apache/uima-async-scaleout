@@ -27,7 +27,7 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController_impl;
-import org.apache.uima.as.client.DirectListener.DirectListenerCallback;
+import org.apache.uima.aae.definition.connectors.ListenerCallback;
 import org.apache.uima.util.Level;
 
 /**
@@ -60,7 +60,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
   
   private CountDownLatch latchToCountNumberOfInitedThreads;
 
-  private DirectListenerCallback callback = null;
+  private ListenerCallback callback = null;
   
   public UimaAsThreadFactory() {
 	  
@@ -79,7 +79,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
     this.latchToCountNumberOfInitedThreads = latchToCountNumberOfInitedThreads;
   }
   
-  public UimaAsThreadFactory withCallback(DirectListenerCallback c) {
+  public UimaAsThreadFactory withCallback(ListenerCallback c) {
 	  callback = c;
 	  return this;
   }
@@ -163,6 +163,7 @@ public class UimaAsThreadFactory implements ThreadFactory {
             // TaskExecutor is terminated.
             r.run();
           } catch (Throwable e) {
+        	  e.printStackTrace();
             if ( !(e instanceof Exception) ) {
               //   try to log. If this is OOM, logging may not succeed and we
               //   get another OOM.

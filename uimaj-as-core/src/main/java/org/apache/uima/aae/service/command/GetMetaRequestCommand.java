@@ -27,14 +27,14 @@ import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.util.Level;
 
 public class GetMetaRequestCommand extends AbstractUimaAsCommand  {
-	private MessageContext mc;
+	//private MessageContext mc;
 	
 	public GetMetaRequestCommand(MessageContext mc, AnalysisEngineController controller) {
-		super(controller);
-		this.mc = mc;
+		super(controller, mc);
+	//	this.mc = mc;
 	}
 	public void execute() throws Exception {
-        Endpoint endpoint = mc.getEndpoint();
+        Endpoint endpoint = super.getEndpoint();
         if (controller.isTopLevelComponent()) {
           endpoint.setCommand(AsynchAEMessage.GetMeta);
           controller.cacheClientEndpoint(endpoint);
