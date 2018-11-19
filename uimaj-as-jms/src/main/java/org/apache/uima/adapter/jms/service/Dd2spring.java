@@ -163,17 +163,52 @@ public class Dd2spring {
 		Runtime.getRuntime().addShutdownHook(shutdownHook);
 
 		// Create a classloader with saxon8 that delegates to the user's
-		// classloader
-		ClassLoader currentClassloader = Thread.currentThread()
-				.getContextClassLoader();
+		// classloader and includes the classes defining xslt helper java methods
+		//   org.apache.uima.aae.deploymentDescriptor.XsltGUIDgenerator and
+		//   org.apache.uima.aae.deploymentDescriptor.XsltImportByName
+		// We do this by creating a custom class loader, which delegates
+		//   first to the threadlocal class loader, and then to 
+		//   the class loader that loaded this class.
+		//   See https://issues.apache.org/jira/browse/UIMA-5907
+		final ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+		ClassLoader tccl_plus_this = new ClassLoader(this.getClass().getClassLoader()) {
+		  @Override
+		  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+		    synchronized(Dd2spring.class) {
+  		    Class<?> c = null;
+  		    try {
+    		    c = tccl.loadClass(name);
+  		    } catch (ClassNotFoundException e) {
+  		      c = getParent().loadClass(name);
+  		    }
+  		    if (c != null && resolve) {
+  		      resolveClass(c);
+  		    }
+          return c;
+  		  }
+		  }
+		  
+		  @Override
+		  public URL getResource(String name) {
+		    synchronized(Dd2spring.class) {
+		      URL url = tccl.getResource(name);
+		      if (null == url) {
+		        url = getParent().getResource(name);  
+		      }
+	        return url;
+		    }
+		  }
+		  
+    };
+		
 		if (null == saxonClassLoader) {
 			URL[] classLoaderUrls = new URL[] { saxonClasspathURL };
 			saxonClassLoader = new URLClassLoader(classLoaderUrls,
-					currentClassloader);
+					tccl_plus_this);
 		}
 		// configure Saxon with these settings
 		SaxonInputs saxonConfig = new SaxonInputs(ddFilePath, tempFile,
-				dd2SpringXsltFilePath, saxonClassLoader, currentClassloader);
+				dd2SpringXsltFilePath, saxonClassLoader, tccl_plus_this);
 		
 		// creates either command line or java based interface to Saxon
 		SaxonInterface saxon = SaxonInterfaceFactory.newSaxonInterface(
