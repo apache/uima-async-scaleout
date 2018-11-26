@@ -155,4 +155,6 @@ public interface AsynchAEMessage {
   public static final int PingTimeout = 5001;
   
   public static final String TargetingSelector = "TargetingSelector";
+  
+  public static final String DisableShutdownHook = "DISABLE_SHUTDOWN_HOOK";
 }

@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidClassException;
+import java.util.Objects;
 
 import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UimaASApplicationExitEvent;
@@ -31,6 +32,7 @@ import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.jmx.monitor.BasicUimaJmxMonitorListener;
 import org.apache.uima.aae.jmx.monitor.JmxMonitor;
 import org.apache.uima.aae.jmx.monitor.JmxMonitorListener;
+import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.activemq.SpringContainerDeployer;
 import org.apache.uima.resource.ResourceInitializationException;
@@ -437,9 +439,19 @@ public class UIMA_Service implements ApplicationListener {
           file.delete();
         }
       }
-      // Add a shutdown hook to catch kill signal and to force quiesce and stop
-      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
-      Runtime.getRuntime().addShutdownHook(shutdownHook);
+  	  if ( Objects.isNull(System.getProperty(AsynchAEMessage.DisableShutdownHook))  ) {
+  		  System.out.println("Starting wiht UIMA-AS ShutdownHook");
+  	      // Add a shutdown hook to catch kill signal and to force quiesce and stop
+  	      ServiceShutdownHook shutdownHook = new ServiceShutdownHook(serviceDeployer);
+  	      Runtime.getRuntime().addShutdownHook(shutdownHook);
+  	  } else {
+  		  System.out.println("Application disabled UIMA-AS ShutdownHook");
+  	      if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+  	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+  	                "main", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+  	                "UIMAJMS_disable_shutdown_hook__INFO");
+  	      }
+  	  }
       // Check if we should start an optional JMX-based monitor that will provide service metrics
       // The monitor is enabled by existence of -Duima.jmx.monitor.interval=<number> parameter. By
       // default

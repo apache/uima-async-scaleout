@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -738,11 +739,22 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
    */
   public synchronized void initialize(Map anApplicationContext)
           throws ResourceInitializationException {
-    // Add ShutdownHook to make sure the connection to the
-    // broker is always closed on process exit.
-    shutdownHookThread = new Thread(new UimaASShutdownHook(this));
-    Runtime.getRuntime().addShutdownHook(shutdownHookThread);
-           
+		// By default UIMA-AS registers a shutdown hook to cleanup and stop the process.
+		// To disable shutdown hook, an application should define 
+		// AsynchAEMessage.DisableShutdownHook property.
+	if ( Objects.isNull(System.getProperty(AsynchAEMessage.DisableShutdownHook))  ) {
+	    // Add ShutdownHook to make sure the connection to the
+	    // broker is always closed on process exit.
+	    shutdownHookThread = new Thread(new UimaASShutdownHook(this));
+	    Runtime.getRuntime().addShutdownHook(shutdownHookThread);
+	} else {
+		System.out.println("Application disabled UIMA-AS ShutdownHook");
+	    if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
+	  	        UIMAFramework.getLogger(CLASS_NAME).logrb(Level.INFO, CLASS_NAME.getName(),
+	  	                "main", JmsConstants.JMS_LOG_RESOURCE_BUNDLE,
+	  	                "UIMAJMS_disable_shutdown_hook__INFO");
+        }
+    }	
     // throws an exception if verions of UIMA-AS is not compatible with UIMA SDK
     VersionCompatibilityChecker.check(CLASS_NAME, "UIMA AS Client", "initialize");
 
