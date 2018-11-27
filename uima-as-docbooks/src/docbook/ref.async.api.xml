@@ -394,7 +394,21 @@ under the License.
       </para>
   </section>
 
-
+    <!--======================================================-->    
+    <!--         Disabling Shutdown Hook                      -->    
+    <!--======================================================-->    
+    <section id="ugr.ref.async.disable.shutdown.hook">
+      <title>Disabling Shutdown Hook</title>
+      <para>By default, the UIMA-AS registers a custom 
+        <code>ShutdownHook</code> which performs cleanup just before the JVM exits.
+        This may not always be desirable. For instance, when the UIMA-AS is running
+        embedded in a larger application, its shutdown hook may interfere with 
+        the application orderly cleanup. In such scenarios, disable the <code>ShutdownHook</code>
+        with a system property <code>-DDISABLE_SHUTDOWN_HOOK</code> and 
+        call UIMA-AS client <code>stop()</code> method to perform the cleanup.   
+      </para>
+    </section>
+  
     <!--======================================================-->    
     <!--         Error Results                                -->    
     <!--======================================================-->    
