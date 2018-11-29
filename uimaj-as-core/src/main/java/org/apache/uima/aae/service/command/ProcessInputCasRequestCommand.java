@@ -34,6 +34,7 @@ import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.handler.input.ProcessRequestHandler_impl;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.util.Level;
 
@@ -98,7 +99,8 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 	private void saveDelegateKey() throws Exception{
 		String delegateKey = super.getMessageStringProperty(AsynchAEMessage.DelegateKey);
 		if ( delegateKey == null ) {
-			delegateKey =  super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+//			delegateKey =  super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+			delegateKey =  super.getMessageStringProperty(AsynchAEMessage.DelegateKey);
 		}
 		super.getEndpoint().setDelegateKey(delegateKey);
 
@@ -106,7 +108,9 @@ public class ProcessInputCasRequestCommand extends AbstractUimaAsCommand  {
 	private void saveEndpointName() throws Exception {
 		String endpointName = super.getMessageStringProperty(AsynchAEMessage.EndpointName);
 		if (endpointName == null ) {
-			endpointName = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+			Origin origin = (Origin)super.getMessageObjectProperty(AsynchAEMessage.MessageFrom);
+			endpointName = origin.getName();
+//			endpointName = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
 		}
 		super.getEndpoint().setEndpoint(endpointName);
 

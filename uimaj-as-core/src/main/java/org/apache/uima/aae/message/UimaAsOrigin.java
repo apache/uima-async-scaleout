@@ -2,14 +2,22 @@ package org.apache.uima.aae.message;
 
 import java.util.UUID;
 
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
+
 public class UimaAsOrigin implements Origin {
 
 	private final String uniqueId = UUID.randomUUID().toString();
 	private final String name;
+	private final EndpointType type;
 	
-	public UimaAsOrigin(String name) {
+	public UimaAsOrigin(String name, EndpointType type) {
 		this.name = name;
+		this.type = type;
 	}
+	public UimaAsOrigin(String name) {
+		this(name,EndpointType.NA);
+	}
+
 	@Override
 	public String getUniqueId() {
 		return uniqueId;
@@ -52,4 +60,9 @@ public class UimaAsOrigin implements Origin {
     public String toString() {
         return "Origin[name: " + name + "] [id:"+uniqueId+"]";
     }
+
+	@Override
+	public EndpointType getType() {
+		return type;
+	}
 }

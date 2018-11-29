@@ -47,7 +47,6 @@ public class UimaAS {
 				Class.forName("org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngine_impl");
 		Constructor<?> constructor = uimaClientClz.getConstructor(type);
 		Object[] argInstance = {transport};
-		//return (UimaAsynchronousEngine)uimaClientClz.newInstance();
 		return (UimaAsynchronousEngine)constructor.newInstance(argInstance);
 	}
 	/*

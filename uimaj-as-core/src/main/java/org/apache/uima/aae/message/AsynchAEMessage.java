@@ -102,6 +102,24 @@ public interface AsynchAEMessage {
   // 5/2013 xcas not used as a serialization form
 //  public static final int XCASPayload = 1004;
 
+  
+	public enum Commands {
+		ProcessInputCASRequest(2000),
+		ProcessChildCASRequest(1002),
+		ProcessInputCASResponse(2001),
+		GetMetaRequest(2001),
+		GetMetaResponse(3001),
+		CollectionProcessCompleteRequest(2002),
+		CollectionProcessCompleteResponse(4001),
+		NoOp(10000);
+		
+		private int value;
+		private Commands(int ordinal) {
+			this.value = ordinal;
+		}
+	}
+  
+  
   public static final int None = 1005;
 
   public static final int BinaryPayload = 1006;

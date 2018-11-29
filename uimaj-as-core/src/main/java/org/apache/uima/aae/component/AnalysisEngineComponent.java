@@ -3,12 +3,15 @@ package org.apache.uima.aae.component;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.uima.aae.AsynchAECasManager_impl;
+import org.apache.uima.aae.InProcessCache;
+import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.DelegateEndpoint;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.DelegateEndpoint.Builder;
 import org.apache.uima.resource.ResourceSpecifier;
 
-public abstract class AnalysisEngineComponent  {
+public abstract class AnalysisEngineComponent { // implements ComponentVisitor  {
 
 	protected List<AnalysisEngineComponent> delegateList = new ArrayList<>();
 	private boolean isCasMultiplier = false;
@@ -21,9 +24,14 @@ public abstract class AnalysisEngineComponent  {
 	private int requestThreadPoolSize=1;
 	private int responseThreadPoolSize=1;
 	private Endpoint endpoint = null;
-	
+	private boolean visited = false;
 	
 	public abstract Object getConnector();
+
+	public abstract AnalysisEngineController newAnalysisEngineController(AnalysisEngineController parentController,  
+			 AsynchAECasManager_impl casManager, InProcessCache cache ) throws Exception;
+//	public abstract AnalysisEngineController newAnalysisEngineController(AnalysisEngineController parentController,
+//			String delegateKey, String resourceSpecifier,  AsynchAECasManager_impl casManager,InProcessCache cache, int i, int scaleout ) throws Exception;
 
 	public AnalysisEngineComponent() {}
 	public AnalysisEngineComponent(String key, ResourceSpecifier rs) {
@@ -31,7 +39,12 @@ public abstract class AnalysisEngineComponent  {
 		resourceSpecifier = rs;
 	}
 
-	
+	public void setVisited() {
+		visited = true;
+	}
+	public boolean visited() {
+		return visited;
+	}
 	public CasMultiplierNature getCasMultiplierNature() {
 		return casMultiplier;
 	}

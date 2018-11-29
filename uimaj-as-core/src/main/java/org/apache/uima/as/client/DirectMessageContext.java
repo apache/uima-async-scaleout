@@ -46,7 +46,8 @@ public class DirectMessageContext implements MessageContext {
 		endpoint.setSerialFormat(SerialFormat.UNKNOWN);
 		endpoint.setServerURI("java");
 		endpoint.setEndpoint(anEndpointName);
-		endpoint.setReplyDestination(message.get(AsynchAEMessage.ReplyToEndpoint));
+		
+		endpoint.setReplyDestination(message.getReplyDestination());
 		endpoint.setDelegateKey(message.getAsString(AsynchAEMessage.DelegateKey));
 		endpoint.setMessageOrigin((Origin)message.get(AsynchAEMessage.MessageFrom));
 		
@@ -121,7 +122,9 @@ public class DirectMessageContext implements MessageContext {
 	public String getMessageStringProperty(String aMessagePropertyName) throws AsynchAEException {
 		return (String)message.get(aMessagePropertyName);
 	}
-
+	public DirectMessage getMessage() {
+		return message;
+	}
 	public int getMessageIntProperty(String aMessagePropertyName) throws AsynchAEException {
 		return (Integer)message.get(aMessagePropertyName);
 	}

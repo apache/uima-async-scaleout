@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.uima.aae.AsynchAECasManager_impl;
+import org.apache.uima.aae.InProcessCache;
+import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.DelegateEndpoint;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.resourceSpecifier.AnalysisEngineDeploymentDescriptionDocument;
@@ -202,7 +205,10 @@ public class TopLevelServiceComponent extends AnalysisEngineComponent{
 		}
 			
 	}
-	
+	@Override
+	public List<AnalysisEngineComponent> getChildren() {
+		return decoratedComponent.getChildren();
+	}
 	public String getName() {
 		return name;
 	}
@@ -245,4 +251,16 @@ public class TopLevelServiceComponent extends AnalysisEngineComponent{
 
 
 	}
+
+	@Override
+	public AnalysisEngineController newAnalysisEngineController(AnalysisEngineController parentController,
+			AsynchAECasManager_impl casManager, InProcessCache cache) throws Exception {
+		return decoratedComponent.newAnalysisEngineController(parentController, casManager, cache);
+	}
+//	@Override
+//	public AnalysisEngineController newAnalysisEngineController(AnalysisEngineController parentController,
+//			String delegateKey, String resourceSpecifier, AsynchAECasManager_impl casManager, InProcessCache cache,
+//			int i, int scaleout) throws Exception {
+//		return decoratedComponent.newAnalysisEngineController(parentController, delegateKey, resourceSpecifier, casManager, cache, i, scaleout);
+//	}
 }

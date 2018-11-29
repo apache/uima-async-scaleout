@@ -108,6 +108,9 @@ public class DirectMessage implements UimaAsMessage {
 		store(AsynchAEMessage.ReplyToEndpoint, replyDestination);
 		return this;
 	}
+	public Origin getOrigin() {
+		return (Origin)stateMap.get(AsynchAEMessage.MessageFrom);
+	}
 	public Object getReplyDestination() {
 		return stateMap.get(AsynchAEMessage.ReplyToEndpoint);
 	}

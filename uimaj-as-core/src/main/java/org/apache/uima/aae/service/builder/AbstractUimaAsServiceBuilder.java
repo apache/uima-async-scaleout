@@ -19,12 +19,15 @@
 package org.apache.uima.aae.service.builder;
 
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Stack;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
@@ -41,6 +44,7 @@ import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.component.AggregateAnalysisEngineComponent;
 import org.apache.uima.aae.component.AnalysisEngineComponent;
 import org.apache.uima.aae.component.ComponentCasPool;
+import org.apache.uima.aae.component.PrimitiveAnalysisEngineComponent;
 import org.apache.uima.aae.component.RemoteAnalysisEngineComponent;
 import org.apache.uima.aae.component.TopLevelServiceComponent;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
@@ -48,6 +52,11 @@ import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
+import org.apache.uima.aae.definition.connectors.Endpoints;
+import org.apache.uima.aae.definition.connectors.UimaAsConsumer;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
+import org.apache.uima.aae.definition.connectors.UimaAsConsumer.ConsumerType;
 import org.apache.uima.aae.controller.DelegateEndpoint;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.controller.Endpoint_impl;
@@ -66,8 +75,10 @@ import org.apache.uima.aae.handler.input.MetadataRequestHandler_impl;
 import org.apache.uima.aae.handler.input.MetadataResponseHandler_impl;
 import org.apache.uima.aae.handler.input.ProcessRequestHandler_impl;
 import org.apache.uima.aae.handler.input.ProcessResponseHandler;
+import org.apache.uima.aae.message.MessageProcessor;
 import org.apache.uima.aae.service.AsynchronousUimaASService;
 import org.apache.uima.aae.service.UimaASService;
+import org.apache.uima.aae.service.command.UimaAsMessageProcessor;
 import org.apache.uima.aae.service.delegate.AggregateAnalysisEngineDelegate;
 import org.apache.uima.aae.service.delegate.AnalysisEngineDelegate;
 import org.apache.uima.aae.service.delegate.CasMultiplierNature;
@@ -104,11 +115,13 @@ import org.apache.uima.resourceSpecifier.TopDescriptorType;
 import org.apache.uima.resourceSpecifier.TopLevelAnalysisEngineType;
 import org.apache.xmlbeans.XmlDocumentProperties;
 
-public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
+public abstract class AbstractUimaAsServiceBuilder 
+implements ServiceBuilder, UimaAsServiceWrapperCreator {
 	protected InProcessCache cache;
 	protected AsynchAECasManager_impl casManager;
     protected ResourceManager resourceManager;
     private static final String NoParent= "NoParent";
+    private ControllerBuilder controllerBuilder;
     private  enum FlowControllerType {
 		FIXED
 	}
@@ -117,11 +130,25 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 
 //    public AnalysisEngineController createController( AnalysisEngineComponent component, int howManyInstances) throws Exception {
     public AnalysisEngineController createController( AnalysisEngineComponent component, ControllerCallbackListener aListener, String serviceId) throws Exception {
-    	AnalysisEngineController controller =
-    			createController(component, null /*, component.getScaleout() */);
-    	controller.setServiceId(serviceId);
-    	controller.addControllerCallbackListener(aListener);
-    	return controller;
+    	// get a builder which will traverse the component N-ary tree in 
+    	// post order traversal mode. Each node on a tree is either
+    	// primitive or aggregate component. For each, create AnalysisEngineController
+    	// instance of appropriate type (primitive or aggregate) and wrap it in
+    	// UimaASService instance for deployment.
+    	controllerBuilder = new PostOrderControllerBuilder(this, cache, casManager);
+    			
+    	AnalysisEngineController topLevelController =
+     			controllerBuilder.build(component);
+    	// the builder created a list of UimaASService instances sorted
+    	// in post order (when traversing component N-ary tree). Start
+    	// each service.
+		for (UimaASService service : controllerBuilder.getServiceList()) {
+			service.start();
+		}		
+        //createController(component, null /*, component.getScaleout() */);
+		topLevelController.setServiceId(serviceId);
+		topLevelController.addControllerCallbackListener(aListener);
+    	return topLevelController;
     }
 
     /**
@@ -139,13 +166,26 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
      */
     public AnalysisEngineController createController( AnalysisEngineComponent component, AnalysisEngineController parentController/*, int howManyInstances */) throws Exception {
 
-    	AnalysisEngineController controller = null;
+//    	AnalysisEngineController controller = null;
      	System.out.println("---------Controller:"+
      			component.getKey()+
      			" resourceSpecifier:"+
      			component.getResourceSpecifier().getClass().getName()+
      			" ResourceCreationSpecifier:"+(component.getResourceSpecifier() instanceof ResourceCreationSpecifier) );
+        /*
+         * public interface AnalysisEngineVisitor {
+         * 
+         *     public void visit(PrimitiveAnalysisEngineComponent visitor);
+         *     public void visit(AggregateAnalysisEngineComponent visitor);
+         *     public void visit(TopLevelAnalysisEngineComponent visitor);
+         * 
+         */
+     	
+     	// Visitor visitor = VisitorFactory.newControllerVisitor(parentController,casManager, cache, 10);
+     	// component.accept(visitor);
 
+     	/*
+     	
      	if ( component.isPrimitive()) {
        		controller = new PrimitiveAnalysisEngineController_impl(parentController, component.getKey(), component.getResourceSpecifier().getSourceUrlString(),casManager, cache, 10, component.getScaleout());
      	} else {
@@ -160,6 +200,10 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
     		} else {
     			throw new RuntimeException("Expected instance of AggregateAnalysisEngineComponent, instead is instanceof "+component.getClass().getName());
     		}
+    		
+    		
+ 
+
 //    		List<AnalysisEngineComponent> delegateComponents = ((AggregateAnalysisEngineComponent)component).getChildren();
     		List<AnalysisEngineComponent> delegateComponents = aggregate.getChildren();
     		for( AnalysisEngineComponent delegateComponent : delegateComponents ) {
@@ -167,19 +211,126 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
     		}
     		controller = new AggregateAnalysisEngineController_impl(parentController, component.getKey(), component.getResourceSpecifier().getSourceUrlString(), casManager, cache, endpoints);
     		addFlowController((AggregateAnalysisEngineController)controller, (AnalysisEngineDescription)component.getResourceSpecifier());
+
+    		String aggregateId = (Objects.isNull(parentController) ? controller.getComponentName() : component.getKey());
+    		
+       		UimaAsEndpoint directEndpoint = 
+    				Endpoints.newEndpoint(EndpointType.Direct,aggregateId,new UimaAsMessageProcessor(controller));
+       		controller.addEndpoint(directEndpoint);
+    		
     		// recursively create delegate controllers for all async delegates
     		createDelegateControllers(aggregate, controller);
      	}
+     	*/
+    	
+     	/*
+     	
+     	AnalysisEngineController controller = null;
+     	
+     	
+     	Deque<ComponentNode> stack = new ArrayDeque<>();
+     	List<UimaASService> serviceList = new ArrayList<>();
+     	stack.push(new ComponentNode(component, parentController, false));
+     	// non-recursive traversal of AnalysisEngineComponent tree producing
+     	// appropriate AnalysisEngineControllers and decorating/wrapping each
+     	// with UimaASService instance.
+     	while( !stack.isEmpty() ) {
+     		ComponentNode entry = stack.pop();
+     		AnalysisEngineComponent c = entry.node;
+     		if ( entry.flag ) {
+     			// check if the last node
+     			if ( entry.aggregateController.isTopLevelComponent() ) {
+     				controller = entry.aggregateController;
+     				
+     			} else {
+     				UimaASService service = 
+     						newServiceWrapperDecorator(entry.aggregateController, entry.parentController, c);
+     				serviceList.add(service);
+     			}
+     		} else {
+     			
+         		if ( c.isPrimitive()  ) {
+         			controller = c.newAnalysisEngineController(entry.parentController,casManager, cache);
+         			UimaASService service =  
+               			newServiceWrapperDecorator(controller, entry.parentController, c);
+         			
+         			serviceList.add(service);
+ 
+         		} else {
+         			if ( !c.getChildren().isEmpty() ) {
+         				controller = 
+         						c.newAnalysisEngineController(entry.parentController, casManager, cache);
+            		
+         	       		stack.push( new ComponentNode(c, controller, parentController, true) );
+         				parentController = controller;
+             			for( AnalysisEngineComponent cc : c.getChildren()) {
+                 			stack.push(new ComponentNode(cc, controller, false));
+             			}
+         				
+         			} else {
+         			}
+         		}
+     			
+     		}
+     	}
+     	
+     	for( UimaASService service : serviceList ) {
+     		service.start();
+     	}
+     	*/
+     	
+     	
+     	//AnalysisEngineController controller = component.visit(parentController);
+  /* 	
    	    if ( !controller.isTopLevelComponent() ) {
-       		UimaASService service = createUimaASServiceWrapper(controller, component);
+       		UimaASService service = 
+       				createUimaASServiceWrapper(controller, parentController, component);
+
+       		
     	    service.start();
 	    }
-
-    	return controller;
+*/
+     	
+     	AnalysisEngineController topLevelController = null;
+     	/*
+     	AnalysisEngineController topLevelController =
+     			controllerBuilder.build(component, parentController);
+    	
+		for (UimaASService service : controllerBuilder.getServiceList()) {
+			service.start();
+		}
+		*/
+     	
+    	return topLevelController;
     }
 
-	
+	class ComponentNode {
+		AnalysisEngineComponent node;
+		AnalysisEngineController parentController;
+		AnalysisEngineController aggregateController;
+		boolean flag;
 
+		ComponentNode(AnalysisEngineComponent node, AnalysisEngineController parentController, boolean flag) {
+			this(node,null,parentController,flag);
+		}
+
+		ComponentNode(AnalysisEngineComponent node, AnalysisEngineController aggregateController, AnalysisEngineController parentController, boolean flag) {
+			this.node = node;
+			this.flag = flag;
+			this.parentController = parentController;
+			this.aggregateController = aggregateController;
+		}
+		@Override
+		public String toString() {
+			return node.toString();
+		}
+	}
+	
+	public UimaASService create(AnalysisEngineController controller, AnalysisEngineController parentController, AnalysisEngineComponent component) throws Exception {
+   		UimaASService service = 
+   				createUimaASServiceWrapper(controller, parentController, component);
+	    return service;
+	}
 	private void createDelegateControllers(AggregateAnalysisEngineComponent aggregateComponent, AnalysisEngineController controller) throws Exception {
 		for (AnalysisEngineComponent delegateComponent : aggregateComponent.getChildren()) {
 			// if error handling threshold has not been defined for the delegate, add
@@ -192,6 +343,7 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 				}
 				
 			} else {
+				/*
 				if (Objects.isNull(controller.getOutputChannel(ENDPOINT_TYPE.DIRECT))) {
 					OutputChannel oc = new DirectOutputChannel().withController(controller);
 					oc.initialize();
@@ -205,6 +357,7 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 					controller.addInputChannel(inputChannel);
 					
 				}
+				*/
 				createController(delegateComponent,	controller /*, scaleout */);
 			}
 
@@ -213,10 +366,14 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 	}
 	
 	
-    private UimaASService createUimaASServiceWrapper(AnalysisEngineController controller, AnalysisEngineComponent component) throws Exception {
-        
+    private UimaASService createUimaASServiceWrapper(AnalysisEngineController controller, AnalysisEngineController parentController, AnalysisEngineComponent component) throws Exception {
+        String serviceId = (Objects.isNull(controller))? controller.getComponentName() : controller.getKey();
     	AsynchronousUimaASService service = 
-    			new AsynchronousUimaASService(controller.getComponentName()).withController(controller);
+    			new AsynchronousUimaASService(serviceId).withController(controller);
+    
+    	
+    	/*   10/19/18 JC replaced with Endpoint idea
+    	 * 
     	// Need an OutputChannel to dispatch messages from this service
     	OutputChannel outputChannel;
 		if ( ( outputChannel = controller.getOutputChannel(ENDPOINT_TYPE.DIRECT)) == null) {
@@ -254,6 +411,9 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 			((DirectOutputChannel)outputChannel).setFreeCASQueue(service.getFreeCasQueue());
 		}			
 		
+		
+		*/
+		
 		/*
 		DirectListener processListener = new DirectListener(Type.ProcessCAS).
 				withController(controller).
@@ -282,6 +442,35 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 			((DirectOutputChannel)outputChannel).setFreeCASQueue(service.getFreeCasQueue());
 		}
     	*/
+	
+   		
+		MessageProcessor messageProcessor = 
+				new UimaAsMessageProcessor(controller);
+	/*	
+		UimaAsEndpoint directEndpoint = new DirectUimaAsEndpoint(messageProcessor, "Service");
+		UimaAsConsumer serviceGetMetaRequestConsumer = directEndpoint.createConsumer("direct:", ConsumerType.GetMetaRequest, 1);
+		UimaAsConsumer serviceProcessCasRequestConsumer = directEndpoint.createConsumer("direct:", ConsumerType.ProcessCASRequest, component.getScaleout());
+		UimaAsConsumer serviceCpcRequestConsumer = directEndpoint.createConsumer("direct:", ConsumerType.CpcRequest, 1);
+
+		UimaAsEndpoint parentEndpoint = parentController.getEndpoint(EndpointType.Direct);
+   		parentEndpoint.createConsumer("direct:"+controller.getComponentName(), ConsumerType.GetMetaResponse, 1);
+   		parentEndpoint.createConsumer("direct:"+controller.getComponentName(), ConsumerType.ProcessCASResponse, component.getScaleout());
+   		parentEndpoint.createConsumer("direct:"+controller.getComponentName(), ConsumerType.CpcResponse, 1);
+   		
+   		parentEndpoint.createProducer(serviceGetMetaRequestConsumer, parentController.getOrigin());
+   		parentEndpoint.createProducer(serviceProcessCasRequestConsumer, parentController.getOrigin());
+   		parentEndpoint.createProducer(serviceCpcRequestConsumer, parentController.getOrigin());
+
+		if (controller.isCasMultiplier()) {
+			UimaAsConsumer serviceFreeCasConsumer = directEndpoint.createConsumer("direct:", ConsumerType.FreeCAS, 1);
+	   		parentEndpoint.createProducer(serviceFreeCasConsumer, parentController.getOrigin());
+		}
+*/
+		if ( Objects.isNull(parentController ) ) {
+			service.initialize(messageProcessor);
+		} else {
+			service.initialize(messageProcessor, parentController);
+		}
     	return service;
     }
 	private DirectListener createDirectListener(AnalysisEngineController controller, int scaleout, DirectInputChannel inputChannel, BlockingQueue<DirectMessage> q, Type type) throws Exception{
@@ -553,8 +742,12 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 
     private UimaASService createUimaASServiceWrapper(AnalysisEngineController controller, AnalysisEngineDelegate d) throws Exception {
     
-    	AsynchronousUimaASService service = 
+    	UimaASService service = 
     			new AsynchronousUimaASService(controller.getComponentName()).withController(controller);
+ 
+    	service.initialize(new UimaAsMessageProcessor(controller));
+    	
+    	/*
     	// Need an OutputChannel to dispatch messages from this service
     	OutputChannel outputChannel;
 		if ( ( outputChannel = controller.getOutputChannel(ENDPOINT_TYPE.DIRECT)) == null) {
@@ -605,7 +798,7 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
 			inputChannel.registerListener(freCASChannelListener);
 			((DirectOutputChannel)outputChannel).setFreeCASQueue(service.getFreeCasQueue());
 		}
-    	
+    	*/
     	return service;
     }
     private boolean isAggregate(AnalysisEngineDelegate d, ResourceSpecifier resourceSpecifier) {
@@ -719,7 +912,9 @@ public abstract class AbstractUimaAsServiceBuilder implements ServiceBuilder {
       	}
    	    if ( !controller.isTopLevelComponent() ) {
        		UimaASService service = createUimaASServiceWrapper(controller, d);
-    	    service.start();
+       		// create listeners and service producers
+    	    //service.initilize(new UimaAsMessageProcessor(controller));
+       		service.start();
 	    }
 
     	return controller;

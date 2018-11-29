@@ -21,6 +21,11 @@ package org.apache.uima.aae.service;
 import java.util.concurrent.BlockingQueue;
 
 import org.apache.uima.aae.InProcessCache;
+import org.apache.uima.aae.InProcessCache.CacheEntry;
+import org.apache.uima.aae.controller.AnalysisEngineController;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.MessageProcessor;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.as.client.DirectMessage;
 import org.apache.uima.cas.CAS;
@@ -48,5 +53,10 @@ public interface UimaASService {
 	public void releaseCAS(String casReferenceId, BlockingQueue<DirectMessage> releaseCASQueue ) throws Exception;
 	public AnalysisEngineMetaData getMetaData() throws Exception; 
 	public void removeFromCache(String casReferenceId);
+	public CacheEntry add2Cache( CAS cas, MessageContext messageContext, String casReferenceId ) throws Exception;
+
 	public UimaASService withInProcessCache(InProcessCache cache);
+	public void initialize(MessageProcessor messageProcessor) throws Exception;
+	public void initialize(MessageProcessor messageProcessor, AnalysisEngineController parentController) throws Exception;
+    public void connect(UimaAsEndpoint clientEndpoint) throws Exception;
 }

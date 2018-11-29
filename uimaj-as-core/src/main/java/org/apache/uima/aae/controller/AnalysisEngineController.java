@@ -22,17 +22,17 @@ package org.apache.uima.aae.controller;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadFactory;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.aae.AsynchAECasManager;
 import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.OutputChannel;
-import org.apache.uima.aae.UimaAsContext;
 import org.apache.uima.aae.UimaEEAdminContext;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.error.ErrorHandlerChain;
@@ -43,8 +43,6 @@ import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.Origin;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.spi.transport.UimaMessageListener;
-import org.apache.uima.aae.spi.transport.UimaTransport;
-import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.as.client.DirectInputChannel;
 import org.apache.uima.as.client.Listener;
 import org.apache.uima.cas.CAS;
@@ -57,6 +55,12 @@ public interface AnalysisEngineController extends ControllerLifecycle {
   public static final String AEInstanceCount = "AEInstanceCount";
 
   public Origin getOrigin();
+  
+  public void addEndpoint(UimaAsEndpoint endpoint);
+  
+  public UimaAsEndpoint getEndpoint(EndpointType type);
+  
+  public void start() throws Exception;
   
   public void sendMetadata(Endpoint anEndpoint) throws AsynchAEException;
 

@@ -43,6 +43,7 @@ import org.apache.uima.aae.error.UimaEEServiceException;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
@@ -71,11 +72,13 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 
 		int payload = super.getMessageIntProperty(AsynchAEMessage.Payload);
 		String casReferenceId = super.getCasReferenceId(this.getClass());
-		String msgFrom = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+//		String msgFrom = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+		String msgFrom = ((Origin)super.getMessageObjectProperty(AsynchAEMessage.MessageFrom)).getName();
 
 		System.out.println(">>>>>>>>>>>>>>> Controller:" + controller.getComponentName()
 				+ " in ProcessInputCasResponseCommand.execute() - Input CAS:" + casReferenceId + " from "
-				+ super.getMessageStringProperty(AsynchAEMessage.MessageFrom)+" Payload:"+payload);
+				+ msgFrom +" Payload:"+payload);
+				//+ super.getMessageStringProperty(AsynchAEMessage.MessageFrom)+" Payload:"+payload);
 
 		if (casReferenceId == null) {
 			// LOG THIS
@@ -874,7 +877,8 @@ public class ProcessInputCasResponseCommand  extends AbstractUimaAsCommand {
 
 			if (super.getEndpoint().getEndpoint() == null
 					|| super.getEndpoint().getEndpoint().trim().length() == 0) {
-				String fromEndpoint = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+				String fromEndpoint = 
+						((Origin)super.getMessageObjectProperty(AsynchAEMessage.MessageFrom)).getName();
 				delegateKey = ((AggregateAnalysisEngineController) controller).lookUpDelegateKey(fromEndpoint);
 			} else {
 				delegateKey = ((AggregateAnalysisEngineController) controller)

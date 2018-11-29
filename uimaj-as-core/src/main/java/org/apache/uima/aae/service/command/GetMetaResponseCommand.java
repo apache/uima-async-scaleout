@@ -27,6 +27,7 @@ import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.controller.Endpoint;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.resource.metadata.ResourceMetaData;
 import org.apache.uima.util.XMLInputSource;
 
@@ -48,11 +49,13 @@ public class GetMetaResponseCommand extends AbstractUimaAsCommand {
             return;
           }
        
-       String fromEndpoint =// mc
-           super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
-
-       String delegateKey = ((AggregateAnalysisEngineController) controller)
-               .lookUpDelegateKey(fromEndpoint);
+//       String fromEndpoint =// mc
+//           super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+    	Origin origin = (Origin) super.getMessageContext().getMessageObjectProperty(AsynchAEMessage.MessageFrom);
+    	String delegateKey = origin.getName();//.split(":")[1];
+ System.out.println("++++++++++++++++++++++  delegateKey: "+delegateKey);
+   //   	String delegateKey = ((AggregateAnalysisEngineController) controller)
+ //              .lookUpDelegateKey(fromEndpoint);
           ResourceMetaData resource = null;
           int serializationSupportedByRemote = AsynchAEMessage.None;
 //          ((MessageContext) anObjectToHandle).getMessageIntProperty(AsynchAEMessage.SERIALIZATION);
@@ -80,11 +83,16 @@ public class GetMetaResponseCommand extends AbstractUimaAsCommand {
           // be unique.
           // The ServerURI set by the service may be its local name for the broker, e.g.
           // tcp://localhost:61616
+ 
           
           ((AggregateAnalysisEngineController) controller).mergeTypeSystem(
-                  resource, fromEndpoint, fromServer);
-          ((AggregateAnalysisEngineController) controller).setRemoteSerializationSupported(serializationSupportedByRemote, fromEndpoint, fromServer);
+                  resource, delegateKey, fromServer);
+          ((AggregateAnalysisEngineController) controller).setRemoteSerializationSupported(serializationSupportedByRemote, delegateKey, fromServer);
 
+//          ((AggregateAnalysisEngineController) controller).mergeTypeSystem(
+//                  resource, fromEndpoint, fromServer);
+//          ((AggregateAnalysisEngineController) controller).setRemoteSerializationSupported(serializationSupportedByRemote, fromEndpoint, fromServer);
+//
 	}
 
 }

@@ -29,6 +29,7 @@ import java.net.URLClassLoader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -63,6 +64,9 @@ import org.apache.uima.aae.UimaEEAdminContext;
 import org.apache.uima.aae.VersionCompatibilityChecker;
 import org.apache.uima.aae.WarmUpDataProvider;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
+import org.apache.uima.aae.definition.connectors.UimaAsConsumer.ConsumerType;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
@@ -78,6 +82,7 @@ import org.apache.uima.aae.jmx.ServiceErrors;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.message.MessageContext;
 import org.apache.uima.aae.message.Origin;
 import org.apache.uima.aae.message.UimaAsOrigin;
 import org.apache.uima.aae.monitor.Monitor;
@@ -285,6 +290,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
   public abstract void dumpState(StringBuffer buffer, String lbl1);
   
   protected abstract void doWarmUp(CAS cas, String casReferenceId) throws Exception;
+
+  private Map<EndpointType, UimaAsEndpoint> endpoints = 
+			new EnumMap<>(EndpointType.class);
+
+
 
   public BaseAnalysisEngineController() {
 	  origin = new UimaAsOrigin("");
@@ -519,6 +529,10 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
         }
       }
     }
+    if (!registeredWithJMXServer) {
+        registeredWithJMXServer = true;
+        registerServiceWithJMX(jmxContext, false);
+      }
 
     // Create an instance of ControllerMBean and register it with JMX Server.
     // This bean exposes service lifecycle APIs to enable remote stop
@@ -527,6 +541,18 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
       String jmxName = getManagementInterface().getJmxDomain() + "name=" + "Controller";
       registerWithAgent(controller, jmxName);
     }
+  }
+  
+  public void addEndpoint(UimaAsEndpoint endpoint) {
+	  endpoints.putIfAbsent(endpoint.getType(), endpoint);
+  }
+  public UimaAsEndpoint getEndpoint(EndpointType type) {
+	  return endpoints.get(type);
+  }
+  public void start() throws Exception {
+	  for( Entry<EndpointType, UimaAsEndpoint> entry : endpoints.entrySet()) {
+		  entry.getValue().start();
+	  }
   }
   public UimaContext getUimaContext() {
 	  return uimaContext;
@@ -978,6 +1004,8 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     name = jmxManagement.getJmxDomain() + key_value_list + ",name=" + thisComponentName + "_"
             + serviceErrors.getLabel();
     registerWithAgent(serviceErrors, name);
+    
+
   }
 
   protected void cleanUp() throws Exception {
@@ -3205,7 +3233,20 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
           getOutputChannel().sendReply(metadata, anEndpoint, true);
         }
         */
-          getOutputChannel(anEndpoint).sendReply(metadata, anEndpoint, true);
+    	  if ( anEndpoint.getServerURI().equals("java")) {
+    		  UimaAsEndpoint endpoint = getEndpoint(EndpointType.Direct);
+    		  
+    		  MessageContext getMetaResponseMessage = endpoint.newMessageBuilder()
+    		  	.newGetMetaReplyMessage(endpoint.getOrigin())
+    		  	.withPayload(AsynchAEMessage.Metadata)
+    		  	.withReplyDestination(anEndpoint.getReplyDestination())
+    		  	.withMetadata(metadata)
+    		  	.build();
+    		  StringBuilder sb = new StringBuilder(anEndpoint.getMessageOrigin().getName()).append(":").append(ConsumerType.GetMetaResponse.name());
+    		  endpoint.dispatch(getMetaResponseMessage, sb.toString() );
+    	  } else {
+              getOutputChannel(anEndpoint).sendReply(metadata, anEndpoint, true);
+    	  }
 
       }
     } catch (Exception e) {

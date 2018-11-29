@@ -22,13 +22,47 @@ import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
-import org.apache.uima.aae.message.UimaAsMessage;
 
 public class CommandFactory {
-	// Can't instantiate this factory. Use static methods only
-	private CommandFactory() {
 
+	/* Consider this Command Pattern implementation
+	 * 
+	private volatile CommandFactory instance;
+	
+	public CommandFactory newInstance(AnalysisEngineController controller) {
+		// use double checked locking to create Singleton
+		if ( Objects.isNull(instance) ) {
+			synchronized(CommandFactory.class) {
+				if ( Objects.isNull(instance) ) {
+					instance = new CommandFactory(controller);
+				}
+			}
+		}
+		return instance;
 	}
+	private static EnumMap<Commands, UimaAsCommand> em =
+			new EnumMap<>(Commands.class);
+	
+	// Can't instantiate this factory. Use static methods only
+	private CommandFactory(AnalysisEngineController controller) {
+		em.put(Commands.ProcessInputCASRequest,CommandBuilder.createProcessInputCasRequestCommand(controller));
+		em.put(Commands.ProcessChildCASRequest,CommandBuilder.createProcessChildCasRequestCommand(controller));
+		em.put(Commands.ProcessInputCASResponse,CommandBuilder.createProcessInputCasResponseCommand(controller));
+		em.put(Commands.GetMetaRequest,CommandBuilder.createGetMetaRequestCommand(controller));
+		em.put(Commands.GetMetaResponse,CommandBuilder.createGetMetaResponseCommand(controller));
+		em.put(Commands.CollectionProcessCompleteRequest,CommandBuilder.createCollectionProcessCompleteRequestCommand(controller));
+		em.put(Commands.CollectionProcessCompleteResponse,CommandBuilder.createCollectionProcessCompleteResponseCommand(controller));
+		em.put(Commands.NoOp,CommandBuilder.createNoOpCommand(controller));
+		
+	}
+	public static UimaAsCommand getCommandFor(Commands command) {
+		if ( em.containsKey(command)) {
+			return em.get(command);
+		}
+		return em.get(Commands.NoOp);
+		
+	}
+	*/
 	public static UimaAsCommand newCommand(MessageContext mc, AnalysisEngineController controller)
 			throws AsynchAEException {
 		// Message type is either Request or Response

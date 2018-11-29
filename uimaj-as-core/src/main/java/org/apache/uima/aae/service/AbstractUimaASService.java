@@ -27,6 +27,8 @@ import org.apache.uima.aae.InProcessCache;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.ControllerStatusListener;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.analysis_engine.metadata.AnalysisEngineMetaData;
 import org.apache.uima.as.client.DirectMessage;
 import org.apache.uima.as.client.Listener;
@@ -36,12 +38,18 @@ import org.apache.uima.resource.ResourceSpecifier;
 
 public abstract class AbstractUimaASService {
 	public final String id = UUID.randomUUID().toString();
-
+	protected UimaAsEndpoint endpoint;
 	protected AnalysisEngineController controller;
 	protected ResourceSpecifier resourceSpecifier = null;
 	protected InProcessCache inProcessCache;
 	protected String name;
 
+	public AbstractUimaASService() {
+		
+	}
+	public AbstractUimaASService(UimaAsEndpoint endpoint) {
+	this.endpoint = endpoint;	
+	}
 	private void startListener(Listener listener, AnalysisEngineController ctrl) {
 		listener.start();
 		if (!ctrl.isPrimitive()) {
@@ -67,7 +75,8 @@ public abstract class AbstractUimaASService {
 
 	}
 
-	protected void startListeners(AnalysisEngineController ctrl) {
+	protected void startListeners(AnalysisEngineController ctrl) throws Exception {
+		/*
 		if (ctrl instanceof AggregateAnalysisEngineController) {
 			for (AnalysisEngineController c : ((AggregateAnalysisEngineController) ctrl).getChildControllerList()) {
 				if (c instanceof AggregateAnalysisEngineController) {
@@ -80,11 +89,21 @@ public abstract class AbstractUimaASService {
 			}
 		}
 		startListenersFromList(ctrl.getAllListeners(), ctrl);
+		*/
+		ctrl.start();
 	}
-
+    protected UimaAsEndpoint getDirectEndpoint() {
+    	return controller.getEndpoint(EndpointType.Direct);
+    }
 	public void start() throws Exception {
 
-		startListeners(controller);
+		//startListeners(controller);
+		endpoint = controller.getEndpoint(EndpointType.Direct);
+		
+		if ( endpoint != null ) {
+			// start consumers
+			endpoint.start();
+		}
 
 //		controller.getControllerLatch().release();
 //		controller.initializeVMTransport(1);
@@ -95,7 +114,6 @@ public abstract class AbstractUimaASService {
 		controller.addControllerCallbackListener(l);
 		System.out.println(
 				".........." + controller.getName() + " AbstractUimaASService.start() ............ 2");
-
 		if (controller instanceof AggregateAnalysisEngineController) {
 			System.out
 					.println("..........." + controller.getName() + " Aggregate sending GetMeta to delegates");

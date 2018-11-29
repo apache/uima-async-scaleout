@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
@@ -45,6 +46,9 @@ import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsConsumer.ConsumerType;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.error.ErrorContext;
@@ -54,6 +58,7 @@ import org.apache.uima.aae.jmx.PrimitiveServiceInfo;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.UimaAsMessage;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.AnalysisEnginePerformanceMetrics;
 import org.apache.uima.aae.spi.transport.UimaMessage;
@@ -541,13 +546,9 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
     localCache.dumpContents();
     try {
     	String delegateKey = getKey();
-    	System.out.println("...... "+delegateKey+".collectionProcessComplete() - calling checkout instance");;
       ae = aeInstancePool.checkout();
-  	System.out.println("...... "+delegateKey+".collectionProcessComplete() - got instance");;
       if (ae != null) {
         ae.collectionProcessComplete();
-      	System.out.println("...... "+delegateKey+".collectionProcessComplete() - ae.CPC() returned");;
-
       }
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINEST)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINEST, getClass().getName(),
@@ -567,10 +568,31 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
       }
 */
       
-    	System.out.println("...... "+delegateKey+".collectionProcessComplete() - trying to send CPC reply");;
+   	
+    	if ( "java".equals(anEndpoint.getServerURI()) ) {
+           	UimaAsEndpoint serviceEndpoint = 
+        			getEndpoint(anEndpoint.getMessageOrigin().getType());
+        	
+       	    MessageContext reply = serviceEndpoint.newMessageBuilder()
+        			.newCpCReplyMessage(serviceEndpoint.getOrigin())
+        			// add this service delegate key
+        			.withSenderKey(anEndpoint.getDelegateKey())
+        			// add destination for this reply
+        			.withReplyDestination(anEndpoint.getReplyDestination())
+        			.withPayload(AsynchAEMessage.None)
+        			.build();
+       	    // dispatch() will create a Producer for a given reply destination
+       	    // and cache it for future use. 
+       	    serviceEndpoint.dispatch(reply, anEndpoint.getMessageOrigin().getName());
+    	} else {
+    	      getOutputChannel(anEndpoint).sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint, null, false);
+    	}
+    	
+    	
 
-      getOutputChannel(anEndpoint).sendReply(AsynchAEMessage.CollectionProcessComplete, anEndpoint, null, false);
-    	System.out.println("...... "+delegateKey+".collectionProcessComplete() - sent CPC reply");;
+      
+      
+      System.out.println("...... "+delegateKey+".collectionProcessComplete() - sent CPC reply");;
 
       if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.FINE)) {
         UIMAFramework.getLogger(CLASS_NAME).logrb(Level.FINE, getClass().getName(),
@@ -1031,8 +1053,35 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
         // Send generated CAS to the client
         if (!stopped) {
-            getOutputChannel(anEndpoint).sendReply(childCasStateEntry, anEndpoint);
-          
+            //getOutputChannel(anEndpoint).sendReply(childCasStateEntry, anEndpoint);
+  		    StringBuilder sb = 
+  		    		new StringBuilder();
+  		    if ( anEndpoint.getMessageOrigin().getName().startsWith(EndpointType.Direct.getName())) {
+  		    	sb.append( anEndpoint.getMessageOrigin().getName());
+  		    } else {
+  		    	sb.append("direct:").append(anEndpoint.getMessageOrigin().getName());
+  		    }
+  		    sb.append(":").append(ConsumerType.ProcessCASRequest.name());
+  		    
+          	UimaAsEndpoint serviceEndpoint = 
+        			getEndpoint(anEndpoint.getMessageOrigin().getType());
+        	
+          	MessageContext reply = serviceEndpoint.newMessageBuilder()
+        			.newProcessCASRequestMessage(serviceEndpoint.getOrigin())
+        			.withSenderKey(anEndpoint.getDelegateKey())
+        			.withReplyDestination(anEndpoint.getReplyDestination())
+        			.withCasReferenceId(childCasStateEntry.getCasReferenceId())
+        			.withParentCasReferenceId(aCasReferenceId)
+        			.withSequenceNo(childCasStateEntry.getSequenceNumber())
+        			.withPayload(AsynchAEMessage.CASRefID)
+        			.build();
+          	// dispatch() will create a Producer for a given reply destination
+          	// and cache it for future use. 
+          	serviceEndpoint.dispatch(reply, sb.toString());
+
+            
+            
+            
             //	Check for delivery failure. The client may have terminated while an input CAS was being processed
           if ( childCasStateEntry.deliveryToClientFailed() ) {
             if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {
@@ -1177,7 +1226,36 @@ public class PrimitiveAnalysisEngineController_impl extends BaseAnalysisEngineCo
 
         if (!stopped && !clientUnreachable ) {
 //            getOutputChannel(anEndpoint).sendReply(getInProcessCache().getCacheEntryForCAS(aCasReferenceId), anEndpoint);
-            getOutputChannel(anEndpoint).sendReply(getLocalCache().lookupEntry(aCasReferenceId), anEndpoint);
+ 
+        	
+/* JC 10/24/18        	
+        	getOutputChannel(anEndpoint).
+            sendReply(getLocalCache().lookupEntry(aCasReferenceId), anEndpoint);
+            */	
+        	
+  		    StringBuilder sb = 
+  		    		new StringBuilder();
+  		    if ( anEndpoint.getMessageOrigin().getName().startsWith(EndpointType.Direct.getName())) {
+  		    	sb.append( anEndpoint.getMessageOrigin().getName());
+  		    } else {
+  		    	sb.append(EndpointType.Direct.getName()).append(anEndpoint.getMessageOrigin().getName());
+  		    }
+  		    sb.append(":").append(ConsumerType.ProcessCASResponse.name());
+  		    
+           	UimaAsEndpoint serviceEndpoint = 
+            			getEndpoint(EndpointType.Direct);
+           	//			getEndpoint(anEndpoint.getMessageOrigin().getType());
+            	
+           	MessageContext reply = serviceEndpoint.newMessageBuilder()
+            			.newProcessCASReplyMessage(serviceEndpoint.getOrigin())
+            			.withSenderKey(anEndpoint.getDelegateKey())
+            			.withReplyDestination(anEndpoint.getReplyDestination())
+            			.withCasReferenceId(aCasReferenceId)
+            			.withPayload(AsynchAEMessage.CASRefID)
+            			.build();
+            // dispatch() will create a Producer for a given reply destination
+           	// and cache it for future use. 
+           	serviceEndpoint.dispatch(reply, sb.toString());
         }
 
         inputCASReturned = true;

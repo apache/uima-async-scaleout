@@ -32,6 +32,7 @@ import org.apache.uima.aae.error.AsynchAEException;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.Marker;
 import org.apache.uima.util.Level;
@@ -51,9 +52,9 @@ public class ProcessChildCasRequestCommand extends AbstractUimaAsCommand {
 		System.out.println(">>>>>>>>>>>>>>> Controller:"+controller.getComponentName()+
 				" in ProcessChildCasRequestCommand.execute() - Child CAS:"+casReferenceId+
 				" Parent CAS:"+parentCasReferenceId+
-				" from "+super
-                .getMessageStringProperty(AsynchAEMessage.MessageFrom)
-				);
+				" from "+
+				((Origin)super
+                .getMessageObjectProperty(AsynchAEMessage.MessageFrom)).getName());
 
 		if (parentCasReferenceId == null) {
             if (UIMAFramework.getLogger(getClass()).isLoggable(Level.INFO)) {
@@ -384,7 +385,8 @@ public class ProcessChildCasRequestCommand extends AbstractUimaAsCommand {
 
 	}
 	private Delegate getLastDelegate(CasStateEntry childCasStateEntry) throws Exception {
-		String cmEndpointName = super.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+		String cmEndpointName = 
+				((Origin)super.getMessageObjectProperty(AsynchAEMessage.MessageFrom)).getName();
 		String newCASProducedBy = ((AggregateAnalysisEngineController) controller).lookUpDelegateKey(cmEndpointName);
 		Delegate delegate = ((AggregateAnalysisEngineController) controller).lookupDelegate(newCASProducedBy);
 

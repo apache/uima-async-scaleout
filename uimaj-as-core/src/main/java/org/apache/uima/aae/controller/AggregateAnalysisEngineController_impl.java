@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -46,7 +47,11 @@ import org.apache.uima.aae.InProcessCache.CacheEntry;
 import org.apache.uima.aae.InputChannel;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.UimaClassFactory;
+import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.controller.LocalCache.CasStateEntry;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsConsumer.ConsumerType;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.aae.delegate.ControllerDelegate;
 import org.apache.uima.aae.delegate.Delegate;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -62,6 +67,9 @@ import org.apache.uima.aae.jmx.ServiceErrors;
 import org.apache.uima.aae.jmx.ServiceInfo;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.Origin;
+import org.apache.uima.aae.message.UimaAsOrigin;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.LongNumericStatistic;
 import org.apache.uima.aae.monitor.statistics.Statistic;
@@ -443,9 +451,11 @@ implements
           }
         }
       }
+      
       // Reply to a client once for each CPC request. doSendCpcReply is volatile thus
       // no need to synchronize it
       if (doSendCpcReply) {
+    	  System.out.println("All Delegates Processes CPC - Replying to Client");
         sendCpcReply(cEndpoint);
         doSendCpcReply = false; // reset for the next CPC
       }
@@ -485,8 +495,30 @@ implements
       getOutputChannel().sendReply(AsynchAEMessage.CollectionProcessComplete, aClientEndpoint, null, false);
     }
 */
-    getOutputChannel(aClientEndpoint).sendReply(AsynchAEMessage.CollectionProcessComplete, aClientEndpoint, null, false);
-    clearStats();
+    
+    if ( aClientEndpoint.getServerURI().equalsIgnoreCase(Transport.Java.name())) {
+ 		String serviceUri = 
+				new StringBuilder(EndpointType.Direct.getName())
+				.append(aClientEndpoint.getMessageOrigin().getName()) //getDelegateKey())
+				.append(":").append(ConsumerType.CpcResponse.name()).toString();
+       
+		try {
+	        UimaAsEndpoint e = getEndpoint(EndpointType.Direct);
+	        MessageContext cpcResponse = 
+	        		e.newMessageBuilder().
+	        		newCpCReplyMessage(e.getOrigin()).
+	        		withPayload(AsynchAEMessage.None).
+	        		build();
+	        e.dispatch(cpcResponse, serviceUri);
+			
+		} catch( Exception e) {
+			e.printStackTrace();
+		}
+     } else {
+    	   getOutputChannel(aClientEndpoint).sendReply(AsynchAEMessage.CollectionProcessComplete, aClientEndpoint, null, false);
+ 
+     }
+     clearStats();
   }
 
   
@@ -580,42 +612,58 @@ implements
         }
       }
     } else {
-      Set<?> set = destinationMap.entrySet();
-      for (Iterator<?> it = set.iterator(); it.hasNext();) {
-        Map.Entry<String, Endpoint> entry = (Map.Entry) it.next();
-        Endpoint endpoint = (Endpoint) entry.getValue();
-        /*
-        if (endpoint != null && endpoint.getStatus() == Endpoint.OK) {
+        Set<?> set = destinationMap.entrySet();
+        for (Iterator<?> it = set.iterator(); it.hasNext();) {
+          Map.Entry<String, Endpoint> entry = (Map.Entry) it.next();
+          Endpoint endpoint = (Endpoint) entry.getValue();
+          /*
+          if (endpoint != null && endpoint.getStatus() == Endpoint.OK) {
 
-          if (!endpoint.isRemote()) {
-            try {
-              UimaTransport transport = getTransport(endpoint.getEndpoint());
-              UimaMessage message = transport
-                      .produceMessage(AsynchAEMessage.CollectionProcessComplete,
-                              AsynchAEMessage.Request, getName());
-              // Send reply back to the client. Use internal (non-jms) transport
-              transport.getUimaMessageDispatcher(endpoint.getEndpoint()).dispatch(message);
-            } catch (Exception e) {
-              if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
-                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
-                        "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAEE_service_exception_WARNING", getComponentName());
+            if (!endpoint.isRemote()) {
+              try {
+                UimaTransport transport = getTransport(endpoint.getEndpoint());
+                UimaMessage message = transport
+                        .produceMessage(AsynchAEMessage.CollectionProcessComplete,
+                                AsynchAEMessage.Request, getName());
+                // Send reply back to the client. Use internal (non-jms) transport
+                transport.getUimaMessageDispatcher(endpoint.getEndpoint()).dispatch(message);
+              } catch (Exception e) {
+                if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, CLASS_NAME.getName(),
+                          "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAEE_service_exception_WARNING", getComponentName());
 
-                UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
-                        "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
-                        "UIMAEE_exception__WARNING", e);
+                  UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(),
+                          "collectionProcessComplete", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
+                          "UIMAEE_exception__WARNING", e);
+                }
               }
+            } else {
+              getOutputChannel().sendRequest(AsynchAEMessage.CollectionProcessComplete, null, endpoint);
+              endpoint.startCollectionProcessCompleteTimer();
             }
+          }
+          */
+          if ( endpoint.getServerURI().equalsIgnoreCase(Transport.Java.name())) {
+      		String serviceUri = 
+    				new StringBuilder(EndpointType.Direct.getName())
+    				.append(endpoint.getDelegateKey())
+    				.append(":").append(ConsumerType.CpcRequest.name()).toString();
+            
+    		try {
+    	        UimaAsEndpoint e = getEndpoint(EndpointType.Direct);
+    	        MessageContext cpcRequest = 
+    	        		e.newMessageBuilder().newCpCRequestMessage(e.getOrigin()).build();
+    	        e.dispatch(cpcRequest, serviceUri);
+    			
+    		} catch( Exception e) {
+    			e.printStackTrace();
+    		}
           } else {
-            getOutputChannel().sendRequest(AsynchAEMessage.CollectionProcessComplete, null, endpoint);
-            endpoint.startCollectionProcessCompleteTimer();
+              getOutputChannel(endpoint).sendRequest(AsynchAEMessage.CollectionProcessComplete, null, endpoint);
+              endpoint.startCollectionProcessCompleteTimer();
           }
         }
-        */
-        getOutputChannel(endpoint).sendRequest(AsynchAEMessage.CollectionProcessComplete, null, endpoint);
-        endpoint.startCollectionProcessCompleteTimer();
-
-      }
     }
   }
 
@@ -1617,7 +1665,22 @@ implements
         delegateEndpoints[i].initialize();
         delegateEndpoints[i].setController(this);
         delegateEndpoints[i].setWaitingForResponse(true);
-        getOutputChannel(ENDPOINT_TYPE.DIRECT).sendRequest(AsynchAEMessage.GetMeta, null, delegateEndpoints[i]);
+		String serviceUri = 
+				new StringBuilder(EndpointType.Direct.getName())
+				.append(delegateEndpoints[i].getDelegateKey())
+				.append(":").append(ConsumerType.GetMetaRequest.name()).toString();
+        
+		try {
+	        UimaAsEndpoint e = getEndpoint(EndpointType.Direct);
+	        MessageContext getMetaRequest = 
+	        		e.newMessageBuilder().newGetMetaRequestMessage(e.getOrigin()).build();
+	        e.dispatch(getMetaRequest, serviceUri);
+			
+		} catch( Exception e) {
+			e.printStackTrace();
+		}
+        
+//        getOutputChannel(ENDPOINT_TYPE.DIRECT).sendRequest(AsynchAEMessage.GetMeta, null, delegateEndpoints[i]);
 /*
         try {
           UimaMessage message = getTransport(delegateEndpoints[i].getEndpoint()).produceMessage(
@@ -2317,7 +2380,33 @@ implements
       }
       // Send CAS to a given reply endpoint
 //      sendVMMessage(mType, replyEndpoint, cacheEntry);
-      getOutputChannel(replyEndpoint).sendReply(casStateEntry, replyEndpoint);
+      if ( replyEndpoint.getServerURI().equalsIgnoreCase(Transport.Java.name())) {
+		    StringBuilder sb = 
+  		    		new StringBuilder();
+  		    if ( replyEndpoint.getMessageOrigin().getName().startsWith(EndpointType.Direct.getName())) {
+  		    	sb.append( replyEndpoint.getMessageOrigin().getName());
+  		    } else {
+  		    	sb.append(EndpointType.Direct.getName()).append(replyEndpoint.getMessageOrigin().getName());
+  		    }
+  		    sb.append(":").append(ConsumerType.ProcessCASResponse.name());
+  		    
+           	UimaAsEndpoint serviceEndpoint = 
+            			getEndpoint(EndpointType.Direct);
+           	//			getEndpoint(anEndpoint.getMessageOrigin().getType());
+            	
+           	MessageContext reply = serviceEndpoint.newMessageBuilder()
+            			.newProcessCASReplyMessage(serviceEndpoint.getOrigin())
+            			.withSenderKey(replyEndpoint.getDelegateKey())
+            			.withReplyDestination(replyEndpoint.getReplyDestination())
+            			.withCasReferenceId(casStateEntry.getCasReferenceId())
+            			.withPayload(AsynchAEMessage.CASRefID)
+            			.build();
+            // dispatch() will create a Producer for a given reply destination
+           	// and cache it for future use. 
+           	serviceEndpoint.dispatch(reply, sb.toString());
+      } else {
+          getOutputChannel(replyEndpoint).sendReply(casStateEntry, replyEndpoint);
+      }
 
     }
   }
@@ -2572,8 +2661,34 @@ implements
 
   private void dispatch(CacheEntry entry, Endpoint anEndpoint) throws AsynchAEException {
     if (!anEndpoint.isRemote()) {
-        getOutputChannel(ENDPOINT_TYPE.DIRECT).sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), anEndpoint);
-/*
+       // getOutputChannel(ENDPOINT_TYPE.DIRECT).sendRequest(AsynchAEMessage.Process, entry.getCasReferenceId(), anEndpoint);
+    	UimaAsEndpoint endpoint = getEndpoint(EndpointType.Direct);
+    	try {
+    		Origin orig = endpoint.getOrigin();
+    		Origin o = getOrigin();
+    		if ( Objects.isNull(o.getName()) || o.getName().isEmpty() ) {
+    			o = new UimaAsOrigin(getComponentName(), EndpointType.Direct);
+    		}
+        	MessageContext message = 
+        			endpoint.newMessageBuilder().newProcessCASRequestMessage(o)
+    				.withPayload(AsynchAEMessage.CASRefID)
+    				.withCasReferenceId(entry.getCasReferenceId())
+    				.build();
+        	
+    		StringBuilder serviceUri = 
+    				new StringBuilder(EndpointType.Direct.getName()).
+    					append(anEndpoint.getDelegateKey()).
+    					append(":").append(ConsumerType.ProcessCASRequest.name());
+
+    		endpoint.dispatch(message, serviceUri.toString());
+    		
+    		
+    	} catch( Exception ee) {
+    		throw new AsynchAEException(ee);
+    	}
+    	
+    	
+    	/*
       try {
         UimaTransport transport = getTransport(anEndpoint.getEndpoint());
         UimaMessage message = transport.produceMessage(AsynchAEMessage.Process,

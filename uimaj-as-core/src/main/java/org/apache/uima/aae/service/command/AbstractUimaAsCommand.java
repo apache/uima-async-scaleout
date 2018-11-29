@@ -36,6 +36,7 @@ import org.apache.uima.aae.error.ErrorContext;
 import org.apache.uima.aae.jmx.ServicePerformance;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.Origin;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.monitor.statistics.DelegateStats;
@@ -53,8 +54,11 @@ import org.apache.uima.util.Level;
 public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 	protected AnalysisEngineController controller;
 	private Object mux = new Object();
-	private final MessageContext messageContext;
-	
+    // package visibility only for messageContext
+	MessageContext messageContext;
+	protected AbstractUimaAsCommand(AnalysisEngineController controller) {
+		this(controller, null);
+	}
 	protected AbstractUimaAsCommand(AnalysisEngineController controller, MessageContext aMessageContext) {
 		this.controller = controller;
 		this.messageContext = aMessageContext;
@@ -325,7 +329,8 @@ public abstract class AbstractUimaAsCommand implements UimaAsCommand {
 	protected Delegate getDelegate(/* MessageContext mc */) throws AsynchAEException {
 		String delegateKey = null;
 		if (messageContext.getEndpoint().getEndpoint() == null || messageContext.getEndpoint().getEndpoint().trim().length() == 0) {
-			String fromEndpoint = messageContext.getMessageStringProperty(AsynchAEMessage.MessageFrom);
+			String fromEndpoint = 
+					((Origin)messageContext.getMessageObjectProperty(AsynchAEMessage.MessageFrom)).getName();
 			delegateKey = ((AggregateAnalysisEngineController) controller)
 					.lookUpDelegateKey(fromEndpoint);
 		} else {

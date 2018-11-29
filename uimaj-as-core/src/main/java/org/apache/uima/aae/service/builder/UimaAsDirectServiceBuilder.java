@@ -31,11 +31,12 @@ import org.apache.uima.aae.UimaClassFactory;
 import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.component.TopLevelServiceComponent;
 import org.apache.uima.aae.controller.AggregateAnalysisEngineController;
-import org.apache.uima.aae.controller.AggregateAnalysisEngineController_impl;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.Endpoint_impl;
+import org.apache.uima.aae.definition.connectors.UimaAsConsumer.ConsumerType;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
 import org.apache.uima.aae.error.ErrorHandler;
 import org.apache.uima.aae.error.ErrorHandlerChain;
 import org.apache.uima.aae.error.Threshold;
@@ -47,6 +48,7 @@ import org.apache.uima.aae.handler.Handler;
 import org.apache.uima.aae.service.AsynchronousUimaASService;
 import org.apache.uima.aae.service.UimaASService;
 import org.apache.uima.aae.service.UimaAsServiceRegistry;
+import org.apache.uima.aae.service.command.UimaAsMessageProcessor;
 import org.apache.uima.aae.service.delegate.AnalysisEngineDelegate;
 import org.apache.uima.aae.service.delegate.RemoteAnalysisEngineDelegate;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -122,10 +124,10 @@ public class UimaAsDirectServiceBuilder extends AbstractUimaAsServiceBuilder  {
 		//topLevelController.addControllerCallbackListener(callback);
 
 		//topLevelController.setServiceId(service.getId());
-		
+		service.withController(topLevelController);
 		service.withInProcessCache(super.cache);
 		System.setProperty("BrokerURI", "Direct");
-		configureTopLevelService(topLevelController, service);//, topLevelComponent.getScaleout());
+		configureTopLevelService(topLevelController, service);
 		return service;
 
 	}
@@ -164,7 +166,7 @@ public class UimaAsDirectServiceBuilder extends AbstractUimaAsServiceBuilder  {
 		
 		//addErrorHandling(topLevelController, pec);
 
-
+/*
 		// create a single instance of OutputChannel for Direct communication if
 		// necessary
 		DirectOutputChannel outputChannel = outputChannel(topLevelController);
@@ -207,8 +209,30 @@ public class UimaAsDirectServiceBuilder extends AbstractUimaAsServiceBuilder  {
 
 		inputChannel.registerListener(getMetaListener);
 		inputChannel.registerListener(processListener);
+*/
+		
+		service.initialize(new UimaAsMessageProcessor(topLevelController));
+		/*
+		scaleout = service.getScaleout();
+		MessageProcessor dummyProcessor = 
+				new UimaAsMessageProcessor(topLevelController);
+		
+		UimaAsEndpoint directEndpoint = new DirectUimaAsEndpoint(dummyProcessor, "Service");
+		directEndpoint.createConsumer("direct:", ConsumerType.GetMetaRequest, 1);
+		directEndpoint.createConsumer("direct:", ConsumerType.ProcessCASRequest, 4);
+		directEndpoint.createConsumer("direct:", ConsumerType.CpcRequest, 1);
+		addFreeCASListener(service, topLevelController, directEndpoint, scaleout );
+		
+		
+		
+		*/
+//		UimaAsConsumer freeCasRequestConsumer = directEndpoint.createConsumer("direct:", ConsumerType.FreeCAS, 1);
 
 		service.withController(topLevelController);
+		
+		//topLevelController.addEndpoint(directEndpoint);
+
+		
 		
 	}
 	
@@ -334,7 +358,10 @@ public class UimaAsDirectServiceBuilder extends AbstractUimaAsServiceBuilder  {
 	private void configureTopLevelService(AnalysisEngineController topLevelController,
 			AsynchronousUimaASService service, AsyncPrimitiveErrorConfigurationType pec, int howMany) throws Exception {
 		addErrorHandling(topLevelController, pec);
+		
+		service.initialize(new UimaAsMessageProcessor(topLevelController));
 
+/*
 
 		// create a single instance of OutputChannel for Direct communication if
 		// necessary
@@ -396,6 +423,8 @@ public class UimaAsDirectServiceBuilder extends AbstractUimaAsServiceBuilder  {
 		inputChannel.registerListener(getMetaListener);
 		inputChannel.registerListener(processListener);
 
+		
+		*/
 		service.withController(topLevelController);
 		
 	}
@@ -411,6 +440,23 @@ public class UimaAsDirectServiceBuilder extends AbstractUimaAsServiceBuilder  {
 			outputChannel.setFreeCASQueue(service.getFreeCasQueue());
 		}
 	}
+	
+	private void addFreeCASListener( AsynchronousUimaASService service, AnalysisEngineController controller, 
+			UimaAsEndpoint endpoint, int scaleout ) throws Exception {
+		DirectListener freCASChannelListener = null;
+		if (controller.isCasMultiplier()) {
+			endpoint.createConsumer( ConsumerType.FreeCASRequest, 1);
+			
+			
+//			freCASChannelListener = new DirectListener(Type.FreeCAS).withController(controller)
+//					.withConsumerThreads(scaleout).withInputChannel(inputChannel).withQueue(service.getFreeCasQueue())
+//					.initialize();
+//			inputChannel.registerListener(freCASChannelListener);
+//			outputChannel.setFreeCASQueue(service.getFreeCasQueue());
+		}
+	}
+	
+
 	public static InputChannel createInputChannel(ChannelType type) {
 		return new DirectInputChannel(type);
 	}

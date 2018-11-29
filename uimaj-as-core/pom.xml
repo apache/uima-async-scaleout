@@ -114,6 +114,13 @@
 			<artifactId>spring-jms</artifactId>
 		</dependency>
 		
+		<!-- dependency>
+			<groupId>org.apache.uima</groupId>
+			<artifactId>uimaj-as-connectors</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency-->
+		
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}</finalName>
