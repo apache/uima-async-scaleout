@@ -23,6 +23,7 @@ import org.apache.uima.aae.controller.EventSubscriber;
 import org.apache.uima.aae.controller.LocalCache;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
 import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ENDPOINT_TYPE;
 import org.apache.uima.aae.controller.BaseAnalysisEngineController.ServiceState;
 import org.apache.uima.aae.error.AsynchAEException;
@@ -41,6 +42,7 @@ import org.apache.uima.aae.monitor.Monitor;
 import org.apache.uima.aae.spi.transport.UimaMessageListener;
 import org.apache.uima.as.client.DirectInputChannel;
 import org.apache.uima.as.client.Listener;
+import org.apache.uima.as.connectors.direct.DirectUimaAsEndpoint;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceSpecifier;
@@ -52,20 +54,20 @@ public class MockUpAnalysisEngineController implements PrimitiveAnalysisEngineCo
 	private ThreadLocal<Long> threadLocalValue = new ThreadLocal<>();
 	private volatile ControllerLatch latch = new ControllerLatch(this);
 	private CyclicBarrier barrier;
-	private Map<Origin, UimaAsEndpoint> endpoints = 
+	private Map<EndpointType, UimaAsEndpoint> endpoints = 
 			new HashMap<>();
 	private final Origin serviceOrigin;
 	
 	public MockUpAnalysisEngineController(String name, int scaleout) {
 		this.name = name;
-		serviceOrigin = new UimaAsOrigin(name);
+		serviceOrigin = new UimaAsOrigin(name, EndpointType.Direct);
 		barrier = new CyclicBarrier(scaleout);
 	}
 	public Origin getOrigin() {
 		return serviceOrigin;
 	}
-	public void addEndpoint(Origin origin, UimaAsEndpoint endpoint) {
-		endpoints.put(origin, endpoint);
+	public void addEndpoint(EndpointType type, UimaAsEndpoint endpoint) {
+		endpoints.put(type, endpoint);
 	}
 	@Override
 	public void terminate() {
@@ -87,17 +89,40 @@ public class MockUpAnalysisEngineController implements PrimitiveAnalysisEngineCo
 
 	@Override
 	public void sendMetadata(Endpoint anEndpoint) throws AsynchAEException {
+		// There is one instance of endpoint per type [Direct, JMS,..]
 		UimaAsEndpoint endpoint = 
-				endpoints.get(anEndpoint.getMessageOrigin());//anEndpoint.getDelegateKey());
-		MessageContext message = endpoint.createMessage(AsynchAEMessage.GetMeta,AsynchAEMessage.Response,anEndpoint);
+				endpoints.get(anEndpoint.getMessageOrigin().getType());//anEndpoint.getDelegateKey());
+		// endpoints are locally cached for future access. If endpoint
+		// of a given type is not availble, lazily create it and cache it
 		try {
+			if ( Objects.isNull(endpoint)) {
+				endpoint = createEndpoint(anEndpoint);
+			}
+			
+			MessageContext message = 
+				endpoint.newMessageBuilder()
+					.newGetMetaReplyMessage(getOrigin())
+					.withSenderKey(anEndpoint.getDelegateKey())
+					.build();
+					
+			message.getEndpoint().
+			   setReplyDestination(anEndpoint.getReplyDestination());
+			
+			// send the reply to target consumer.
 			endpoint.dispatch(message);
 		} catch( Exception e) {
 			throw new AsynchAEException(e);
 		}
 
 	}
-
+	private UimaAsEndpoint createEndpoint(Endpoint e) throws Exception {
+		
+		// FIX THE NAMING HERE: Two things are Endpoint now
+		UimaAsEndpoint endpoint =
+					new DirectUimaAsEndpoint( e.getMessageOrigin().getName());
+		addEndpoint(e.getMessageOrigin().getType(), endpoint);
+		return endpoint;
+	}
 	@Override
 	public ControllerLatch getControllerLatch() {
 		return latch;
@@ -260,6 +285,7 @@ public class MockUpAnalysisEngineController implements PrimitiveAnalysisEngineCo
 
 	@Override
 	public void initialize() throws AsynchAEException {
+
 		System.out.println(".....Thread["+Thread.currentThread().getId()+"] "+ getComponentName()+" - Initializing AE");
 	}
 
@@ -654,6 +680,21 @@ public class MockUpAnalysisEngineController implements PrimitiveAnalysisEngineCo
 	@Override
 	public boolean threadAssignedToAE() {
 		return Objects.nonNull(threadLocalValue.get());
+	}
+	@Override
+	public void addEndpoint(UimaAsEndpoint endpoint) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public UimaAsEndpoint getEndpoint(EndpointType type) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void start() throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
