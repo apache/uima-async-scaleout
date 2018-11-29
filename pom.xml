@@ -99,6 +99,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.uima</groupId>
+      <artifactId>uimaj-as-connectors</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.uima</groupId>
       <artifactId>uimaj-ep-deployeditor</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -482,6 +487,8 @@
               			    <exclude>uima-as-parent/**</exclude>
               			    <exclude>uimaj-as-activemq/**</exclude>
               			    <exclude>uimaj-as-camel/**</exclude>
+              			    <exclude>uimaj-as-connectors/**</exclude>
+              			    
               			    <exclude>uimaj-as-core/**</exclude>
               			    <exclude>uimaj-as-jms/**</exclude>
               			    <exclude>uimaj-as-osgi-runtime/**</exclude>
@@ -553,6 +560,5 @@
   <modules>
     <module>uima-as-parent</module>
     <module>aggregate-uima-as</module>
-    <module>uimaj-as-connectors</module>
   </modules>
 </project>
