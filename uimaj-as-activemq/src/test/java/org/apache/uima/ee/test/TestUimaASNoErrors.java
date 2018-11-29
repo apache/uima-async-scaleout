@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1229,7 +1230,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    initialize(uimaAsClient, appCtx);
 	    waitUntilInitialized();
 
-	    for (int i = 0; i < 500; i++) {
+	    for (int i = 0; i < 2; i++) {
 	      CAS cas = uimaAsClient.getCAS();
 	      cas.setDocumentText("Some Text");
 	      System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
@@ -1441,6 +1442,8 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 	@Test
 	public void testDeployAsyncAggregateServiceOverJava() throws Exception {
+//		URL url = TestUimaASNoErrors.class.getResource("/Deploy_AsyncAggregate.xml");
+		
 		testDeployAsyncAggregateService(Transport.Java);
 	}
 
@@ -1457,7 +1460,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 
 		addExceptionToignore(org.apache.uima.aae.error.UimaEEServiceException.class);
 
-		runTest(appCtx, uimaAsClient, "tcp://localhost:61616", "TopLevelTaeQueue", 200, PROCESS_LATCH);
+		runTest(appCtx, uimaAsClient, "tcp://localhost:61616", "TopLevelTaeQueue", 2, PROCESS_LATCH);
 	}
 
 	 @Test
@@ -1476,7 +1479,7 @@ public class TestUimaASNoErrors extends BaseTestSupport {
 	    
 	       System.setProperty("NoOpBroker", "tcp::/localhost:61616");
 	       System.setProperty(JmsConstants.SessionTimeoutOverride, "2500000");
-//	       deployService(eeUimaEngine, relativePath + "/Deploy_NoOpAnnotator.xml");
+	      // deployService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotator.xml");
 			deployJmsService(uimaAsClient, relativePath + "/Deploy_NoOpAnnotatorUsingPlaceholder.xml");
 
 	       Map<String, Object> appCtx = defaultContext("TopLevelTaeQueue");

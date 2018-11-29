@@ -70,9 +70,14 @@ import org.apache.uima.aae.client.UimaAsynchronousEngine;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.ControllerCallbackListener;
 import org.apache.uima.aae.controller.Endpoint;
+import org.apache.uima.aae.definition.connectors.Endpoints;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.aae.error.UimaASMetaRequestTimeout;
 import org.apache.uima.aae.jmx.JmxManager;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.MessageProcessor;
 import org.apache.uima.aae.message.UIMAMessage;
 import org.apache.uima.aae.service.AsynchronousUimaASService;
 import org.apache.uima.aae.service.UimaASService;
@@ -495,12 +500,28 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
     if ( dispatchThread == null ) {
   	  // make sure we are in the running state. The local consumer depends on it
       	running = true;
-      
+      	UimaAsEndpoint clientEndpoint;
+      	try {
+      		
+      		MessageProcessor messageProcessor = 
+      				new ClientMessageProcessor();
+      		
+          	clientEndpoint =
+          			Endpoints.newEndpoint(EndpointType.Direct, EndpointType.Direct.getName()+"Client", messageProcessor);
+          	// create client consumers and connect them to the service
+          	// producers
+          	service.connect(clientEndpoint);
+          	clientEndpoint.start();
+      	} catch( Exception e) {
+      		throw new ResourceInitializationException(e);
+      	}
+
     	// start message consumer to handle replies  
-    	startLocalConsumer(anApplicationContext);
+   // 	startLocalConsumer(anApplicationContext);
     	// start dispatcher in its own thread. It will fetch messages from a shared 'pendingMessageQueue'
       	LocalDispatcher dispatcher =
-      			new LocalDispatcher(this, service, pendingMessageQueue);
+      			new LocalDispatcher(this, service, pendingMessageQueue, clientEndpoint);
+      	
       	dispatchThread = new Thread(dispatcher,"LocalDispatcher");
       	dispatchThread.start();
     }
@@ -1687,6 +1708,14 @@ public class BaseUIMAAsynchronousEngine_impl extends BaseUIMAAsynchronousEngineC
 	public void onException(JMSException arg0) {
 		arg0.printStackTrace();
 		
+	}
+	  
+  }
+  private class ClientMessageProcessor implements MessageProcessor {
+
+	@Override
+	public void process(MessageContext message) throws Exception {
+		onMessage((DirectMessage)message.getRawMessage());
 	}
 	  
   }

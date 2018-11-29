@@ -24,7 +24,12 @@ import org.apache.uima.UIMAFramework;
 import org.apache.uima.aae.UIMAEE_Constants;
 import org.apache.uima.aae.client.UimaASProcessStatus;
 import org.apache.uima.aae.client.UimaASProcessStatusImpl;
+import org.apache.uima.aae.definition.connectors.UimaAsConsumer.ConsumerType;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint;
+import org.apache.uima.aae.definition.connectors.UimaAsEndpoint.EndpointType;
 import org.apache.uima.aae.message.AsynchAEMessage;
+import org.apache.uima.aae.message.MessageContext;
+import org.apache.uima.aae.message.UimaAsOrigin;
 import org.apache.uima.aae.service.UimaASService;
 import org.apache.uima.adapter.jms.JmsConstants;
 import org.apache.uima.adapter.jms.client.BaseUIMAAsynchronousEngineCommon_impl;
@@ -39,37 +44,89 @@ public class LocalDispatcher implements Runnable  {
 	private BlockingQueue<PendingMessage> messageQueue = null;
 	private BaseUIMAAsynchronousEngineCommon_impl client;
 	private UimaASService service;
-
+	private UimaAsEndpoint clientEndpoint;
+	
 	public LocalDispatcher(BaseUIMAAsynchronousEngineCommon_impl client, UimaASService service,
-			BlockingQueue<PendingMessage> pendingMessageQueue) {
+			BlockingQueue<PendingMessage> pendingMessageQueue, UimaAsEndpoint clientEndpoint) {
 		this.service = service;
 		this.client = client;
 		this.messageQueue = pendingMessageQueue;
+		this.clientEndpoint = clientEndpoint;
 	}
-
+	
 	private boolean reject(PendingMessage pm) {
 		return false;
 	}
 
 	private void dispatch(PendingMessage pm) throws Exception {
 		boolean doCallback = false;
-
+		StringBuilder serviceUri = new StringBuilder("direct").append(":").append(service.getName());
+		
 		switch (pm.getMessageType()) {
 		case AsynchAEMessage.GetMeta:
-			service.sendGetMetaRequest();
+			serviceUri.append(":").append(ConsumerType.GetMetaRequest.name()).toString();
+			MessageContext getMetaMessage =
+				clientEndpoint.newMessageBuilder().
+					newGetMetaRequestMessage(new UimaAsOrigin("Client", EndpointType.Direct))
+//					newGetMetaRequestMessage(new UimaAsOrigin("direct:Client", EndpointType.Direct))
+					.withPayload(AsynchAEMessage.None)
+					.build();
+			clientEndpoint.dispatch(getMetaMessage, serviceUri.toString());
+			
 			System.out.println("LocalDispatcher.dispatch()-dispatched getMeta Request");
 			break;
 
 		case AsynchAEMessage.Process:
 			doCallback = true;
-			service.process((CAS) pm.getProperty(AsynchAEMessage.CAS), pm.getPropertyAsString(AsynchAEMessage.CasReference));
-			System.out.println("LocalDispatcher.dispatch()-dispatched Process Request");
+			serviceUri.append(":").append(ConsumerType.ProcessCASRequest.name()).toString();
+			
+			MessageContext processMessage =
+					clientEndpoint.newMessageBuilder().
+						newProcessCASRequestMessage(new UimaAsOrigin("Client", EndpointType.Direct))
+//						newProcessCASRequestMessage(new UimaAsOrigin("direct:Client", EndpointType.Direct))
+						.withPayload(AsynchAEMessage.CASRefID)
+						.withCasReferenceId(pm.getPropertyAsString(AsynchAEMessage.CasReference))
+						.build();
+
+			service.add2Cache((CAS) pm.getProperty(AsynchAEMessage.CAS), processMessage, pm.getPropertyAsString(AsynchAEMessage.CasReference));
+
+			clientEndpoint.dispatch(processMessage, serviceUri.toString());
+				
+			System.out.println("LocalDispatcher.dispatch()-dispatched process Request");
+
+				
 			break;
 
 		case AsynchAEMessage.CollectionProcessComplete:
-			service.collectionProcessComplete();
+			serviceUri.append(":").append(ConsumerType.CpcRequest.name()).toString();
+
+			MessageContext cpcMessage =
+			   clientEndpoint.newMessageBuilder().
+				  newCpCRequestMessage(new UimaAsOrigin("Client", EndpointType.Direct))
+//				  newCpCRequestMessage(new UimaAsOrigin("direct:Client", EndpointType.Direct))
+				  .withPayload(AsynchAEMessage.None)
+				  .build();
+		    clientEndpoint.dispatch(cpcMessage, serviceUri.toString());
+
 			System.out.println("LocalDispatcher.dispatch()-dispatched CPC Request");
 			break;
+
+		case AsynchAEMessage.ReleaseCAS:
+			serviceUri.append(":").append(ConsumerType.FreeCASRequest.name()).toString();
+
+			MessageContext freeCASMessage =
+			   clientEndpoint.newMessageBuilder().
+				  newCpCRequestMessage(new UimaAsOrigin("Client", EndpointType.Direct))
+//				  newCpCRequestMessage(new UimaAsOrigin("direct:Client", EndpointType.Direct))
+				  .withPayload(AsynchAEMessage.CASRefID)
+				  .withCasReferenceId(pm.getPropertyAsString(AsynchAEMessage.CasReference))
+				  .build();
+		    clientEndpoint.dispatch(freeCASMessage, serviceUri.toString());
+
+			System.out.println("LocalDispatcher.dispatch()-dispatched Free CAS Request");
+			break;
+
+		
 		}
         if ( doCallback ) {
             UimaASProcessStatus status = new UimaASProcessStatusImpl(new ProcessTrace_impl(),(CAS)pm.getProperty(AsynchAEMessage.CAS),
@@ -99,9 +156,9 @@ public class LocalDispatcher implements Runnable  {
 		while (client.isRunning()) {
 			PendingMessage pm = null;
 			try {
-				System.out.println("LocalDispatcher.run()- waiting for new message ... queue hashcode:"+messageQueue.hashCode());
+				System.out.println("Client LocalDispatcher.run()- waiting for new message ... queue hashcode:"+messageQueue.hashCode());
 				pm = messageQueue.take();
-				System.out.println("LocalDispatcher.run()-got new message to dispatch");
+				System.out.println("Client LocalDispatcher.run()-got new message to dispatch");
 			} catch (InterruptedException e) {
 				
 				return;
@@ -122,12 +179,8 @@ public class LocalDispatcher implements Runnable  {
 					}
 				}
 				try {
-					System.out.println(".................... calling LocalDispatch.beforeDispatch()");
 					client.beforeDispatch(pm);
-					
-					System.out.println(".................... calling LocalDispatch.dispatch()");
 					dispatch(pm);
-					System.out.println(".................... LocalDispatch.dispatch() returned");
 				} catch (Exception e) {
 					if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.WARNING)) {
 						UIMAFramework.getLogger(CLASS_NAME).logrb(Level.WARNING, getClass().getName(), "run",
