@@ -121,7 +121,7 @@
 		<uimaScmRoot>uima-as</uimaScmRoot>
 		<uimaScmProject>${project.artifactId}</uimaScmProject>
 		<!-- level of uimaj sdk this release depends on -->
-		<uimajDependencyVersion>2.10.2</uimajDependencyVersion>
+		<uimajDependencyVersion>2.10.3</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
 		<org.apache.activemq.version>5.15.2</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
