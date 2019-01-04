@@ -2019,7 +2019,11 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     if (this instanceof AggregateAnalysisEngineController_impl) {
       ((AggregateAnalysisEngineController_impl) this).cleanUp();
       if (!((AggregateAnalysisEngineController_impl) this).initialized) {
-        notifyListenersWithInitializationStatus(new ResourceInitializationException());
+         if ( cause != null ) {
+       	  notifyListenersWithInitializationStatus(new ResourceInitializationException(cause));
+         } else {
+       	  notifyListenersWithInitializationStatus(new ResourceInitializationException());
+         }
       }
     }
     if (statsMap != null) {
@@ -2171,6 +2175,9 @@ public abstract class BaseAnalysisEngineController extends Resource_ImplBase imp
     terminate(null, null);
   }
 
+  public void terminate(Throwable cause) {
+	    terminate(cause, "NA");
+	  }
   public void terminate(Throwable cause, String aCasReferenceId) {
       if (stopLatch.getCount() > 0) {
         if (UIMAFramework.getLogger(CLASS_NAME).isLoggable(Level.INFO)) {

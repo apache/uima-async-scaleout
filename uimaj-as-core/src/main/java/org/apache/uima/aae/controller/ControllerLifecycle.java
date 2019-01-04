@@ -30,6 +30,11 @@ public interface ControllerLifecycle {
   public void terminate();
 
   /**
+   * Called to initiate shutdown of the Asynchronous Service. An implementation can close an input
+   * and output channels and do any necessary cleanup before terminating.
+   */
+  public void terminate(Throwable cause);
+  /**
    * Register one or more listeners through which the controller can send notification of events.
    * 
    * 

@@ -101,7 +101,7 @@ public class GetMetaErrorHandler extends ErrorHandlerBase implements ErrorHandle
                     "UIMAEE_terminate_service__INFO",
                     new Object[] { aController.getComponentName(), endpoint.getEndpoint() });
           }
-          aController.terminate();
+          aController.terminate(t);
           // Notify if the error occurred during initialization of the service.
           // If the ping times out, there is no need to notify the listener. We
           // use getMeta request as a ping to check if the service is running.

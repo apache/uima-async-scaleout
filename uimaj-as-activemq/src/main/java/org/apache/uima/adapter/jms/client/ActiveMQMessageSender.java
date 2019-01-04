@@ -374,7 +374,6 @@ public class ActiveMQMessageSender extends BaseMessageSender {
 							new Object[] { cacheEntry.getCasReferenceId(), String.valueOf(cas.hashCode()),
 									engine.serviceDelegate.toString() });
 				}
-
 			} else if (pm.getMessageType() == AsynchAEMessage.GetMeta
 					&& engine.serviceDelegate.getGetMetaTimeout() > 0) {
 				// timer for PING has been started in sendCAS()
@@ -409,6 +408,9 @@ public class ActiveMQMessageSender extends BaseMessageSender {
                         "run", UIMAEE_Constants.JMS_LOG_RESOURCE_BUNDLE,
                         "UIMAEE_exception__WARNING", e);
             }
+			if (casProcessRequest) {
+				addCasToOutstandingList((String)pm.get(AsynchAEMessage.CasReference));
+			}
 		} finally {
 			if (jmsSession != null) {
 				try {
@@ -419,5 +421,16 @@ public class ActiveMQMessageSender extends BaseMessageSender {
 			}
 		}
 
+	}
+	private void addCasToOutstandingList(String casReferenceId) {
+		 ClientRequest cacheEntry = engine.getCache().get(casReferenceId);
+		if (cacheEntry != null) {
+			CAS cas = cacheEntry.getCAS();
+			// Add the cas to a list of CASes pending reply. Also start the timer if
+			// necessary
+			engine.serviceDelegate.addCasToOutstandingList(cacheEntry.getCasReferenceId(), cas.hashCode(),
+					engine.timerPerCAS); // true=timer per cas
+
+		}
 	}
 }

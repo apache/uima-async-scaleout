@@ -742,7 +742,9 @@ public class UimacppServiceController extends AnalysisEngineControllerAdapter im
     }
 
   }
-
+  public void terminate(Throwable cause) {
+	  terminate();
+  }
   /**
    * 
    * Runs when UIMA EE client API undeploys this service.
