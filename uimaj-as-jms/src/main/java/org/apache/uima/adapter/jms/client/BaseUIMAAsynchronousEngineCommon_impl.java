@@ -1203,7 +1203,7 @@ public abstract class BaseUIMAAsynchronousEngineCommon_impl implements UimaAsync
           }
         }
         String meta = ((TextMessage) message).getText();
-        ByteArrayInputStream bis = new ByteArrayInputStream(meta.getBytes());
+        ByteArrayInputStream bis = new ByteArrayInputStream(meta.getBytes("UTF-8"));
         XMLInputSource in1 = new XMLInputSource(bis, null);
         // Adam - store ResouceMetaData in field so we can return it from getMetaData().
         resourceMetadata = (ProcessingResourceMetaData) UIMAFramework.getXMLParser()
