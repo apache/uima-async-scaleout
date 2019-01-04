@@ -834,7 +834,13 @@ public abstract class Delegate {
           delegate.setState(TIMEOUT_STATE);
           ErrorContext errorContext = new ErrorContext();
           errorContext.add(AsynchAEMessage.Command, aCommand);
-          String enrichedMessage = enrichProcessCASTimeoutMessage(aCommand, aCasReferenceId,timeToWait,"Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId );
+          String msg = "";
+          if ( aCommand == AsynchAEMessage.GetMeta ) {
+        	  msg = "Delegate Service:"+delegateKey+" GetMeta Request Has Timed Out";
+          } else {
+        	  msg = "Delegate Service:"+delegateKey+" Has Timed Out While Processing CAS:"+aCasReferenceId;
+          }
+          String enrichedMessage = enrichProcessCASTimeoutMessage(aCommand, aCasReferenceId,timeToWait, msg);
           Exception cause = new MessageTimeoutException(enrichedMessage);
           if ( aCasReferenceId != null ) {  // true on GetMeta Ping timeout
                 errorContext.add(AsynchAEMessage.CasReference, aCasReferenceId);
