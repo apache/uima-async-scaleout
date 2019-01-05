@@ -196,8 +196,8 @@ public class TestUimaASExtended extends BaseTestSupport {
             broker2.waitUntilStopped();
         	  System.out.println("..... Stopped broker ............................");
         	  Timer timer = new Timer();
-  		  timer.schedule(new StartBrokerTask(broker2, this),1000);
-  		  delay =5000;
+  		  timer.schedule(new StartBrokerTask(broker2, this),100);
+  		  //delay =5000;
           } 
           
           synchronized(appCtx) {
@@ -220,7 +220,7 @@ public class TestUimaASExtended extends BaseTestSupport {
           */
           CAS cas = uimaAsEngine.getCAS();
           cas.setDocumentText("Some Text");
-        //  System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
+          System.out.println("UIMA AS Client Sending CAS#" + (i + 1) + " Request to a Service");
           try {
             uimaAsEngine.sendAndReceiveCAS(cas);
           } catch( Exception e) {
