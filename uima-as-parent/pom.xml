@@ -123,9 +123,9 @@
 		<!-- level of uimaj sdk this release depends on -->
 		<uimajDependencyVersion>2.10.3</uimajDependencyVersion>
 		<!-- level of ActiveMQ this release depends on -->
-		<org.apache.activemq.version>5.15.2</org.apache.activemq.version>
+		<org.apache.activemq.version>5.15.8</org.apache.activemq.version>
 		<!-- level of SpringFramework this release depends on -->
-		<org.springframework.version>4.3.9.RELEASE</org.springframework.version>
+		<org.springframework.version>4.3.18.RELEASE</org.springframework.version>
 
         <org.apache.camel.version>2.19.3</org.apache.camel.version>
 
@@ -135,7 +135,7 @@
 
 		<org.apache.geronimo.servlet.specs.version>1.0</org.apache.geronimo.servlet.specs.version>
 
-		<jetty.version>9.2.22.v20170606</jetty.version>
+		<jetty.version>9.2.25.v20180606</jetty.version>
 
 		<commons-pool.version>2.4.2</commons-pool.version>
 
@@ -149,9 +149,9 @@
 		
 		<xpp3.version>1.1.4c</xpp3.version>
 		
-		<http.client.version>4.5.3</http.client.version>
+		<http.client.version>4.5.6</http.client.version>
 		
-		<http.core.version>4.4.4</http.core.version>
+		<http.core.version>4.4.10</http.core.version>
 		
         <hawtbuff.version>1.11</hawtbuff.version>		
         
