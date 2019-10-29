@@ -29,6 +29,7 @@ import org.apache.uima.aae.UimaAsThreadFactory;
 import org.apache.uima.aae.client.UimaAsynchronousEngine.Transport;
 import org.apache.uima.aae.controller.AnalysisEngineController;
 import org.apache.uima.aae.controller.PrimitiveAnalysisEngineController;
+import org.apache.uima.aae.definition.connectors.ListenerCallback;
 import org.apache.uima.aae.message.AsynchAEMessage;
 import org.apache.uima.aae.spi.transport.vm.UimaVmQueue;
 import org.springframework.core.task.TaskExecutor;
@@ -219,7 +220,7 @@ public class DirectListener implements Listener, JavaQueueListener {
 		}
 		return controller.getKey();
 	}
-	public class DirectListenerCallback {
+	public class DirectListenerCallback implements ListenerCallback{
 		private DirectListener dl;
 		private boolean initializationFailed = false;
 		private Exception exception;
