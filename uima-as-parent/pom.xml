@@ -21,7 +21,7 @@
 	<parent>
 		<groupId>org.apache.uima</groupId>
 		<artifactId>parent-pom</artifactId>
-		<version>12</version>
+		<version>13</version>
 		<relativePath />
 	</parent>
 
@@ -34,15 +34,15 @@
 	<url>${uimaWebsiteUrl}</url>
 
 	<scm>
-		<connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.10.2/uima-as-parent
-    </connection>
-		<developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.10.2/uima-as-parent
-    </developerConnection>
-		<url>
-      http://svn.apache.org/viewvc/uima/uima-as/tags/uima-as-2.10.2/uima-as-parent
-    </url>
+	  <connection>
+             scm:git:https://github.com/apache/uima-uimaj/uimaj-parent
+          </connection>
+	  <developerConnection>
+             scm:git:https://github.com/apache/uima-uimaj/uimaj-parent
+          </developerConnection>
+	  <url>
+             https://github.com/apache/uima-uimaj/tree/master/uimaj-parent
+          </url>
 	</scm>
 
 
@@ -56,7 +56,7 @@
 			<id>eclipsePlugins</id>
 			<name>Eclipse components</name>
 			<layout>default</layout>
-			<url>http://repo1.maven.org/eclipse</url>
+			<url>http://repo1.maven.org/maven2</url>
 
 			<releases>
 				<updatePolicy>never</updatePolicy>
@@ -206,7 +206,7 @@ ${uimaASNoticeText}
 
 
 
-      	    <dependency>
+               	        <dependency>
 				<groupId>org.apache.activemq</groupId>
 				<artifactId>activemq-jaas</artifactId>
 				<version>${org.apache.activemq.version}</version>
@@ -480,7 +480,6 @@ ${uimaASNoticeText}
     <pluginManagement>
     
     	<plugins>
-
            <plugin>
               <artifactId>maven-compiler-plugin</artifactId>
               <version>3.1</version>
@@ -505,9 +504,11 @@ ${uimaASNoticeText}
     									maven-bundle-plugin
     								</artifactId>
     								<versionRange>
-    									[2.3.7,)
+    									[3,)
     								</versionRange>
     								<goals>
+                                                                        <goal>process</goal>
+                                                                        <goal>bundle</goal>
     									<goal>manifest</goal>
     								</goals>
     							</pluginExecutionFilter>
