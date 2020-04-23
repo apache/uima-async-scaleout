@@ -1,0 +1,219 @@
+ <!DOCTYPE html>
+   <!--
+   ***************************************************************
+   * Licensed to the Apache Software Foundation (ASF) under one
+   * or more contributor license agreements.  See the NOTICE file
+   * distributed with this work for additional information
+   * regarding copyright ownership.  The ASF licenses this file
+   * to you under the Apache License, Version 2.0 (the
+   * "License"); you may not use this file except in compliance
+   * with the License.  You may obtain a copy of the License at
+         *
+   *   http://www.apache.org/licenses/LICENSE-2.0
+   * 
+   * Unless required by applicable law or agreed to in writing,
+   * software distributed under the License is distributed on an
+   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   * KIND, either express or implied.  See the License for the
+   * specific language governing permissions and limitations
+   * under the License.
+   ***************************************************************
+   -->
+
+ <html>
+   <head>
+		 <style>
+		   mthd {font-weight: bold; font-family: monospace;}
+		   fld {margin-left: 2em; display: block}
+		   actn {margin-left: 2em; display: block}  
+		 </style>
+   </head>
+   <body>
+ <h1>UIMA-AS Testing Utilities</h1>
+ <h4>A brief guide to the utilities for helping 
+to construct uima-as test cases</h4>
+
+<p>Last updated: October, 2013</p>
+<p>Test cases run lots of asynchronous parts.  The main flow is to have a test case set things up, and then 
+set up 1 or more monitor threads that will await various latch countdowns (EXCEPTION, CPC, PROCESS).
+The monitor threads are "joined" back in the main thread.  There's an extra semiphore that is used to delay 
+sending the first CAS until all monitor threads have started up.
+</p>
+
+<p>CASes in the system are assigned Cas Ref Ids, which are UUIDs.</p>
+
+<p>There are 2 support / utility classes, with this inheritance:<br/>
+<code style="margin-left:2em">BaseTestSupport  ->  ActiveMQSupport -> TestCase</code></p>
+  
+<h2>ActiveMQSupport</h2>
+<h3>Starting / stopping broker(s)</h3>
+<ul>
+<li> 
+<p><mthd>setup()</mthd> creates and starts <code>broker</code>
+<actn>creates, starts broker, addHttpConnector(port = 18888)</actn>
+<actn>Sets system properties:
+<pre>
+   DefaultBrokerUrl = broker:()/localhost?persistent=false
+   DefaultHttpBrokerUrl = http://localhost:[portNumber]
+</pre></actn>
+</p>
+</li>
+
+<li>
+<p><mthd>teardown</mthd> clears two System properties and stops <code>broker</code>
+<fld>clear System properties <code>activemq.broker.jmx.domain, BrokerURL</code></fld>
+</p>
+</li>
+
+<li>
+<p><mthd>cleanBroker(BrokerService broker)</mthd> sometimes done before stopping
+<actn>deleteAllMessages - removes messages from all queues</actn>
+<actn>goes thru all known Client connections and "stop()"s them</actn>
+<actn>goes thru all non-topic destinations and removes them</actn>
+<pre>
+   Typical use: 
+     stop-uima-client;
+     cleanBroker(broker2);
+     broker2.stop()
+     broker2.waitUntilStopped();
+</pre>
+</p>
+</li>
+
+<li>
+<p><mthd>stopBroker()</mthd> stops main <code>broker</code>
+<fld><code>broker, tcpConnector</code></fld>
+<actn>stop <code>tcpConnector</code>, removeConnector from broker, removeHttpConnector, deleteAllMessages, stop broker, waitUtilStopped</actn>
+</p>
+</li>
+</ul>
+
+<h3>BrokerConnectors</h3>
+<ul>
+<li>
+<p><mthd>addHttpConnector( [broker], port-number)</mthd> returns Uri String
+<fld>set-field <code>TransportConnector httpConnector</code></fld>
+<actn>Iterates with increasing port-number in case port in use</actn>
+</p>
+</li><li>        
+        
+<p><mthd>getHttpURI()</mthd> returns Uri String of field <code>httpConnector</code>
+</p>
+</li><li>
+
+<p><mthd>removeHttpConnector()</mthd>
+<actn>stops <code>httpConnector</code></actn>
+<actn>removes <code>httpConnector</code> from broker</actn></p>
+</li><li>
+
+<p><mthd>addConnector(broker, type, basePort)</mthd> returns <code>TransportConnector</code>
+<actn>starting with basePort, incr port till get a good return from broker.addConnector using localhost:port</actn></p>
+</li><li>
+
+<p><mthd>getBrokerUri()</mthd>
+<fld><code>uri</code></fld></p>
+</li><li>
+
+<p><mthd>getConnection()</mthd> returns <code>Connection</code> from <code>uri</code></p>
+</li><li>
+
+<p><mthd>createBroker( [port, useJmx, isSecondaryBroker])</mthd> returns BrokerService, used for main broker and 2ndry broker
+<actn>broker uri <code>broker:()/localhost?persistent=false</code></actn>
+<fld>sets <code>tcpConnector</code> to a tcp style connector at the port (default 61617)</fld>
+<actn>if isSecondaryBroker, changes tcpConnector name and JmxDomainName gets ".test" added</actn>
+</p>
+</li><li>
+
+<p><mthd>setupSecondaryBroker(boolean addProperty)</mthd> returns broker instance
+<actn>sets system property <code>activemq.broker.jmx.domain = org.apache.activemq.test</code></actn>
+<actn>creates a secondary broker (calls <code>createBroker(61620, true, treu)</code> and starts it.</actn>
+<actn>if addProperty, adds system property <code>BrokerURL</code></actn>
+</p>
+</li>
+</ul>
+<!-- ********************************************************************************************** -->
+<!--  Base Test Support                                                                             -->
+<!-- ********************************************************************************************** -->
+<h2>BaseTestSupport</h2>
+<p>Inherits from ActiveMQSupport</p>
+
+<p><mthd>deployService(asyncEngine - to hold ref, deploydescriptorPath)</mthd> returns UUID string
+<actn>uses SystemProp: BrokerURL or tcp://localhost:8118, sets defaultBrokerURL</actn></p>
+
+<p><mthd>addxceptionToIgnore, ignoreException</mthd></p>
+
+<p><mthd>initialize(asyncEngine, appCtx)</mthd> calls initialize on engine after adding statusCallbackListener of <code>listener</code>
+which is set to a new instance of UimaAsTestCallbackListener, a subclass of this class</p>
+
+<p><mthd>buildContext(top-level-svc-broker-uri, top-level-queue-name, [timeout default 0])</mthd> returns appCtx map
+<actn>sets CasPoolSize to 4, ReplyWindow to 15</actn></p>
+
+<p><mthd>isMetaRequest(Message)</mthd></p>
+
+<p><mthd>spinMonitorThread(ctrlSemaphore, howMany, kind)</mthd> returns thread that will wait
+for howMany count-downs; returned threads are typically joined.
+<fld>Kind/latches: <code>cpcLatch, exceptionCountLatch, processCountLatch</code></fld> </p>
+
+
+<p><mthd>waitUntilInitialized()</mthd> signalled by callback, set up for one use per test instantiation
+<fld><code>initializeMonitor, initialized</code></fld>
+
+<p><mthd>waitOnMonitor(Semaphore)</mthd> used to wait until all monitor threads are spun</p>
+
+<p><mthd>runTestWithMultipleThreads(svc-deploy-descr, q-name, how-many-CASes=per-thread, how-many-threads,
+timeout, getmeta-timeout, [fail-on-timeout])</mthd>
+<fld><code>engine</code> = new asyncEngine</fld>
+<actn>deploy into engine, initialize engine</actn>
+<actn>if <code>fail-on-timeout</code>, set timer task to undeploy in 5 seconds</actn>
+<actn>spin up runner threads and have them send CASes, one at a time</actn>
+<actn>wait till all CASes received, then wait till CPC done</actn>
+</p>
+
+<p><mthd>runCrTest(engine, howMany)</mthd> Run using collection reader
+<fld>set <code>engine</code> from the passed-in engine</fld>
+<actn>The engine needs to be set up with a collection reader and
+ the standard listeners to count down the
+PROCESS_LATCH</actn></p>
+
+<p><mthd>runTest(2)(appCtx, engine, brokerUri, q-name, howMany, latchKind, is-async-send)</mthd>
+<fld>sets <code>engine</code></fld>
+<actn>if latchKind is EXCEPTION_LATCH, use 1 thread for running client, 
+else use 2 - one for client, and one for CPC</actn>
+<actn>if runTest, send all CASes at once (up to pool limit) up to howMany.
+If runTest2, send each CAS 1 at a time, and wait until it is complete including CPC.</actn>
+<actn>After <code>howMany</code> CASes, send CPC and wait for completion.</actn>
+</p>
+
+<p><mthd>sendCAS(engine, howMany, isAsync)</mthd>
+<actn>Gets CAS from casPool, sets doc txt, calls sendCas or SendAndReceiveCAS</actn></p>
+
+
+
+<p><mthd>spinShutdownThread(asyncEngine, when, [springContainerIds, stop_now or quiesce])</mthd> 
+<actn>after specified delay, tops either the async engine, or the deployed things.  Used
+to test recovery from svcs dying</actn></p> 
+
+<h3>UimaTestCallbackListener</h3>
+<p><mthd>onBeforeProcessCAS</mthd> writes logmsg to sysout</p>
+<p><mthd>onBeforeMessageSend</mthd> writes Received ... notivication with CAS [casRefId]
+<fld>sets casSent to casRefId)
+</p>
+
+<p><mthd>onUimaAsServiceExit</mthd> logs msg with cause</p>
+
+<p><mthd>entityProcessComplete</mthd> might have performance metrics or not...
+<actn>verifies (on exception) <code>receivedExpectedParentReferenceId</code></actn>
+<actn>For successful test, gets processTraceEvents, checks duration is what's expected <code>expectedProcessTime</code>
+<actn>For perform metrics: add per-component-performance-metrics to sysout log</actn>
+</p>
+
+<p><mthd>isProcessTimeout</mthd></p>
+<p><mthd>initializationComplete</mthd></p>
+<p><mthd>collectionProcessComplete</mthd></p>
+
+<h3>SimpleCallbackListener</h3>
+<p>extends UimaTestCallbackListener, overrides entityProcessComplete with a much simpler check/report</p>
+
+   </body>
+ </html>
+ 

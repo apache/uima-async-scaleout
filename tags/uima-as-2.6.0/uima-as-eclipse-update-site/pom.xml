@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements.  See the NOTICE file
+   distributed with this work for additional information
+   regarding copyright ownership.  The ASF licenses this file
+   to you under the Apache License, Version 2.0 (the
+   "License"); you may not use this file except in compliance
+   with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied.  See the License for the
+   specific language governing permissions and limitations
+   under the License.    
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+<parent>
+    <groupId>org.apache.uima</groupId>
+    <artifactId>uima-as-parent</artifactId>
+    <version>2.6.0</version>
+    <relativePath>../uima-as-parent/pom.xml</relativePath>
+  </parent>
+  
+  <artifactId>uima-as-eclipse-update-site</artifactId>
+  <packaging>pom</packaging>
+  <version>2.6.0</version>
+
+  <name>Apache UIMA Eclipse: ${project.artifactId}</name>
+  <description>The UIMA Eclipse update site</description>
+  <url>${uimaWebsiteUrl}</url>
+
+  <scm>
+    <connection>
+      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-eclipse-update-site
+    </connection>
+    <developerConnection>
+      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/trunk/uima-as-eclipse-update-site
+    </developerConnection>
+    <url>
+      http://svn.apache.org/viewvc/uima/uima-as/trunk/uima-as-eclipse-update-site
+    </url>
+  </scm>
+
+  <properties>
+    <uimaScmRoot>uima-as</uimaScmRoot>
+    <uimaScmProject>${project.artifactId}</uimaScmProject>
+    <!-- eclipseUpdateSite>${project.build.directory}/ </eclipseUpdateSite-->
+
+   <eclipseUpdateSiteComponent>uima-as</eclipseUpdateSiteComponent>
+   <eclipseUpdateSubSite>${project.build.directory}/eclipse-update-site/${eclipseUpdateSiteComponent}</eclipseUpdateSubSite>
+  </properties>
+
+
+  <!-- don't use dependency mechanism - use dependency:copy because we need to get multiple versions 
+    for the eclipse-feature-projects, and Maven wants to resolve multiple versions into one. -->
+
+  <build>
+    <!-- normally, the resources spec copies into target/classes/ ... but if it's not a "jar" packaging, 
+      it copies into target/ -->
+    <!-- This bit just copies in stuff that isn't needed for the update site, but makes it
+         show in a browser - supports IE and FireFox, not Chrome 
+    <resources>
+      <resource>
+        <targetPath>eclipse-update-site/web</targetPath>
+        <directory>web</directory>
+      </resource>
+      <resource>
+        <targetPath>eclipse-update-site</targetPath>
+        <directory>.</directory>
+        <includes>
+          <include>index.html</include>
+          <include>site.xml</include>
+        </includes>
+      </resource>
+    </resources>
+    -->
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-all-plugins</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <!-- ===================================================================
+                List here all the new plugins 
+                ======================================================================= -->
+              <artifactItems>
+                <artifactItem>
+                   <groupId>org.apache.uima</groupId>
+                   <artifactId>uimaj-ep-deployeditor</artifactId>
+                   <version>${project.version}</version>
+                   <destFileName>org.apache.uima.deployeditor_${parsedVersion.osgiVersion}.jar</destFileName>
+                </artifactItem>
+                
+                <artifactItem>
+                   <groupId>org.apache.uima</groupId>
+                   <artifactId>uimaj-ep-runtime-deployeditor</artifactId>
+                   <version>${project.version}</version>
+                   <destFileName>org.apache.uima.runtime.fragments.deployeditor_${parsedVersion.osgiVersion}.jar</destFileName>
+                </artifactItem>
+
+              </artifactItems>            
+              <!-- outputDirectory>${toBePacked}/plugins</outputDirectory -->              
+              <outputDirectory>${toBePacked}</outputDirectory>              
+              <!-- outputDirectory>${project.build.directory}/work/plugins</outputDirectory-->
+            </configuration>
+          </execution>
+          
+          <!-- ===================================================================
+                                         the FEATURES
+          ======================================================================= -->
+          
+          <execution>
+            <id>copy-features</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <!-- include here all of the features and all versions for this update site -->
+              <artifactItems>
+                <artifactItem>
+                   <groupId>org.apache.uima</groupId>
+                   <artifactId>uimaj-eclipse-feature-deployeditor</artifactId>
+                   <version>${project.version}</version>
+                   <destFileName>org.apache.uima.deployeditor_${parsedVersion.osgiVersion}.jar</destFileName>
+                </artifactItem>
+                     
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/eus-work/features</outputDirectory>
+              <!-- outputDirectory>${eclipseUpdateSite}/features</outputDirectory -->              
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+
+      
+    </plugins>
+  </build>
+
+</project>

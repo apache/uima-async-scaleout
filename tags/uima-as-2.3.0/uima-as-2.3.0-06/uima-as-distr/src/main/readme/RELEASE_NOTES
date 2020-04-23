@@ -1,0 +1,310 @@
+	Apache UIMA Asynchronous Scaleout v2.3.0-incubating
+                               Release Notes
+   -----------------------------------------------------------------------
+
+CONTENTS
+1. What is UIMA-AS?
+2. Major Changes in this Release
+3. How to Get Involved
+4. How to Report Issues
+5. List of JIRA Issues Fixed in this Release   
+   
+   
+1. What is UIMA-AS?
+
+UIMA Asynchronous Scaleout (AS) is an add-on to Apache UIMA that provides a set of capabilities
+for achieving flexible scaleout.  It is a second generation design, replacing the
+CPM and Vinci Services. The CPM and Vinci are still available and are not being deprecated, 
+but new designs are encouraged to use UIMA-AS for scalability, and current designs 
+reaching limitations may want to move to UIMA-AS.
+  
+UIMA-AS is integrated with the new flow controller architecture, and can be applied to
+both primitive and aggregate analysis engines.  It fully supports CAS Multipliers.
+
+2. Major Changes in this Release
+
+Please refer to the README for a list of changes.
+
+
+3. How to Get Involved
+
+The Apache UIMA project really needs and appreciates any contributions, 
+including documentation help, source code and feedback.  If you are interested
+in contributing, please visit http://incubator.apache.org/uima/get-involved.html.
+
+
+4. How to Report Issues
+
+The Apache UIMA project uses JIRA for issue tracking.  Please report any 
+issues you find at http://issues.apache.org/jira/browse/uima.
+
+
+5. List of JIRA Issues Fixed in this Release
+
+Release Notes - UIMA - Version 2.3AS
+
+
+** Bug
+    * [UIMA-845] - UIMA-AS client doesnt recover from failed connection to a temp queue
+    * [UIMA-914] - If the Error Configuration thresholdWindow value is invalid it is quietly ignored
+    * [UIMA-955] - Deployment fails if 2 delegates have the same queue name, on same or different brokers
+    * [UIMA-959] - Scaleout doc wrongly implies Vinci and AS services can be in same aggregate
+    * [UIMA-1002] - Problem scaling out CAS multipliers
+    * [UIMA-1011] - [DDE] When switching backward and forward between C++ and Java top-AE, Custom Settings are not properly handled
+    * [UIMA-1019] - A UIMA Aggregate Cas Multiplier cannot be deployed as an AS Aggregate service
+    * [UIMA-1022] - Sometimes hangs at initialization when trying to connect to a remote service
+    * [UIMA-1026] - UIMA-As ThresholdWindow not implemented correctly
+    * [UIMA-1030] - Remove two unused interfaces:  org.apache.uima.adapter.jms.client.UIMAAsynchronousEngine
+    * [UIMA-1034] - [DDE] Dirty flag is not set when environment parameters are edited
+    * [UIMA-1040] - Modify dd2spring to handle UIMA-AS Aggregate Cas Multipliers
+    * [UIMA-1057] - UIMA-AS Aggregate Tries To Dispose a CAS that Has Not Yet Been Fully Processed
+    * [UIMA-1070] - Fix a hang in UIMA-AS caused by an invalid AE descriptor
+    * [UIMA-1076] - In DDE, CAS pool size setting is Not Applicable when Top AE is a primitive AE
+    * [UIMA-1078] - Pool size and heap size for CAS Multiplier should NOT be displayed (be disable) for Top Analysis Engine running as AS aggregate
+    * [UIMA-1081] - Fix a hang in the common client caused by inconsistent synchronization
+    * [UIMA-1084] - Uima AS JMX statistics are invalid
+    * [UIMA-1091] - ServicePerformanceMBean implementation in Uima AS does not return valid idle time from getIdleTime()
+    * [UIMA-1110] - The default setting of prefetch=1 is causing problems
+    * [UIMA-1117] - Simple aggregate hangs when get a delegate error on an input CAS
+    * [UIMA-1118] - Fix "Failed to start jmx connector: Cannot bind to URL" while starting uima AS service
+    * [UIMA-1120] - UIMA AS use of TimeToLive can lead to service request failures.
+    * [UIMA-1122] - Reset method of the ClientInfo MBean deletes important parameters
+    * [UIMA-1124] - If 2 delegates use the same queue name getMeta will time out on one of them
+    * [UIMA-1125] - Modify UIMA-AS synchronization when deserializing CASes
+    * [UIMA-1131] - Delegates following a CAS Multiplier do not get the complete typesystem
+    * [UIMA-1132] - Fix a hang in UIMA-AS if a Cas Multiplier is the last component in the pipeline
+    * [UIMA-1135] - UIMA-AS dd2spring needs update for UIMA-1019
+    * [UIMA-1137] - Service hangs if deployed before broker is ready
+    * [UIMA-1138] - Deployment of an aggregate hangs if one of its co-located delegates has a missing import
+    * [UIMA-1145] - UIMA-AS client occasionally hangs while processing CASes
+    * [UIMA-1149] - [UIMA-AS] fix potential thread safety issue with flow controller code
+    * [UIMA-1158] - Some shell scripts don't work on Ubuntu Linux
+    * [UIMA-1159] - UIMA-AS dd2Spring fix - generating wrong property for co-located component - treating it as a remote
+    * [UIMA-1161] - UIMA-AS inputQueueScaleout should be settable on nested co-located aggregates
+    * [UIMA-1162] - Synchronize checkin() method of the AnalysisEngineInstancePoolWithThreadAffinity
+    * [UIMA-1164] - Increasing concurrent Consumer count on Spring Listener causes creation of multiple temp queues
+    * [UIMA-1165] - Fix a race condition in the UIMA-AS aggregate that results in a hang
+    * [UIMA-1166] - Getmeta replies from some remote delegates are ignored, causing a timeout
+    * [UIMA-1171] - Initialization hangs if an Exception is thrown when initializing the flow controller AND delegates are offline
+    * [UIMA-1186] - UIMA-AS update POMs to depend on 2.3.0 uima base version, and update uima-as poms to 2.3.0-incubating-SNAPSHOT
+    * [UIMA-1190] - Jmx Monitor in Uima AS not compiling when using Java 5
+    * [UIMA-1191] - Uima AS Reply Listener should be terminated when a delegate is disabled
+    * [UIMA-1194] - JMX stats for UIMA AS seem inconsistent 
+    * [UIMA-1196] - Add support for binary serialization and deserialization in Uima AS
+    * [UIMA-1198] - False msg referring to UIMA_HOME logged by first JUnit test
+    * [UIMA-1199] - If a parallel flow involves colocated delegates the application hangs
+    * [UIMA-1200] - Optimize UIMA AS XMI Cas serialization by reusing an instance of a XML Parser
+    * [UIMA-1205] - When Handling Invalid Message Uima AS Service Needs to Log Which Property Makes The Message Invalid
+    * [UIMA-1209] - Old 2.2.2 services cannot be used in parallel
+    * [UIMA-1215] - The README for UIMA-AS refers to core UIMA documantation that is not in the build
+    * [UIMA-1216] - UIMA AS Client Code Doesn't Release CAS While Handling Process Exception
+    * [UIMA-1217] - entityProcessComplete returns null CAS on error
+    * [UIMA-1218] - UIMA AS Primitive Controller Doesnt Report Exception During Initialization 
+    * [UIMA-1219] - UIMA AS Aggregate Hangs While Processing Multiple CASes from the Client
+    * [UIMA-1220] - CASes are not released from remote CAS Multipliers when the reply queue is remote
+    * [UIMA-1223] - Annotators should be initialized in the same thread that their process method will later be called on
+    * [UIMA-1224] - Exceptions received from a delegate don't identify their origin
+    * [UIMA-1229] - Add Private (not shared) Cache to UIMA AS Controllers For Storing Intermediate State for Each CAS
+    * [UIMA-1231] - UIMA AS Doesnt Expose to JMX Sizes of Java Queues Used For Internal Messaging
+    * [UIMA-1232] - Fix Synchronization Problem in the UIMA AS code
+    * [UIMA-1233] - Log Outgoing Message Sizes Destined for Remote Queue
+    * [UIMA-1234] - Cleanup Testcases to Handle ServiceShutdownException Quietly
+    * [UIMA-1236] - Fix a hang in the  testProcessParallelFlowWithDelegateDisable testcase
+    * [UIMA-1237] - Fix "Cas Not Found In CasManager Cache" Error in the Parallel Step
+    * [UIMA-1238] - Fix NullPointerException When Sending Reply to Uima AS Client
+    * [UIMA-1239] - Fix "Consumer Closed" Exception Thrown By ActiveMQ 
+    * [UIMA-1240] - Deployment Descriptor Editor resets CAS Pool size for aggregates when you change number of instances of a delegate
+    * [UIMA-1245] - Processing order of parent CAS different on UIMA and UIMA AS
+    * [UIMA-1246] - Error handling for CASes generated in an aggregate needs clarification.
+    * [UIMA-1253] - UIMA-AS Can't run Aggregate containing a CAS Consumer delegate
+    * [UIMA-1254] - UIMA AS Aggregate ServiceInfo JMX Component is Missing  Broker URL
+    * [UIMA-1255] - Modify UIMA-AS Aggregate to Handle Cas Not Found Error
+    * [UIMA-1259] - Service MBean methods for accessing UIMA-CPP JMX statistics need to be synchronized
+    * [UIMA-1265] - Incomplete Metadata Returned From UIMA AS Primitive Service When Deployed With Synchronous Aggregate
+    * [UIMA-1269] - NPE when using a C++ service deployed via JNI
+    * [UIMA-1270] - runRemoteAsyncAE uses binary serialization which is not supported for native CPP services
+    * [UIMA-1271] - UIMA-AS Should Use TextMessage Only for GetMeta Request and Reply
+    * [UIMA-1272] - Change Prefetch Value On a Temp Queue Connection Used By UIMA AS Client API
+    * [UIMA-1279] - UIMA AS Client Not Handling Errors When Deploying Synchronous Aggregate
+    * [UIMA-1285] - Fix Flow Object Not In Flow Cache Error
+    * [UIMA-1286] - UIMA AS Service Doesnt Start a Timer On Connection To a Temp Reply Queue
+    * [UIMA-1292] - Uima AS Jms Listener Should Support Retry When Establishing Connection To a Broker
+    * [UIMA-1293] - Replies from remote CasMultipliers that don't always generate CASes are not handled correctly
+    * [UIMA-1296] - UIMA AS Service Not Processing Stop Request
+    * [UIMA-1297] - Uima AS Service Not Handling Send Failures Correctly
+    * [UIMA-1303] - Uima AS Creates Jms Sessions With Wrong Acknowledgment Property
+    * [UIMA-1309] - Fix Uima AS testcase testPrimitiveServiceProcessPingFailure() to ignore RuntimeException
+    * [UIMA-1310] - Fix Uima AS Client memory leak
+    * [UIMA-1315] - Fix a hang in the Uima AS client
+    * [UIMA-1316] - FlowController collectionProcessComplete() method not called
+    * [UIMA-1317] - Modify UIMA AS Endpoint Object To Use Volatile Booleans
+    * [UIMA-1322] - Uima AS service should fetch broker URL from ServiceInfo object when creating connection to a reply queue
+    * [UIMA-1323] - Fix NPE in Uima AS GetMetaErrorHandler
+    * [UIMA-1324] - Uima AS not logging exceptions generated by Spring while parsing invalid Deployment Descriptor
+    * [UIMA-1327] - Cannot start broker with startBroker.sh script
+    * [UIMA-1328] - deployAsyncService.sh causes Log4j FileNotFoundException
+    * [UIMA-1339] - MESSAGE LOCALIZATION FAILED -- missing key UIMAJMS_send_reply_failed__FINE
+    * [UIMA-1343] - Uima AS aggregate controller should synchronize code that processes CPC replies from delegates
+    * [UIMA-1348] - Uima AS UIMA_Service class is not handling default broker correctly
+    * [UIMA-1353] - UIMA-AS JUnit test code suppresses some exceptions so may not report some test failures
+    * [UIMA-1355] - When one delagate in a parallel step fails, the flow continues without waiting for the last reply
+    * [UIMA-1357] - Uima AS testcase hangs when run in a loop
+    * [UIMA-1358] - Exceptions on generated CASes are returned to client without parentage information
+    * [UIMA-1359] - Strange warning message when deploying an Aggregate CM
+    * [UIMA-1367] - UIMA-AS docs & JavaDocs don't fully describe the UimaASStatusCallbackListener interface
+    * [UIMA-1369] - ResourceInitializationException in a collocated delegate causes a hang
+    * [UIMA-1375] - Fix a race condition while handling CASes generated by a Cas Multiplier
+    * [UIMA-1376] - Fix NPE in Uima AS Aggregate while handling getMeta responses
+    * [UIMA-1394] - Uima AS should log Id of an expired CAS
+    * [UIMA-1395] - No way to programatically kill a uimacpp process launched by UimacppServiceController
+    * [UIMA-1399] - Deployment of C++ service ignores <environmentVariable name="UIMACPP_STARTING_DIRECTORY">
+    * [UIMA-1402] - Uima AS listener threads sometimes hangs while trying to stop
+    * [UIMA-1406] - UimacppServiceController should implement AnalysisEngineController interface
+    * [UIMA-1407] - Fix UimaAS log messages
+    * [UIMA-1409] - The implementation of the uimaj-as-camel producer must be thread safe but is not
+    * [UIMA-1410] - The uimaj-as-camel producer should report and log all error/exceptions
+    * [UIMA-1416] - Stop sending ShutdownException from Uima AS service to the client
+    * [UIMA-1429] - Generate unique JMX name for every UIMA AS client instance
+    * [UIMA-1433] - UIMA AS service creates too many JMS connections 
+    * [UIMA-1434] - UIMA AS logs an exception when handling stale messages
+    * [UIMA-1435] - UIMA AS client creates too many JMS connections to a broker
+    * [UIMA-1436] - Fix UIMA AS client code to address race conditions that may result in a hang
+    * [UIMA-1437] - Fix UIMA AS testcase code to address intermittent hangs
+    * [UIMA-1439] - Fix interemittent hangs in UIMA AS when stopping the JMS listener
+    * [UIMA-1449] - Fix ConcurrentModificationException in the Delegate object
+    * [UIMA-1450] - UIMA AS controller creates a component CAS Pool with a wrong name
+    * [UIMA-1454] - Stale requests are processed and subsequently labeled as exceptions
+    * [UIMA-1459] - Fix UIMA AS bugs reported by Findbugs
+    * [UIMA-1472] - Uima AS imports ConcurrentHashMap from a wrong package
+    * [UIMA-1475] - UIMA AS testcases hang when run with JDK 1.5
+    * [UIMA-1476] - Fix race condition in the UIMA As client when creating a shared JMS connection
+    * [UIMA-1477] - UIMA AS client hangs while handling CPC request 
+    * [UIMA-1487] - Add support for collectionProcessComplete timeout setting in JMS service adapter
+    * [UIMA-1495] - dd2spring throws SAXParseException if parameters are appended to a broker URL
+    * [UIMA-1514] - uimaj-as-camel should not use default Bundle-SymbolicName
+    * [UIMA-1540] - Uima AS client consumes too much CPU while waiting for a free CAS 
+    * [UIMA-1565] - Fix NPE in Uima AS jUnit code when running with AMQ 5.2
+    * [UIMA-1566] - build breaks for some components having no source files
+    * [UIMA-1573] - setUimaClassPath fixes
+    * [UIMA-1579] - The cas pool size of the camel uima driver must be configurable
+    * [UIMA-1580] - Synchronize AsynchAECasManager initialize() method to fix NPE while merging type systems
+    * [UIMA-1584] - Document Delta CAS XMI format
+    * [UIMA-1593] - AEs that declare multipleDeploymentAllowed=false can't be deployed as services and called from multiple clients in the same JVM
+    * [UIMA-1609] - binary assembly wrongly including FOP files
+    * [UIMA-1615] - make build-from-sources work
+    * [UIMA-1624] - Uima AS service should start listeners on its input queue on succesfull initialization only
+    * [UIMA-1626] - JmsOutputChannel.sendReply(Throwable t, ...) fails if exception is not serializeable
+    * [UIMA-1630] - Fix IndexOutOfBounds exception in BaseAnalysisEngineController
+    * [UIMA-1632] - UIMA AS service does not recover from broker failure and subsequent restart
+    * [UIMA-1633] - UimaASStatusCallbackListener javadoc should say when aStatus can be null
+    * [UIMA-1636] - Modify property names used to enable and configure UIMA AS Jmx Monitor 
+    * [UIMA-1637] - Update JMX MBeans exposed by UIMA AS
+    * [UIMA-1638] - Remove dumping stack traces to stdout in UIMA AS
+    * [UIMA-1640] - UIMA AS aggregate is not merging Flow Controller's metadata
+    * [UIMA-1643] - UIMA AS client does not recover correctly when the connection to a broker fails
+    * [UIMA-1644] - uimaj-as-camel throws a NullPointerException when a null status is returned on initializationComplete
+    * [UIMA-1645] - uimaj-as-camel needs a timeout parameter
+    * [UIMA-1646] - Using failover in broker URL causes XML exception
+    * [UIMA-1647] - Scripts fail to call runUimaClass.sh 
+    * [UIMA-1648] - UIMA AS lib path contains duplicate entries
+    * [UIMA-1649] - deployAsyncService.sh log4j warnings 
+    * [UIMA-1651] - We should remove runRemoteAsyncAEmultiple.cmd
+    * [UIMA-1654] - UIMA AS client doesnt remove its MBean from the JMX Server on shutdown
+    * [UIMA-1655] - Fix NPE in UIMA AS service while creating a new listener
+    * [UIMA-1656] - UIMA AS aggregate should not attempt to send getMeta request to remotes when its stopping
+    * [UIMA-1657] - UIMA AS client fails if a failover broker uri with multiple endpoints is used
+    * [UIMA-1659] - UIMA AS aggregate creates a redundant temp reply queue for each delegate
+    * [UIMA-1662] - uima-as extract and build script has copy/paste error - is building base uima instead of uima-as
+    * [UIMA-1663] - All directories in UIMA distribution should be 755
+    * [UIMA-1665] - UIMA AS aggregate not handling timeouts correctly for parallel delegates
+    * [UIMA-1666] - CasPoolSize should equal numberOfInstances when deploying a primitive component
+    * [UIMA-1671] - UIMA AS client fails to localize exception message when executed in an OSGI server
+    * [UIMA-1672] - BaseAnalysisEngineController.stopCasMultiplier should log stopping also to log file
+    * [UIMA-1673] - uimaee_messages.properties contains key UIMAEE_stopping_collocated_cm_INFO twice
+    * [UIMA-1674] - Exception thrown from CasMultiplier.process should be reported to client as failure
+    * [UIMA-1675] - UIMA AS client does not log time out error correctly
+    * [UIMA-1681] - Wrong value for JMX monitoring property
+    * [UIMA-1683] - fix copyright notice in the NOTICE files
+    * [UIMA-1687] - correct top-level svn license/notice files
+    * [UIMA-1692] - add missing license headers to .project files etc. in uimaj-eclipse-... projects
+
+** Improvement
+    * [UIMA-841] - move Eclipse feature maven builds into feature projects
+    * [UIMA-844] - Add connection recovery for temp queues in the JMS Listener object
+    * [UIMA-927] - Provide a way to drain Dead Letter Queue 
+    * [UIMA-998] - The UIMA website should have a list of known problems and any work-arounds
+    * [UIMA-1109] - Need ability to quiesce an instance of a service
+    * [UIMA-1127] - Services that timeout should be handled differently on subsequent requests
+    * [UIMA-1130] - Deployment Descriptor should allow setting the number of concurrent listeners for a reply queue
+    * [UIMA-1133] - Timeout needs different implementation to eliminate interaction with CAS pool size
+    * [UIMA-1134] - Put additional scaleout scenarios in UIMA AS getting started
+    * [UIMA-1136] - [DDE] Support editing of Prefetch value and set default value to 0 (instead of 1)
+    * [UIMA-1140] - Embedded broker should be eliminated
+    * [UIMA-1146] - Setting the number of concurrent listeners of a reply queue for Co-located Delegates
+    * [UIMA-1156] - [SimpleServer] Add improvement to support UIMA-AS services
+    * [UIMA-1160] - [DDE] Copy missing icon named "editor.gif" from CDE to to DDE 
+    * [UIMA-1163] - set svn:eol-style to native for source files in UIMA project
+    * [UIMA-1173] - BaseUIMAAsynchronousEngine_impl.getCAS() should queue requests
+    * [UIMA-1189] - Remove excessive synchronization from Uima As
+    * [UIMA-1211] - Optimize UIMA-AS Logging by Testing The Log Level
+    * [UIMA-1262] - Make changes to superPoms active before they are *installed*
+    * [UIMA-1274] - Add binary serialization option to JMS service descriptor
+    * [UIMA-1288] - Need a Better Approach For Specifying UIMA AS Broker URL in Deployment Descriptor
+    * [UIMA-1294] - Enable access of service's ipaddr from process Cas replies
+    * [UIMA-1332] - [DDE] Allow an "empty" value for the "Broker URL for input queue" field (related to UIMA-1288)
+    * [UIMA-1382] - Change log level for JMS timeout between services and their reply queues
+    * [UIMA-1391] - Client of a CAS Multiplier should be able to stop processing of a CAS
+    * [UIMA-1393] - UimaSerializer should make use of ThreadLocal
+    * [UIMA-1401] - Uima AS should assign explicit name to processing threads 
+    * [UIMA-1412] - EntityProcessStatus implementations should implement toString to ease debuging
+    * [UIMA-1480] - Add version compatibility verification to UIMA-AS for base UIMA level
+    * [UIMA-1481] - add Javadocs to UIMA-AS assembly
+    * [UIMA-1484] - Update UIMA-AS Documentation
+    * [UIMA-1501] - more refactoring and updating - parent POMs
+    * [UIMA-1517] - Don't set executable bits on non-executables, when building assemblies
+    * [UIMA-1522] - Sandbox RegularExpressionAnnotator - change commons-io to test dependency
+    * [UIMA-1537] - License Notice Disclaimer copying
+    * [UIMA-1538] - Common Build Step: build source Jars for java Jars
+    * [UIMA-1541] - UIMA AS source should be reformated according to uima guideline
+    * [UIMA-1567] - Maven build: add <prerequisites> to uimaj to specify minimum Maven release level
+    * [UIMA-1568] - Remove no longer used assemble-plugin files from uimaj-ep- projects
+    * [UIMA-1574] - uima-as assembly is to be unzipped over base, but cannot be, because top level dir names differ
+    * [UIMA-1575] - Change eclipse update site and feature generation to use common maven mechanisms
+    * [UIMA-1578] - The uimaj-as-camel documentation should be extended and reviewed
+    * [UIMA-1585] - Run RAT on projects, fix missing licenses, add RAT running to POM, document exclusions
+    * [UIMA-1590] - fix extractAndBuild scripts
+    * [UIMA-1612] - Removed Unused classes from UIMA AS org.apache.uima.aae.error.handler package
+    * [UIMA-1613] - run Rat consistently for all maven assemblies
+    * [UIMA-1622] - Make uima-as dependencies more precise
+    * [UIMA-1635] - uima-as docs review fixes for 2.3.0 level
+    * [UIMA-1660] - uimaj-as-camel should support failover in configruation string
+    * [UIMA-1670] - uima-as startup issues
+    * [UIMA-1677] - UIMA-AS Doc updates from proofreading
+    * [UIMA-1689] - fix some miscompares between svn export and source-distribution
+    * [UIMA-1691] - change checkout to export in extract and build scripts
+
+** New Feature
+    * [UIMA-1017] - Client API does not support the CAS multiplier interface
+    * [UIMA-1104] - Need a monitor component for UIMA-AS services to capture performance metrics 
+    * [UIMA-1168] - Use Delta CAS serialization to reduce overhead of remote service calls
+    * [UIMA-1172] - JMX client mbean should have attribute for max and average response latency
+    * [UIMA-1213] - UIMA-AS Client API needs additional JMX parameter - Time-waiting-for-CAS
+    * [UIMA-1214] - Enable use of *delta* BinaryCas for services
+    * [UIMA-1241] - UIMA AS Service Should Expose Cas Pool Size for Monitioring via JMX
+    * [UIMA-1300] - The client API needs to support optional callback listener before sendCas
+    * [UIMA-1311] - On Uima AS service startup log its runtime environment
+    * [UIMA-1314] - Add OSGI support to uima-as
+    * [UIMA-1354] - Add camel based uima-as driver
+    * [UIMA-1531] - Need a script to launch a UIMA-AS service via RunWithJarPath
+
+
+
+
+** Task
+    * [UIMA-1147] - Merge uima-as-post1st branch with the uima-as SVN trunk
+    * [UIMA-1155] - Remove stale methods and classes from the uima-as projects
+    * [UIMA-1381] - Write documentation for uimaj-as-camel project
+    * [UIMA-1413] - Add uimaj-as-camel to uima as distribution
+    * [UIMA-1479] - Move UIMA-AS out of sandbox, change to an "add-on" packaging style to the core
+    * [UIMA-1555] - repackage UIMA-AS to work as an add-on to base UIMA
+    * [UIMA-1614] - update 2.3.0-incubating-SNAPSHOT to drop the snapshot in prep for release
