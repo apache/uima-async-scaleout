@@ -3,3 +3,5 @@
 .classpath
 target/
 feature.xml
+MANIFEST.MF
+issuesFixed
