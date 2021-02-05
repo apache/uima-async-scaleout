@@ -319,6 +319,15 @@
            <groupId>org.eclipse.platform</groupId>
            <artifactId>org.eclipse.swt</artifactId>
          </exclusion>
+        <!-- https://issues.apache.org/jira/browse/UIMA-6267 -->
+        <exclusion>
+          <groupId>com.sun.jna</groupId>
+          <artifactId>com.sun.jna</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jna</groupId>
+          <artifactId>com.sun.jna.platform</artifactId>
+        </exclusion>
        </exclusions>
      </dependency>
      
@@ -370,12 +379,28 @@
           <groupId>org.eclipse.platform</groupId>
           <artifactId>org.eclipse.swt</artifactId>
         </exclusion>
-        
+        <!-- https://issues.apache.org/jira/browse/UIMA-6267 -->
+        <exclusion>
+          <groupId>com.sun.jna</groupId>
+          <artifactId>com.sun.jna</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jna</groupId>
+          <artifactId>com.sun.jna.platform</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
-
-
+    <!-- https://issues.apache.org/jira/browse/UIMA-3510 -->
+    <dependency>
+      <groupId>org.eclipse.equinox</groupId>
+      <artifactId>app</artifactId>
+      <!-- https://issues.apache.org/jira/browse/UIMA-3695
+          <version>[1.0.0,1.0.1)</version>
+       -->
+       <version>[1.2.0,2.0.0)</version>
+       <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
