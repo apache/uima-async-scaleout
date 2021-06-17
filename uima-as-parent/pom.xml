@@ -32,7 +32,7 @@
   <parent>
     <groupId>org.apache.uima</groupId>
     <artifactId>parent-pom</artifactId>
-    <version>13</version>
+    <version>14</version>
     <relativePath />
   </parent>
 
@@ -46,13 +46,13 @@
 
   <scm>
     <connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.10.2/uima-as-parent
+      scm:git:https://github.com/apache/uima-async-scaleout
     </connection>
     <developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/tags/uima-as-2.10.2/uima-as-parent
+      scm:git:https://github.com/apache/uima-async-scaleout
     </developerConnection>
     <url>
-      http://svn.apache.org/viewvc/uima/uima-as/tags/uima-as-2.10.2/uima-as-parent
+      https://github.com/apache/uima-async-scaleout
     </url>
   </scm>
 
@@ -62,7 +62,7 @@
     of a build tool, where the users hasn't checked out the build tooling. This
     allows maven to find the snapshots when looking for the parent of this pom -->
   <repositories>
-    <repository>
+    <!-- repository>
       <id>eclipsePlugins</id>
       <name>Eclipse components</name>
       <layout>default</layout>
@@ -76,7 +76,7 @@
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </repository>
+    </repository -->
 
     <!-- modify central repository access: Turn on checksum checking -->
     <repository>
@@ -107,7 +107,13 @@
       </releases>
     </repository>
 
+    <repository>
+      <id>${eclipseP2RepoId}</id>
+      <url>${eclipseP2RepoUrl}</url>
+      <layout>p2</layout>
+    </repository>
 
+    
   </repositories>
 
   <pluginRepositories>
@@ -130,13 +136,18 @@
   <properties>
     <uimaScmRoot>uima-as</uimaScmRoot>
     <uimaScmProject>${project.artifactId}</uimaScmProject>
+
+
+    <eclipseP2RepoId>org.eclipse.p2.201812</eclipseP2RepoId>
+    <eclipseP2RepoUrl>http://download.eclipse.org/releases/2018-12/</eclipseP2RepoUrl>
+
     <!-- level of uimaj sdk this release depends on -->
     <uimajDependencyVersion>2.10.3</uimajDependencyVersion>
     <!-- level of ActiveMQ this release depends on -->
-    <org.apache.activemq.version>5.15.8</org.apache.activemq.version>
+    <org.apache.activemq.version>5.16.2</org.apache.activemq.version>
     <!-- level of SpringFramework this release depends on -->
-    <org.springframework.version>4.3.18.RELEASE</org.springframework.version>
-    <org.apache.camel.version>2.19.3</org.apache.camel.version>
+    <org.springframework.version>4.3.30.RELEASE</org.springframework.version>
+    <org.apache.camel.version>2.25.2</org.apache.camel.version>
     <org.apache.geronimo.jms.specs.version>1.1.1</org.apache.geronimo.jms.specs.version>
     <org.apache.geronimo.j2ee.specs.version>1.0.1</org.apache.geronimo.j2ee.specs.version>
     <org.apache.geronimo.servlet.specs.version>1.0</org.apache.geronimo.servlet.specs.version>

@@ -48,13 +48,13 @@
        element, and just changing the following two properties -->
   <scm>
     <connection>
-      scm:svn:http://svn.apache.org/repos/asf/uima/uima-as/trunk
+      scm:git:https://github.com/apache/uima-async-scaleout
     </connection>
     <developerConnection>
-      scm:svn:https://svn.apache.org/repos/asf/uima/uima-as/trunk
+      scm:git:https://github.com/apache/uima-async-scaleout
     </developerConnection>
     <url>
-      http://svn.apache.org/viewvc/uima/uima-as/trunk
+      https://github.com/apache/uima-async-scaleout
     </url>
   </scm>
 
