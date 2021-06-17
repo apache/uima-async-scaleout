@@ -107,11 +107,11 @@
       </releases>
     </repository>
 
-    <repository>
+    <!--repository>
       <id>${eclipseP2RepoId}</id>
       <url>${eclipseP2RepoUrl}</url>
       <layout>p2</layout>
-    </repository>
+    </repository-->
 
     
   </repositories>
@@ -138,8 +138,8 @@
     <uimaScmProject>${project.artifactId}</uimaScmProject>
 
 
-    <eclipseP2RepoId>org.eclipse.p2.201812</eclipseP2RepoId>
-    <eclipseP2RepoUrl>http://download.eclipse.org/releases/2018-12/</eclipseP2RepoUrl>
+    <!--eclipseP2RepoId>org.eclipse.p2.201812</eclipseP2RepoId>
+    <eclipseP2RepoUrl>http://download.eclipse.org/releases/2018-12/</eclipseP2RepoUrl-->
 
     <!-- level of uimaj sdk this release depends on -->
     <uimajDependencyVersion>2.10.3</uimajDependencyVersion>
