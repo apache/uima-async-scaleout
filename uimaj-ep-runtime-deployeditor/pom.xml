@@ -95,7 +95,7 @@
       <version>[1.6.1,2.0.0)</version>
       <scope>provided</scope>
     </dependency>
- <dependency>
+    <dependency>
       <groupId>${eclipseP2RepoId}</groupId>
       <artifactId>org.eclipse.core.resources</artifactId>
       <version>[3.11.1,4.0.0)</version>
@@ -131,14 +131,6 @@
       <version>[3.2.0,5.0.0)</version>
       <scope>provided</scope>
     </dependency>
-
-
-
-
-
-
-    
-
   </dependencies>
 
   <build>
