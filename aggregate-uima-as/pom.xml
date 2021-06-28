@@ -64,7 +64,7 @@
     <module>../uimaj-as-activemq</module>
     <module>../uimaj-as-core</module>
     <module>../uimaj-as-jms</module>
-    <!--module>../aggregate-uima-as-eclipse-plugins</module-->
+    <module>../aggregate-uima-as-eclipse-plugins</module>
     <module>../uima-as-docbooks</module>
   </modules>
 </project>
