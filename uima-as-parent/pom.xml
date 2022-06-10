@@ -538,6 +538,26 @@
           </toolchains>
         </configuration>
       </plugin>
+      
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-cli</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+              <!-- default configuration -->
+            <configuration>
+              <excludes combine.children="append">
+                  <exclude>.github/**/*</exclude> <!-- GitHub config/template files -->
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   
     <pluginManagement>
@@ -609,7 +629,6 @@
             </execution>
           </executions>
         </plugin>
-
       </plugins>
     </pluginManagement>
   </build>
@@ -632,5 +651,4 @@
       </repositories>
     </profile>
   </profiles>
-
 </project>
