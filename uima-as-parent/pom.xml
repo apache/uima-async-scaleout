@@ -45,15 +45,9 @@
   <url>${uimaWebsiteUrl}</url>
 
   <scm>
-    <connection>
-      scm:git:https://github.com/apache/uima-async-scaleout
-    </connection>
-    <developerConnection>
-      scm:git:https://github.com/apache/uima-async-scaleout
-    </developerConnection>
-    <url>
-      https://github.com/apache/uima-async-scaleout
-    </url>
+    <connection>scm:git:https://github.com/apache/uima-async-scaleout</connection>
+    <developerConnection>scm:git:https://github.com/apache/uima-async-scaleout</developerConnection>
+    <url>https://github.com/apache/uima-async-scaleout</url>
   </scm>
 
   <!-- The repositories section is duplicated from the parent pom one, and
@@ -62,39 +56,20 @@
     of a build tool, where the users hasn't checked out the build tooling. This
     allows maven to find the snapshots when looking for the parent of this pom -->
   <repositories>
-    <!-- repository>
-      <id>eclipsePlugins</id>
-      <name>Eclipse components</name>
-      <layout>default</layout>
-      <url>https://repo1.maven.org/maven2</url>
-
-      <releases>
-      <updatePolicy>never</updatePolicy>
-      <checksumPolicy>fail</checksumPolicy>
-      </releases>
-
-      <snapshots>
-      <enabled>false</enabled>
-      </snapshots>
-      </repository -->
-
     <!-- modify central repository access: Turn on checksum checking -->
     <repository>
       <id>central</id>
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
       <url>https://repo1.maven.org/maven2</url>
-
       <releases>
         <enabled>true</enabled>
         <checksumPolicy>fail</checksumPolicy>
         <updatePolicy>never</updatePolicy>
       </releases>
-
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-
     </repository>
 
     <!-- this is needed if this pom refers to a snapshot of the parent -->
@@ -123,6 +98,7 @@
         <updatePolicy>never</updatePolicy>
       </snapshots>
     </pluginRepository>
+    
     <pluginRepository>
       <id>artifactory.openntf.org</id>
       <name>artifactory.openntf.org</name>
@@ -138,18 +114,18 @@
     <eclipseP2RepoUrl>https://download.eclipse.org/releases/2018-12/</eclipseP2RepoUrl>
 
     <!-- level of uimaj sdk this release depends on -->
-    <uimajDependencyVersion>2.10.3</uimajDependencyVersion>
+    <uimajDependencyVersion>2.11.0</uimajDependencyVersion>
     <!-- level of ActiveMQ this release depends on -->
     <org.apache.activemq.version>5.16.2</org.apache.activemq.version>
     <!-- level of SpringFramework this release depends on -->
-    <org.springframework.version>4.3.30.RELEASE</org.springframework.version>
+    <org.springframework.version>5.3.20</org.springframework.version>
     <org.apache.camel.version>2.25.2</org.apache.camel.version>
     <org.apache.geronimo.jms.specs.version>1.1.1</org.apache.geronimo.jms.specs.version>
     <org.apache.geronimo.j2ee.specs.version>1.0.1</org.apache.geronimo.j2ee.specs.version>
     <org.apache.geronimo.servlet.specs.version>1.0</org.apache.geronimo.servlet.specs.version>
     <jetty.version>9.2.25.v20180606</jetty.version>
     <commons-pool.version>2.4.2</commons-pool.version>
-    <xstream.version>1.4.10</xstream.version>
+    <xstream.version>1.4.19</xstream.version>
     <log4j.version>1.2.17</log4j.version>
     <xmlbeans.version>3.1.0</xmlbeans.version>
     <slf4j.version>1.7.13</slf4j.version>
@@ -157,7 +133,7 @@
     <http.client.version>4.5.6</http.client.version>
     <http.core.version>4.4.10</http.core.version>
     <hawtbuff.version>1.11</hawtbuff.version>
-    <junit.version>4.8.1</junit.version>
+    <junit.version>4.13.2</junit.version>
 
     <!--
       Configuring settings is best done through default properties that multiple plugins.
@@ -195,7 +171,6 @@
     the uima-as components depends on. -->
   <dependencyManagement>
     <dependencies>
-
       <dependency>
         <groupId>org.apache.uima</groupId>
         <artifactId>uimaj-core</artifactId>
@@ -203,55 +178,42 @@
         <scope>compile</scope>
       </dependency>
 
-
       <!-- Active MQ Stuff -->
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-client</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-broker</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
-
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-jaas</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-web</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-spring</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-console</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-http</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
-
-
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-camel</artifactId>
@@ -307,26 +269,21 @@
         <artifactId>activemq-shiro</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
-
-      <dependency>
-        <groupId>org.fusesource.hawtbuf</groupId>
-        <artifactId>hawtbuf</artifactId>
-        <version>${hawtbuff.version}</version>
-      </dependency>
-
-
-
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-kahadb-store</artifactId>
         <version>${org.apache.activemq.version}</version>
       </dependency>
-
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>activemq-http</artifactId>
         <version>${org.apache.activemq.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.fusesource.hawtbuf</groupId>
+        <artifactId>hawtbuf</artifactId>
+        <version>${hawtbuff.version}</version>
       </dependency>
 
       <!-- Spring Framework Dependencies -->
@@ -335,56 +292,41 @@
         <artifactId>spring-core</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
-      <!--dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-asm</artifactId>
-        <version>${org.springframework.version}</version>
-        </dependency -->
-
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-aop</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-beans</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-context</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-webt</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-expression</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-tx</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-jms</artifactId>
         <version>${org.springframework.version}</version>
       </dependency>
-
-
 
       <dependency>
         <groupId>org.apache.geronimo.specs</groupId>
@@ -396,8 +338,6 @@
         <artifactId>geronimo-j2ee-management_1.1_spec</artifactId>
         <version>${org.apache.geronimo.j2ee.specs.version}</version>
       </dependency>
-
-
       <dependency>
         <groupId>org.apache.geronimo.specs</groupId>
         <artifactId>geronimo-servlet_3.0_spec</artifactId>
@@ -422,7 +362,6 @@
         <groupId>com.thoughtworks.xstream</groupId>
         <artifactId>xstream</artifactId>
         <version>${xstream.version}</version>
-        <type>jar</type>
         <scope>compile</scope>
       </dependency>
 
@@ -438,8 +377,6 @@
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
-
-
 
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -459,13 +396,11 @@
         <version>${log4j.version}</version>
       </dependency>
 
-
       <dependency>
         <groupId>xpp3</groupId>
         <artifactId>xpp3</artifactId>
         <version>${xpp3.version}</version>
       </dependency>
-
 
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -484,7 +419,6 @@
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
       </dependency>
-
 
       <dependency>
         <groupId>${eclipseP2RepoId}</groupId>
@@ -509,7 +443,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
 
   <build>
     <plugins>
