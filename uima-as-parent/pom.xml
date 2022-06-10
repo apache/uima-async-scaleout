@@ -149,7 +149,7 @@
     <org.apache.geronimo.servlet.specs.version>1.0</org.apache.geronimo.servlet.specs.version>
     <jetty.version>9.2.25.v20180606</jetty.version>
     <commons-pool.version>2.4.2</commons-pool.version>
-    <xstream.version>1.4.10</xstream.version>
+    <xstream.version>1.4.19</xstream.version>
     <log4j.version>1.2.17</log4j.version>
     <xmlbeans.version>3.1.0</xmlbeans.version>
     <slf4j.version>1.7.13</slf4j.version>
