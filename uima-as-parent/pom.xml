@@ -142,7 +142,7 @@
     <!-- level of ActiveMQ this release depends on -->
     <org.apache.activemq.version>5.16.2</org.apache.activemq.version>
     <!-- level of SpringFramework this release depends on -->
-    <org.springframework.version>4.3.30.RELEASE</org.springframework.version>
+    <org.springframework.version>5.2.22.RELEASE</org.springframework.version>
     <org.apache.camel.version>2.25.2</org.apache.camel.version>
     <org.apache.geronimo.jms.specs.version>1.1.1</org.apache.geronimo.jms.specs.version>
     <org.apache.geronimo.j2ee.specs.version>1.0.1</org.apache.geronimo.j2ee.specs.version>
