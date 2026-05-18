@@ -1,6 +1,13 @@
 Apache UIMA Asynchronous Scaleout (UIMA-AS)
 ===========================================
 
+> [!IMPORTANT]
+> **This project has been retired.**
+>
+> Apache UIMA-AS was retired on **21 Dec 2022** and is no longer actively
+> maintained. The source code remains available for archival and reference
+> purposes, but no new releases, bug fixes, or security updates are planned.
+
 What is UIMA-AS?
 ----------------
 
